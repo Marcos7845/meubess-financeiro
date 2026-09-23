@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onde estão os dados no Omie — o que a chave atual abre</title>
+<style>
+  :root{
+    --tinta:#12181f; --tinta-fraca:#5b6875; --linha:#dfe4ea; --fundo:#f6f7f9;
+    --papel:#fff; --tem:#0f7b4f; --tem-fundo:#e8f5ee; --nao:#a1440f; --nao-fundo:#fdeee4;
+    --alerta:#8c1d1d; --alerta-fundo:#fdeaea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:40px 20px 72px;background:var(--fundo);color:var(--tinta);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  main{max-width:960px;margin:0 auto}
+  h1{font-size:30px;line-height:1.25;margin:0 0 6px}
+  .sub{color:var(--tinta-fraca);margin:0 0 32px;font-size:15px}
+  section{background:var(--papel);border:1px solid var(--linha);border-radius:12px;padding:24px 28px;margin:0 0 20px}
+  h2{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--tinta-fraca);
+    margin:0 0 16px;font-weight:700}
+  .achado{border-left:4px solid var(--alerta);background:var(--alerta-fundo)}
+  .achado p{margin:0 0 10px}
+  .achado p:last-child{margin-bottom:0}
+  .empresa{font-size:20px;font-weight:700;margin:0 0 4px}
+  .empresa small{display:block;font-size:14px;font-weight:400;color:var(--tinta-fraca);margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--linha);vertical-align:top}
+  th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--tinta-fraca);font-weight:700}
+  tbody tr:last-child td{border-bottom:none}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{font-size:13.5px;background:var(--fundo);border:1px solid var(--linha);border-radius:4px;padding:1px 5px}
+  pre{background:#11161c;color:#dfe6ee;border-radius:10px;padding:18px 20px;overflow-x:auto;
+    font-size:12.5px;line-height:1.65;margin:0}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .tag.tem{color:var(--tem);background:var(--tem-fundo)}
+  .tag.nao{color:var(--nao);background:var(--nao-fundo)}
+  ul{margin:0;padding-left:22px}
+  li{margin:0 0 8px}
+  li:last-child{margin-bottom:0}
+  .nota{font-size:14px;color:var(--tinta-fraca);margin:14px 0 0}
+  footer{max-width:960px;margin:0 auto;color:var(--tinta-fraca);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <h1>Onde estão os dados no Omie</h1>
+  <p class="sub">Leitura de diagnóstico da chave que está no <code>.env</code> — 23/09/2026. Só métodos de listagem
+  e consulta; nada foi incluído, alterado nem faturado. Nenhum valor, nome ou documento de cliente aparece aqui.</p>
+
+  <section class="achado">
+    <h2>O achado</h2>
+    <p><strong>A chave não abre a empresa da MeuBESS.</strong> Ela abre uma empresa só, e essa empresa está
+    praticamente vazia: <strong>nenhum pedido de venda, nenhum produto, nenhuma conta a receber, nenhum lançamento
+    de conta corrente</strong> e apenas <strong>1 cliente</strong> e <strong>2 contas a pagar</strong>.</p>
+    <p>Os códigos que a plataforma MeuBESS gravou como <code>external_id</code> no Omie
+    <strong>não existem nesta empresa</strong>: dois pedidos, um cliente e um produto foram consultados pelo código e
+    os quatro voltaram “não encontrado”. Uma consulta de controle, com um código que existe aqui, voltou
+    “encontrado” — então a chamada está certa e o que falta são os registros, não o método.</p>
+    <p>Conclusão: a MeuBESS envia os dados para <em>outra</em> empresa (ou outra conta) do Omie, e é a chave
+    <em>dessa</em> empresa que os dashboards precisam.</p>
+  </section>
+
+  <section>
+    <h2>Empresa que a chave abre</h2>
+    <p class="empresa">NON IMPORTACAO E DISTRIBUICAO LTDA
+      <small>CNPJ 32.589.565/0004-95 — devolvido por <code>geral/empresas</code> → <code>ListarEmpresas</code>,
+      1 empresa no retorno</small></p>
+    <p class="nota">O sufixo <code>/0004</code> indica uma filial. O nome não é “MeuBESS”, e o cadastro vazio combina
+    com uma empresa que não é a que recebe a integração.</p>
+  </section>
+
+  <section>
+    <h2>Contagem por serviço e método</h2>
+    <table>
+      <thead>
+        <tr><th>Serviço → método</th><th>O que é</th><th class="n">Páginas</th><th class="n">Registros</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>produtos/pedido</code> → <code>ListarPedidos</code></td><td>pedidos de venda</td><td class="n">0</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>financas/contareceber</code> → <code>ListarContasReceber</code></td><td>contas a receber</td><td class="n">1</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>financas/contapagar</code> → <code>ListarContasPagar</code></td><td>contas a pagar</td><td class="n">1</td><td class="n">2</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>financas/contacorrentelancamentos</code> → <code>ListarLancamentos</code></td><td>lançamentos de conta corrente</td><td class="n">1</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>geral/clientes</code> → <code>ListarClientes</code></td><td>clientes</td><td class="n">1</td><td class="n">1</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>geral/produtos</code> → <code>ListarProdutos</code></td><td>produtos</td><td class="n">0</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>financas/mf</code> → <code>ListarMovimentos</code></td><td>movimentos financeiros (fonte das telas hoje)</td><td class="n">1</td><td class="n">2</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>financas/pesquisartitulos</code> → <code>PesquisarLancamentos</code></td><td>títulos a pagar e a receber</td><td class="n">1</td><td class="n">2</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>financas/contacorrente</code> → <code>ListarContasCorrentes</code></td><td>contas correntes cadastradas</td><td class="n">1</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>geral/categorias</code> → <code>ListarCategorias</code></td><td>plano de contas</td><td class="n">2</td><td class="n">142</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>geral/departamentos</code> → <code>ListarDepartamentos</code></td><td>centros de custo</td><td class="n">1</td><td class="n">1</td><td><span class="tag tem">tem dados</span></td></tr>
+        <tr><td><code>servicos/os</code> → <code>ListarOS</code></td><td>ordens de serviço (receita de serviço)</td><td class="n">0</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>produtos/nfconsultar</code> → <code>ListarNF</code></td><td>notas fiscais de venda emitidas</td><td class="n">1</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>produtos/pedidocompra</code> → <code>ListarPedCompra</code></td><td>pedidos de compra (origem de despesa)</td><td class="n">1</td><td class="n">0</td><td><span class="tag nao">vazio</span></td></tr>
+        <tr><td><code>geral/empresas</code> → <code>ListarEmpresas</code></td><td>empresas da chave</td><td class="n">1</td><td class="n">1</td><td><span class="tag tem">tem dados</span></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Nenhum método voltou erro de permissão: os quinze respondem para esta chave. O que muda é só se há
+    registro dentro. Os 142 do plano de contas e o 1 centro de custo são cadastro que vem pronto do Omie, não
+    movimento.</p>
+  </section>
+
+  <section>
+    <h2>Consulta pelos códigos que a MeuBESS gravou</h2>
+    <table>
+      <thead><tr><th>Código (external_id)</th><th>Método</th><th>Resultado</th><th>Código de erro do Omie</th></tr></thead>
+      <tbody>
+        <tr><td>pedido 5232347200 <small>(o mais antigo, 17/04/2026)</small></td><td><code>produtos/pedido</code> → <code>ConsultarPedido</code></td><td><span class="tag nao">não encontrado</span></td><td><code>SOAP-ENV:Client-105</code></td></tr>
+        <tr><td>pedido 5299465950 <small>(o mais recente, 23/09/2026)</small></td><td><code>produtos/pedido</code> → <code>ConsultarPedido</code></td><td><span class="tag nao">não encontrado</span></td><td><code>SOAP-ENV:Client-105</code></td></tr>
+        <tr><td>cliente 5299465472</td><td><code>geral/clientes</code> → <code>ConsultarCliente</code></td><td><span class="tag nao">não encontrado</span></td><td><code>SOAP-ENV:Client-103</code></td></tr>
+        <tr><td>produto 5298040801</td><td><code>geral/produtos</code> → <code>ConsultarProduto</code></td><td><span class="tag nao">não encontrado</span></td><td><code>SOAP-ENV:Client-105</code></td></tr>
+        <tr><td><strong>controle</strong> — um código que existe nesta empresa</td><td><code>geral/clientes</code> → <code>ConsultarCliente</code></td><td><span class="tag tem">encontrado</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="nota">A linha de controle é o que fecha o argumento. <code>Client-103</code> também aparece quando o
+    parâmetro está mal formado — foi assim que o script de filtros de data descobriu que o Omie só aceita
+    <code>dd/mm/aaaa</code>. Como o mesmo método, com o mesmo parâmetro, acha um código desta empresa, o
+    “não encontrado” dos quatro códigos da MeuBESS é ausência de registro, não chamada errada.</p>
+  </section>
+
+  <section>
+    <h2>Onde parecem morar receitas e despesas</h2>
+    <ul>
+      <li><strong>Nesta chave, em lugar nenhum útil.</strong> As duas únicas linhas financeiras são contas a pagar, e
+      elas aparecem pelos três caminhos que levam ao mesmo lugar: <code>financas/contapagar</code>,
+      <code>financas/mf</code> → <code>ListarMovimentos</code> e <code>financas/pesquisartitulos</code> →
+      <code>PesquisarLancamentos</code>. Receita: zero por todos os caminhos.</li>
+      <li><strong>A receita da MeuBESS nasce em pedido de venda.</strong> O arquivo de integrações da plataforma tem
+      171 <code>Order</code> com código do Omie, de 17/04/2026 a 23/09/2026 — ou seja, a plataforma cria
+      <em>pedido de venda</em> no Omie, e o pedido faturado é que gera o título a receber. Na empresa certa, a receita
+      deve aparecer em <code>produtos/pedido</code> → <code>ListarPedidos</code> e, depois do faturamento, em
+      <code>financas/contareceber</code> / <code>ListarMovimentos</code> com <code>cTpLancamento: "CR"</code>.</li>
+      <li><strong>A despesa não vem da plataforma.</strong> O arquivo de integrações não tem nenhum tipo de despesa
+      (só <code>Order</code>, <code>Customer</code>, <code>Product</code> e <code>User</code>). Despesa é lançada
+      direto no Omie pelo financeiro — conta a pagar — e continua saindo de <code>financas/mf</code> /
+      <code>financas/contapagar</code>.</li>
+      <li><strong>Sem ordem de serviço e sem nota fiscal nesta chave</strong> (<code>servicos/os</code> e
+      <code>produtos/nfconsultar</code> vazios), então não há indício de receita de serviço por esse caminho — mas
+      isso só se confirma na empresa certa.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O que isso muda nas fontes de <code>docs/fontes.md</code></h2>
+    <ul>
+      <li><strong>Os métodos continuam certos; o que está errado é a empresa.</strong> Todo o mapeamento das três telas
+      em <code>financas/mf</code> → <code>ListarMovimentos</code>, <code>financas/pesquisartitulos</code> →
+      <code>PesquisarLancamentos</code>, <code>geral/categorias</code>, <code>geral/departamentos</code> e
+      <code>geral/dre</code> segue valendo — nenhum desses métodos foi negado para a chave. Nada precisa ser reescrito
+      por causa do método.</li>
+      <li><strong>A linha “quem libera” da tabela de fontes está incompleta.</strong> Hoje ela diz que o dono gera a
+      chave. Falta dizer <em>de qual empresa do Omie</em>: a chave atual abre uma filial que não é a da operação, e é
+      por isso que a conferência de qualquer número contra a fonte dá zero. Enquanto a chave não trocar, nenhum
+      indicador pode ser dado como conferido.</li>
+      <li><strong>Falta uma fonte que ainda não está no documento: o pedido de venda.</strong> O plano atual tira tudo
+      de título financeiro. Os 171 <code>Order</code> mostram que existe um elo anterior — o pedido — que é onde a
+      receita aparece antes de virar título. Isso importa para “Top 10 receitas” e para a quebra de “vendas de
+      produtos” no DRE, que hoje estão marcadas como lacuna justamente porque o título não tem descrição nem produto:
+      quem tem isso é o pedido (<code>produtos/pedido</code> → <code>ListarPedidos</code> / <code>ConsultarPedido</code>).</li>
+      <li><strong>O cadastro de clientes e produtos da MeuBESS vive no Omie, não na planilha.</strong> A plataforma
+      grava código de Omie para 147 <code>Customer</code> e 109 <code>Product</code>. Onde o documento hoje aponta
+      <code>ListarClientesResumido</code> só para pegar nome, o de-para com a plataforma existe e é oficial.</li>
+      <li><strong>O que não muda:</strong> a decisão de regime de caixa (filtro <code>dDtPagtoDe</code> /
+      <code>dDtPagtoAte</code>) e o formato <code>dd/mm/aaaa</code> seguem confirmados; não dependem da empresa.</li>
+    </ul>
+    <p class="nota">Este diagnóstico não editou <code>docs/fontes.md</code>.</p>
+  </section>
+
+  <section>
+    <h2>Como reproduzir</h2>
+    <p>Script: <code>scripts/mapear-omie.mjs</code> — sem credencial dentro, lê <code>OMIE_APP_KEY</code> e
+    <code>OMIE_APP_SECRET</code> do <code>.env</code> da raiz. Os códigos vão na linha de comando, nada do arquivo de
+    integrações fica no repositório. Pausa de 2,5 s entre chamadas, com espera do tempo que o Omie pedir em
+    <code>Client-1880</code>, <code>Client-6</code> e <code>MISUSE_API_PROCESS</code>.</p>
+    <pre>node scripts/mapear-omie.mjs pedido=5232347200 pedido=5299465950 cliente=5299465472 produto=5298040801</pre>
+  </section>
+</main>
+<footer>MeuBESS · Financeiro — diagnóstico de leitura do Omie, 23/09/2026. Só leitura, nenhum valor exposto.</footer>
+</body>
+</html>

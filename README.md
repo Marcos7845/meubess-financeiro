@@ -15,6 +15,8 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
 
 - **Só leitura nas fontes.** Nada aqui escreve no ERP, nas planilhas de origem ou em qualquer sistema financeiro.
 - **Credencial só no `.env`** (fora do git; o modelo é o `.env.example`). Nunca em código, commit, log ou mensagem.
+  A chave do Omie usa duas variáveis, `OMIE_APP_KEY` e `OMIE_APP_SECRET`, só para leitura, gravadas pelo dono no `.env`
+  local.
 - **Todo número confere com a fonte.** Cada indicador diz de onde vem (ERP: módulo, tabela e filtro; planilha: arquivo,
   aba e coluna) e é conferido com um caso real antes de ser dado como pronto.
 - **Número financeiro não sai da máquina para ser medido ou classificado** por serviço de terceiros.

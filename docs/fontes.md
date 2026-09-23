@@ -10,7 +10,7 @@ aparecem nelas são de exemplo — nenhum é da MeuBESS.
 
 | fonte | o que é | como lemos | quem libera o acesso |
 |---|---|---|---|
-| ERP | **Omie** — o ERP da MeuBESS. Usamos os módulos Finanças (contas a pagar, contas a receber, movimentos financeiros) e Geral (categorias, departamentos, clientes, contas do DRE) | **API REST do Omie**: `POST https://app.omie.com.br/api/v1/<serviço>/`, corpo JSON com `call`, `app_key`, `app_secret` e `param`. Só métodos de consulta (`Listar*`, `Consultar*`, `Pesquisar*`, `Obter*`) — nenhum que inclua, altere ou exclua. Documentação: https://developer.omie.com.br/service-list/ | _a definir_ |
+| ERP | **Omie** — o ERP da MeuBESS. Usamos os módulos Finanças (contas a pagar, contas a receber, movimentos financeiros) e Geral (categorias, departamentos, clientes, contas do DRE) | **API REST do Omie**: `POST https://app.omie.com.br/api/v1/<serviço>/`, corpo JSON com `call`, `app_key`, `app_secret` e `param`. Só métodos de consulta (`Listar*`, `Consultar*`, `Pesquisar*`, `Obter*`) — nenhum que inclua, altere ou exclua. Documentação: https://developer.omie.com.br/service-list/ | A chave de API (app key e app secret) é gerada pelo dono (Vitor); já existe um aplicativo de integração cadastrado no Omie |
 | Planilhas | _a definir_ | _onde moram (Google Sheets, Excel no OneDrive, arquivo local)_ | _a definir_ |
 
 ### Como lemos o Omie (vale para as três telas)

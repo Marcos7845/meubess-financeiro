@@ -34,9 +34,7 @@ Toda consulta roda nas duas chaves e os resultados se somam. Medido no Omie em 2
 Nenhum lançamento usa código fora do cadastro, nas duas empresas. As divergências não são cosméticas: o código `2.01.89`
 é "Pensão Alimentícia- Custo (estoque)" (DRE `1.21.03`) na empresa 1 e "Gas para empilhadeira -Custos" (DRE `2.11.02`)
 na empresa 2; o `2.01.02` é "Fretes s/ compras" nas duas, mas cai em `1.21.03` numa e em `2.01.01` na outra.
-**lacuna:** somar por código de categoria junta, nesses 77 casos, coisas cadastradas de forma diferente, e as 46 com
-`codigo_dre` diferente caem em linhas diferentes do DRE. Qual cadastro vale em cada caso — e se algum par deve virar uma
-linha só — é decisão da MeuBESS.
+**lacuna:** a decisão do dono (24/09/2026) é que o contador unifica os planos no Omie — mesmo código com a mesma descrição e a mesma conta do DRE nas duas empresas — e isso ainda não foi feito. Enquanto os 77 códigos tiverem cadastro diferente, somar por categoria junta coisas distintas, e as 46 com `codigo_dre` diferente caem em linhas diferentes do DRE. A soma por categoria só vale depois da unificação, que será conferida com uma nova leitura e comparação dos dois planos.
 
 **2. Lançamentos entre as duas empresas, que contariam duas vezes na soma: 3 em 2026.** Os três foram lidos na empresa 2
 e têm a `/0001-42` como contraparte (`detalhes.cCPFCNPJCliente` com a mesma raiz de CNPJ, filial diferente): 2 a receber,

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>As planilhas de fluxo de caixa (DFC) de 2026 — o que elas têm e o que podem alimentar</title>
+<style>
+  :root{
+    --tinta:#16202b; --tinta2:#55657a; --linha:#dde3ea; --fundo:#f6f8fa; --papel:#fff;
+    --omie:#1f6feb; --dfc:#b8860b; --nao:#8a94a3; --destaque:#fff8e1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--tinta);
+       font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .env{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  header{border-bottom:2px solid var(--tinta);padding-bottom:18px;margin-bottom:8px}
+  h1{font-size:28px;line-height:1.25;margin:0 0 8px}
+  .sub{color:var(--tinta2);font-size:15px;margin:0}
+  h2{font-size:21px;margin:44px 0 6px;padding-top:14px;border-top:1px solid var(--linha)}
+  h3{font-size:16px;margin:26px 0 6px;color:var(--tinta2);text-transform:uppercase;letter-spacing:.06em}
+  p{margin:10px 0}
+  .nota{background:var(--papel);border:1px solid var(--linha);border-left:4px solid var(--tinta);
+        padding:14px 16px;border-radius:0 6px 6px 0;margin:18px 0}
+  .nota.aviso{border-left-color:var(--dfc);background:var(--destaque)}
+  table{width:100%;border-collapse:collapse;background:var(--papel);margin:16px 0;
+        font-size:14px;border:1px solid var(--linha)}
+  th,td{padding:9px 11px;text-align:left;vertical-align:top;border-bottom:1px solid var(--linha)}
+  th{background:#eef2f6;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
+     color:var(--tinta2)}
+  tbody tr:last-child td{border-bottom:none}
+  code{background:#eef2f6;padding:1px 5px;border-radius:4px;font-size:.88em;
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;
+       letter-spacing:.04em;white-space:nowrap;color:#fff}
+  .t-omie{background:var(--omie)} .t-dfc{background:var(--dfc)} .t-nao{background:var(--nao)}
+  .cheio{color:#1a7f37;font-weight:600} .vazio{color:var(--dfc);font-weight:600}
+  ul{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  .peq{font-size:13px;color:var(--tinta2)}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:16px 0}
+  .cartao{background:var(--papel);border:1px solid var(--linha);border-radius:8px;padding:14px 16px}
+  .cartao b{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--tinta2);
+            margin-bottom:6px}
+  .num{font-size:26px;font-weight:700;line-height:1.1}
+  footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--linha);color:var(--tinta2);font-size:13px}
+</style>
+</head>
+<body>
+<div class="env">
+
+<header>
+  <h1>As planilhas de fluxo de caixa (DFC) de 2026</h1>
+  <p class="sub">O que elas têm dentro, quais meses estão preenchidos, e quais números das três telas
+  elas poderiam alimentar. Leitura de estrutura feita em 24/09/2026, só leitura, sem abrir nenhum arquivo
+  para edição. Nenhum valor em reais e nenhum nome aparece nesta página.</p>
+</header>
+
+<div class="cols">
+  <div class="cartao"><b>arquivos</b><div class="num">12</div>
+    <span class="peq">um por mês, todos de 2026, na pasta DFC/2026 sincronizada</span></div>
+  <div class="cartao"><b>meses com movimento</b><div class="num">9</div>
+    <span class="peq">janeiro a setembro; outubro, novembro e dezembro só têm provisão</span></div>
+  <div class="cartao"><b>contas do DFC</b><div class="num">69</div>
+    <span class="peq">o cadastro da aba <code>BASE</code> — um terceiro plano, fora os dois do Omie</span></div>
+  <div class="cartao"><b>indicadores em disputa</b><div class="num">21</div>
+    <span class="peq">onde Omie e DFC dão o mesmo número e a escolha é sua</span></div>
+</div>
+
+<div class="nota aviso">
+  <b>Nada mudou de fonte.</b> Todos os indicadores continuam apontando para o Omie. Esta página só mostra
+  onde o DFC seria capaz de responder a mesma pergunta, para você decidir. Cada caso está registrado em
+  <code>docs/fontes.md</code> como uma <b>lacuna: Omie ou DFC</b>.
+</div>
+
+<h2>O modelo comum aos 12 arquivos</h2>
+<p>Os arquivos não são cópias uns dos outros: cada mês foi salvo a partir do anterior e ganhou abas pelo
+caminho. Mas três abas existem em todos os 12, e são o esqueleto.</p>
+
+<table>
+  <thead><tr><th style="width:26%">aba</th><th>o que é</th><th style="width:26%">onde ficam os meses/dias</th></tr></thead>
+  <tbody>
+    <tr><td><b>a aba do mês</b><br><span class="peq"><code>JANEIRO2026</code>, <code>FEVEREIRO</code>,
+      <code>Mrço2026</code>; de abril em diante <code> 2026</code>, com espaço na frente</span></td>
+      <td>o painel do mês — <code>Saldo Inicial</code> (B6), <code>Provisões</code> (B10),
+      <code>Receitas</code> (B15), <code>Gastos</code> (B20), <code>Lucro Liquido</code> (B25) — e, embaixo,
+      o caixa <b>dia a dia</b>: <code>Inicial</code> (42), <code>Entradas</code> (43), <code>Gastos</code> (44),
+      <code>Final</code> (45)</td>
+      <td>um dia por coluna, de <code>D</code> a <code>AH</code>, nas linhas 42–45</td></tr>
+    <tr><td><b><code>FLUXO DE CAIXA</code></b></td>
+      <td>o extrato do mês, uma linha por lançamento. É o coração da planilha</td>
+      <td>um arquivo por mês; dentro, <code>VENCIMENTO</code> (E) e <code>DIA PG</code> (F)</td></tr>
+    <tr><td><b><code>BASE</code></b><br><span class="peq"><code>base</code> em janeiro–março</span></td>
+      <td>o cadastro de contas do DFC: a coluna A lista as contas de <code>SUB 2</code></td>
+      <td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>O cabeçalho de <code>FLUXO DE CAIXA</code></h3>
+<table>
+  <thead><tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th>
+  <th>J</th><th>K</th><th>L</th><th>M</th><th>N</th><th>O</th><th>P</th><th>Q</th></tr></thead>
+  <tbody><tr>
+    <td>EMP.</td><td>VER.</td><td>BANCO</td><td>TIPO</td><td>VENCI&shy;MENTO</td><td>DIA PG</td>
+    <td>FORNE&shy;CEDOR / CLIENTE</td><td>TITULO</td><td>CLASS. CONTABIL</td><td>SUB 2</td>
+    <td>ENTRADA</td><td>SAIDA</td><td>SALDO</td><td>PAGA&shy;MENTO</td><td>STATUS</td>
+    <td>CONCI&shy;LIADO</td><td>OBS:</td>
+  </tr></tbody>
+</table>
+<p class="peq"><b>A única diferença entre os 12:</b> em <code>03 - DFC - MAR2026.xlsx</code> há uma coluna
+<code>SALDO</code> a mais em N, e daí para a direita tudo anda uma casa. Quem ler as planilhas tem de achar
+as colunas pelo nome no cabeçalho, não pela letra. Dentro da aba, o cabeçalho ainda se repete: ela é dividida
+em blocos, um por banco (três em setembro).</p>
+
+<h2>Quais meses estão preenchidos</h2>
+<table>
+  <thead><tr><th>arquivo</th><th style="width:22%">linhas em <code>FLUXO DE CAIXA</code></th>
+  <th style="width:24%">pagamentos com data no mês</th><th style="width:34%">situação</th></tr></thead>
+  <tbody>
+    <tr><td>01 janeiro</td><td>416</td><td>413</td><td class="cheio">preenchido</td></tr>
+    <tr><td>02 fevereiro</td><td>446</td><td>421</td><td class="cheio">preenchido</td></tr>
+    <tr><td>03 março</td><td>525</td><td>523</td><td class="cheio">preenchido</td></tr>
+    <tr><td>04 abril</td><td>602</td><td>563</td><td class="cheio">preenchido</td></tr>
+    <tr><td>05 maio</td><td>919</td><td>884</td><td class="cheio">preenchido</td></tr>
+    <tr><td>06 junho</td><td>496</td><td>462</td><td class="cheio">preenchido</td></tr>
+    <tr><td>07 julho</td><td>755</td><td>709</td><td class="cheio">preenchido</td></tr>
+    <tr><td>08 agosto</td><td>457</td><td>388</td><td class="cheio">preenchido</td></tr>
+    <tr><td>09 setembro</td><td>346</td><td>334</td><td class="cheio">preenchido — o mês em curso</td></tr>
+    <tr><td>10 outubro</td><td>136</td><td>104</td><td class="vazio">só provisão: 104 linhas, todas
+      <code>A PAGAR</code>, nenhuma de receita</td></tr>
+    <tr><td>11 novembro</td><td>132</td><td>79</td><td class="vazio">só provisão: 79 linhas, todas
+      <code>A PAGAR</code></td></tr>
+    <tr><td>12 dezembro</td><td>132</td><td>79</td><td class="vazio">só provisão: 79 linhas, todas
+      <code>A PAGAR</code></td></tr>
+  </tbody>
+</table>
+<p>O DFC só tem mês fechado <b>até setembro de 2026</b>. Os três últimos arquivos são o gabarito das despesas
+recorrentes, não o mês.</p>
+
+<h2>As contas do DFC</h2>
+<p>Duas colunas classificam cada lançamento, e são o que o DFC tem no lugar de um plano de contas.</p>
+<div class="cols">
+  <div class="cartao"><b>CLASS. CONTABIL (coluna I) — o grupo</b>
+    <p class="peq">24 valores em setembro: <code>RECEITA DE CLIENTE</code>, <code>FORNECEDORES G&amp;A</code>,
+    <code>FORNECEDORES COGS</code>, <code>PESSOAL PJ</code>, <code>REEMBOLSO</code>, <code>DESPESA PJ</code>,
+    <code>OUTRAS DESPESAS</code>, <code>FOLHA, IMPOSTOS E ADIANTAMENTOS</code>,
+    <code>IMPOSTOS E CONTRIBUIÇÕES</code>, <code>COMPRA DE MERCADORIA</code>, <code>DESPESA CLT</code>,
+    <code>ESTORNO</code>, <code>REPASSE</code>, <code>RESCISÃO</code>, <code>REPASSE CREDITO</code>,
+    <code>TRANSFERENCIA</code>, <code>TRANSFERÊNCIA</code>, <code>CARTÃO DE CREDITO</code>,
+    <code>SEGURO</code>, <code>EMPRÉSTIMO</code>, <code>RETIRADA DE SÓCIO</code>,
+    <code>ADIANTAMENTO JURÍDICO</code>, <code>ALUGUEL</code>.</p></div>
+  <div class="cartao"><b>SUB 2 (coluna J) — a conta</b>
+    <p class="peq">As 69 contas da aba <code>BASE</code>, coluna A. Vão de <code>ÁGUA (SANEPAR)</code> e
+    <code>ALUGUEL (BARRACÃO)</code> a <code>TRANSFERÊNCIAS BANCÁRIAS - RECEITA</code> e
+    <code>VIGILÂNCIA E MONITORAMENTO</code>, passando por <code>COMPRAS DE MERCADORIAS</code>,
+    <code>DESPESAS CLT</code>, <code>DESPESAS PJ</code>, <code>DEVOLUCÃO</code>, <code>FRETE E CARRETO</code>,
+    <code>RECEITA COM VENDAS</code>, <code>RECEITA COM SERVIÇOS</code>. A lista inteira está em
+    <code>docs/fontes.md</code>.</p></div>
+</div>
+<p class="peq">O cadastro <code>BASE</code> mudou de forma durante o ano (três colunas em janeiro, seis em
+fevereiro e março, quatro em abril, duas em maio, uma de junho em diante). A coluna <code>SUB 2</code> do
+<code>FLUXO DE CAIXA</code>, essa, existe nos 12. Há grafia solta nos lançamentos
+(<code>Despesas CLT</code> ao lado de <code>DESPESAS CLT</code>, <code>RENDIMENTO FINANCEEIRO</code>).</p>
+
+<h2>Indicador por indicador: Omie, DFC ou os dois</h2>
+<p>Onde aparece <span class="tag t-dfc">OMIE ou DFC</span>, os dois respondem e a escolha é sua. A fonte
+continua sendo o Omie até você decidir.</p>
+
+<table>
+  <thead><tr><th style="width:8%">tela</th><th style="width:26%">indicador ou bloco</th>
+  <th style="width:14%">quem responde</th><th>onde o DFC responderia (aba e coluna/linha)</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Saldo</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>FLUXO DE CAIXA</code>: <code>ENTRADA</code> (K) menos <code>SAIDA</code> (L), mês por
+      <code>DIA PG</code> (F)</td></tr>
+    <tr><td>1</td><td>Receitas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>FLUXO DE CAIXA</code>: <code>ENTRADA</code> (K), mês por <code>DIA PG</code> (F)</td></tr>
+    <tr><td>1</td><td>Despesas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>FLUXO DE CAIXA</code>: <code>SAIDA</code> (L), mês por <code>DIA PG</code> (F)</td></tr>
+    <tr><td>1</td><td>Despesas pagas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>SAIDA</code> (L) onde <code>PAGAMENTO</code> (N) = <code>PAGO</code></td></tr>
+    <tr><td>1</td><td>Despesas pendentes</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>SAIDA</code> (L) onde <code>PAGAMENTO</code> (N) = <code>A PAGAR</code>, mês por
+      <code>VENCIMENTO</code> (E). É o que preenche outubro a dezembro</td></tr>
+    <tr><td>1</td><td>Despesas com funcionários</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><b>Aqui o DFC responde o que o Omie não marca:</b> <code>CLASS. CONTABIL</code> (I) traz
+      <code>FOLHA, IMPOSTOS E ADIANTAMENTOS</code>, <code>PESSOAL PJ</code>, <code>DESPESA CLT</code>,
+      <code>DESPESA PJ</code>, <code>RESCISÃO</code> na própria linha</td></tr>
+    <tr><td>1</td><td>% desp. funcionários / receita líquida</td>
+      <td><span class="tag t-dfc">OMIE ou DFC</span></td><td>segue as duas linhas de que depende</td></tr>
+    <tr><td>1</td><td>Top 10 despesas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td>agrupar por <code>CLASS. CONTABIL</code> (I) ou <code>SUB 2</code> (J). Resolve a dúvida do rateio:
+      no DFC cada linha tem uma classificação só</td></tr>
+    <tr><td>1</td><td>Top 10 receitas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td>linhas com <code>CLASS. CONTABIL</code> (I) = <code>RECEITA DE CLIENTE</code>, ordenadas por
+      <code>ENTRADA</code> (K). A descrição já está na linha — <code>FORNECEDOR / CLIENTE</code> (G),
+      <code>TITULO</code> (H), <code>OBS:</code> (Q)</td></tr>
+    <tr><td>1</td><td>Receita × despesa por dia</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><b>O bloco já existe pronto:</b> aba do mês, linhas <code>Entradas</code> (43) e
+      <code>Gastos</code> (44), um dia por coluna de <code>D</code> a <code>AH</code></td></tr>
+    <tr><td>1</td><td>Receita × despesa por mês</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td>um arquivo por mês, somando as linhas 43 e 44. Só janeiro a setembro têm movimento</td></tr>
+
+    <tr><td>2</td><td>Receita total</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>ENTRADA</code> (K) das linhas de receita, ou pronta na linha <code>Receitas</code> (B15)</td></tr>
+    <tr><td>2</td><td>Custos e despesas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>SAIDA</code> (L) por <code>CLASS. CONTABIL</code> (I): <code>FORNECEDORES COGS</code> é custo,
+      <code>FORNECEDORES G&amp;A</code> é despesa geral — separação que o Omie não faz sozinho</td></tr>
+    <tr><td>2</td><td>EBITDA</td><td><span class="tag t-dfc">OMIE ou DFC</span> <span class="peq">(parcial)</span></td>
+      <td>o DFC <b>não</b> ajuda na depreciação nem na amortização: nada disso sai do caixa. O resultado
+      financeiro, sim — <code>JUROS</code>, <code>RENDIMENTO FINANCEIRO</code>, <code>EMPRESTIMO</code>,
+      <code>TARIFAS BANCÁRIAS</code></td></tr>
+    <tr><td>2</td><td>Lucro líquido</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>Lucro Liquido</code> pronto na linha 25 (B25) — mas é lucro <b>de caixa</b>, não o do DRE</td></tr>
+    <tr><td>2</td><td>Margem de lucro</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td>segue os dois cartões de que depende</td></tr>
+    <tr><td>2</td><td>(+) Receitas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>SUB 2</code> (J) em <code>RECEITA COM VENDAS</code>, <code>RECEITA COM SERVIÇOS</code>,
+      <code>OUTRAS RECEITAS</code>, <code>REEMBOLSO RECEITA</code>, <code>RENDIMENTO FINANCEIRO</code>.
+      A quebra por produto não existe lá</td></tr>
+    <tr><td>2</td><td>(−) Deduções</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><b>O DFC marca devolução na linha:</b> <code>SUB 2</code> (J) = <code>DEVOLUCÃO</code>, com
+      <code>ESTORNO</code> em <code>CLASS. CONTABIL</code> (I) — o que falta no Omie</td></tr>
+    <tr><td>2</td><td>(−) Custos de vendas</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>CLASS. CONTABIL</code> (I) = <code>FORNECEDORES COGS</code>, com <code>SUB 2</code> (J) em
+      <code>COMPRAS DE MERCADORIAS</code>, <code>FRETE E CARRETO</code>,
+      <code>ARMAZENAGEM E MANUSEIO</code></td></tr>
+    <tr><td>2</td><td>(−) Despesas gerais</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>CLASS. CONTABIL</code> (I) = <code>FORNECEDORES G&amp;A</code>, quebrado pelas contas de
+      <code>SUB 2</code> (J)</td></tr>
+    <tr><td>2</td><td>(−) Impostos</td><td><span class="tag t-dfc">OMIE ou DFC</span></td>
+      <td><code>CLASS. CONTABIL</code> (I) = <code>IMPOSTOS E CONTRIBUIÇÕES</code>, com <code>SUB 2</code> (J)
+      em <code>ISS</code>, <code>INSS</code>, <code>IRPJ / CSLL</code> — as guias pagas</td></tr>
+
+    <tr><td>3</td><td>a tela inteira</td><td><span class="tag t-omie">só OMIE</span></td>
+      <td>o DFC é caixa: registra o que entrou, não a carteira em aberto. Não tem cadastro de cliente nem os
+      oito status do Omie</td></tr>
+  </tbody>
+</table>
+
+<h2>Onde os dois se sobrepõem — e o que ainda não se sabe</h2>
+<ul>
+  <li><b>Os dois registram o mesmo pagamento e o mesmo recebimento</b>, em regime de caixa. De janeiro a
+  setembro de 2026 há dois números possíveis para quase todo indicador das Telas 1 e 2, e eles
+  <b>ainda não foram comparados</b>.</li>
+  <li><b>Não há chave que ligue uma linha do DFC a um título do Omie.</b> A coluna <code>TITULO</code> (H)
+  guarda o número do projeto, da PO ou da nota — nenhum deles é o código do título nem o do pedido no Omie.
+  A única ponte declarada é a coluna <code>OBS GU - OMIE</code> da aba <code>CARTÃO DE CRÉDITO</code>, e ela
+  é uma marca de conferência manual, não um código.</li>
+  <li><b>Três planos de contas convivem:</b> os dois do Omie (187 códigos) e as 69 contas de
+  <code>SUB 2</code> do DFC, que não usam código nenhum.</li>
+  <li><b>O recorte de empresa não bate de saída:</b> as telas somam as filiais <code>/0001-42</code> e
+  <code>/0002-23</code> do Omie; o DFC separa por <code>B3W</code> e <code>N3</code> (este a partir de agosto)
+  e não diz, em lugar nenhum, qual é qual.</li>
+</ul>
+
+<h2>Como as planilhas são lidas</h2>
+<p>Pelo arquivo <code>.xlsx</code> local, na pasta DFC/2026 que o OneDrive sincroniza neste computador,
+<b>só leitura</b>. O script <code>scripts/estrutura-dfc.mjs</code> abre o arquivo, lê e fecha — nunca grava,
+move ou abre para edição, porque qualquer alteração o OneDrive mandaria de volta para o SharePoint. Nenhuma
+planilha foi copiada para dentro do repositório, e o caminho da pasta não está escrito no código.</p>
+
+<footer>
+  Fonte: <code>docs/fontes.md</code>, seções "As planilhas de fluxo de caixa (DFC) de 2026" e "O que o DFC
+  pode alimentar e o que fica no Omie". Estrutura lida em 24/09/2026 por
+  <code>scripts/estrutura-dfc.mjs</code>.
+</footer>
+
+</div>
+</body>
+</html>

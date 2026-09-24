@@ -12,7 +12,7 @@ aparecem nelas são de exemplo — nenhum é da MeuBESS.
 | fonte | o que é | como lemos | quem libera o acesso |
 |---|---|---|---|
 | ERP | **Omie** — o ERP da MeuBESS (razão social NON IMPORTACAO E DISTRIBUICAO LTDA, em **três filiais**). **Papel das empresas (dono, 24/09/2026):** a empresa 1, filial `/0001-42`, é a das **rotinas administrativas** (o escritório); a empresa 2, filial `/0002-23`, é a de **compra, venda e logística**, a principal. **As três telas mostram a soma das empresas 1 e 2 (decisão do dono, 24/09/2026).** Cada consulta roda nas **duas** chaves — `OMIE_MEUBESS_1` e `OMIE_MEUBESS_2` — e os resultados se somam; toda linha deste documento que diz "`ListarMovimentos` com tal filtro" quer dizer a mesma chamada, com o mesmo filtro, nas duas empresas. A empresa 3 (`/0003-04`) **fica fora**. Só a `/0002-23` tem os pedidos, clientes e produtos que a plataforma envia (na leitura de 24/09/2026, 783 pedidos de venda, 814 contas a receber e 1.085 contas a pagar, contra 20 / 131 / 1.529 da `/0001-42` e 0 / 0 / 17 da `/0003-04` — comparação em `docs/comparacao-chaves-omie.html`), então a descrição vinda do pedido de venda só existe para a empresa 2. O que a soma exige dos dois cadastros está medido em "A soma das empresas 1 e 2", logo abaixo. Usamos os módulos Finanças (contas a pagar, contas a receber, movimentos financeiros), Geral (categorias, departamentos, clientes, contas do DRE) e Produtos (pedido de venda) | **API REST do Omie**: `POST https://app.omie.com.br/api/v1/<serviço>/`, corpo JSON com `call`, `app_key`, `app_secret` e `param`. **Cada consulta é feita duas vezes, uma por empresa, e os resultados se somam.** As chaves estão no `.env`: a da filial `/0001-42` em **`OMIE_MEUBESS_1_APP_KEY`** / **`OMIE_MEUBESS_1_APP_SECRET`** e a da `/0002-23` em **`OMIE_MEUBESS_2_APP_KEY`** / **`OMIE_MEUBESS_2_APP_SECRET`**. A terceira, `OMIE_MEUBESS_3_…` (filial `/0003-04`), a leitura das telas não usa. Só métodos de consulta (`Listar*`, `Consultar*`, `Pesquisar*`, `Obter*`) — nenhum que inclua, altere ou exclua. Documentação: https://developer.omie.com.br/service-list/ | A chave de API (app key e app secret) é gerada pelo dono (Vitor), uma por filial; já existe um aplicativo de integração cadastrado no Omie e as três chaves estão gravadas no `.env` local |
-| Planilhas | _a definir_ | _onde moram (Google Sheets, Excel no OneDrive, arquivo local)_ | _a definir_ |
+| Planilhas | **DFC** — as planilhas de **fluxo de caixa** que o financeiro da MeuBESS mantém, **uma por mês**: 12 arquivos `.xlsx` de 2026, de `01 - DFC - JAN2026.xlsx` a `12 - DFC DEZEMBRO 2026.xlsx`. Cada arquivo traz o movimento do mês lançado linha a linha (banco, vencimento, dia de pagamento, fornecedor/cliente, classificação contábil, entrada, saída, saldo, status), um painel do mês com o caixa dia a dia e um **cadastro próprio de contas** (a aba `BASE`) — um terceiro plano, diferente dos dois do Omie. Não é um DRE: é caixa. A estrutura completa está em "As planilhas de fluxo de caixa (DFC) de 2026", logo abaixo | **A pasta DFC/2026 sincronizada** — a pasta do SharePoint do financeiro que o OneDrive espelha neste computador. Lemos o arquivo `.xlsx` local, **só leitura**: `scripts/estrutura-dfc.mjs` (sem dependências; o `.xlsx` é um zip, lido com `zlib`) abre o arquivo com `fs.readFileSync` e **nunca grava, move ou abre para edição** — qualquer alteração o OneDrive mandaria de volta para o SharePoint. Nenhuma planilha é copiada para dentro do repositório, e o caminho da pasta não fica escrito no código: o script acha a subpasta de 2026 sozinho (ou aceita `DFC_DIR`) | O dono — é ele que libera a pasta do SharePoint e a mantém sincronizada neste computador |
 
 ### A soma das empresas 1 e 2 (vale para as três telas)
 
@@ -254,6 +254,145 @@ O que o pedido **não** é: não traz data de pagamento nem quanto já foi receb
 `ListarMovimentos` nos números (o regime de caixa continua no título). Ele entra só onde o título não responde —
 descrição e produto — e essas linhas dizem "pedido de venda" na coluna de filtro.
 
+### As planilhas de fluxo de caixa (DFC) de 2026 (vale para as três telas)
+
+Lidas em 24/09/2026 por `scripts/estrutura-dfc.mjs` (só leitura; o script imprime estrutura e contagens, nunca valor de
+célula); a mesma leitura, numa página para ler de uma vez, está em
+[`docs/planilhas-dfc.html`](planilhas-dfc.html). São **12 arquivos, um por mês**, todos de 2026. Os arquivos **não são cópias uns dos outros** — cada mês foi
+salvo a partir do anterior e ganhou abas pelo caminho —, mas **três abas existem nos 12** e são o modelo comum:
+
+| aba | o que é | onde ficam os meses/dias |
+|---|---|---|
+| a aba do mês (`JANEIRO2026`, `FEVEREIRO`, `Mrço2026`; de abril em diante ` 2026`, com espaço na frente) | painel do mês: `Saldo Inicial` (B6), `Provisões` (B10), `Receitas` (B15), `Gastos` (B20), `Lucro Liquido` (B25); depois o quadro do caixa **dia a dia**, linhas `Inicial` (42), `Entradas` (43), `Gastos` (44), `Final` (45); e, da linha 47 para baixo, o lançamento de recebimentos e pagamentos por banco e dia | **um dia por coluna**, de `D` a `AH` nas linhas 42–45 (31 dias). O mês é o do arquivo |
+| `FLUXO DE CAIXA` | o extrato do mês, **uma linha por lançamento**. É o coração da planilha | um arquivo por mês; dentro dele, a data em `VENCIMENTO` (E) e em `DIA PG` (F) |
+| `BASE` (`base` em janeiro–março) | o **cadastro de contas do DFC**: a coluna A lista as contas de `SUB 2` | — |
+
+**Cabeçalho de `FLUXO DE CAIXA`** (linha 1, igual em 11 dos 12 arquivos):
+
+| col | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| rótulo | `EMP.` | `VER.` | `BANCO` | `TIPO` | `VENCIMENTO` | `DIA PG` | `FORNECEDOR / CLIENTE` | `TITULO` | `CLASS. CONTABIL` | `SUB 2` | `ENTRADA` | `SAIDA` | `SALDO` | `PAGAMENTO` | `STATUS` | `CONCILIADO` | `OBS:` |
+
+**A única diferença de modelo entre os 12:** em `03 - DFC - MAR2026.xlsx` há uma coluna `SALDO` a mais em N, e daí para
+a direita tudo anda uma casa (`PAGAMENTO` em O, `STATUS` em P, `CONCILIADO` em Q, `OBS:` em R). Quem ler as planilhas
+tem de achar as colunas **pelo nome no cabeçalho**, não pela letra.
+
+Dentro de `FLUXO DE CAIXA` o cabeçalho **se repete**: a aba é dividida em blocos, um por banco, cada um com sua linha
+de saldo inicial e seu total (em setembro, três blocos). Ler a aba inteira de uma vez, sem enxergar os blocos, mistura
+saldo com lançamento.
+
+**As contas do DFC.** Duas colunas classificam cada linha, e são o que o DFC tem no lugar de um plano de contas:
+
+- **`CLASS. CONTABIL` (I)** — o grupo. Na leitura de setembro, 24 valores: `RECEITA DE CLIENTE`, `FORNECEDORES G&A`,
+  `FORNECEDORES COGS`, `PESSOAL PJ`, `REEMBOLSO`, `DESPESA PJ`, `OUTRAS DESPESAS`, `FOLHA, IMPOSTOS E ADIANTAMENTOS`,
+  `IMPOSTOS E CONTRIBUIÇÕES`, `COMPRA DE MERCADORIA`, `DESPESA CLT`, `ESTORNO`, `REPASSE`, `RESCISÃO`,
+  `REPASSE CREDITO`, `TRANSFERENCIA`, `TRANSFERÊNCIA`, `CARTÃO DE CREDITO`, `SEGURO`, `EMPRÉSTIMO`,
+  `RETIRADA DE SÓCIO`, `ADIANTAMENTO JURÍDICO`, `ALUGUEL` (`TRANSFERENCIA` e `TRANSFERÊNCIA` são a mesma coisa escrita
+  de dois jeitos).
+- **`SUB 2` (J)** — a conta. Sai do cadastro da aba `BASE`, coluna A, que em setembro tem **69 contas**:
+  `ÁGUA (SANEPAR)`, `ALUGUEL (BARRACÃO)`, `ALUGUEL (SEDE)`, `ALUGUEL (BOX)`, `ALUGUEL (BOX - PE)`,
+  `ALUGUEL DE VEÍCULOS`, `APLICAÇÃO TRANS.`, `ARMAZENAGEM E MANUSEIO`, `BRINDES E MARKETING`, `COMISSÃO DE VENDAS`,
+  `COMPRA PROVISÃO`, `COMPRAS - PROVISÃO`, `COMPRAS DE MERCADORIAS`, `CONDOMÍNIO`, `CONSÓRCIOS`,
+  `CRÉDITO REPASSE - CUSTO`, `CUSTOS COM CARTÃO DE CRÉDITO`, `DESPESAS CLT`, `DESPESAS PJ`, `DESPESAS VEICULOS`,
+  `DEVOLUCÃO`, `EMPRESTIMO`, `ENERGIA ELÉTRICA`, `ENERGIA ELÉTRICA (SEDE)`, `FRETE - PROVISÃO`, `FRETE E CARRETO`,
+  `HONORÁRIOS CONTÁBEIS`, `HONORÁRIOS JURÍDICOS`, `INDEDUTIVEL`, `INSS`, `IPTU (BARRACÃO)`, `IPTU (SEDE)`,
+  `IRPJ / CSLL`, `ISS`, `JUROS`, `LICENÇAS DE SOFTWARE`, `LIMPEZA`, `LOCAÇÃO DE HARDWARE`, `MANTIMENTOS`,
+  `MÁQUINAS E EQUIPAMENTOS`, `MARKETING / PUBLICIDADE`, `MATERIAIS DE ESCRITÓRIO`, `MATERIAIS DE LIMPEZA`, `MULTAS`,
+  `OUTRAS DESPESAS`, `OUTRAS DESPESAS - PROVISÃO`, `OUTRAS RECEITAS`, `OUTRAS RECEITAS - PROVISÃO`,
+  `PRÓ-LABORE ( retirada de sócio )`, `RECEBIMENTO CLIENTE - PROVISÃO`, `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`,
+  `REEMBOLSO`, `REEMBOLSO - PROVISÃO`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, `REPASSE`, `REPASSE - CREDITO`,
+  `SALDO FINAL`, `SALDO FINAL PROVISÃO`, `SALDO INICIAL`, `SALDO INICIAL PROVISÃO`, `SEGURO`, `TARIFAS BANCÁRIAS`,
+  `TAXA BANCARIA`, `TELEFONIA / INTERNET`, `TRANSFERÊNCIAS BANCÁRIAS - CUSTO`, `TRANSFERÊNCIAS BANCÁRIAS - RECEITA`,
+  `VIGILÂNCIA E MONITORAMENTO`.
+
+O cadastro `BASE` **mudou de forma durante o ano**: em janeiro eram três colunas (`SUBCATEGRIA 1`, `categoria`,
+`CATEGORIA 2`), em fevereiro e março seis, em abril quatro, em maio duas e de junho em diante uma só
+(`SUBCATEGORIA 2`). A coluna `SUB 2` do `FLUXO DE CAIXA`, essa sim, existe nos 12 arquivos. Também há grafia solta nos
+lançamentos (`Despesas CLT` ao lado de `DESPESAS CLT`, `RENDIMENTO FINANCEEIRO`), e em janeiro–março as contas foram
+escritas em caixa mista.
+
+**Outras colunas que classificam:** `PAGAMENTO` (N), com `PAGO`, `RECEBIDO` e `A PAGAR`; `STATUS` (O), com `INTEGRAL`,
+`PARCIAL` e `SINAL` (quanto do projeto aquele recebimento cobriu); `TIPO` (D), com `PRIMEIRO DIA` / `ULTIMO DIA`;
+`EMP.` (A), com `B3W` em todos os meses e `N3` a partir de agosto. **Não está escrito em lugar nenhum da planilha qual
+`EMP.` é qual empresa do Omie** — o de-para entre `B3W` / `N3` e as filiais `/0001-42` e `/0002-23` não existe nos
+arquivos.
+
+**As outras abas** (não estão nos 12; aparecem e somem conforme o mês):
+
+| aba | em quais arquivos | o que é |
+|---|---|---|
+| `CONTA BANCO` | abril–dezembro | as contas bancárias da empresa: `EMPRESA`, `BANCO`, `AGENCIA`, `CONTA` (11 linhas) |
+| `BANCO` e `SALDO BANCARIO` | janeiro–abril | a versão anterior do mesmo controle, com saldo por banco e por dia |
+| `CARTÃO DE CRÉDITO` | maio–dezembro | a fatura lançada linha a linha: `CARTÃO`, `DATA`, `NOME`, `VALOR`, `Obs`, **`OBS GU - OMIE`**, `VALOR TOTAL`, `VENCIMENTO`. A coluna `OBS GU - OMIE` é a marca de conferência contra o Omie — o único ponto do DFC que aponta para o ERP |
+| `PROVISÃO` | abril–dezembro | controle por projeto: `CLIENTE`, `VALOR PROJETO`, `VALOR RECEBIDO`, `VALIR A RECEBER` [sic], `VALOR DE COMPRA`, `VALOR FRETE`, `VALOR REPASSE`, `VALOR COMISSÃO`, `VALOR FINAL`. Em julho e agosto tinha 13–15 linhas; em setembro, 5 |
+| `FRETE` | julho–dezembro | um frete por linha: `CT-e`, `Projeto`, `Transportadora`, `Data Emissão`, `Peso (kg)`, `Valor`, `Orçado` |
+| `COMPRRAS` [sic] | agosto | compras: `PROVISÃO DE COMPRA`, `DATA COMPRA`, `FORNECEDOR`, `PROJETO`, `CLIENTE`, `VALOR COMPRA`, `VALOR ESTOQUE`, `PO` |
+| `PJ VENDAS` e `COMISSÃO PJ` | abril–dezembro | os prestadores PJ e o cálculo de comissão sobre o faturado |
+| `RATEIO B3NXB3W` | abril–dezembro | rateio de despesa comum entre as duas empresas, e **o único lugar que usa código de conta contábil** (`3.4.2.03.0001 - SERVIÇOS DE LIMPEZA` e afins) — que não são os códigos do plano do Omie |
+| `Planilha1` … `Planilha10`, `Detalhes1`, `DESPESA`, `FLUXO DE CAIXA-erro`, `FLUXO DE CAIXA (2)` | soltas | rascunhos e versões antigas, quase todas ocultas. Não servem de fonte |
+
+**Quais meses estão preenchidos.** De janeiro a setembro cada arquivo tem o movimento do próprio mês, realizado.
+Outubro, novembro e dezembro só têm as contas fixas já provisionadas — **nenhuma receita e nenhum pagamento baixado**:
+
+| arquivo | linhas em `FLUXO DE CAIXA` | pagamentos com data no mês | situação |
+|---|---|---|---|
+| 01 janeiro | 416 | 413 | preenchido |
+| 02 fevereiro | 446 | 421 | preenchido |
+| 03 março | 525 | 523 | preenchido |
+| 04 abril | 602 | 563 | preenchido |
+| 05 maio | 919 | 884 | preenchido |
+| 06 junho | 496 | 462 | preenchido |
+| 07 julho | 755 | 709 | preenchido |
+| 08 agosto | 457 | 388 | preenchido |
+| 09 setembro | 346 | 334 | preenchido (o mês em curso) |
+| 10 outubro | 136 | 104 | **só provisão** — 104 linhas, todas `A PAGAR`, nenhuma de receita |
+| 11 novembro | 132 | 79 | **só provisão** — 79 linhas, todas `A PAGAR` |
+| 12 dezembro | 132 | 79 | **só provisão** — 79 linhas, todas `A PAGAR` |
+
+Ou seja: **o DFC só tem mês fechado até setembro de 2026**, e os três últimos arquivos são o gabarito das despesas
+recorrentes, não o mês.
+
+### O que o DFC pode alimentar e o que fica no Omie
+
+Nenhum indicador trocou de fonte nesta leitura. Onde o DFC é candidato, a linha do indicador ganhou uma
+**lacuna: Omie ou DFC** — a escolha é do dono. O resumo:
+
+| tela | o que o DFC pode alimentar | aba e coluna/linha |
+|---|---|---|
+| 1 | Saldo, Receitas, Despesas, Despesas pagas, Despesas pendentes | `FLUXO DE CAIXA`: `ENTRADA` (K) e `SAIDA` (L), com o mês vindo de `DIA PG` (F) — ou de `VENCIMENTO` (E) no caso do pendente; `PAGAMENTO` (N) separa `PAGO` / `RECEBIDO` / `A PAGAR` |
+| 1 | Despesas com funcionários e o % sobre a receita | `FLUXO DE CAIXA`: `CLASS. CONTABIL` (I) e `SUB 2` (J) nomeiam pessoal na própria linha — o Omie não marca isso |
+| 1 | Top 10 despesas e Top 10 receitas | `FLUXO DE CAIXA` agrupado por `CLASS. CONTABIL` (I) ou `SUB 2` (J); a descrição da receita já está em `FORNECEDOR / CLIENTE` (G), `TITULO` (H) e `OBS:` (Q) |
+| 1 | Receita × despesa por dia e por mês | aba do mês, linhas `Entradas` (43) e `Gastos` (44), um dia por coluna de `D` a `AH` — o bloco já existe pronto |
+| 2 | Receita total, Custos e despesas, Lucro líquido, Margem | `FLUXO DE CAIXA` por `CLASS. CONTABIL` (I) — `FORNECEDORES COGS` é custo e `FORNECEDORES G&A` é despesa geral; e a aba do mês já traz `Receitas` (B15), `Gastos` (B20) e `Lucro Liquido` (B25), **de caixa** |
+| 2 | Deduções, Custos de vendas, Despesas gerais, Impostos | `CLASS. CONTABIL` (I) e `SUB 2` (J): `DEVOLUCÃO`; `COMPRAS DE MERCADORIAS` + `FRETE E CARRETO` + `ARMAZENAGEM E MANUSEIO`; `FORNECEDORES G&A`; `IMPOSTOS E CONTRIBUIÇÕES` |
+| **3** | **nada** | ver abaixo |
+
+**O que fica no Omie, e por quê:**
+
+- **A Tela 3 inteira.** Ela é uma carteira de contas a receber, filtrada por vencimento, status, cliente e categoria,
+  com os oito `cStatus` do Omie. O DFC é caixa: registra o que entrou, não a carteira em aberto. A aba `PROVISÃO` tem
+  `VALOR RECEBIDO` e `VALIR A RECEBER` por projeto, que é o mesmo assunto, mas é um controle manual de poucas linhas
+  (5 em setembro) e não cobre o cadastro de clientes nem os status.
+- **O EBITDA da Tela 2**, na parte de depreciação e amortização: nenhuma das duas sai do caixa, então não existe no
+  DFC. O resultado financeiro, esse sim, o DFC nomeia (`JUROS`, `RENDIMENTO FINANCEIRO`, `EMPRESTIMO`,
+  `TARIFAS BANCÁRIAS`).
+- **A quebra por produto** das receitas do DRE: no DFC a linha aponta o projeto (`TITULO`, coluna H), não o produto.
+- **Qualquer coisa que dependa de cadastro** — cliente, categoria, departamento, conta do DRE. O DFC não tem cadastro
+  de cliente: escreve o nome direto na célula.
+
+**Onde os dois se sobrepõem — e o que ainda não se sabe:**
+
+- Os dois registram **o mesmo pagamento e o mesmo recebimento**, em regime de caixa. De janeiro a setembro de 2026 há
+  dois números possíveis para quase todo indicador das Telas 1 e 2, e eles **não foram comparados**.
+- **Não há chave que ligue uma linha do DFC a um título do Omie.** A coluna `TITULO` (H) guarda o número do projeto
+  (`aaaammdd-xxxxxxxx`), o número da PO ou o da nota — nenhum deles é o `nCodTitulo` nem o `codigo_pedido` do Omie. A
+  única ponte declarada entre os dois é a coluna `OBS GU - OMIE` da aba `CARTÃO DE CRÉDITO`, e ela é uma marca de
+  conferência manual, não um código.
+- **Três planos de contas convivem**: os dois do Omie (187 códigos, ver "A soma das empresas 1 e 2") e as 69 contas de
+  `SUB 2` do DFC, que não usam código nenhum.
+- **O recorte de empresa não bate de saída**: as telas somam as filiais `/0001-42` e `/0002-23` do Omie; o DFC separa
+  por `B3W` e `N3` e não diz qual é qual.
+
 ## Navegação
 
 As três telas num app só, com menu no topo. A referência da tela 1 mostra também Contas a Pagar, Centro de Custo, Fluxo
@@ -277,13 +416,13 @@ ignora). Única exceção: "Despesas pendentes", que por definição ainda não 
 
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
 |---|---|---|---|---|
-| Saldo | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CPCR"` e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); descarta `detalhes.cStatus = "CANCELADO"` | receitas − despesas do período | |
-| Receitas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` (ou `cNatureza: "R"`) e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); soma `detalhes.nValorTitulo`, fora os `CANCELADO` | soma das receitas do período | |
-| Despesas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` (ou `cNatureza: "P"`), `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa) e mesmo descarte de `CANCELADO` | soma das despesas do período | |
-| Despesas pagas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` e `dDtPagtoDe` / `dDtPagtoAte` no mês; soma `resumo.nValPago` (cobre também o `PAGTOPARCIAL`) | despesas com baixa no período | |
-| Despesas pendentes | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtVencDe` / `dDtVencAte` no mês (exceção ao caixa: sem baixa não há data de pagamento) e `resumo.cLiquidado = "N"` (equivale a `cStatus` em `EMABERTO`, `AVENCER`, `VENCEHOJE`, `ATRASADO`, `PAGTOPARCIAL`); soma `resumo.nValAberto` | despesas sem baixa, vencendo no período | |
-| Despesas com funcionários | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa) e `cExibirDepartamentos: "S"`; soma `departamentos[].nDistrValor` dos códigos de pessoal. **lacuna:** quais departamentos são "de funcionários" — o Omie não marca departamento como de pessoal, a lista é decisão da MeuBESS (na referência seriam "funcionários do escritório" e "funcionários de obra") | despesas dos centros de custo de pessoal | |
-| % desp. funcionários / receita líquida | Omie (calculado) | numerador: a linha acima. Denominador: a linha "(=) Receita líquida" da Tela 2, no mesmo mês de caixa (`dDtPagtoDe` / `dDtPagtoAte`). **lacuna:** a receita líquida depende de quais categorias a MeuBESS trata como dedução — ver a linha de deduções na Tela 2 | desp. funcionários ÷ receita líquida | |
+| Saldo | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CPCR"` e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); descarta `detalhes.cStatus = "CANCELADO"`. **lacuna: Omie ou DFC** — o DFC dá o mesmo número em `FLUXO DE CAIXA`: `ENTRADA` (K) menos `SAIDA` (L), com o mês vindo de `DIA PG` (F). A escolha entre as duas fontes é do dono. | receitas − despesas do período | |
+| Receitas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` (ou `cNatureza: "R"`) e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); soma `detalhes.nValorTitulo`, fora os `CANCELADO`. **lacuna: Omie ou DFC** — no DFC é a coluna `ENTRADA` (K) de `FLUXO DE CAIXA`, somada pelo mês de `DIA PG` (F). A escolha entre as duas fontes é do dono. | soma das receitas do período | |
+| Despesas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` (ou `cNatureza: "P"`), `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa) e mesmo descarte de `CANCELADO`. **lacuna: Omie ou DFC** — no DFC é a coluna `SAIDA` (L) de `FLUXO DE CAIXA`, somada pelo mês de `DIA PG` (F). A escolha entre as duas fontes é do dono. | soma das despesas do período | |
+| Despesas pagas | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` e `dDtPagtoDe` / `dDtPagtoAte` no mês; soma `resumo.nValPago` (cobre também o `PAGTOPARCIAL`). **lacuna: Omie ou DFC** — no DFC é a `SAIDA` (L) das linhas com `PAGAMENTO` (N) = `PAGO`, pelo mês de `DIA PG` (F). A escolha entre as duas fontes é do dono. | despesas com baixa no período | |
+| Despesas pendentes | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtVencDe` / `dDtVencAte` no mês (exceção ao caixa: sem baixa não há data de pagamento) e `resumo.cLiquidado = "N"` (equivale a `cStatus` em `EMABERTO`, `AVENCER`, `VENCEHOJE`, `ATRASADO`, `PAGTOPARCIAL`); soma `resumo.nValAberto`. **lacuna: Omie ou DFC** — no DFC é a `SAIDA` (L) das linhas com `PAGAMENTO` (N) = `A PAGAR`, pelo mês de `VENCIMENTO` (E) — a mesma exceção ao caixa. É o que preenche outubro, novembro e dezembro nas planilhas. A escolha entre as duas fontes é do dono. | despesas sem baixa, vencendo no período | |
+| Despesas com funcionários | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa) e `cExibirDepartamentos: "S"`; soma `departamentos[].nDistrValor` dos códigos de pessoal. **lacuna:** quais departamentos são "de funcionários" — o Omie não marca departamento como de pessoal, a lista é decisão da MeuBESS (na referência seriam "funcionários do escritório" e "funcionários de obra"). **lacuna: Omie ou DFC** — aqui o DFC responde o que o Omie não marca: `FLUXO DE CAIXA` traz a classificação na própria linha, em `CLASS. CONTABIL` (I — `FOLHA, IMPOSTOS E ADIANTAMENTOS`, `PESSOAL PJ`, `DESPESA CLT`, `DESPESA PJ`, `RESCISÃO`) e em `SUB 2` (J — `DESPESAS CLT`, `DESPESAS PJ`, `PRÓ-LABORE ( retirada de sócio )`, `COMISSÃO DE VENDAS`, `REEMBOLSO`). Qual lista vale continua sendo decisão do dono, mas no DFC ela não precisa ser inventada. A escolha entre as duas fontes é do dono. | despesas dos centros de custo de pessoal | |
+| % desp. funcionários / receita líquida | Omie (calculado) | numerador: a linha acima. Denominador: a linha "(=) Receita líquida" da Tela 2, no mesmo mês de caixa (`dDtPagtoDe` / `dDtPagtoAte`). **lacuna:** a receita líquida depende de quais categorias a MeuBESS trata como dedução — ver a linha de deduções na Tela 2. **lacuna: Omie ou DFC** — segue as duas linhas de que depende; se elas vierem do DFC, esta vem junto. A escolha entre as duas fontes é do dono. | desp. funcionários ÷ receita líquida | |
 
 Mais um botão **Fluxo de caixa** (leva à visão de fluxo, fora do escopo agora).
 
@@ -291,10 +430,10 @@ Mais um botão **Fluxo de caixa** (leva à visão de fluxo, fora do escopo agora
 
 | bloco | forma | indicador | fonte | tabela/aba e filtro | conferido |
 |---|---|---|---|---|---|
-| Top 10 despesas | barras horizontais | total por centro de custo, as 10 maiores | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa) e `cExibirDepartamentos: "S"`; agrupa `departamentos[].cCodDepartamento` somando `nDistrValor` e pega as 10 maiores; nome em `geral/departamentos` → `ListarDepartamentos` (`codigo` → `descricao`). **lacuna:** o que fazer com despesa sem rateio de departamento (ficar de fora, ou virar "sem centro de custo") — decisão da MeuBESS | |
-| Top 10 receitas | barras horizontais | maiores lançamentos de receita (data, status, descrição) | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa), ordenado no app por `detalhes.nValorTitulo`; data em `detalhes.dDtVenc`, status em `detalhes.cStatus`. **"Descrição":** o título do Omie não tem campo de descrição, mas o pedido de venda que o originou tem — o elo é `detalhes.nCodOS` do lançamento, que é o `cabecalho.codigo_pedido`, e com ele `produtos/pedido` → `ConsultarPedido` traz `det[].produto.descricao` (com `codigo_produto`) e `cabecalho.numero_pedido` (= `detalhes.cNumOS`). **lacuna:** (a) o que aparece como "descrição" — a descrição dos produtos do pedido, o número do pedido, `detalhes.observacao` (só vem com `lDadosCad: true`) ou a `descricao` da categoria — é decisão da MeuBESS; (b) a receita que não nasceu de pedido (`cOrigem = "MANR"`, 7 em 100 na amostra) fica sem descrição de pedido | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207); o número da tela, não |
-| Receita × despesa por dia | colunas (receita acima, despesa abaixo) | totais diários no mês escolhido | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CPCR"` e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); agrupa pelo dia dessa mesma data (`detalhes.dDtPagamento`) e separa por `detalhes.cNatureza` | |
-| Receita × despesa por mês | duas linhas | totais mensais, com seletor de meses anteriores | Omie | a mesma chamada do bloco de cima, com `dDtPagtoDe` / `dDtPagtoAte` cobrindo a faixa de meses do seletor; agrupa por ano-mês de `detalhes.dDtPagamento` | |
+| Top 10 despesas | barras horizontais | total por centro de custo, as 10 maiores | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa) e `cExibirDepartamentos: "S"`; agrupa `departamentos[].cCodDepartamento` somando `nDistrValor` e pega as 10 maiores; nome em `geral/departamentos` → `ListarDepartamentos` (`codigo` → `descricao`). **lacuna:** o que fazer com despesa sem rateio de departamento (ficar de fora, ou virar "sem centro de custo") — decisão da MeuBESS. **lacuna: Omie ou DFC** — o DFC não tem centro de custo; tem duas colunas de classificação em `FLUXO DE CAIXA` — `CLASS. CONTABIL` (I, 24 valores na leitura de setembro) e `SUB 2` (J, as 69 contas da aba `BASE`). Agrupar por uma delas dá as 10 maiores, e resolve a lacuna do rateio (no DFC cada linha tem uma classificação só). A escolha entre as duas fontes é do dono. | |
+| Top 10 receitas | barras horizontais | maiores lançamentos de receita (data, status, descrição) | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa), ordenado no app por `detalhes.nValorTitulo`; data em `detalhes.dDtVenc`, status em `detalhes.cStatus`. **"Descrição":** o título do Omie não tem campo de descrição, mas o pedido de venda que o originou tem — o elo é `detalhes.nCodOS` do lançamento, que é o `cabecalho.codigo_pedido`, e com ele `produtos/pedido` → `ConsultarPedido` traz `det[].produto.descricao` (com `codigo_produto`) e `cabecalho.numero_pedido` (= `detalhes.cNumOS`). **lacuna:** (a) o que aparece como "descrição" — a descrição dos produtos do pedido, o número do pedido, `detalhes.observacao` (só vem com `lDadosCad: true`) ou a `descricao` da categoria — é decisão da MeuBESS; (b) a receita que não nasceu de pedido (`cOrigem = "MANR"`, 7 em 100 na amostra) fica sem descrição de pedido. **lacuna: Omie ou DFC** — no DFC são as linhas de `FLUXO DE CAIXA` com `CLASS. CONTABIL` (I) = `RECEITA DE CLIENTE`, ordenadas por `ENTRADA` (K). Ali a descrição já existe na própria linha — `FORNECEDOR / CLIENTE` (G), o número do projeto em `TITULO` (H) e o texto livre de `OBS:` (Q) — sem precisar do pedido de venda. A escolha entre as duas fontes é do dono. | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207); o número da tela, não |
+| Receita × despesa por dia | colunas (receita acima, despesa abaixo) | totais diários no mês escolhido | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CPCR"` e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); agrupa pelo dia dessa mesma data (`detalhes.dDtPagamento`) e separa por `detalhes.cNatureza`. **lacuna: Omie ou DFC** — este bloco já existe pronto no DFC: na aba do mês (`JANEIRO2026`, `FEVEREIRO`, `Mrço2026`, ` 2026` de abril em diante), linhas `Entradas` (43) e `Gastos` (44), uma coluna por dia de `D` a `AH`, com `Inicial` (42) e `Final` (45) do dia. A escolha entre as duas fontes é do dono. | |
+| Receita × despesa por mês | duas linhas | totais mensais, com seletor de meses anteriores | Omie | a mesma chamada do bloco de cima, com `dDtPagtoDe` / `dDtPagtoAte` cobrindo a faixa de meses do seletor; agrupa por ano-mês de `detalhes.dDtPagamento`. **lacuna: Omie ou DFC** — no DFC seria um arquivo por mês, somando as linhas `Entradas` (43) e `Gastos` (44) da aba do mês. Só janeiro a setembro de 2026 têm movimento — ver "As planilhas de fluxo de caixa (DFC) de 2026". A escolha entre as duas fontes é do dono. | |
 
 **Centros de custo da referência** (a confirmar contra o Omie, em `geral/departamentos` → `ListarDepartamentos`):
 assessoria jurídica · depósito · escritório · funcionários do escritório · funcionários de obra · marketing · material
@@ -321,24 +460,24 @@ para toda a tabela e os cartões — o filtro de data é o de pagamento do Omie,
 
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
 |---|---|---|---|---|
-| Receita total | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` nos meses do filtro (caixa), fora os `CANCELADO` | soma das linhas de receita da tabela abaixo | |
-| Custos e despesas | Omie | a mesma leitura (`dDtPagtoDe` / `dDtPagtoAte`) com `cTpLancamento: "CP"` | soma das linhas de custos, despesas gerais e impostos | |
-| EBITDA | Omie (calculado) | as linhas da tabela abaixo. **lacuna:** quais categorias são depreciação, amortização e resultado financeiro — o Omie não marca isso, e o `codigo_dre` só diz em que conta do DRE a categoria cai. Sem essa lista o EBITDA não se distingue do lucro operacional | receita líquida − custos − despesas operacionais, antes de juros, impostos, depreciação e amortização | |
-| Lucro líquido | Omie (calculado) | as linhas da tabela abaixo | receita líquida − custos − despesas gerais − impostos | |
-| Margem de lucro | Omie (calculado) | os dois cartões acima | lucro líquido ÷ receita | |
+| Receita total | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` nos meses do filtro (caixa), fora os `CANCELADO`. **lacuna: Omie ou DFC** — no DFC é a `ENTRADA` (K) das linhas de receita de `FLUXO DE CAIXA` (`SUB 2` em J = `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`), somada pelo mês de `DIA PG` (F) — ou, pronta, na linha `Receitas` (B15) da aba do mês. A escolha entre as duas fontes é do dono. | soma das linhas de receita da tabela abaixo | |
+| Custos e despesas | Omie | a mesma leitura (`dDtPagtoDe` / `dDtPagtoAte`) com `cTpLancamento: "CP"`. **lacuna: Omie ou DFC** — no DFC é a `SAIDA` (L) agrupada por `CLASS. CONTABIL` (I): `FORNECEDORES COGS` é custo e `FORNECEDORES G&A` é despesa geral — uma separação que o Omie não faz sozinho. Pronta, é a linha `Gastos` (B20) da aba do mês, mas sem a separação. A escolha entre as duas fontes é do dono. | soma das linhas de custos, despesas gerais e impostos | |
+| EBITDA | Omie (calculado) | as linhas da tabela abaixo. **lacuna:** quais categorias são depreciação, amortização e resultado financeiro — o Omie não marca isso, e o `codigo_dre` só diz em que conta do DRE a categoria cai. Sem essa lista o EBITDA não se distingue do lucro operacional. **lacuna: Omie ou DFC (parcial)** — o DFC não ajuda na depreciação nem na amortização: nenhuma das duas sai do caixa, então não existe linha para elas nas planilhas. O resultado financeiro, sim — `SUB 2` (J) em `JUROS`, `RENDIMENTO FINANCEIRO`, `EMPRESTIMO`, `TARIFAS BANCÁRIAS`. A escolha entre as duas fontes é do dono. | receita líquida − custos − despesas operacionais, antes de juros, impostos, depreciação e amortização | |
+| Lucro líquido | Omie (calculado) | as linhas da tabela abaixo. **lacuna: Omie ou DFC** — o DFC traz um `Lucro Liquido` pronto na linha 25 (B25) da aba do mês, mas é lucro **de caixa** (entradas menos saídas do mês), não o do DRE — sem deduções, impostos por competência nem depreciação. A escolha entre as duas fontes é do dono. | receita líquida − custos − despesas gerais − impostos | |
+| Margem de lucro | Omie (calculado) | os dois cartões acima. **lacuna: Omie ou DFC** — segue os dois cartões de que depende; se eles vierem do DFC, esta vem junto. A escolha entre as duas fontes é do dono. | lucro líquido ÷ receita | |
 
 **Tabela:** uma coluna por mês (realizado e AH com seta) e o total do período. Linhas agrupadas, abrindo e fechando:
 
 | linha | fonte | contas do plano / abas | conferido |
 |---|---|---|---|
-| (+) Receitas: outras receitas, vendas de produtos | Omie | categorias com `conta_receita = "S"` e `totalizadora = "N"` em `geral/categorias` → `ListarCategorias`, agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` (caixa). **"Vendas de produtos":** o título não diz qual produto foi vendido, o pedido de venda diz — chega-se nele por `detalhes.nCodOS` (= `cabecalho.codigo_pedido`) e `produtos/pedido` → `ConsultarPedido`, com os itens em `det[].produto` (`codigo_produto`, `descricao`, `valor_total`), o total em `total_pedido.valor_total_pedido` e a categoria do pedido em `informacoes_adicionais.codigo_categoria`. **lacuna:** (a) a quebra entre "outras receitas" e "vendas de produtos" depende de como a MeuBESS montou o plano de contas e o DRE no Omie — esses nomes não existem no cadastro padrão, e se "outras receitas" é a receita que não vem de pedido de produto é decisão dela; (b) como repartir o valor recebido de um título entre os produtos do pedido (proporcional ao `valor_total` dos itens ou o pedido inteiro numa linha) é decisão dela | ligação `nCodOS` e os campos de `det[].produto` e `total_pedido` conferidos no Omie em 24/09/2026 (pedido 827); a quebra em linhas do DRE, não |
+| (+) Receitas: outras receitas, vendas de produtos | Omie | categorias com `conta_receita = "S"` e `totalizadora = "N"` em `geral/categorias` → `ListarCategorias`, agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` (caixa). **"Vendas de produtos":** o título não diz qual produto foi vendido, o pedido de venda diz — chega-se nele por `detalhes.nCodOS` (= `cabecalho.codigo_pedido`) e `produtos/pedido` → `ConsultarPedido`, com os itens em `det[].produto` (`codigo_produto`, `descricao`, `valor_total`), o total em `total_pedido.valor_total_pedido` e a categoria do pedido em `informacoes_adicionais.codigo_categoria`. **lacuna:** (a) a quebra entre "outras receitas" e "vendas de produtos" depende de como a MeuBESS montou o plano de contas e o DRE no Omie — esses nomes não existem no cadastro padrão, e se "outras receitas" é a receita que não vem de pedido de produto é decisão dela; (b) como repartir o valor recebido de um título entre os produtos do pedido (proporcional ao `valor_total` dos itens ou o pedido inteiro numa linha) é decisão dela. **lacuna: Omie ou DFC** — no DFC as receitas são as linhas com `SUB 2` (J) em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, `REPASSE` e `REPASSE - CREDITO`. A quebra por produto não existe lá: a linha aponta o projeto (`TITULO`, coluna H), não o produto. A escolha entre as duas fontes é do dono. | ligação `nCodOS` e os campos de `det[].produto` e `total_pedido` conferidos no Omie em 24/09/2026 (pedido 827); a quebra em linhas do DRE, não |
 | (=) Receita bruta | Omie (calculado) | soma das linhas de receita; no Omie a conta totalizadora é a que tem `totalizaDRE = "S"` em `geral/dre` → `ListarCadastroDRE` | |
-| (−) Deduções: devoluções, taxas de serviço | Omie | **lacuna:** o Omie não marca categoria como "dedução". Há pistas — `detalhes.cOperacao = "13"` (devolução de venda) e os campos de retenção do título (`nValorPIS`, `nValorCOFINS`, `nValorCSLL`, `nValorIR`, `nValorISS`, `nValorINSS`, com o `cRet…` correspondente em `"S"`) — mas quais categorias entram nesta linha é decisão da MeuBESS | |
+| (−) Deduções: devoluções, taxas de serviço | Omie | **lacuna:** o Omie não marca categoria como "dedução". Há pistas — `detalhes.cOperacao = "13"` (devolução de venda) e os campos de retenção do título (`nValorPIS`, `nValorCOFINS`, `nValorCSLL`, `nValorIR`, `nValorISS`, `nValorINSS`, com o `cRet…` correspondente em `"S"`) — mas quais categorias entram nesta linha é decisão da MeuBESS. **lacuna: Omie ou DFC** — o DFC marca devolução na própria linha — `SUB 2` (J) = `DEVOLUCÃO`, com `ESTORNO` em `CLASS. CONTABIL` (I) —, que é exatamente o que falta no Omie. A escolha entre as duas fontes é do dono. | |
 | (=) Receita líquida | Omie (calculado) | receita bruta − deduções; depende da lacuna da linha acima | |
-| (−) Custos de vendas: custo do produto, outros custos | Omie | categorias com `conta_despesa = "S"` cujo `codigo_dre` cai na conta de custo do DRE. **lacuna:** quais são essas contas no DRE da MeuBESS — sai do cadastro dela, não do padrão do Omie | |
+| (−) Custos de vendas: custo do produto, outros custos | Omie | categorias com `conta_despesa = "S"` cujo `codigo_dre` cai na conta de custo do DRE. **lacuna:** quais são essas contas no DRE da MeuBESS — sai do cadastro dela, não do padrão do Omie. **lacuna: Omie ou DFC** — no DFC é `CLASS. CONTABIL` (I) = `FORNECEDORES COGS` ou `COMPRA DE MERCADORIA`, com `SUB 2` (J) em `COMPRAS DE MERCADORIAS`, `FRETE E CARRETO` e `ARMAZENAGEM E MANUSEIO`. A escolha entre as duas fontes é do dono. | |
 | (=) Lucro bruto | Omie (calculado) | receita líquida − custos de vendas | |
-| (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI | Omie | categorias com `conta_despesa = "S"` agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` e `dDtPagtoDe` / `dDtPagtoAte` nos meses do filtro (regime de caixa, como as demais linhas da tela), fora os `cStatus = "CANCELADO"`. **Quebra por categoria do plano de contas (decisão do dono, 24/09/2026):** cada lançamento entra na linha pela categoria dele — `codigo_categoria` do lançamento, que no retorno é `detalhes.cCodCateg` (ou `categorias[].cCodCateg`, com `nDistrValor`, quando o título é rateado) — e **não** por departamento; `departamentos[]` não entra na quebra desta linha (o centro de custo segue sendo o recorte da Tela 1). O cadastro das categorias, com a conta do DRE de cada uma, está em `docs/plano-de-categorias-omie.html` | |
-| (−) Impostos | Omie | **lacuna:** duas leituras possíveis, e a MeuBESS escolhe — (a) os impostos retidos no próprio título (`nValorPIS`, `nValorCOFINS`, `nValorCSLL`, `nValorIR`, `nValorISS`, `nValorINSS`), ou (b) as guias pagas, que entram como conta a pagar e se reconhecem por `detalhes.cTipo` (`DAS`, `DRF`, `GUIA`) ou pela categoria de imposto | |
+| (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI | Omie | categorias com `conta_despesa = "S"` agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` e `dDtPagtoDe` / `dDtPagtoAte` nos meses do filtro (regime de caixa, como as demais linhas da tela), fora os `cStatus = "CANCELADO"`. **Quebra por categoria do plano de contas (decisão do dono, 24/09/2026):** cada lançamento entra na linha pela categoria dele — `codigo_categoria` do lançamento, que no retorno é `detalhes.cCodCateg` (ou `categorias[].cCodCateg`, com `nDistrValor`, quando o título é rateado) — e **não** por departamento; `departamentos[]` não entra na quebra desta linha (o centro de custo segue sendo o recorte da Tela 1). O cadastro das categorias, com a conta do DRE de cada uma, está em `docs/plano-de-categorias-omie.html`. **lacuna: Omie ou DFC** — no DFC é `CLASS. CONTABIL` (I) = `FORNECEDORES G&A`, quebrado pelas contas de `SUB 2` (J) — o cadastro da aba `BASE`, coluna A, com 69 contas em setembro. A escolha entre as duas fontes é do dono. | |
+| (−) Impostos | Omie | **lacuna:** duas leituras possíveis, e a MeuBESS escolhe — (a) os impostos retidos no próprio título (`nValorPIS`, `nValorCOFINS`, `nValorCSLL`, `nValorIR`, `nValorISS`, `nValorINSS`), ou (b) as guias pagas, que entram como conta a pagar e se reconhecem por `detalhes.cTipo` (`DAS`, `DRF`, `GUIA`) ou pela categoria de imposto. **lacuna: Omie ou DFC** — no DFC é `CLASS. CONTABIL` (I) = `IMPOSTOS E CONTRIBUIÇÕES`, com `SUB 2` (J) em `ISS`, `INSS` e `IRPJ / CSLL` — as guias pagas, que é a leitura (b). A retenção no título só o Omie tem. A escolha entre as duas fontes é do dono. | |
 | (=) EBITDA / lucro líquido | Omie (calculado) | **lacuna:** a referência junta os dois numa linha só e eles não são a mesma coisa. Qual dos dois a linha mostra (ou se vira duas linhas) é decisão da MeuBESS; o EBITDA ainda depende da lacuna de depreciação, amortização e resultado financeiro do cartão | |
 
 O agrupamento real sai do **plano de contas do ERP** — no Omie, o `codigo_dre` de cada categoria (`ListarCategorias`)
@@ -358,6 +497,12 @@ filtros indo direto para a API — vencimento em `dDtVencDe` / `dDtVencAte`, sta
 (`cLiquidado`, `nValPago`, `nValAberto`) e `lancamentos[]` (as baixas). O mesmo dá para fazer com `financas/mf` →
 `ListarMovimentos` e `cTpLancamento: "CR"`. **lacuna:** onde entram `VENCEHOJE` e `PAGTO_PARCIAL` nas faixas da tela é
 decisão da MeuBESS; abaixo eles estão como pendente e como recebido-em-parte, que é a leitura mais direta dos campos.
+
+**Esta tela fica no Omie, inteira.** O DFC não entra: ele é caixa — registra o que entrou e o que saiu, não a carteira
+em aberto — e não tem cadastro de cliente nem os oito `cStatus`. O que mais se aproxima é a aba `PROVISÃO`
+(`CLIENTE`, `VALOR PROJETO`, `VALOR RECEBIDO`, `VALIR A RECEBER` por projeto), que é um controle manual de poucas
+linhas, e a coluna `STATUS` (O) do `FLUXO DE CAIXA`, que diz se o recebimento foi `INTEGRAL`, `PARCIAL` ou `SINAL`.
+Nenhum dos dois cobre a tela. Ver "O que o DFC pode alimentar e o que fica no Omie".
 
 **Cartões no topo (4):**
 

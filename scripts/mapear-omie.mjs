@@ -6,7 +6,8 @@
 // A única identificação impressa é a da própria empresa que a chave abre (geral/empresas), que é o que se quer saber.
 // A saída vai para a tela e para mapa-omie.log na raiz (ignorado pelo git); a última linha é FIM.
 //
-// Uso: node scripts/mapear-omie.mjs [--descobrir] [pedido=CODIGO ...] [cliente=CODIGO ...] [produto=CODIGO ...]
+// Uso: node scripts/mapear-omie.mjs [--descobrir] [chave=NOME] [pedido=CODIGO ...] [cliente=CODIGO ...] [produto=CODIGO ...]
+//   chave=NOME roda uma chave só (parte do nome da variável, ex.: chave=MEUBESS_1) e grava em mapa-omie-<nome>.log
 //   ex.: node scripts/mapear-omie.mjs pedido=123 pedido=456 cliente=789
 // Os códigos são os external_id da plataforma MeuBESS; passe-os na linha de comando, nada fica no repositório.
 // Credencial: no .env da raiz (fora do git) o script descobre sozinho os pares de chave e segredo do Omie:
@@ -19,9 +20,12 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 
-// Toda linha vai para a tela e para o log dentro do repositório (mapa-omie.log, ignorado pelo git).
+// Toda linha vai para a tela e para um log dentro do repositório (mapa-omie*.log, ignorado pelo git).
 // O log guarda exatamente o que a tela mostra: nunca chave, segredo, valor, nome ou documento de cliente.
-const LOG = new URL("../mapa-omie.log", import.meta.url);
+// Com chave=NOME o log leva o nome da chave no arquivo, para uma execução não apagar o log da outra.
+const argumentos = process.argv.slice(2);
+const soAChave = /^chave=(.+)$/.exec(argumentos.find((a) => /^chave=/.test(a)) ?? "")?.[1] ?? null;
+const LOG = new URL(`../mapa-omie${soAChave ? `-${soAChave.toLowerCase()}` : ""}.log`, import.meta.url);
 writeFileSync(LOG, "");
 const registrar = (linha = "") => {
   console.log(linha);
@@ -32,6 +36,7 @@ const BASE = "https://app.omie.com.br/api/v1/";
 const POR_PAGINA = 100;
 const MAX_PAGINAS = 50;
 const PAUSA_MS = 2500;
+const TEMPO_LIMITE_MS = 60000;
 const TENTATIVAS = 4;
 
 let env;
@@ -75,8 +80,10 @@ for (const p of achado.pares) {
   registrar(`  - ${p.chave} (${st(p.chave)}) + ${p.segredo} (${st(p.segredo)})`);
 }
 registrar("");
-const argumentos = process.argv.slice(2);
-if (argumentos.includes("--descobrir")) process.exit(0);
+if (argumentos.includes("--descobrir")) {
+  registrar("FIM");
+  process.exit(0);
+}
 
 let OMIE_APP_KEY;
 let OMIE_APP_SECRET;
@@ -89,14 +96,17 @@ async function chamar(servico, metodo, param) {
     await dormir(PAUSA_MS * t);
     let json;
     try {
+      // AbortSignal.timeout corta a chamada que não volta: sem ele, uma resposta pendurada trava o script para sempre.
       const resp = await fetch(`${BASE}${servico}/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ call: metodo, app_key: OMIE_APP_KEY, app_secret: OMIE_APP_SECRET, param: [param] }),
+        signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
       });
       json = await resp.json();
-    } catch {
-      return { erro: "sem resposta utilizável do Omie" };
+    } catch (e) {
+      const estourou = e?.name === "TimeoutError" || e?.name === "AbortError";
+      return { erro: estourou ? `sem resposta em ${TEMPO_LIMITE_MS / 1000}s` : "sem resposta utilizável do Omie" };
     }
     const code = String(json.faultcode ?? "");
     // Client-1880: o Omie ainda processa a requisição anterior deste método; espera e repete
@@ -189,10 +199,10 @@ const CONSULTAS = {
 };
 
 const aConsultar = [];
-for (const arg of argumentos) {
+for (const arg of argumentos.filter((a) => !/^chave=/.test(a))) {
   const m = /^(pedido|cliente|produto)=(\d+)$/.exec(arg);
   if (!m) {
-    registrar("ERRO: argumento inválido (use pedido=CODIGO, cliente=CODIGO, produto=CODIGO ou --descobrir)");
+    registrar("ERRO: argumento inválido (use pedido=CODIGO, cliente=CODIGO, produto=CODIGO, chave=NOME ou --descobrir)");
     process.exit(1);
   }
   aConsultar.push([m[1], m[2]]);
@@ -230,7 +240,17 @@ async function mapear() {
 }
 
 registrar(`Só leitura. Pausa de ${PAUSA_MS / 1000}s entre chamadas; se o Omie pedir mais, o script espera.`);
-for (const p of achado.pares) {
+registrar(`Uma chamada que não responde em ${TEMPO_LIMITE_MS / 1000}s vira "sem resposta" e o script segue.`);
+// chave=NOME roda só os pares cujo nome de variável contém NOME (ex.: chave=MEUBESS_1)
+const aRodar = soAChave
+  ? achado.pares.filter((p) => p.chave.toUpperCase().includes(soAChave.toUpperCase()))
+  : achado.pares;
+if (!aRodar.length) {
+  registrar(`ERRO: nenhum par de chave com "${soAChave}" no nome`);
+  registrar("FIM");
+  process.exit(1);
+}
+for (const p of aRodar) {
   const k = String(env[p.chave] ?? "").trim();
   const s = String(env[p.segredo] ?? "").trim();
   registrar("");

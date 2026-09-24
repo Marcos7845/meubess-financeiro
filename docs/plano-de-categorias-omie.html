@@ -3,33 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plano de categorias e departamentos do Omie — MeuBESS (2026)</title>
+<title>Plano de categorias e departamentos do Omie — MeuBESS, empresas 1 e 2 (2026)</title>
 <style>
-  :root { --tinta:#1d2733; --suave:#5b6776; --linha:#dde2e8; --fundo:#f6f8fa; --destaque:#0b6b4f; }
+  :root { --tinta:#1d2733; --suave:#5b6776; --linha:#dde2e8; --fundo:#f6f8fa; --destaque:#0b6b4f; --alerta:#a4400c; --e1:#eef4fb; --e2:#f0f7f2; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.5 system-ui, "Segoe UI", sans-serif; color:var(--tinta); background:var(--fundo); }
-  main { max-width:1000px; margin:0 auto; padding:24px 20px 60px; }
+  main { max-width:1140px; margin:0 auto; padding:24px 20px 60px; }
   h1 { font-size:24px; margin:0 0 4px; }
   h2 { font-size:19px; margin:36px 0 6px; padding-top:12px; border-top:2px solid var(--tinta); }
   h3 { font-size:16px; margin:0 0 2px; }
-  .sub { font-weight:400; font-size:13px; color:var(--suave); margin-left:6px; }
+  .sub { font-weight:400; font-size:13px; color:var(--suave); margin-left:4px; }
   .quem { color:var(--suave); margin:0 0 18px; }
   .cartoes { display:flex; flex-wrap:wrap; gap:10px; margin:14px 0; }
   .cartao { background:#fff; border:1px solid var(--linha); border-radius:8px; padding:10px 14px; min-width:150px; }
   .cartao b { display:block; font-size:22px; color:var(--destaque); }
   .cartao span { font-size:13px; color:var(--suave); }
   .nota { background:#fff; border-left:4px solid var(--destaque); padding:10px 14px; margin:14px 0; font-size:14px; }
+  .nota.lacuna { border-left-color:var(--alerta); }
   .grupo { background:#fff; border:1px solid var(--linha); border-radius:8px; padding:12px 14px; margin:14px 0; }
   .resumo { margin:0 0 8px; font-size:13px; color:var(--suave); }
   table { width:100%; border-collapse:collapse; font-size:14px; }
-  th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--linha); }
+  th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--linha); vertical-align:top; }
   th { font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:var(--suave); }
+  th.e1, td.e1 { background:var(--e1); } th.e2, td.e2 { background:var(--e2); }
   td.cod { font-variant-numeric:tabular-nums; color:var(--suave); white-space:nowrap; }
   .n { text-align:right; font-variant-numeric:tabular-nums; }
-  tr.inativa td { color:#8a94a1; }
-  tr.inativa td:nth-child(2) { text-decoration:line-through; }
+  .forte { font-weight:600; }
+  tr.inativa td:nth-child(2) { color:#8a94a1; }
+  tr.diverge { background:#fffaf5; }
+  .tag { display:inline-block; font-size:11.5px; padding:0 6px; border-radius:10px; background:#eef1f4; color:var(--suave); }
+  .tag.alerta { background:#fdead9; color:var(--alerta); }
+  .tag.falta { background:#e9eefb; color:#2b4a8b; }
+  .alertatxt { color:var(--alerta); }
   body.so-com-uso tr.semuso { display:none; }
-  body.so-ativas tr.inativa { display:none; }
+  body.so-divergentes tr:not(.diverge):not(.sofalta) { display:none; }
   .filtros { position:sticky; top:0; background:var(--fundo); padding:8px 0; border-bottom:1px solid var(--linha); z-index:2; }
   .filtros label { margin-right:18px; font-size:14px; }
   code { background:#eef1f4; padding:0 4px; border-radius:3px; font-size:12.5px; }
@@ -40,292 +47,360 @@
 <body>
 <main>
 <h1>Plano de categorias e departamentos do Omie</h1>
-<p class="quem">MeuBESS · filial /0002-23 · lançamentos emitidos em 2026 · lido em 24/09/2026 · só leitura do Omie</p>
+<p class="quem">MeuBESS · <b>empresa 1</b> (/0001-42, escritório (rotinas administrativas)) e <b>empresa 2</b> (/0002-23, operação (compra, venda e logística)) — as duas que as telas somam · lançamentos emitidos em 2026 · lido em 24/09/2026 · só leitura do Omie</p>
 
 <div class="cartoes">
-  <div class="cartao"><b>167</b><span>categorias (116 ativas, 51 inativas)</span></div>
-  <div class="cartao"><b>35</b><span>categorias com lançamento em 2026</span></div>
-  <div class="cartao"><b>16</b><span>departamentos (16 ativos, 0 inativos)</span></div>
-  <div class="cartao"><b>11</b><span>departamentos com lançamento em 2026</span></div>
-  <div class="cartao"><b>2.843</b><span>lançamentos de 2026 contados</span></div>
+  <div class="cartao"><b>187</b><span>códigos de categoria nas duas somadas</span></div>
+  <div class="cartao"><b>86</b><span>iguais nas duas (código, descrição e conta do DRE)</span></div>
+  <div class="cartao"><b>77</b><span>mesmo código, cadastro diferente</span></div>
+  <div class="cartao"><b>20 · 4</b><span>só na empresa 1 · só na empresa 2</span></div>
+  <div class="cartao"><b>16</b><span>departamentos nas duas somadas</span></div>
+  <div class="cartao"><b>2.572 · 2.845</b><span>lançamentos de 2026 contados (E1 · E2)</span></div>
 </div>
 
 <div class="nota">
   <b>Esta página só mostra o cadastro.</b> Qual categoria é dedução, custo de venda, imposto, depreciação, amortização ou
-  resultado financeiro, quais departamentos são "de funcionários" e se as despesas gerais do DRE se quebram por categoria ou
-  por departamento são decisões da MeuBESS. A coluna "tipo" repete os marcadores do Omie (<code>conta_receita</code>,
-  <code>conta_despesa</code>, <code>totalizadora</code>, <code>transferencia</code>), não uma classificação nossa.<br>
+  resultado financeiro, quais departamentos são "de funcionários" e como tratar um lançamento entre as duas empresas são
+  decisões da MeuBESS. A coluna "tipo" repete os marcadores do Omie (<code>conta_receita</code>,
+  <code>conta_despesa</code>, <code>totalizadora</code>, <code>transferencia</code>), não uma classificação nossa; quando
+  o cadastro diverge entre as empresas, o tipo e a descrição mostrados são os da empresa 2.<br>
   <b>Como ler a contagem:</b> lançamentos do <code>financas/mf</code> com emissão em 2026, sem os cancelados
-  (211 de 3.054 lidos ficaram de fora). Cada lançamento conta uma vez por categoria e uma vez por
-  departamento; um título rateado em vários departamentos aparece em cada um. 1.137 lançamento(s) não têm
-  departamento e 0 não trazem categoria.
-  Sem valores em reais e sem nomes de clientes ou fornecedores.
+  (23 de 2.595 na empresa 1, 211 de 3.056 na empresa 2). Cada lançamento conta uma
+  vez por categoria e uma vez por departamento; um título rateado em vários departamentos aparece em cada um.
+  Sem valores em reais e sem nomes de clientes, fornecedores ou funcionários.
+</div>
+
+<div class="nota lacuna">
+  <b>lacuna — o que a soma das duas empresas ainda pede da MeuBESS.</b>
+  <ul>
+    <li><b>Categoria que diverge:</b> 77 código(s) existem nas duas com cadastro diferente
+      (63 com descrição diferente, 46 com conta do DRE diferente) e
+      20 existem só na empresa 1, 4 só na empresa 2. Somar por código de
+      categoria junta, nesses casos, coisas cadastradas de forma diferente. Qual cadastro vale — e se algum par deve
+      virar uma linha só do DRE — é decisão da MeuBESS.</li>
+    <li><b>Lançamento entre as duas empresas:</b> 0 na empresa 1 e 3 na empresa 2
+      têm a outra filial da MeuBESS como cliente ou fornecedor.
+      Somando as duas empresas, o mesmo dinheiro entre elas pode entrar duas vezes (uma como despesa numa, outra como
+      receita na outra). Se esses lançamentos saem da soma, entram inteiros, ou entram de um lado só, é decisão da
+      MeuBESS. Categorias marcadas como transferência no Omie aparecem em
+      0 lançamento(s) da empresa 1 e 0 lançamento(s) da empresa 2.</li>
+    <li><b>Centro de custo entre as empresas:</b> o código do departamento é próprio de cada empresa
+      (0 código em comum entre as duas), e 16 nome(s) existem dos dois lados. O
+      filtro de centro de custo da Tela 1 precisa casar os dois cadastros por nome, ou tratar cada empresa em separado —
+      a MeuBESS decide qual.</li>
+  </ul>
+</div>
+
+<h2>Lançamentos de 2026 entre as duas empresas</h2>
+<div class="grupo">
+<p class="resumo">Lançamento cuja contraparte (<code>detalhes.cCPFCNPJCliente</code>) é outra filial da própria MeuBESS — mesma raiz de CNPJ, filial diferente. Só a contagem; nenhum valor.</p>
+<table><thead><tr><th>lidos na</th><th>contraparte</th><th class="n">lançamentos</th><th>natureza</th><th>categoria</th><th class="n">em categoria de transferência</th></tr></thead><tbody>
+<tr><td>Empresa 1 · /0001-42</td><td>—</td><td class="n forte">0</td><td>—</td><td>—</td><td class="n">0</td></tr>
+<tr><td>Empresa 2 · /0002-23</td><td>/0001-42: 3</td><td class="n forte">3</td><td>a pagar: 1<br>a receber: 2</td><td>2.01.03 Compras de Materia Prima: 1<br>1.01.01 RECEITA DE VENDA DE PRODUTOS: 2</td><td class="n">0</td></tr>
+</tbody></table>
 </div>
 
 <div class="filtros">
   <label><input type="checkbox" id="so-com-uso"> só com lançamento em 2026</label>
-  <label><input type="checkbox" id="so-ativas"> só ativas</label>
+  <label><input type="checkbox" id="so-divergentes"> só o que não bate entre as duas</label>
 </div>
 
 <h2>Categorias, agrupadas pela conta do DRE</h2>
-<p class="quem">A conta do DRE é a do <code>codigo_dre</code> de cada categoria, com o nome vindo de <code>ListarCadastroDRE</code>. Dentro de cada conta, da mais usada para a menos usada.</p>
+<p class="quem">A conta do DRE é a do <code>codigo_dre</code> de cada categoria (a da empresa 2 quando as duas têm), com o nome vindo de <code>ListarCadastroDRE</code>. Dentro de cada conta, da mais usada para a menos usada, somando as duas empresas.</p>
 <section class="grupo"><h3>1.01.01 — Receita Bruta de Vendas <span class="sub">nível 3 · sinal + · não totalizadora</span></h3>
-<p class="resumo">4 categoria(s), 3 ativa(s) · 1.303 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">1.01.01</td><td>RECEITA DE VENDA DE PRODUTOS</td><td>receita</td><td>ativa</td><td class="n">1.298</td></tr>
-<tr class=""><td class="cod">1.01.03</td><td>RECEITA DE REVENDA DE MERCADORIAS</td><td>receita</td><td>ativa</td><td class="n">3</td></tr>
-<tr class=""><td class="cod">1.04.01</td><td>Adiantamento de Clientes</td><td>receita</td><td>ativa</td><td class="n">2</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.02</td><td>Clientes - Serviços Prestados</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">5 categoria(s) · 226 lançamento(s) na empresa 1 · 1.303 na empresa 2 · <b class="alertatxt">3 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class=""><td class="cod">1.01.01</td><td>RECEITA DE VENDA DE PRODUTOS</td><td>receita</td><td>ativa</td><td class="n">16</td><td>ativa</td><td class="n">1.298</td><td class="n forte">1.314</td></tr>
+<tr class="diverge"><td class="cod">1.01.99</td><td>&amp;lt;Disponível&amp;gt;<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.01.01 × —</span> <span class="sub">“RECEITA DE SERVIÇOS PRESTADOS” × “&amp;lt;Disponível&amp;gt;”</span></td><td>receita</td><td>ativa</td><td class="n">210</td><td>inativa</td><td class="n">0</td><td class="n forte">210</td></tr>
+<tr class=""><td class="cod">1.01.03</td><td>RECEITA DE REVENDA DE MERCADORIAS</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">3</td><td class="n forte">3</td></tr>
+<tr class="diverge"><td class="cod">1.04.01</td><td>Adiantamento de Clientes<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 1.01.01</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">2</td><td class="n forte">2</td></tr>
+<tr class="semuso diverge"><td class="cod">1.01.02</td><td>Clientes - Serviços Prestados<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.11.02 × 1.01.01</span> <span class="sub">“Rendimento Bancários” × “Clientes - Serviços Prestados”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>1.01.03 — Deduções de Receita <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">5 categoria(s), 5 ativa(s) · 4 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.09.01</td><td>Devoluções de Vendas de Mercadoria</td><td>despesa</td><td>ativa</td><td class="n">4</td></tr>
-<tr class="semuso"><td class="cod">2.06.04</td><td>COFINS A RECOLHER</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.09.02</td><td>Devoluções de Vendas de Produtos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.06.01</td><td>ICMS</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.06.03</td><td>PIS A RECOLHER</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">5 categoria(s) · 0 lançamento(s) na empresa 1 · 4 na empresa 2 · <b class="alertatxt">3 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class=""><td class="cod">2.09.01</td><td>Devoluções de Vendas de Mercadoria</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">4</td><td class="n forte">4</td></tr>
+<tr class="semuso diverge"><td class="cod">2.06.04</td><td>COFINS A RECOLHER<br><span class="tag alerta">descrição diferente</span> <span class="sub">“COFINS SOBRE VENDAS” × “COFINS A RECOLHER”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.09.02</td><td>Devoluções de Vendas de Produtos<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Devoluções de Vendas de Serviços Prestados” × “Devoluções de Vendas de Produtos”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.06.01</td><td>ICMS</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.06.03</td><td>PIS A RECOLHER<br><span class="tag alerta">descrição diferente</span> <span class="sub">“PIS SOBRE VENDAS” × “PIS A RECOLHER”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>1.11.01 — Outras Receitas <span class="sub">nível 3 · sinal + · não totalizadora</span></h3>
-<p class="resumo">5 categoria(s), 2 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="inativa semuso"><td class="cod">1.02.01</td><td>Dividendos Recebidos</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.02.98</td><td>Outras receitas - Aluguel (sublocação barracão)</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.02.99</td><td>outras Receitas - não identificadas</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.02.02</td><td>Rendimentos de Aplicações</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.96</td><td>Transferencia</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">6 categoria(s) · 16 lançamento(s) na empresa 1 · 0 na empresa 2 · <b class="alertatxt">3 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class=""><td class="cod">1.02.02</td><td>Rendimentos de Aplicações</td><td>receita</td><td>ativa</td><td class="n">14</td><td>inativa</td><td class="n">0</td><td class="n forte">14</td></tr>
+<tr class=""><td class="cod">1.02.99</td><td>outras Receitas - não identificadas</td><td>receita</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="semuso"><td class="cod">1.02.01</td><td>Dividendos Recebidos</td><td>receita</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.02.98</td><td>Outras receitas - Aluguel (sublocação barracão)<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 1.11.01</span> <span class="sub">“&amp;lt;Disponível&amp;gt;” × “Outras receitas - Aluguel (sublocação barracão)”</span></td><td>receita</td><td>inativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.04.97</td><td>Prêmios de Seguros / Sinistros<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.11.01 × —</span> <span class="sub">“TRANSFERENCIA” × “Prêmios de Seguros / Sinistros”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.04.96</td><td>Transferencia<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 1.11.01</span> <span class="sub">“&amp;lt;Disponível&amp;gt;” × “Transferencia”</span></td><td>receita</td><td>inativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>1.11.02 — Receitas Financeiras <span class="sub">nível 3 · sinal + · não totalizadora</span></h3>
-<p class="resumo">1 categoria(s), 1 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="semuso"><td class="cod">1.04.94</td><td>Rendimento Financeiro</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">2 categoria(s) · 0 lançamento(s) na empresa 1 · 0 na empresa 2 · <b class="alertatxt">1 divergente(s)</b> · 1 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="inativa semuso diverge"><td class="cod">1.04.95</td><td>Prêmios de Seguros / Sinistros<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.11.02 × —</span> <span class="sub">“Rendimento Bancário” × “Prêmios de Seguros / Sinistros”</span></td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">1.04.94</td><td>Rendimento Financeiro<br><span class="tag falta">só na empresa 2</span></td><td>receita</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>1.21.02 — Custo dos Serviços Prestados <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">1 categoria(s), 0 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="inativa semuso"><td class="cod">2.01.04</td><td>Compra de Serviços</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">1 categoria(s) · 0 lançamento(s) na empresa 1 · 0 na empresa 2</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="inativa semuso"><td class="cod">2.01.04</td><td>Compra de Serviços</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>1.21.03 — Outros Custos <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">1 categoria(s), 0 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="inativa semuso"><td class="cod">2.01.99</td><td>CUSTO DOS PRODUTOS VENDIDOS</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">8 categoria(s) · 53 lançamento(s) na empresa 1 · 0 na empresa 2 · <b class="alertatxt">2 divergente(s)</b> · 6 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td class="cod">2.08.98</td><td>&amp;lt;Disponível&amp;gt;<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × —</span> <span class="sub">“Reembolso” × “&amp;lt;Disponível&amp;gt;”</span></td><td>despesa</td><td>ativa</td><td class="n">30</td><td>inativa</td><td class="n">0</td><td class="n forte">30</td></tr>
+<tr class="diverge"><td class="cod">2.01.99</td><td>CUSTO DOS PRODUTOS VENDIDOS<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Gás para empilhadeira - Custos” × “CUSTO DOS PRODUTOS VENDIDOS”</span></td><td>despesa</td><td>ativa</td><td class="n">16</td><td>inativa</td><td class="n">0</td><td class="n forte">16</td></tr>
+<tr class="sofalta"><td class="cod">2.01.85</td><td>Seguro de Vida- Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>—</td><td class="n">—</td><td class="n forte">4</td></tr>
+<tr class="sofalta"><td class="cod">2.01.88</td><td>Assistência Médica e social - Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">3</td><td>—</td><td class="n">—</td><td class="n forte">3</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.11.95</td><td>Financiamento Veiculo<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.84</td><td>Outros Benefícios-  Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.86</td><td>Vale Refeição- Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.87</td><td>Vale Transporte- Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.01.01 — Despesas Variáveis <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">21 categoria(s), 21 ativa(s) · 1.294 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.01.02</td><td>Fretes s/ compras</td><td>despesa</td><td>ativa</td><td class="n">618</td></tr>
-<tr class=""><td class="cod">2.01.03</td><td>Compras de Materia Prima</td><td>despesa</td><td>ativa</td><td class="n">376</td></tr>
-<tr class=""><td class="cod">2.01.01</td><td>Compras de Mercadorias para Revenda</td><td>despesa</td><td>ativa</td><td class="n">128</td></tr>
-<tr class=""><td class="cod">2.10.99</td><td>Adiantamentos a Fornecedores</td><td>despesa</td><td>ativa</td><td class="n">104</td></tr>
-<tr class=""><td class="cod">2.02.03</td><td>Desp com Repres. Coml -REPASSES</td><td>despesa</td><td>ativa</td><td class="n">41</td></tr>
-<tr class=""><td class="cod">2.08.99</td><td>Reembolso - Custo</td><td>despesa</td><td>ativa</td><td class="n">11</td></tr>
-<tr class=""><td class="cod">2.02.97</td><td>Reembolso por cancelamento</td><td>despesa</td><td>ativa</td><td class="n">9</td></tr>
-<tr class=""><td class="cod">2.08.02</td><td>Outras Despesas</td><td>despesa</td><td>ativa</td><td class="n">3</td></tr>
-<tr class=""><td class="cod">2.04.96</td><td>Certificado Digital</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.06.98</td><td>TAXA</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class="semuso"><td class="cod">2.02.04</td><td>Bonificações</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.06</td><td>Comunicação</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.02.02</td><td>Desp com Rep. Comercial - AJUDA DE CUSTO PJS</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.97</td><td>Despesa Insumos Escritório</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.04</td><td>Equipamentos de Informática</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.02.96</td><td>Estorno de venda</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.03</td><td>Instalações</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.01</td><td>Máquinas e Equipamentos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.05</td><td>Móveis e Utensílios</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.05.98</td><td>Transferencia</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.02</td><td>Veículos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">21 categoria(s) · 675 lançamento(s) na empresa 1 · 1.296 na empresa 2 · <b class="alertatxt">19 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td class="cod">2.01.02</td><td>Fretes s/ compras<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 1.21.03 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">1</td><td>ativa</td><td class="n">620</td><td class="n forte">621</td></tr>
+<tr class="diverge"><td class="cod">2.01.03</td><td>Compras de Materia Prima<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">77</td><td>ativa</td><td class="n">376</td><td class="n forte">453</td></tr>
+<tr class="diverge"><td class="cod">2.10.99</td><td>Adiantamentos a Fornecedores<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.01.01</span> <span class="sub">“Implantação de saldos (saidas)” × “Adiantamentos a Fornecedores”</span></td><td>despesa</td><td>ativa</td><td class="n">159</td><td>ativa</td><td class="n">104</td><td class="n forte">263</td></tr>
+<tr class="diverge"><td class="cod">2.02.02</td><td>Desp com Rep. Comercial - AJUDA DE CUSTO PJS<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 2.11.04 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">167</td><td>ativa</td><td class="n">0</td><td class="n forte">167</td></tr>
+<tr class="diverge"><td class="cod">2.04.96</td><td>Certificado Digital<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.02 × 2.01.01</span> <span class="sub">“Despesas Indedutíveis” × “Certificado Digital”</span></td><td>despesa</td><td>ativa</td><td class="n">152</td><td>ativa</td><td class="n">2</td><td class="n forte">154</td></tr>
+<tr class="diverge"><td class="cod">2.01.01</td><td>Compras de Mercadorias para Revenda<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">18</td><td>ativa</td><td class="n">128</td><td class="n forte">146</td></tr>
+<tr class=""><td class="cod">2.02.03</td><td>Desp com Repres. Coml -REPASSES</td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">41</td><td class="n forte">45</td></tr>
+<tr class="diverge"><td class="cod">2.08.99</td><td>Reembolso - Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.01.01</span> <span class="sub">“OUTRAS DESPESAS” × “Reembolso - Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">34</td><td>ativa</td><td class="n">11</td><td class="n forte">45</td></tr>
+<tr class="diverge"><td class="cod">2.02.96</td><td>Estorno de venda<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Despesas vendas: Lanches/Refeições” × “Estorno de venda”</span></td><td>despesa</td><td>ativa</td><td class="n">20</td><td>ativa</td><td class="n">0</td><td class="n forte">20</td></tr>
+<tr class=""><td class="cod">2.06.98</td><td>TAXA</td><td>despesa</td><td>ativa</td><td class="n">13</td><td>ativa</td><td class="n">2</td><td class="n forte">15</td></tr>
+<tr class="diverge"><td class="cod">2.07.02</td><td>Veículos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 3.01.01 × 2.01.01</span> <span class="sub">“Consórcio” × “Veículos”</span></td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">0</td><td class="n forte">12</td></tr>
+<tr class="diverge"><td class="cod">2.02.97</td><td>Reembolso por cancelamento<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Despesas vendas:  Pedágio/Uber/99” × “Reembolso por cancelamento”</span></td><td>despesa</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">9</td><td class="n forte">11</td></tr>
+<tr class="diverge"><td class="cod">2.08.02</td><td>Outras Despesas<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.01.01</span> <span class="sub">“Pagamento empréstimo Intercompany B3N” × “Outras Despesas”</span></td><td>despesa</td><td>ativa</td><td class="n">7</td><td>ativa</td><td class="n">3</td><td class="n forte">10</td></tr>
+<tr class="diverge"><td class="cod">2.07.03</td><td>Instalações<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 3.01.01 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">6</td><td>ativa</td><td class="n">0</td><td class="n forte">6</td></tr>
+<tr class="diverge"><td class="cod">2.07.01</td><td>Máquinas e Equipamentos<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 3.01.01 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="diverge"><td class="cod">2.02.04</td><td>Bonificações<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Bonificações/Brindes a clientes” × “Bonificações”</span></td><td>despesa</td><td>ativa</td><td class="n">1</td><td>ativa</td><td class="n">0</td><td class="n forte">1</td></tr>
+<tr class="semuso diverge"><td class="cod">2.07.06</td><td>Comunicação<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.01</span></td><td>despesa</td><td>inativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.04.97</td><td>Despesa Insumos Escritório<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.02 × 2.01.01</span> <span class="sub">“Agua e esgoto -ADM” × “Despesa Insumos Escritório”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.07.04</td><td>Equipamentos de Informática<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 3.01.01 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.07.05</td><td>Móveis e Utensílios<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 3.01.01 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.05.98</td><td>Transferencia<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.01.01</span> <span class="sub">“&amp;lt;Disponível&amp;gt;” × “Transferencia”</span></td><td>despesa</td><td>inativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.01.02 — Recuperação de Despesas Variáveis <span class="sub">nível 3 · sinal + · não totalizadora</span></h3>
-<p class="resumo">6 categoria(s), 5 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="semuso"><td class="cod">1.03.04</td><td>Devoluções de Compra de Ativo</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.03.03</td><td>Devoluções de Compra de Matéria Prima</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.03.02</td><td>Devoluções de Compra de Material de Consumo</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.03.01</td><td>Devoluções de Compra de Mercadoria de Revenda</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.03.26</td><td>Devoluções de Compra de Serviços</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.02</td><td>Receb. de Reembolso de Despesas</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">6 categoria(s) · 0 lançamento(s) na empresa 1 · 0 na empresa 2 · <b class="alertatxt">2 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="semuso diverge"><td class="cod">1.03.04</td><td>Devoluções de Compra de Ativo<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.02</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.03.03</td><td>Devoluções de Compra de Matéria Prima</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.03.02</td><td>Devoluções de Compra de Material de Consumo</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.03.01</td><td>Devoluções de Compra de Mercadoria de Revenda</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.03.26</td><td>Devoluções de Compra de Serviços</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.04.02</td><td>Receb. de Reembolso de Despesas<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Recebimento de Reembolso de Despesas” × “Receb. de Reembolso de Despesas”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.01 — Despesas com Pessoal <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">17 categoria(s), 10 ativa(s) · 4 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.03.14</td><td>Outros Benefícios</td><td>despesa</td><td>ativa</td><td class="n">3</td></tr>
-<tr class=""><td class="cod">2.02.01</td><td>Desp repr. Comercial- COMISSÕES s/ vendas</td><td>despesa</td><td>ativa</td><td class="n">1</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.05</td><td>13º Salário- Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.02</td><td>Adiantamento de Salário</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.10</td><td>Assistência Médica e social -Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.03</td><td>Férias- Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.07</td><td>FGTS- Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.06</td><td>INSS- Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.08</td><td>IRRF S/ Salários- Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.97</td><td>Mensalidade/Contribuição Sindical-ADM</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.09</td><td>Pensão Alimentícia</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.04</td><td>Rescisões- Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.01</td><td>Salários e Ordenados - Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.13</td><td>Seguro de Vida-Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.99</td><td>Terceiros e Estagiários- ADM</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.12</td><td>Vale Refeição-Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03.11</td><td>Vale Transporte- Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">19 categoria(s) · 261 lançamento(s) na empresa 1 · 4 na empresa 2 · <b class="alertatxt">6 divergente(s)</b> · 1 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td class="cod">2.02.01</td><td>Desp repr. Comercial- COMISSÕES s/ vendas<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.01.01 × 2.11.01</span> <span class="sub">“Desp com Rep. Comercial- COMISSÕES s/ vendas” × “Desp repr. Comercial- COMISSÕES s/ vendas”</span></td><td>despesa</td><td>ativa</td><td class="n">98</td><td>ativa</td><td class="n">1</td><td class="n forte">99</td></tr>
+<tr class=""><td class="cod">2.03.01</td><td>Salários e Ordenados - Adm</td><td>despesa</td><td>ativa</td><td class="n">26</td><td>ativa</td><td class="n">0</td><td class="n forte">26</td></tr>
+<tr class=""><td class="cod">2.03.10</td><td>Assistência Médica e social -Adm</td><td>despesa</td><td>ativa</td><td class="n">24</td><td>inativa</td><td class="n">0</td><td class="n forte">24</td></tr>
+<tr class=""><td class="cod">2.03.12</td><td>Vale Refeição-Adm</td><td>despesa</td><td>ativa</td><td class="n">21</td><td>ativa</td><td class="n">0</td><td class="n forte">21</td></tr>
+<tr class=""><td class="cod">2.03.11</td><td>Vale Transporte- Adm</td><td>despesa</td><td>ativa</td><td class="n">18</td><td>ativa</td><td class="n">0</td><td class="n forte">18</td></tr>
+<tr class=""><td class="cod">2.03.99</td><td>Terceiros e Estagiários- ADM</td><td>despesa</td><td>ativa</td><td class="n">16</td><td>inativa</td><td class="n">0</td><td class="n forte">16</td></tr>
+<tr class="diverge"><td class="cod">2.03.14</td><td>Outros Benefícios<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Outros Benefícios- ADM” × “Outros Benefícios”</span></td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">3</td><td class="n forte">15</td></tr>
+<tr class="sofalta"><td class="cod">2.01.79</td><td>Sistema de Ponto<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">13</td><td>—</td><td class="n">—</td><td class="n forte">13</td></tr>
+<tr class=""><td class="cod">2.03.07</td><td>FGTS- Adm</td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">0</td><td class="n forte">12</td></tr>
+<tr class="diverge"><td class="cod">2.03.02</td><td>Adiantamento de Salário<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Adiantamento de Salário- Adm” × “Adiantamento de Salário”</span></td><td>despesa</td><td>ativa</td><td class="n">5</td><td>ativa</td><td class="n">0</td><td class="n forte">5</td></tr>
+<tr class=""><td class="cod">2.03.06</td><td>INSS- Adm</td><td>despesa</td><td>ativa</td><td class="n">5</td><td>ativa</td><td class="n">0</td><td class="n forte">5</td></tr>
+<tr class=""><td class="cod">2.03.04</td><td>Rescisões- Adm</td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">0</td><td class="n forte">4</td></tr>
+<tr class=""><td class="cod">2.03.13</td><td>Seguro de Vida-Adm</td><td>despesa</td><td>ativa</td><td class="n">3</td><td>inativa</td><td class="n">0</td><td class="n forte">3</td></tr>
+<tr class=""><td class="cod">2.03.03</td><td>Férias- Adm</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">2.03.08</td><td>IRRF S/ Salários- Adm</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="semuso"><td class="cod">2.03.05</td><td>13º Salário- Adm</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.03.97</td><td>Mensalidade/Contribuição Sindical-ADM<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Mensalidade/Contribuição Sindical- Adm” × “Mensalidade/Contribuição Sindical-ADM”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.03.09</td><td>Pensão Alimentícia<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Pensão Alimentícia - Adm” × “Pensão Alimentícia”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.03.98</td><td>Uniformes e equipamentos de Segurança -Adm<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 2.11.01 × —</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.02 — Despesas Administrativas <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">38 categoria(s), 34 ativa(s) · 126 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.01.91</td><td>Locação de Máquinas e Equipamentos-Custos</td><td>despesa</td><td>ativa</td><td class="n">52</td></tr>
-<tr class=""><td class="cod">2.04.10</td><td>Honorários Contábeis</td><td>despesa</td><td>ativa</td><td class="n">13</td></tr>
-<tr class=""><td class="cod">2.01.93</td><td>Seguros de carga -Custo</td><td>despesa</td><td>ativa</td><td class="n">13</td></tr>
-<tr class=""><td class="cod">2.01.94</td><td>IPTU- Custo</td><td>despesa</td><td>ativa</td><td class="n">11</td></tr>
-<tr class=""><td class="cod">2.01.98</td><td>Aluguel -Custo</td><td>despesa</td><td>ativa</td><td class="n">8</td></tr>
-<tr class=""><td class="cod">2.01.90</td><td>Vigilância e Monitoramento -Custos</td><td>despesa</td><td>ativa</td><td class="n">7</td></tr>
-<tr class=""><td class="cod">2.04.92</td><td>Cartão de Crédito</td><td>despesa</td><td>ativa</td><td class="n">6</td></tr>
-<tr class=""><td class="cod">2.10.97</td><td>Pagamento Pacianotto - adto Juridico</td><td>despesa</td><td>ativa</td><td class="n">4</td></tr>
-<tr class=""><td class="cod">2.01.97</td><td>Água e Esgoto-Custo</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.12.99</td><td>Aluguel do Barracão</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.04.06</td><td>Material de Escritório-ADM</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.04.08</td><td>Seguros</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.01.95</td><td>Telefone e Internet -Custo</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">2.08.01</td><td>Adiantamento/Retirada de Sócio</td><td>despesa</td><td>ativa</td><td class="n">1</td></tr>
-<tr class=""><td class="cod">2.04.14</td><td>Materiais de Limpeza- ADM</td><td>despesa</td><td>ativa</td><td class="n">1</td></tr>
-<tr class="semuso"><td class="cod">2.03.96</td><td>Aluguel - PE</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.01</td><td>Aluguel -ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.01.92</td><td>Armanezagem e manuseio de Carga -Custos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.04.07</td><td>Assistência, Manutenção e reparos em geral -ADM</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.95</td><td>Brindes e Marketing</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.02</td><td>Condomínio- ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.04.98</td><td>Despesas com bens duráveis em geral-ADM</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.12.97</td><td>Energia Eletrica</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.04</td><td>Energia Elétrica- ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.01.96</td><td>Energia Elétrica-Custo</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.04.03</td><td>Fundos de reserva -ADM</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.01.89</td><td>Gas para empilhadeira -Custos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.11</td><td>Honorários Advocaticios</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.09</td><td>IPTU -ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.93</td><td>Mantimentos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.94</td><td>Mensalidade Hardware</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.99</td><td>Mensalidades de Software</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.12.98</td><td>Sanepar</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.11.98</td><td>Seguro de Vida - Diretoria</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.12</td><td>Serviços de Limpeza</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04.05</td><td>Telefone e Internet</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.11.99</td><td>Veiculos</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.04.13</td><td>Vigilância e Monitoramento -Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">46 categoria(s) · 1.168 lançamento(s) na empresa 1 · 126 na empresa 2 · <b class="alertatxt">23 divergente(s)</b> · 8 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td class="cod">2.11.98</td><td>Seguro de Vida - Diretoria<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.03 × 2.11.02</span> <span class="sub">“Cartão de Credito” × “Seguro de Vida - Diretoria”</span></td><td>despesa</td><td>ativa</td><td class="n">345</td><td>ativa</td><td class="n">0</td><td class="n forte">345</td></tr>
+<tr class=""><td class="cod">2.04.06</td><td>Material de Escritório-ADM</td><td>despesa</td><td>ativa</td><td class="n">141</td><td>ativa</td><td class="n">2</td><td class="n forte">143</td></tr>
+<tr class="diverge"><td class="cod">2.04.99</td><td>Mensalidades de Software<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Mensalidades de Software-ADM” × “Mensalidades de Software”</span></td><td>despesa</td><td>ativa</td><td class="n">138</td><td>ativa</td><td class="n">0</td><td class="n forte">138</td></tr>
+<tr class="sofalta"><td class="cod">2.04.90</td><td>Serviços de Terceiros - PJ ADM<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">122</td><td>—</td><td class="n">—</td><td class="n forte">122</td></tr>
+<tr class=""><td class="cod">2.04.05</td><td>Telefone e Internet</td><td>despesa</td><td>ativa</td><td class="n">68</td><td>ativa</td><td class="n">0</td><td class="n forte">68</td></tr>
+<tr class="diverge"><td class="cod">2.01.91</td><td>Locação de Máquinas e Equipamentos-Custos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“FGTS-  Custo (estoque)” × “Locação de Máquinas e Equipamentos-Custos”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">52</td><td class="n forte">56</td></tr>
+<tr class="diverge"><td class="cod">2.12.98</td><td>Sanepar<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Energia Elétrica” × “Sanepar”</span></td><td>despesa</td><td>ativa</td><td class="n">48</td><td>ativa</td><td class="n">0</td><td class="n forte">48</td></tr>
+<tr class=""><td class="cod">2.04.10</td><td>Honorários Contábeis</td><td>despesa</td><td>ativa</td><td class="n">32</td><td>ativa</td><td class="n">13</td><td class="n forte">45</td></tr>
+<tr class="diverge"><td class="cod">2.11.99</td><td>Veiculos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.03 × 2.11.02</span> <span class="sub">“Aluguel Veiculo” × “Veiculos”</span></td><td>despesa</td><td>ativa</td><td class="n">37</td><td>ativa</td><td class="n">0</td><td class="n forte">37</td></tr>
+<tr class="diverge"><td class="cod">2.04.93</td><td>Mantimentos<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Locação de Software- Adm” × “Mantimentos”</span></td><td>despesa</td><td>ativa</td><td class="n">31</td><td>ativa</td><td class="n">0</td><td class="n forte">31</td></tr>
+<tr class="sofalta"><td class="cod">2.12.96</td><td>Telefone / Internet<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">27</td><td>—</td><td class="n">—</td><td class="n forte">27</td></tr>
+<tr class=""><td class="cod">2.04.04</td><td>Energia Elétrica- ADM</td><td>despesa</td><td>ativa</td><td class="n">22</td><td>ativa</td><td class="n">0</td><td class="n forte">22</td></tr>
+<tr class=""><td class="cod">2.04.02</td><td>Condomínio- ADM</td><td>despesa</td><td>ativa</td><td class="n">19</td><td>ativa</td><td class="n">0</td><td class="n forte">19</td></tr>
+<tr class="diverge"><td class="cod">2.01.97</td><td>Água e Esgoto-Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.01 × 2.11.02</span> <span class="sub">“Salários - Custo (estoque)” × “Água e Esgoto-Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">16</td><td>ativa</td><td class="n">2</td><td class="n forte">18</td></tr>
+<tr class="diverge"><td class="cod">2.01.94</td><td>IPTU- Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“Rescisões- Custo (estoque)” × “IPTU- Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">11</td><td class="n forte">15</td></tr>
+<tr class="diverge"><td class="cod">2.08.01</td><td>Adiantamento/Retirada de Sócio<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.11.02</span></td><td>despesa</td><td>ativa</td><td class="n">13</td><td>ativa</td><td class="n">1</td><td class="n forte">14</td></tr>
+<tr class=""><td class="cod">2.04.03</td><td>Fundos de reserva -ADM</td><td>despesa</td><td>ativa</td><td class="n">13</td><td>inativa</td><td class="n">0</td><td class="n forte">13</td></tr>
+<tr class="diverge"><td class="cod">2.01.93</td><td>Seguros de carga -Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“13º Salário- Custo (estoque)” × “Seguros de carga -Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">13</td><td class="n forte">13</td></tr>
+<tr class="diverge"><td class="cod">2.01.89</td><td>Gas para empilhadeira -Custos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“Pensão Alimentícia- Custo (estoque)” × “Gas para empilhadeira -Custos”</span></td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">0</td><td class="n forte">12</td></tr>
+<tr class="diverge"><td class="cod">2.10.97</td><td>Pagamento Pacianotto - adto Juridico<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.11.02</span> <span class="sub">“Adiantamentos a Fornecedores” × “Pagamento Pacianotto - adto Juridico”</span></td><td>despesa</td><td>ativa</td><td class="n">8</td><td>ativa</td><td class="n">4</td><td class="n forte">12</td></tr>
+<tr class="diverge"><td class="cod">2.04.92</td><td>Cartão de Crédito<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Despesas com Brindes - Endomarketing” × “Cartão de Crédito”</span></td><td>despesa</td><td>ativa</td><td class="n">5</td><td>ativa</td><td class="n">6</td><td class="n forte">11</td></tr>
+<tr class="diverge"><td class="cod">2.01.90</td><td>Vigilância e Monitoramento -Custos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“IRRF S/ Salários-  Custo (estoque)” × “Vigilância e Monitoramento -Custos”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">7</td><td class="n forte">11</td></tr>
+<tr class=""><td class="cod">2.04.11</td><td>Honorários Advocaticios</td><td>despesa</td><td>ativa</td><td class="n">10</td><td>ativa</td><td class="n">0</td><td class="n forte">10</td></tr>
+<tr class=""><td class="cod">2.04.12</td><td>Serviços de Limpeza</td><td>despesa</td><td>ativa</td><td class="n">10</td><td>ativa</td><td class="n">0</td><td class="n forte">10</td></tr>
+<tr class="diverge"><td class="cod">2.12.97</td><td>Energia Eletrica<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Aguá / Esgoto” × “Energia Eletrica”</span></td><td>despesa</td><td>ativa</td><td class="n">9</td><td>ativa</td><td class="n">0</td><td class="n forte">9</td></tr>
+<tr class="diverge"><td class="cod">2.01.98</td><td>Aluguel -Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.11.02</span> <span class="sub">“Disponível2” × “Aluguel -Custo”</span></td><td>despesa</td><td>inativa</td><td class="n">0</td><td>ativa</td><td class="n">8</td><td class="n forte">8</td></tr>
+<tr class="diverge"><td class="cod">2.12.99</td><td>Aluguel do Barracão<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Aluguel” × “Aluguel do Barracão”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">2</td><td class="n forte">6</td></tr>
+<tr class="diverge"><td class="cod">2.01.96</td><td>Energia Elétrica-Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“Adiantamento de Salário (custo)” × “Energia Elétrica-Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">6</td><td>ativa</td><td class="n">0</td><td class="n forte">6</td></tr>
+<tr class="diverge"><td class="cod">2.04.94</td><td>Mensalidade Hardware<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Despesas com confraternizações” × “Mensalidade Hardware”</span></td><td>despesa</td><td>ativa</td><td class="n">6</td><td>ativa</td><td class="n">0</td><td class="n forte">6</td></tr>
+<tr class=""><td class="cod">2.04.13</td><td>Vigilância e Monitoramento -Adm</td><td>despesa</td><td>ativa</td><td class="n">4</td><td>inativa</td><td class="n">0</td><td class="n forte">4</td></tr>
+<tr class=""><td class="cod">2.04.01</td><td>Aluguel -ADM</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="diverge"><td class="cod">2.01.92</td><td>Armanezagem e manuseio de Carga -Custos<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“INSS-  Custo (estoque)” × “Armanezagem e manuseio de Carga -Custos”</span></td><td>despesa</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="sofalta"><td class="cod">2.04.88</td><td>Armazém e Manuseio<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">2</td><td>—</td><td class="n">—</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">2.04.07</td><td>Assistência, Manutenção e reparos em geral -ADM</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">2.04.09</td><td>IPTU -ADM</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">2.04.08</td><td>Seguros</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">2</td><td class="n forte">2</td></tr>
+<tr class="diverge"><td class="cod">2.01.95</td><td>Telefone e Internet -Custo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 1.21.03 × 2.11.02</span> <span class="sub">“Férias - Custo (estoque)” × “Telefone e Internet -Custo”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">2</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">2.04.14</td><td>Materiais de Limpeza- ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">1</td><td class="n forte">1</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.80</td><td>Aguá e Esgoto<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.03.96</td><td>Aluguel - PE<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.11.02</span> <span class="sub">“Acordo Trabalhista” × “Aluguel - PE”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.04.95</td><td>Brindes e Marketing<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Locação de veículos” × “Brindes e Marketing”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.04.98</td><td>Despesas com bens duráveis em geral-ADM</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.04.89</td><td>Giro de Capital<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.11.96</td><td>Pró-Labore<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.11.97</td><td>Seguro<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.02.94</td><td>Seguro - mercadoria<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.03 — Despesas Financeiras <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">5 categoria(s), 2 ativa(s) · 9 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.05.04</td><td>Tarifas Bancárias</td><td>despesa</td><td>ativa</td><td class="n">9</td></tr>
-<tr class="semuso"><td class="cod">2.04.91</td><td>Emprestimo</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.02</td><td>Juros e Multas pagos</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.01</td><td>Juros sobre Empréstimos</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.99</td><td>Tarifas Bancarias</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">5 categoria(s) · 21 lançamento(s) na empresa 1 · 9 na empresa 2 · <b class="alertatxt">2 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class=""><td class="cod">2.05.04</td><td>Tarifas Bancárias</td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">9</td><td class="n forte">21</td></tr>
+<tr class="diverge"><td class="cod">2.05.99</td><td>Tarifas Bancarias<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Transferência Intercompany” × “Tarifas Bancarias”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>inativa</td><td class="n">0</td><td class="n forte">4</td></tr>
+<tr class="diverge"><td class="cod">2.04.91</td><td>Emprestimo<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.01.01 × 2.11.03</span> <span class="sub">“Despesa Insumo Escritório” × “Emprestimo”</span></td><td>despesa</td><td>ativa</td><td class="n">3</td><td>ativa</td><td class="n">0</td><td class="n forte">3</td></tr>
+<tr class=""><td class="cod">2.05.02</td><td>Juros e Multas pagos</td><td>despesa</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="semuso"><td class="cod">2.05.01</td><td>Juros sobre Empréstimos</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.04 — Despesas de Vendas e Marketing <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">3 categoria(s), 3 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="semuso"><td class="cod">2.02.95</td><td>Despesa Marketing</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.02.99</td><td>Despesas de Viagens (Vendas e MKT)</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.02.98</td><td>Despesas Vendas - Propaganda e Marketing</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">3 categoria(s) · 44 lançamento(s) na empresa 1 · 0 na empresa 2 · <b class="alertatxt">3 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td class="cod">2.02.98</td><td>Despesas Vendas - Propaganda e Marketing<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 2.01.01 × 2.11.04</span></td><td>despesa</td><td>ativa</td><td class="n">41</td><td>ativa</td><td class="n">0</td><td class="n forte">41</td></tr>
+<tr class="diverge"><td class="cod">2.02.99</td><td>Despesas de Viagens (Vendas e MKT)<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.01.01 × 2.11.04</span> <span class="sub">“Despesas vendas: Hospedagens /passagens” × “Despesas de Viagens (Vendas e MKT)”</span></td><td>despesa</td><td>ativa</td><td class="n">3</td><td>ativa</td><td class="n">0</td><td class="n forte">3</td></tr>
+<tr class="semuso diverge"><td class="cod">2.02.95</td><td>Despesa Marketing<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.01.01 × 2.11.04</span> <span class="sub">“Despesa vendas: Combustíveis” × “Despesa Marketing”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.05 — Outros Tributos <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">4 categoria(s), 3 ativa(s) · 18 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.06.07</td><td>ISS RETIDO</td><td>despesa</td><td>ativa</td><td class="n">16</td></tr>
-<tr class=""><td class="cod">2.06.05</td><td>IRPJ/CSLL</td><td>despesa</td><td>ativa</td><td class="n">2</td></tr>
-<tr class="inativa semuso"><td class="cod">2.06.06</td><td>CSLL</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.06.95</td><td>IOF</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">4 categoria(s) · 61 lançamento(s) na empresa 1 · 18 na empresa 2 · <b class="alertatxt">1 divergente(s)</b></p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class=""><td class="cod">2.06.95</td><td>IOF</td><td>despesa</td><td>ativa</td><td class="n">41</td><td>ativa</td><td class="n">0</td><td class="n forte">41</td></tr>
+<tr class=""><td class="cod">2.06.07</td><td>ISS RETIDO</td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">16</td><td class="n forte">28</td></tr>
+<tr class="diverge"><td class="cod">2.06.05</td><td>IRPJ/CSLL<br><span class="tag alerta">descrição diferente</span> <span class="sub">“IRPJ” × “IRPJ/CSLL”</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>ativa</td><td class="n">2</td><td class="n forte">6</td></tr>
+<tr class=""><td class="cod">2.06.06</td><td>CSLL</td><td>despesa</td><td>ativa</td><td class="n">4</td><td>inativa</td><td class="n">0</td><td class="n forte">4</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>3.01.01 — Ativos <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">2 categoria(s), 2 ativa(s) · 0 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class="semuso"><td class="cod">2.07.98</td><td>Benfeitorias em Imóveis de Terceiros</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07.99</td><td>Consórcio</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
+<p class="resumo">2 categoria(s) · 0 lançamento(s) na empresa 1 · 0 na empresa 2 · 2 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="semuso sofalta"><td class="cod">2.07.98</td><td>Benfeitorias em Imóveis de Terceiros<br><span class="tag falta">só na empresa 2</span></td><td>despesa</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.07.99</td><td>Consórcio<br><span class="tag falta">só na empresa 2</span></td><td>despesa</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>Sem conta do DRE <span class="sub">categorias sem <code>codigo_dre</code> no cadastro</span></h3>
-<p class="resumo">54 categoria(s), 25 ativa(s) · 111 lançamento(s)-categoria em 2026</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>tipo</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">2.10.96</td><td>Implantação de saldos (saidas)</td><td>despesa</td><td>ativa</td><td class="n">111</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.98</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.01.99</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.02.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.02.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.02.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.06.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.06.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.08.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.08.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.08.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.08.98</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.09.03</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.09.04</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.09.05</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.04</td><td>Aumento de Capital</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.01</td><td>Custos/Despesas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.04</td><td>Despesas Administrativas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.03</td><td>Despesas com Pessoal-ADM</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.02</td><td>Despesas de Vendas e Marketing</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.11</td><td>DESPESAS DIRETORIA</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.05</td><td>Despesas Financeiras / Bancos</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.12</td><td>DESPESAS OPERACIONAIS</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.03</td><td>Devoluções de Compras</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.09</td><td>Devoluções de Vendas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">0.01.01</td><td>Entrada de Transferência</td><td>transferência</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.98</td><td>Implantação de saldos (entradas)</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.06</td><td>Impostos e Taxas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.07</td><td>Investimento/ Imobilizado</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.06.02</td><td>IPI A RECOLHER</td><td>despesa</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.08</td><td>Outras Despesas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04</td><td>Outras Entradas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">2.10</td><td>OUTRAS SAIDAS</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.05.03</td><td>Pagamento de Empréstimos Bancários</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.10.98</td><td>Pagamento empréstimo Intercompany B3N</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.04.95</td><td>Prêmios de Seguros / Sinistros</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.97</td><td>Prêmios de Seguros / Sinistros</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.04.99</td><td>Recebimento de Empréstimo Intercompany B3N</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.04.03</td><td>Recebimento de Empréstimos Bancários</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.01</td><td>Receitas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.02</td><td>Receitas Indiretas/Outras receitas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">0.01.02</td><td>Saída de Transferência</td><td>transferência</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.06.99</td><td>Simples Nacional (DAS)</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">0.01</td><td>Transferência</td><td>totalizadora</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">2.03.98</td><td>Uniformes e equipamentos de Segurança -Adm</td><td>despesa</td><td>inativa</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">1.04.06</td><td>Venda de Ativos</td><td>receita</td><td>ativa</td><td class="n">0</td></tr>
-<tr class="inativa semuso"><td class="cod">1.04.05</td><td>Venda de Participações</td><td>receita</td><td>inativa</td><td class="n">0</td></tr>
+<p class="resumo">54 categoria(s) · 75 lançamento(s) na empresa 1 · 111 na empresa 2 · <b class="alertatxt">9 divergente(s)</b> · 6 só numa das empresas</p>
+<table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="sofalta"><td class="cod">2.10.96</td><td>Implantação de saldos (saidas)<br><span class="tag falta">só na empresa 2</span></td><td>despesa</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">111</td><td class="n forte">111</td></tr>
+<tr class="diverge"><td class="cod">2.10.98</td><td>Pagamento empréstimo Intercompany B3N<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Pagamento Pacianotto - Adto acordo Juridico” × “Pagamento empréstimo Intercompany B3N”</span></td><td>despesa</td><td>ativa</td><td class="n">30</td><td>inativa</td><td class="n">0</td><td class="n forte">30</td></tr>
+<tr class=""><td class="cod">2.02</td><td>Despesas de Vendas e Marketing</td><td>totalizadora</td><td>ativa</td><td class="n">24</td><td>ativa</td><td class="n">0</td><td class="n forte">24</td></tr>
+<tr class=""><td class="cod">2.01</td><td>Custos/Despesas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">11</td><td>ativa</td><td class="n">0</td><td class="n forte">11</td></tr>
+<tr class="sofalta"><td class="cod">2.01.82</td><td>Uniformes e equipamentos de Segurança - Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>—</td><td class="n">—</td><td class="n forte">4</td></tr>
+<tr class=""><td class="cod">2.11</td><td>DESPESAS DIRETORIA</td><td>totalizadora</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class=""><td class="cod">1.04.99</td><td>Recebimento de Empréstimo Intercompany B3N</td><td>receita</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
+<tr class="sofalta"><td class="cod">2.01.83</td><td>Terceiros e Estagiários-  Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">2</td><td>—</td><td class="n">—</td><td class="n forte">2</td></tr>
+<tr class="inativa semuso"><td class="cod">1.01.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.01.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.01.97</td><td>&amp;lt;Disponível&amp;gt;<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Marketing” × “&amp;lt;Disponível&amp;gt;”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.01.98</td><td>&amp;lt;Disponível&amp;gt;<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Comissão de Venda” × “&amp;lt;Disponível&amp;gt;”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.02.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.02.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.02.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.03.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.05.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.05.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.05.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.06.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.06.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.08.95</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.08.96</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.08.97</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.09.03</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.09.04</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">2.09.05</td><td>&amp;lt;Disponível&amp;gt;</td><td>despesa</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.04.04</td><td>Aumento de Capital</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.04</td><td>Despesas Administrativas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.03</td><td>Despesas com Pessoal-ADM<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Despesas com Pessoal” × “Despesas com Pessoal-ADM”</span></td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.05</td><td>Despesas Financeiras / Bancos</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.12</td><td>DESPESAS OPERACIONAIS</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.03</td><td>Devoluções de Compras<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Devoluções” × “Devoluções de Compras”</span></td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.09</td><td>Devoluções de Vendas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">0.01.01</td><td>Entrada de Transferência</td><td>transferência</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.04.98</td><td>Implantação de saldos (entradas)<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Implantação de saldo (entradas)” × “Implantação de saldos (entradas)”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.06</td><td>Impostos e Taxas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.02.93</td><td>Indicação - comissão<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.07</td><td>Investimento/ Imobilizado<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Investimento” × “Investimento/ Imobilizado”</span></td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">2.06.02</td><td>IPI A RECOLHER<br><span class="tag alerta">descrição diferente</span> <span class="sub">“IPI” × “IPI A RECOLHER”</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.81</td><td>Mensalidade/Contribuição Sindical-  Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.08</td><td>Outras Despesas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.04</td><td>Outras Entradas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.10</td><td>OUTRAS SAIDAS</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.05.03</td><td>Pagamento de Empréstimos Bancários</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso sofalta"><td class="cod">2.01.78</td><td>Recarga Celular<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.04.03</td><td>Recebimento de Empréstimos Bancários</td><td>receita</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.01</td><td>Receitas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso diverge"><td class="cod">1.02</td><td>Receitas Indiretas/Outras receitas<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Receitas Indiretas” × “Receitas Indiretas/Outras receitas”</span></td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">0.01.02</td><td>Saída de Transferência</td><td>transferência</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">2.06.99</td><td>Simples Nacional (DAS)</td><td>despesa</td><td>ativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">0.01</td><td>Transferência</td><td>totalizadora</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="semuso"><td class="cod">1.04.06</td><td>Venda de Ativos</td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
+<tr class="inativa semuso"><td class="cod">1.04.05</td><td>Venda de Participações</td><td>receita</td><td>inativa</td><td class="n">0</td><td>inativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>Contas do DRE sem nenhuma categoria ligada <span class="sub">14 conta(s)</span></h3>
 <ul class="vazias"><li>1 — Lucro Bruto</li><li>1.01 — Receita Líquida Operacional</li><li>1.01.02 — Impostos</li><li>1.11 — Receita Líquida Indireta</li><li>1.11.03 — Outras Deduções de Receita</li><li>1.21 — Custos</li><li>1.21.01 — Custo Médio (CMC) das Vendas</li><li>2 — Despesas</li><li>2.01 — Variáveis</li><li>2.11 — Fixas</li><li>2.11.10 — Recuperação de Despesas Fixas</li><li>3 — Investimentos</li><li>3.01 — Investimentos</li><li>3.01.02 — Serviços</li></ul></section>
 
 <h2>Departamentos (centros de custo)</h2>
 <div class="grupo">
-<p class="resumo">16 departamento(s) · da mais usada para a menos usada · 1.137 lançamento(s) sem departamento</p>
-<table><thead><tr><th>código</th><th>descrição</th><th>situação</th><th class="n">lançamentos 2026</th></tr></thead><tbody>
-<tr class=""><td class="cod">5191334709</td><td>FISCAL</td><td>ativo</td><td class="n">1.025</td></tr>
-<tr class=""><td class="cod">5191334793</td><td>ESTOQUE</td><td>ativo</td><td class="n">907</td></tr>
-<tr class=""><td class="cod">5191334816</td><td>LOGÍSTICA</td><td>ativo</td><td class="n">750</td></tr>
-<tr class=""><td class="cod">5191334808</td><td>COMPRAS</td><td>ativo</td><td class="n">303</td></tr>
-<tr class=""><td class="cod">5191334680</td><td>COMERCIAL</td><td>ativo</td><td class="n">23</td></tr>
-<tr class=""><td class="cod">5191334691</td><td>FINANCEIRO</td><td>ativo</td><td class="n">12</td></tr>
-<tr class=""><td class="cod">5191334704</td><td>CONTÁBIL</td><td>ativo</td><td class="n">5</td></tr>
-<tr class=""><td class="cod">5191334818</td><td>INSIDE SALES</td><td>ativo</td><td class="n">3</td></tr>
-<tr class=""><td class="cod">5191334631</td><td>ADMINISTRATIVO</td><td>ativo</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">5191219609</td><td>MEU BESS</td><td>ativo</td><td class="n">2</td></tr>
-<tr class=""><td class="cod">5191334729</td><td>FACILITIES</td><td>ativo</td><td class="n">1</td></tr>
-<tr class="semuso"><td class="cod">5191334682</td><td>DIRETORIA</td><td>ativo</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">5191334820</td><td>MARKETING</td><td>ativo</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">5191334667</td><td>OPERACIONAL</td><td>ativo</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">5191334750</td><td>RH</td><td>ativo</td><td class="n">0</td></tr>
-<tr class="semuso"><td class="cod">5191334758</td><td>TI</td><td>ativo</td><td class="n">0</td></tr>
+<p class="resumo">16 nome(s) de departamento nas duas empresas · 16 existem nas duas · da mais usada para a menos usada · sem departamento: 1.142 lançamento(s) na empresa 1, 1.138 lançamento(s) na empresa 2</p>
+<p class="resumo"><b class="alertatxt">A tabela casa os departamentos pelo NOME, não pelo código.</b> O código do departamento é próprio de cada empresa — das 16 da empresa 1 e 16 da empresa 2, 0 código(s) coincidem. Somar as duas empresas por <code>cCodDepartamento</code> separaria em dois o que é o mesmo centro de custo.</p>
+<table><thead><tr><th rowspan="2">descrição</th><th rowspan="2">códigos</th><th rowspan="2">onde existe</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
+<tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
+<tr class="diverge"><td>FISCAL<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644953 · E2 5191334709</td><td>nas duas</td><td>ativo</td><td class="n">12</td><td>ativo</td><td class="n">1.026</td><td class="n forte">1.038</td></tr>
+<tr class="diverge"><td>ESTOQUE<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645127 · E2 5191334793</td><td>nas duas</td><td>ativo</td><td class="n">52</td><td>ativo</td><td class="n">907</td><td class="n forte">959</td></tr>
+<tr class="diverge"><td>LOGÍSTICA<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645163 · E2 5191334816</td><td>nas duas</td><td>ativo</td><td class="n">4</td><td>ativo</td><td class="n">751</td><td class="n forte">755</td></tr>
+<tr class="diverge"><td>DIRETORIA<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644784 · E2 5191334682</td><td>nas duas</td><td>ativo</td><td class="n">619</td><td>ativo</td><td class="n">0</td><td class="n forte">619</td></tr>
+<tr class="diverge"><td>COMPRAS<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645153 · E2 5191334808</td><td>nas duas</td><td>ativo</td><td class="n">54</td><td>ativo</td><td class="n">303</td><td class="n forte">357</td></tr>
+<tr class="diverge"><td>INSIDE SALES<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645189 · E2 5191334818</td><td>nas duas</td><td>ativo</td><td class="n">252</td><td>ativo</td><td class="n">3</td><td class="n forte">255</td></tr>
+<tr class="diverge"><td>TI<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645055 · E2 5191334758</td><td>nas duas</td><td>ativo</td><td class="n">152</td><td>ativo</td><td class="n">0</td><td class="n forte">152</td></tr>
+<tr class="diverge"><td>COMERCIAL<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644726 · E2 5191334680</td><td>nas duas</td><td>ativo</td><td class="n">75</td><td>ativo</td><td class="n">23</td><td class="n forte">98</td></tr>
+<tr class="diverge"><td>RH<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645048 · E2 5191334750</td><td>nas duas</td><td>ativo</td><td class="n">98</td><td>ativo</td><td class="n">0</td><td class="n forte">98</td></tr>
+<tr class="diverge"><td>MARKETING<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645193 · E2 5191334820</td><td>nas duas</td><td>ativo</td><td class="n">67</td><td>ativo</td><td class="n">0</td><td class="n forte">67</td></tr>
+<tr class="diverge"><td>FACILITIES<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969645033 · E2 5191334729</td><td>nas duas</td><td>ativo</td><td class="n">32</td><td>ativo</td><td class="n">1</td><td class="n forte">33</td></tr>
+<tr class="diverge"><td>ADMINISTRATIVO<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644534 · E2 5191334631</td><td>nas duas</td><td>ativo</td><td class="n">20</td><td>ativo</td><td class="n">2</td><td class="n forte">22</td></tr>
+<tr class="diverge"><td>FINANCEIRO<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644818 · E2 5191334691</td><td>nas duas</td><td>ativo</td><td class="n">8</td><td>ativo</td><td class="n">12</td><td class="n forte">20</td></tr>
+<tr class="diverge"><td>MEU BESS<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969530588 · E2 5191219609</td><td>nas duas</td><td>ativo</td><td class="n">18</td><td>ativo</td><td class="n">2</td><td class="n forte">20</td></tr>
+<tr class="diverge"><td>CONTÁBIL<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644915 · E2 5191334704</td><td>nas duas</td><td>ativo</td><td class="n">8</td><td>ativo</td><td class="n">5</td><td class="n forte">13</td></tr>
+<tr class="semuso diverge"><td>OPERACIONAL<br><span class="tag alerta">mesmo nome, código diferente</span></td><td class="cod">E1 5969644648 · E2 5191334667</td><td>nas duas</td><td>ativo</td><td class="n">0</td><td>ativo</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table>
 </div>
 
-<footer>Gerada por <code>scripts/plano-de-contas-omie.mjs</code>. Fonte: API do Omie (<code>geral/categorias</code>, <code>geral/departamentos</code>, <code>geral/dre</code>, <code>financas/mf</code>), chave da filial /0002-23.</footer>
+<footer>Gerada por <code>scripts/plano-de-contas-omie.mjs</code>. Fonte: API do Omie (<code>geral/empresas</code>, <code>geral/categorias</code>, <code>geral/departamentos</code>, <code>geral/dre</code>, <code>financas/mf</code>), chaves das filiais /0001-42 e /0002-23. A empresa 3 (<code>/0003-04</code>) fica fora das telas e desta página.</footer>
 </main>
 <script>
-  for (const id of ["so-com-uso", "so-ativas"]) {
+  for (const id of ["so-com-uso", "so-divergentes"]) {
     document.getElementById(id).addEventListener("change", (e) => document.body.classList.toggle(id, e.target.checked));
   }
 </script>

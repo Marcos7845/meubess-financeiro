@@ -11,8 +11,47 @@ aparecem nelas são de exemplo — nenhum é da MeuBESS.
 
 | fonte | o que é | como lemos | quem libera o acesso |
 |---|---|---|---|
-| ERP | **Omie** — o ERP da MeuBESS (razão social NON IMPORTACAO E DISTRIBUICAO LTDA, em **três filiais**). **Papel das empresas (dono, 24/09/2026):** a empresa 1, filial `/0001-42`, é a das **rotinas administrativas** (o escritório); a empresa 2, filial `/0002-23`, é a de **compra, venda e logística**, a principal. A leitura das telas é hoje só da **filial `/0002-23`** (CNPJ 32.589.565/0002-23), a única com os pedidos, clientes e produtos que a plataforma envia: na leitura de 24/09/2026, 783 pedidos de venda, 814 contas a receber e 1.085 contas a pagar. A `/0001-42` (20 / 131 / 1.529) e a `/0003-04` (0 / 0 / 17) não têm os pedidos da plataforma e não são lidas — comparação em `docs/comparacao-chaves-omie.html`. **lacuna:** falta decidir se as telas somam a empresa 1 (o escritório) à empresa 2; até lá só a 2 entra nos números, e o papel da empresa 3 (`/0003-04`) não foi informado. Usamos os módulos Finanças (contas a pagar, contas a receber, movimentos financeiros), Geral (categorias, departamentos, clientes, contas do DRE) e Produtos (pedido de venda) | **API REST do Omie**: `POST https://app.omie.com.br/api/v1/<serviço>/`, corpo JSON com `call`, `app_key`, `app_secret` e `param`. A chave da filial `/0002-23` está no `.env` nas variáveis **`OMIE_MEUBESS_2_APP_KEY`** e **`OMIE_MEUBESS_2_APP_SECRET`**; as outras duas filiais são `OMIE_MEUBESS_1_…` e `OMIE_MEUBESS_3_…`, que a leitura das telas não usa. Só métodos de consulta (`Listar*`, `Consultar*`, `Pesquisar*`, `Obter*`) — nenhum que inclua, altere ou exclua. Documentação: https://developer.omie.com.br/service-list/ | A chave de API (app key e app secret) é gerada pelo dono (Vitor), uma por filial; já existe um aplicativo de integração cadastrado no Omie e as três chaves estão gravadas no `.env` local |
+| ERP | **Omie** — o ERP da MeuBESS (razão social NON IMPORTACAO E DISTRIBUICAO LTDA, em **três filiais**). **Papel das empresas (dono, 24/09/2026):** a empresa 1, filial `/0001-42`, é a das **rotinas administrativas** (o escritório); a empresa 2, filial `/0002-23`, é a de **compra, venda e logística**, a principal. **As três telas mostram a soma das empresas 1 e 2 (decisão do dono, 24/09/2026).** Cada consulta roda nas **duas** chaves — `OMIE_MEUBESS_1` e `OMIE_MEUBESS_2` — e os resultados se somam; toda linha deste documento que diz "`ListarMovimentos` com tal filtro" quer dizer a mesma chamada, com o mesmo filtro, nas duas empresas. A empresa 3 (`/0003-04`) **fica fora**. Só a `/0002-23` tem os pedidos, clientes e produtos que a plataforma envia (na leitura de 24/09/2026, 783 pedidos de venda, 814 contas a receber e 1.085 contas a pagar, contra 20 / 131 / 1.529 da `/0001-42` e 0 / 0 / 17 da `/0003-04` — comparação em `docs/comparacao-chaves-omie.html`), então a descrição vinda do pedido de venda só existe para a empresa 2. O que a soma exige dos dois cadastros está medido em "A soma das empresas 1 e 2", logo abaixo. Usamos os módulos Finanças (contas a pagar, contas a receber, movimentos financeiros), Geral (categorias, departamentos, clientes, contas do DRE) e Produtos (pedido de venda) | **API REST do Omie**: `POST https://app.omie.com.br/api/v1/<serviço>/`, corpo JSON com `call`, `app_key`, `app_secret` e `param`. **Cada consulta é feita duas vezes, uma por empresa, e os resultados se somam.** As chaves estão no `.env`: a da filial `/0001-42` em **`OMIE_MEUBESS_1_APP_KEY`** / **`OMIE_MEUBESS_1_APP_SECRET`** e a da `/0002-23` em **`OMIE_MEUBESS_2_APP_KEY`** / **`OMIE_MEUBESS_2_APP_SECRET`**. A terceira, `OMIE_MEUBESS_3_…` (filial `/0003-04`), a leitura das telas não usa. Só métodos de consulta (`Listar*`, `Consultar*`, `Pesquisar*`, `Obter*`) — nenhum que inclua, altere ou exclua. Documentação: https://developer.omie.com.br/service-list/ | A chave de API (app key e app secret) é gerada pelo dono (Vitor), uma por filial; já existe um aplicativo de integração cadastrado no Omie e as três chaves estão gravadas no `.env` local |
 | Planilhas | _a definir_ | _onde moram (Google Sheets, Excel no OneDrive, arquivo local)_ | _a definir_ |
+
+### A soma das empresas 1 e 2 (vale para as três telas)
+
+Toda consulta roda nas duas chaves e os resultados se somam. Medido no Omie em 24/09/2026 por
+`scripts/plano-de-contas-omie.mjs` (só leitura), sobre os lançamentos do `financas/mf` **emitidos em 2026**, fora os
+`cStatus = "CANCELADO"` — 2.572 lançamentos na empresa 1 e 2.846 na empresa 2. O cadastro inteiro, lado a lado, está em
+[`docs/plano-de-categorias-omie.html`](plano-de-categorias-omie.html).
+
+**1. Os dois planos de categorias usam a mesma numeração, mas não são o mesmo plano.** São 187 códigos somando as duas
+(183 na empresa 1, 167 na empresa 2):
+
+| | códigos |
+|---|---|
+| iguais nas duas (mesmo código, mesma descrição, mesma conta do DRE) | 86 |
+| mesmo código, cadastro diferente | 77 — sendo 63 com descrição diferente e 46 com `codigo_dre` diferente |
+| só na empresa 1 | 20 |
+| só na empresa 2 | 4 |
+
+Nenhum lançamento usa código fora do cadastro, nas duas empresas. As divergências não são cosméticas: o código `2.01.89`
+é "Pensão Alimentícia- Custo (estoque)" (DRE `1.21.03`) na empresa 1 e "Gas para empilhadeira -Custos" (DRE `2.11.02`)
+na empresa 2; o `2.01.02` é "Fretes s/ compras" nas duas, mas cai em `1.21.03` numa e em `2.01.01` na outra.
+**lacuna:** somar por código de categoria junta, nesses 77 casos, coisas cadastradas de forma diferente, e as 46 com
+`codigo_dre` diferente caem em linhas diferentes do DRE. Qual cadastro vale em cada caso — e se algum par deve virar uma
+linha só — é decisão da MeuBESS.
+
+**2. Lançamentos entre as duas empresas, que contariam duas vezes na soma: 3 em 2026.** Os três foram lidos na empresa 2
+e têm a `/0001-42` como contraparte (`detalhes.cCPFCNPJCliente` com a mesma raiz de CNPJ, filial diferente): 2 a receber,
+na categoria `1.01.01` "RECEITA DE VENDA DE PRODUTOS", e 1 a pagar, na `2.01.03` "Compras de Materia Prima". Lidos na
+empresa 1, **zero** — nenhum lançamento de 2026 dela tem outra filial como contraparte, então esses três não aparecem
+espelhados do outro lado. Nenhum dos dois lados usa categoria marcada como transferência (`transferencia = "S"`) em
+2026. **lacuna:** se esses lançamentos saem da soma, entram inteiros ou entram de um lado só é decisão da MeuBESS.
+
+**3. Departamentos: os mesmos 16 nomes nas duas empresas, e nenhum código em comum.** A empresa 1 tem 16 departamentos,
+todos ativos, e a empresa 2 também; os 16 nomes são os mesmos dos dois lados, mas **zero** códigos coincidem — o
+`cCodDepartamento` é próprio de cada empresa. Os da empresa 1, com os lançamentos de 2026: DIRETORIA (619), INSIDE SALES
+(252), TI (152), RH (98), COMERCIAL (75), MARKETING (67), COMPRAS (54), ESTOQUE (52), FACILITIES (32), ADMINISTRATIVO
+(20), MEU BESS (18), FISCAL (12), FINANCEIRO (8), CONTÁBIL (8), LOGÍSTICA (4) e OPERACIONAL (0). Sem departamento:
+1.142 lançamentos na empresa 1 e 1.138 na empresa 2. **lacuna:** o filtro de centro de custo da Tela 1 tem de casar os
+dois cadastros pelo nome (o código não serve) ou tratar cada empresa em separado — a MeuBESS decide qual.
 
 ### Como lemos o Omie (vale para as três telas)
 

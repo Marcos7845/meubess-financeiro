@@ -24,8 +24,11 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
     [`docs/comparacao-chaves-omie.html`](docs/comparacao-chaves-omie.html));
   - `OMIE_MEUBESS_3_APP_KEY` / `OMIE_MEUBESS_3_APP_SECRET` — empresa 3, filial `/0003-04`: papel não informado.
 
-  Em aberto: falta decidir se as telas somam a empresa 1 à empresa 2 (hoje só a 2 é lida). Detalhe em
-  [`docs/fontes.md`](docs/fontes.md).
+  **As telas somam as empresas 1 e 2** (decisão do dono, 24/09/2026): cada consulta roda nas duas chaves e os
+  resultados se somam. A empresa 3 fica fora. O que a soma exige dos dois cadastros — planos de categorias que divergem,
+  lançamentos entre as filiais e departamentos com código próprio de cada empresa — está medido em
+  [`docs/fontes.md`](docs/fontes.md) e em
+  [`docs/plano-de-categorias-omie.html`](docs/plano-de-categorias-omie.html).
 - **Todo número confere com a fonte.** Cada indicador diz de onde vem (ERP: módulo, tabela e filtro; planilha: arquivo,
   aba e coluna) e é conferido com um caso real antes de ser dado como pronto.
 - **Número financeiro não sai da máquina para ser medido ou classificado** por serviço de terceiros.

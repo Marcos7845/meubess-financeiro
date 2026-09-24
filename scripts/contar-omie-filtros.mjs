@@ -3,8 +3,10 @@
 // o número de páginas e de lançamentos. Nunca imprime valor, cliente, descrição, categoria nem a chave.
 // Um filtro que o Omie ignora aparece com a mesma contagem da linha "sem filtro de data".
 //
-// Uso: node scripts/contar-omie-filtros.mjs AAAA-MM        (ex.: node scripts/contar-omie-filtros.mjs 2026-08)
-// Credencial: OMIE_APP_KEY e OMIE_APP_SECRET no .env da raiz (fora do git). Node 21.7+, sem dependências.
+// Uso: node scripts/contar-omie-filtros.mjs AAAA-MM [chave=N]   (ex.: node scripts/contar-omie-filtros.mjs 2026-08)
+// Credencial no .env da raiz (fora do git): por padrão o par OMIE_MEUBESS_2_APP_KEY / OMIE_MEUBESS_2_APP_SECRET, a chave
+// das telas (filial /0002-23). chave=1 ou chave=3 lê o par OMIE_MEUBESS_1_… ou OMIE_MEUBESS_3_… no lugar.
+// Node 21.7+, sem dependências.
 
 const URL_OMIE = "https://app.omie.com.br/api/v1/financas/mf/";
 const POR_PAGINA = 100;
@@ -12,11 +14,20 @@ const MAX_PAGINAS = 300;
 const PAUSA_MS = 2500;
 const TENTATIVAS = 4;
 
-const mes = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(process.argv[2] ?? "");
+const args = process.argv.slice(2);
+const mes = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(args.find((a) => !a.startsWith("chave=")) ?? "");
 if (!mes) {
   console.log("ERRO: informe o mês como AAAA-MM (ex.: 2026-08)");
   process.exit(1);
 }
+const escolhida = args.find((a) => a.startsWith("chave="))?.slice(6);
+if (escolhida !== undefined && !/^[123]$/.test(escolhida)) {
+  console.log("ERRO: chave deve ser 1, 2 ou 3 (ex.: chave=1)");
+  process.exit(1);
+}
+// Nomes das variáveis; o padrão é a chave 2 e chave=N só troca o número
+const VAR_CHAVE = "OMIE_MEUBESS_2_APP_KEY".replace("_2_", `_${escolhida ?? 2}_`);
+const VAR_SEGREDO = "OMIE_MEUBESS_2_APP_SECRET".replace("_2_", `_${escolhida ?? 2}_`);
 const [, ano, mm] = mes;
 const ultimo = String(new Date(Date.UTC(Number(ano), Number(mm), 0)).getUTCDate()).padStart(2, "0");
 
@@ -26,9 +37,12 @@ try {
   console.log("ERRO: arquivo .env não encontrado ou ilegível na raiz do repositório");
   process.exit(1);
 }
-const { OMIE_APP_KEY, OMIE_APP_SECRET } = process.env;
-if (!OMIE_APP_KEY || !OMIE_APP_SECRET) {
-  console.log("ERRO: OMIE_APP_KEY e OMIE_APP_SECRET precisam estar preenchidas no .env");
+const APP_KEY = process.env[VAR_CHAVE];
+const APP_SECRET = process.env[VAR_SEGREDO];
+// só o NOME da variável que falta, nunca o valor
+const faltam = [[VAR_CHAVE, APP_KEY], [VAR_SEGREDO, APP_SECRET]].filter(([, v]) => !v).map(([n]) => n);
+if (faltam.length) {
+  console.log(`ERRO: ${faltam.join(" e ")} ${faltam.length > 1 ? "precisam" : "precisa"} estar preenchida${faltam.length > 1 ? "s" : ""} no .env`);
   process.exit(1);
 }
 
@@ -49,8 +63,8 @@ async function contar(filtro) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             call: "ListarMovimentos",
-            app_key: OMIE_APP_KEY,
-            app_secret: OMIE_APP_SECRET,
+            app_key: APP_KEY,
+            app_secret: APP_SECRET,
             param: [{ nPagina: n, nRegPorPagina: POR_PAGINA, ...filtro }],
           }),
         });

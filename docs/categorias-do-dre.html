@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Categorias do Omie: o que é dedução, custo, depreciação e resultado financeiro</title>
+<style>
+  :root {
+    --tinta: #1b2430; --fraco: #5d6b7a; --linha: #e2e8ef; --fundo: #fbfcfd; --caixa: #fff;
+    --a: #7b4bb7; --b: #0f7b6c; --c: #b06a00; --d: #1f5fa8; --duvida: #fff8e6; --duvidab: #e8c86a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0 1.2rem 4rem; background: var(--fundo); color: var(--tinta);
+    font: 16px/1.62 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 63rem; margin: 0 auto; }
+  header { padding: 2.6rem 0 1.4rem; border-bottom: 2px solid var(--linha); margin-bottom: 1.8rem; }
+  h1 { font-size: 1.85rem; line-height: 1.25; margin: 0 0 .9rem; letter-spacing: -.01em; }
+  h2 { font-size: 1.32rem; margin: 0 0 .7rem; display: flex; align-items: center; gap: .6rem; }
+  h3 { font-size: .98rem; margin: 1.7rem 0 .4rem; text-transform: uppercase; letter-spacing: .05em; color: var(--fraco); }
+  p { margin: 0 0 .85rem; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .87em;
+    background: #eef2f6; padding: .1em .35em; border-radius: 3px; }
+  .chamada { background: #eef4fb; border-left: 4px solid var(--d); padding: 1rem 1.2rem; border-radius: 0 6px 6px 0; margin: 0 0 1.1rem; }
+  .aviso { background: #fdf3f3; border-left: 4px solid #c0564f; padding: 1rem 1.2rem; border-radius: 0 6px 6px 0; margin: 1.4rem 0; }
+  .indice { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.4rem 0 0; padding: 0; list-style: none; }
+  .indice a { display: block; padding: .45rem .8rem; background: var(--caixa); border: 1px solid var(--linha);
+    border-radius: 999px; text-decoration: none; color: var(--tinta); font-size: .9rem; }
+  .indice a:hover { border-color: var(--fraco); }
+  section { background: var(--caixa); border: 1px solid var(--linha); border-radius: 10px;
+    padding: 1.6rem 1.7rem; margin: 0 0 1.5rem; }
+  #grupo-a h2 .letra { background: var(--a); } #grupo-b h2 .letra { background: var(--b); }
+  #grupo-c h2 .letra { background: var(--c); } #grupo-d h2 .letra { background: var(--d); }
+  .letra { display: inline-grid; place-items: center; width: 1.85rem; height: 1.85rem; border-radius: 50%;
+    color: #fff; font-size: .95rem; font-weight: 700; flex: none; }
+  .paraque { font-size: 1.02rem; }
+  .onde { font-size: .93rem; color: var(--fraco); border-top: 1px dashed var(--linha); padding-top: .7rem; }
+  .nota { font-size: .9rem; color: var(--fraco); }
+  table { width: 100%; border-collapse: collapse; margin: .6rem 0 0; font-size: .89rem; }
+  th, td { text-align: left; padding: .42rem .55rem; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--fraco);
+    border-bottom: 2px solid var(--linha); white-space: nowrap; }
+  td.emp, td.num { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.num { font-weight: 600; }
+  td.pista { font-size: .84rem; color: #8a6d1f; white-space: nowrap; }
+  tbody tr:hover { background: #f7fafc; }
+  h3 + .nota + table tbody tr:hover { background: #f7fafc; }
+  .vazia { color: var(--fraco); font-style: italic; font-size: .88rem; }
+  .vazio { background: #fff8ef; border: 1px solid #e9d3ad; border-radius: 8px; padding: 1.1rem 1.2rem; }
+  .vazio p:last-child { margin-bottom: 0; }
+  details { margin: 1rem 0 0; background: var(--duvida); border: 1px solid var(--duvidab); border-radius: 8px; padding: .7rem 1rem; }
+  summary { cursor: pointer; font-size: .9rem; font-weight: 600; }
+  details table { margin-top: .8rem; }
+  footer { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 2px solid var(--linha);
+    font-size: .88rem; color: var(--fraco); }
+  footer code { font-size: .85em; }
+  .placar { display: flex; flex-wrap: wrap; gap: .8rem; margin: 1.2rem 0 0; }
+  .placar div { flex: 1 1 8rem; background: var(--caixa); border: 1px solid var(--linha);
+    border-radius: 8px; padding: .75rem .9rem; }
+  .placar b { display: block; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .placar span { font-size: .82rem; color: var(--fraco); }
+  @media (max-width: 40rem) { section { padding: 1.2rem 1rem; } table { font-size: .82rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Categorias do Omie: o que é dedução, custo, depreciação e resultado financeiro</h1>
+  <p>A Tela 2 (o DRE) precisa saber, de cada categoria do plano de contas, em qual linha ela entra. Quatro dessas
+  linhas o Omie <strong>não marca sozinho</strong> — nada no cadastro diz "isto aqui é dedução da receita". Esta
+  página olha as 270 categorias das empresas 1 e 2 e <strong>sugere</strong> quais são, usando duas pistas:
+  o <strong>nome</strong> da categoria e a <strong>conta do DRE</strong> em que ela já está pendurada hoje.</p>
+
+  <div class="chamada">
+    <p style="margin:0"><strong>Isto é sugestão, não decisão.</strong> Nenhuma categoria foi mexida no Omie e nenhuma
+    lacuna de <code>docs/fontes.md</code> foi fechada por esta página. Onde as duas pistas concordam, a sugestão é
+    firme; onde elas discordam, a categoria vai para "em dúvida" com o motivo ao lado. A palavra final é do dono.</p>
+  </div>
+
+  <div class="placar">
+    <div><b>39</b><span>categorias sugeridas, somando os quatro grupos</span></div>
+    <div><b>49</b><span>em dúvida — as duas pistas discordam</span></div>
+    <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
+    <div><b>2171</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
+  </div>
+
+  <ul class="indice">
+    <li><a href="#grupo-a">a · Dedução da receita (10)</a></li>
+    <li><a href="#grupo-b">b · Custo de vendas (18)</a></li>
+    <li><a href="#grupo-c">c · Depreciação e amortização (0)</a></li>
+    <li><a href="#grupo-d">d · Resultado financeiro (11)</a></li>
+  </ul>
+</header>
+
+<section style="background:#f4f7fa">
+  <h2 style="font-size:1.1rem">Como ler esta página, em meio minuto</h2>
+  <p>Cada grupo abaixo tem <strong>duas listas</strong>. A primeira, <em>sugeridas</em>, é onde o nome da categoria e a
+  conta do DRE contam a mesma história — pode bater o olho e seguir. A segunda, <em>em dúvida</em>, é onde as duas
+  discordam, e é a lista que realmente pede sua decisão: o nome diz uma coisa e o cadastro do Omie diz outra.</p>
+  <p>A coluna <strong>lanç.</strong> é quantos lançamentos aquela categoria teve de 01/01/2026 a 30/09/2026 — serve para você saber o
+  que é grande e o que é cadastro parado. Categoria em dúvida <strong>sem nenhum lançamento</strong> fica escondida
+  atrás de um "mostrar mais", porque não muda número nenhum hoje. <strong>Não há valores em reais nesta página.</strong></p>
+  <p class="nota">A coluna <strong>emp.</strong> diz de qual empresa é a categoria: <strong>1</strong> é a filial
+  <code>/0001-42</code> (as rotinas administrativas) e <strong>2</strong> é a <code>/0002-23</code> (compra, venda e
+  logística). As duas têm planos separados, com a mesma numeração e conteúdo diferente — por isso o mesmo código
+  aparece duas vezes, às vezes com nomes diferentes.</p>
+</section>
+
+<section id="grupo-a">
+  <h2><span class="letra">a</span> Dedução da receita</h2>
+  <p class="paraque">É o dinheiro que entrou como venda mas não é seu: imposto que incide sobre a venda e venda que voltou (devolução, cancelamento). Tirando isso da receita bruta você chega na <em>receita líquida</em>, que é a receita de verdade — e é sobre ela que a tela calcula o peso de cada despesa.</p>
+  <p class="onde">Na Tela 2, na linha <strong>(−) Deduções</strong> — logo abaixo da receita bruta.</p>
+  <h3>Sugeridas: 10</h3>
+  <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.09.01</code></td>
+      <td>Devoluções de Vendas de Mercadoria</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">1</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.01</code></td>
+      <td>ICMS</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.03</code></td>
+      <td>PIS SOBRE VENDAS</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.04</code></td>
+      <td>COFINS SOBRE VENDAS</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.09.01</code></td>
+      <td>Devoluções de Vendas de Mercadoria</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.09.02</code></td>
+      <td>Devoluções de Vendas de Serviços Prestados</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.01</code></td>
+      <td>ICMS</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.03</code></td>
+      <td>PIS A RECOLHER</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.04</code></td>
+      <td>COFINS A RECOLHER</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.09.02</code></td>
+      <td>Devoluções de Vendas de Produtos</td>
+      <td><code>1.01.03</code> Deduções de Receita</td>
+      <td class="num">0</td>
+    </tr>
+    </tbody>
+  </table><h3>Em dúvida: 3 com movimento no período</h3>
+  <p class="nota">Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.07</code></td>
+      <td>ISS RETIDO</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.07</code></td>
+      <td>ISS RETIDO</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.02.97</code></td>
+      <td>Reembolso por cancelamento</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">4</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table><details><summary>Mais 5 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.02</code></td>
+      <td>IPI</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.99</code></td>
+      <td>Simples Nacional (DAS)</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.02.96</code></td>
+      <td>Estorno de venda</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.02</code></td>
+      <td>IPI A RECOLHER</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.99</code></td>
+      <td>Simples Nacional (DAS)</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table></details>
+</section>
+
+<section id="grupo-b">
+  <h2><span class="letra">b</span> Custo de vendas</h2>
+  <p class="paraque">É o que você gastou para ter o que vendeu: a mercadoria comprada para revenda, a matéria-prima, o frete que trouxe a carga, a armazenagem. Não é despesa de escritório. Receita líquida menos custo de vendas é o <em>lucro bruto</em> — quanto sobra da venda antes de pagar a estrutura da empresa.</p>
+  <p class="onde">Na Tela 2, na linha <strong>(−) Custos de vendas</strong>.</p>
+  <h3>Sugeridas: 18</h3>
+  <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.99</code></td>
+      <td>Gás para empilhadeira - Custos</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">7</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.89</code></td>
+      <td>Pensão Alimentícia- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">6</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.96</code></td>
+      <td>Adiantamento de Salário (custo)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">3</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.85</code></td>
+      <td>Seguro de Vida- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">2</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.90</code></td>
+      <td>IRRF S/ Salários-  Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">2</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.91</code></td>
+      <td>FGTS-  Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">2</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.94</code></td>
+      <td>Rescisões- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">2</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.88</code></td>
+      <td>Assistência Médica e social - Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.92</code></td>
+      <td>INSS-  Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.02</code></td>
+      <td>Fretes s/ compras</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.04</code></td>
+      <td>Compra de Serviços</td>
+      <td><code>1.21.02</code> Custo dos Serviços Prestados</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.84</code></td>
+      <td>Outros Benefícios-  Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.86</code></td>
+      <td>Vale Refeição- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.87</code></td>
+      <td>Vale Transporte- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.93</code></td>
+      <td>13º Salário- Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.95</code></td>
+      <td>Férias - Custo (estoque)</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.04</code></td>
+      <td>Compra de Serviços</td>
+      <td><code>1.21.02</code> Custo dos Serviços Prestados</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.99</code></td>
+      <td>CUSTO DOS PRODUTOS VENDIDOS</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+    </tr>
+    </tbody>
+  </table><h3>Em dúvida: 19 com movimento no período</h3>
+  <p class="nota">Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.02</code></td>
+      <td>Fretes s/ compras</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">227</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.03</code></td>
+      <td>Compras de Materia Prima</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">126</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.01</code></td>
+      <td>Compras de Mercadorias para Revenda</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">53</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.03</code></td>
+      <td>Compras de Materia Prima</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">26</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.91</code></td>
+      <td>Locação de Máquinas e Equipamentos-Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">21</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.08.99</code></td>
+      <td>OUTRAS DESPESAS</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">15</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.08.98</code></td>
+      <td>Reembolso</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">11</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.01</code></td>
+      <td>Compras de Mercadorias para Revenda</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">9</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.97</code></td>
+      <td>Salários - Custo (estoque)</td>
+      <td><code>2.11.01</code> Despesas com Pessoal</td>
+      <td class="num">8</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.93</code></td>
+      <td>Seguros de carga -Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.98</code></td>
+      <td>Aluguel -Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">4</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.94</code></td>
+      <td>IPTU- Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">3</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.08.99</code></td>
+      <td>Reembolso - Custo</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">3</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.82</code></td>
+      <td>Uniformes e equipamentos de Segurança - Custo (estoque)</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">2</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.90</code></td>
+      <td>Vigilância e Monitoramento -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">2</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.83</code></td>
+      <td>Terceiros e Estagiários-  Custo (estoque)</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.04.88</code></td>
+      <td>Armazém e Manuseio</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.95</code></td>
+      <td>Telefone e Internet -Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.97</code></td>
+      <td>Água e Esgoto-Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table><details><summary>Mais 6 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.01.81</code></td>
+      <td>Mensalidade/Contribuição Sindical-  Custo (estoque)</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.02.94</code></td>
+      <td>Seguro - mercadoria</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.89</code></td>
+      <td>Gas para empilhadeira -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.92</code></td>
+      <td>Armanezagem e manuseio de Carga -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.96</code></td>
+      <td>Energia Elétrica-Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table></details>
+</section>
+
+<section id="grupo-c">
+  <h2><span class="letra">c</span> Depreciação e amortização</h2>
+  <p class="paraque">É o desgaste do que a empresa comprou para durar (máquina, veículo, instalação) espalhado ao longo dos anos de uso. É a única despesa da lista que <strong>não sai dinheiro do caixa no mês</strong>: você pagou a máquina uma vez e a contabilidade reparte esse valor por vários anos.</p>
+  <p class="onde">No cartão de <strong>EBITDA</strong> da Tela 2 — é uma das duas coisas que o EBITDA tira da conta.</p>
+  <h3>Sugeridas: nenhuma</h3>
+  <div class="vazio">
+    <p><strong>Não existe categoria de depreciação nem de amortização no plano das duas empresas.</strong> A busca por
+    "deprecia", "amortiza" e "exaust" no nome, na descrição padrão e na explicação de cada uma das
+    350 categorias não achou nenhuma, e nenhuma das 28 contas do DRE é
+    dessas duas.</p>
+    <p>Isso é esperado, e não é erro de cadastro: o plano do Omie classifica <em>movimento de dinheiro</em>, e
+    depreciação não movimenta dinheiro. O que existe no plano é a <strong>compra</strong> do bem — a conta do DRE
+    <code>3.01.01</code> "Ativos", com 7 categorias, como "Máquinas e Equipamentos", "Consórcio", "Instalações".
+    Essa compra é a matéria-prima do cálculo da depreciação, não o cálculo.</p>
+    <p><strong>O que isso significa para a tela:</strong> a depreciação teria de vir de fora do módulo financeiro do
+    Omie — da ficha de bens do contador. Enquanto ela não vier, o EBITDA da tela é EBITDA sem depreciação e sem
+    amortização, e a tela precisa dizer isso ao lado do número. Quem decide é o dono.</p>
+  </div>
+</section>
+
+<section id="grupo-d">
+  <h2><span class="letra">d</span> Resultado financeiro</h2>
+  <p class="paraque">É o que o dinheiro custou ou rendeu, e não a operação: juros de empréstimo, tarifa do banco, IOF de um lado; rendimento de aplicação do outro. O EBITDA tira isso porque ele quer mostrar se a operação em si dá lucro, separado de como a empresa se financia.</p>
+  <p class="onde">No cartão de <strong>EBITDA</strong> da Tela 2 — é a outra coisa que o EBITDA tira da conta.</p>
+  <h3>Sugeridas: 11</h3>
+  <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.04</code></td>
+      <td>Tarifas Bancárias</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">6</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.05.04</code></td>
+      <td>Tarifas Bancárias</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">3</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.02</code></td>
+      <td>Juros e Multas pagos</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">1</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.01.02</code></td>
+      <td>Rendimento Bancários</td>
+      <td><code>1.11.02</code> Receitas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.04.95</code></td>
+      <td>Rendimento Bancário</td>
+      <td><code>1.11.02</code> Receitas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.01</code></td>
+      <td>Juros sobre Empréstimos</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.04.94</code></td>
+      <td>Rendimento Financeiro</td>
+      <td><code>1.11.02</code> Receitas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.04.91</code></td>
+      <td>Emprestimo</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.05.01</code></td>
+      <td>Juros sobre Empréstimos</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.05.02</code></td>
+      <td>Juros e Multas pagos</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.05.99</code></td>
+      <td>Tarifas Bancarias</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+    </tbody>
+  </table><h3>Em dúvida: 7 com movimento no período</h3>
+  <p class="nota">Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.98</code></td>
+      <td>Cartão de Credito</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">69</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.99</code></td>
+      <td>Aluguel Veiculo</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">17</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.02.02</code></td>
+      <td>Rendimentos de Aplicações</td>
+      <td><code>1.11.01</code> Outras Receitas</td>
+      <td class="num">7</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.95</code></td>
+      <td>IOF</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.08.02</code></td>
+      <td>Pagamento empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">3</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.99</code></td>
+      <td>Transferência Intercompany</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">2</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.04.99</code></td>
+      <td>Recebimento de Empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table><details><summary>Mais 9 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.04.03</code></td>
+      <td>Recebimento de Empréstimos Bancários</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.03</code></td>
+      <td>Pagamento de Empréstimos Bancários</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.02.02</code></td>
+      <td>Rendimentos de Aplicações</td>
+      <td><code>1.11.01</code> Outras Receitas</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.04.03</code></td>
+      <td>Recebimento de Empréstimos Bancários</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.04.99</code></td>
+      <td>Recebimento de Empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.05.03</code></td>
+      <td>Pagamento de Empréstimos Bancários</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.95</code></td>
+      <td>IOF</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.10.98</code></td>
+      <td>Pagamento empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table></details>
+</section>
+
+<section class="aviso" style="border-radius:10px">
+  <h2 style="font-size:1.1rem">O que esta página responde — e o que ela não fecha</h2>
+  <p>Ela dá material para quatro lacunas de <code>docs/fontes.md</code>, e <strong>não fecha nenhuma delas</strong>:</p>
+  <ul>
+    <li>a linha <strong>(−) Deduções</strong> da Tela 2 — quais categorias do Omie são dedução: grupo <strong>a</strong>;</li>
+    <li>a linha <strong>(−) Custos de vendas</strong> — quais contas do DRE são de custo: grupo <strong>b</strong>;</li>
+    <li>o cartão de <strong>EBITDA</strong> — quais categorias são depreciação, amortização e resultado financeiro:
+        grupos <strong>c</strong> e <strong>d</strong>;</li>
+    <li>o cartão <strong>% desp. funcionários / receita líquida</strong> da Tela 1, que depende da receita líquida e,
+        por ela, do grupo <strong>a</strong>.</li>
+  </ul>
+  <p style="margin-bottom:0">Enquanto o dono não escolher, as quatro seguem escritas como lacuna em
+  <code>docs/fontes.md</code>, e o EBITDA da tela continua sem se distinguir do lucro operacional.</p>
+</section>
+
+<footer>
+  <p><strong>De onde saem estes números.</strong> Do cadastro de categorias das empresas 1 e 2 lido do Omie em
+  24/09/2026 (<code>geral/categorias</code> → <code>ListarCategorias</code>, 183 categorias na
+  empresa 1 e 167 na 2), com a conta do DRE de cada uma vindo do próprio retorno
+  (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem da leitura de
+  <code>financas/mf</code> → <code>ListarMovimentos</code> da mesma data, na faixa de 01/01/2026 a 30/09/2026 por data de pagamento,
+  fora os <code>CANCELADO</code>, contando cada título uma vez pelo <code>nCodTitulo</code>.</p>
+  <p>Ficaram de fora da conta: 34 categorias totalizadoras (são somas, não recebem lançamento),
+  42 vagas <code>&lt;Disponível&gt;</code> do plano padrão do Omie e 4 de transferência
+  entre contas. Nome de terceiro aparece como <code>[terceiro]</code>, como em <code>docs/fontes.md</code>.</p>
+  <p>Página gerada por <code>scripts/categorias-do-dre.mjs</code>, que <strong>não chama a API do Omie</strong>: lê o
+  cache local de <code>.cache/omie/</code> (pasta fora do git) que o <code>scripts/confronto-dfc-omie.mjs</code>
+  gravou. Nada foi escrito no Omie nem nas planilhas. O cadastro inteiro, lado a lado, está em
+  <code>docs/plano-de-categorias-omie.html</code>.</p>
+</footer>
+
+</div>
+</body>
+</html>

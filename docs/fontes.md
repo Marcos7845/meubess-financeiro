@@ -34,7 +34,38 @@ Toda consulta roda nas duas chaves e os resultados se somam. Medido no Omie em 2
 Nenhum lançamento usa código fora do cadastro, nas duas empresas. As divergências não são cosméticas: o código `2.01.89`
 é "Pensão Alimentícia- Custo (estoque)" (DRE `1.21.03`) na empresa 1 e "Gas para empilhadeira -Custos" (DRE `2.11.02`)
 na empresa 2; o `2.01.02` é "Fretes s/ compras" nas duas, mas cai em `1.21.03` numa e em `2.01.01` na outra.
-**lacuna:** a decisão do dono (24/09/2026) é que o contador unifica os planos no Omie — mesmo código com a mesma descrição e a mesma conta do DRE nas duas empresas. **Leitura refeita em 24/09/2026** (`scripts/plano-de-contas-omie.mjs`, só leitura) depois de o contador ter avisado que unificou: **a unificação não aparece no Omie.** Os números são os mesmos da primeira leitura — 187 códigos, 86 iguais, **77 com cadastro diferente** (63 na descrição, 46 na conta do DRE, 32 nas duas), 20 só na empresa 1 e 4 só na empresa 2 — e o cadastro de categorias lido é idêntico ao da leitura anterior; só mudou a contagem de lançamentos de 2026 da empresa 1 (2.572 para 2.569). Enquanto os 77 códigos tiverem cadastro diferente, somar por categoria junta coisas distintas, e as 46 com `codigo_dre` diferente caem em linhas diferentes do DRE. A soma por categoria só vale quando uma nova leitura mostrar zero divergências; a lacuna fecha nesse dia. Os 77 que ainda divergem, por código (nome de terceiro que aparece em 3 descrições está trocado por `[terceiro]`):
+**Decisão do dono (24/09/2026): as três telas somam as empresas 1 e 2 pela conta do DRE de cada empresa, sem unificar os planos de categorias.** Cada lançamento cai na linha do DRE pelo `codigo_dre` da categoria dele **na própria empresa** — e não pelo código da categoria —, e o contador **não** vai unificar os planos. Assim os 77 códigos com cadastro diferente deixam de bloquear a soma: o mesmo código pode ter outro nome ou outra conta do DRE na outra empresa, e cada lançamento segue a conta da empresa dele. O que a soma exige é que as contas do DRE das duas empresas sejam as mesmas, e **são** — medido em 24/09/2026 por `scripts/contas-dre-omie.mjs` (só leitura, `geral/dre` → `ListarCadastroDRE` nas duas chaves):
+
+| contas do DRE | |
+|---|---|
+| em cada empresa | 28 na empresa 1 e 28 na empresa 2 |
+| iguais (mesmo código e mesma descrição) | 28 — e também com o mesmo nível, sinal, "totaliza" e exibição |
+| mesmo código, descrição diferente | 0 |
+| só na empresa 1 | 0 |
+| só na empresa 2 | 0 |
+
+As 28 contas, iguais nas duas: 9 totalizadoras (`1` Lucro Bruto, `1.01` Receita Líquida Operacional, `1.11` Receita Líquida Indireta, `1.21` Custos, `2` Despesas, `2.01` Variáveis, `2.11` Fixas, `3` Investimentos, `3.01` Investimentos) e 19 que recebem categoria: `1.01.01` Receita Bruta de Vendas, `1.01.02` Impostos, `1.01.03` Deduções de Receita, `1.11.01` Outras Receitas, `1.11.02` Receitas Financeiras, `1.11.03` Outras Deduções de Receita, `1.21.01` Custo Médio (CMC) das Vendas, `1.21.02` Custo dos Serviços Prestados, `1.21.03` Outros Custos, `2.01.01` Despesas Variáveis, `2.01.02` Recuperação de Despesas Variáveis, `2.11.01` Despesas com Pessoal, `2.11.02` Despesas Administrativas, `2.11.03` Despesas Financeiras, `2.11.04` Despesas de Vendas e Marketing, `2.11.05` Outros Tributos, `2.11.10` Recuperação de Despesas Fixas, `3.01.01` Ativos e `3.01.02` Serviços. A `1.21.01` está marcada para não aparecer no DRE, nas duas empresas.
+
+**lacuna:** categoria usada em lançamento sem `codigo_dre` não cai em nenhuma linha do DRE por essa regra. A mesma leitura, sobre os lançamentos emitidos em 2026 (fora os `CANCELADO`; um lançamento conta uma vez por categoria), achou **13 categorias sem `codigo_dre` na empresa 1, em 355 lançamentos** (a empresa tem 87 categorias usadas e 2.569 lançamentos contados), e **1 na empresa 2, em 111 lançamentos** (35 categorias usadas, 2.845 lançamentos). Nenhuma categoria usada está fora do cadastro de categorias, e nenhuma tem `codigo_dre` que não exista no DRE da própria empresa. Se esses lançamentos viram uma linha "sem conta do DRE", se o contador preenche o `codigo_dre` dessas categorias no Omie ou se cada uma é ligada a uma conta por nós é decisão da MeuBESS.
+
+| empresa | código | descrição | lançamentos em 2026 |
+|---|---|---|---|
+| 1 | `1.04.99` | Recebimento de Empréstimo Intercompany [terceiro] | 2 |
+| 1 | `2.01` | Custos/Despesas Diretas | 10 |
+| 1 | `2.01.01` | Compras de Mercadorias para Revenda | 18 |
+| 1 | `2.01.03` | Compras de Materia Prima | 76 |
+| 1 | `2.01.82` | Uniformes e equipamentos de Segurança - Custo (estoque) | 4 |
+| 1 | `2.01.83` | Terceiros e Estagiários-  Custo (estoque) | 2 |
+| 1 | `2.02` | Despesas de Vendas e Marketing | 24 |
+| 1 | `2.08.01` | Adiantamento/Retirada de Sócio | 13 |
+| 1 | `2.08.02` | Pagamento empréstimo Intercompany [terceiro] | 7 |
+| 1 | `2.10.97` | Adiantamentos a Fornecedores | 8 |
+| 1 | `2.10.98` | Pagamento [terceiro] - Adto acordo Juridico | 30 |
+| 1 | `2.10.99` | Implantação de saldos (saidas) | 159 |
+| 1 | `2.11` | Despesas Diretoria | 2 |
+| 2 | `2.10.96` | Implantação de saldos (saidas) | 111 |
+
+Para consulta, os 77 códigos com cadastro diferente entre as duas empresas (leitura de 24/09/2026; nome de terceiro que aparece em 3 descrições está trocado por `[terceiro]`). Pela decisão acima, cada um segue a conta do DRE da própria empresa:
 
 | código | descrição na empresa 1 | descrição na empresa 2 | difere em |
 |---|---|---|---|

@@ -16,10 +16,16 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
 - **Só leitura nas fontes.** Nada aqui escreve no ERP, nas planilhas de origem ou em qualquer sistema financeiro.
 - **Credencial só no `.env`** (fora do git; o modelo é o `.env.example`). Nunca em código, commit, log ou mensagem.
   O Omie tem três chaves, uma por filial, só para leitura, gravadas pelo dono no `.env` local, cada uma em um par de
-  variáveis: `OMIE_MEUBESS_1_APP_KEY` / `OMIE_MEUBESS_1_APP_SECRET` (filial `/0001-42`), `OMIE_MEUBESS_2_APP_KEY` /
-  `OMIE_MEUBESS_2_APP_SECRET` (filial `/0002-23`) e `OMIE_MEUBESS_3_APP_KEY` / `OMIE_MEUBESS_3_APP_SECRET` (filial
-  `/0003-04`). **A das telas é a `OMIE_MEUBESS_2`**: só a filial `/0002-23` tem os pedidos, clientes e produtos que a
-  plataforma envia (ver [`docs/comparacao-chaves-omie.html`](docs/comparacao-chaves-omie.html)).
+  variáveis, e cada filial tem o seu papel (dono, 24/09/2026):
+  - `OMIE_MEUBESS_1_APP_KEY` / `OMIE_MEUBESS_1_APP_SECRET` — empresa 1, filial `/0001-42`: as **rotinas administrativas**
+    (o escritório);
+  - `OMIE_MEUBESS_2_APP_KEY` / `OMIE_MEUBESS_2_APP_SECRET` — empresa 2, filial `/0002-23`: **compra, venda e logística**,
+    a principal. **É a chave das telas**: só ela tem os pedidos, clientes e produtos que a plataforma envia (ver
+    [`docs/comparacao-chaves-omie.html`](docs/comparacao-chaves-omie.html));
+  - `OMIE_MEUBESS_3_APP_KEY` / `OMIE_MEUBESS_3_APP_SECRET` — empresa 3, filial `/0003-04`: papel não informado.
+
+  Em aberto: falta decidir se as telas somam a empresa 1 à empresa 2 (hoje só a 2 é lida). Detalhe em
+  [`docs/fontes.md`](docs/fontes.md).
 - **Todo número confere com a fonte.** Cada indicador diz de onde vem (ERP: módulo, tabela e filtro; planilha: arquivo,
   aba e coluna) e é conferido com um caso real antes de ser dado como pronto.
 - **Número financeiro não sai da máquina para ser medido ou classificado** por serviço de terceiros.

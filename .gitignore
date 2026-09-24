@@ -9,3 +9,6 @@ dist/
 .next/
 graphify-out/cache/
 mapa-omie*.log
+
+# cache local das leituras do Omie (scripts/confronto-dfc-omie.mjs) — nunca entra em commit
+.cache/

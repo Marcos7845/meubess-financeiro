@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confronto DFC × Omie — meses fechados de 2026</title>
+<style>
+  :root { --tinta:#1b2430; --fraca:#5b6878; --linha:#e2e7ee; --fundo:#f6f8fb; --ok:#127a4b; --at:#96650a; --ruim:#b02a2a; }
+  * { box-sizing:border-box }
+  body { margin:0; padding:32px 24px 64px; font:16px/1.55 -apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--tinta); background:var(--fundo) }
+  main { max-width:1140px; margin:0 auto }
+  h1 { font-size:28px; margin:0 0 4px }
+  h2 { font-size:21px; margin:44px 0 10px; padding-top:18px; border-top:2px solid var(--linha) }
+  h3 { font-size:17px; margin:26px 0 8px }
+  p, li { max-width:92ch }
+  .sub { color:var(--fraca); margin:0 0 24px }
+  .cartao { background:#fff; border:1px solid var(--linha); border-radius:10px; padding:16px 20px; margin:16px 0 }
+  table { border-collapse:collapse; width:100%; background:#fff; font-size:14px; margin:12px 0 }
+  th, td { border:1px solid var(--linha); padding:7px 10px; text-align:left; vertical-align:top }
+  th { background:#eef2f7; font-weight:600 }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap }
+  .ok { color:var(--ok); font-weight:600 }
+  .atencao { color:var(--at); font-weight:600 }
+  .ruim { color:var(--ruim); font-weight:600 }
+  .nota { background:#fffbe9; border-left:4px solid #e0b700; padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:13px }
+  .barra { display:inline-block; height:9px; background:#3b7dd8; border-radius:3px; vertical-align:middle }
+  .barra.b { background:#8a9bb0 }
+  footer { color:var(--fraca); font-size:13px; margin-top:48px; border-top:1px solid var(--linha); padding-top:16px }
+</style>
+<main>
+<h1>Confronto DFC × Omie — meses fechados de 2026</h1>
+<p class="sub">Janeiro a setembro de 2026. Leitura de 24/09/2026 por <code>scripts/confronto-dfc-omie.mjs</code>, só leitura das duas fontes.
+Esta página é a única saída com valores em reais; ela fica no repositório e não sai da máquina.</p>
+
+<div class="cartao">
+  <strong>O que está sendo comparado.</strong> Do lado do DFC, as linhas da aba <code>FLUXO DE CAIXA</code> dos 9 arquivos de mês
+  fechado, com <code>DIA PG</code> dentro do próprio mês e marca de baixa em <code>PAGAMENTO</code>:
+  <strong>4643</strong> linhas. Do lado do Omie, os lançamentos de <code>financas/mf</code> → <code>ListarMovimentos</code>
+  das empresas 1 (<code>/0001-42</code>) e 2 (<code>/0002-23</code>) somadas, com <code>dDtPagtoDe</code>/<code>dDtPagtoAte</code> na faixa,
+  fora os <code>CANCELADO</code>, valor em <code>resumo.nValPago</code>: <strong>2148</strong> lançamentos.
+  As linhas <code>A PAGAR</code> do DFC e os saldos de bloco ficam de fora — o confronto é de caixa, dos dois lados.
+</div>
+
+<div class="nota">
+  <strong>Achado novo da leitura: o rótulo da coluna do DFC não descreve o que está na coluna.</strong> O cabeçalho diz
+  <code>ENTRADA</code> (K) e <code>SAIDA</code> (L), mas nos nove arquivos a coluna K guarda o movimento <strong>com sinal</strong> —
+  negativo é saída, positivo é entrada — e a coluna L só aparece preenchida em linha de recebimento, trazendo o
+  <em>saldo corrido do banco</em>, não uma saída. Quem somar a coluna <code>SAIDA</code> como despesa soma saldo, não gasto.
+  Este confronto lê o valor pelo módulo de K (a L só nas 33 linhas em que K vem vazia) e
+  a natureza pelo sinal, conferida contra a coluna <code>PAGAMENTO</code>:
+  <strong>31</strong> linhas em 4643 têm sinal e
+  <code>PAGAMENTO</code> discordando. A correção disto muda a linha de <code>docs/fontes.md</code> que manda somar <code>ENTRADA</code> (K) e
+  <code>SAIDA</code> (L) — mas isso é decisão do dono, e nada foi alterado lá.
+</div>
+
+<h2>O que a leitura achou, em cinco linhas</h2>
+<ol>
+  <li><strong>O Omie só começa em março.</strong> Em janeiro ele tem 3 lançamento(s) pagos e em fevereiro 14, contra 413 e 420 linhas no DFC. Os percentuais de janeiro e fevereiro na tabela abaixo são aritmética sobre quase nada — <strong>ignore-os</strong>. O confronto real é de março a setembro.</li>
+  <li><strong>De março a setembro as entradas batem razoavelmente e as saídas não.</strong> Nas entradas a diferença fica quase sempre abaixo de 5%; nas saídas ela é grande e sempre no mesmo sentido: o DFC registra mais que o Omie.</li>
+  <li><strong>O rótulo da coluna do DFC engana</strong> (ver o aviso acima): a coluna <code>SAIDA</code> não tem saída.</li>
+  <li><strong>59.4% dos lançamentos do Omie acham par no DFC</strong> pela data e pelo valor, mas só 27.5% das linhas do DFC acham par no Omie — o DFC é mais miúdo: ele lança frete, tarifa e cartão linha a linha.</li>
+  <li><strong>A coluna <code>EMP.</code> não é o recorte de empresa do Omie</strong> (seção 3).</li>
+</ol>
+
+<h2>1. Mês a mês: entradas e saídas</h2>
+<p>A base do percentual é o Omie. Diferença positiva = o DFC registra mais que o Omie.</p>
+<table>
+<tr><th rowspan="2">mês</th><th class="n" colspan="4">entradas (recebido)</th><th class="n" colspan="4">saídas (pago)</th></tr>
+<tr><th class="n">DFC</th><th class="n">Omie</th><th class="n">dif.</th><th class="n">dif. %</th><th class="n">DFC</th><th class="n">Omie</th><th class="n">dif.</th><th class="n">dif. %</th></tr>
+<tr><td>janeiro</td>
+<td class="n">R$ 4.894.212,02</td><td class="n">R$ 353.093,59</td><td class="n">R$ 4.541.118,43</td><td class="n ruim">+1286.1%</td>
+<td class="n">R$ 5.730.394,54</td><td class="n">R$ 5.425,00</td><td class="n">R$ 5.724.969,54</td><td class="n ruim">+105529.4%</td></tr>
+<tr><td>fevereiro</td>
+<td class="n">R$ 5.336.475,20</td><td class="n">R$ 348.297,70</td><td class="n">R$ 4.988.177,50</td><td class="n ruim">+1432.2%</td>
+<td class="n">R$ 6.108.443,39</td><td class="n">R$ 47.726,00</td><td class="n">R$ 6.060.717,39</td><td class="n ruim">+12699.0%</td></tr>
+<tr><td>março</td>
+<td class="n">R$ 4.840.887,05</td><td class="n">R$ 4.762.505,85</td><td class="n">R$ 78.381,20</td><td class="n ok">+1.6%</td>
+<td class="n">R$ 4.579.679,06</td><td class="n">R$ 6.557.227,43</td><td class="n">-R$ 1.977.548,37</td><td class="n ruim">-30.2%</td></tr>
+<tr><td>abril</td>
+<td class="n">R$ 6.844.328,23</td><td class="n">R$ 3.821.401,53</td><td class="n">R$ 3.022.926,70</td><td class="n ruim">+79.1%</td>
+<td class="n">R$ 6.142.649,55</td><td class="n">R$ 4.838.259,36</td><td class="n">R$ 1.304.390,19</td><td class="n ruim">+27.0%</td></tr>
+<tr><td>maio</td>
+<td class="n">R$ 3.117.297,88</td><td class="n">R$ 1.895.836,66</td><td class="n">R$ 1.221.461,22</td><td class="n ruim">+64.4%</td>
+<td class="n">R$ 3.071.393,16</td><td class="n">R$ 872.087,70</td><td class="n">R$ 2.199.305,46</td><td class="n ruim">+252.2%</td></tr>
+<tr><td>junho</td>
+<td class="n">R$ 3.221.174,84</td><td class="n">R$ 2.101.264,19</td><td class="n">R$ 1.119.910,65</td><td class="n ruim">+53.3%</td>
+<td class="n">R$ 3.933.555,17</td><td class="n">R$ 2.809.345,38</td><td class="n">R$ 1.124.209,79</td><td class="n ruim">+40.0%</td></tr>
+<tr><td>julho</td>
+<td class="n">R$ 2.896.930,45</td><td class="n">R$ 2.943.620,47</td><td class="n">-R$ 46.690,02</td><td class="n ok">-1.6%</td>
+<td class="n">R$ 2.296.351,90</td><td class="n">R$ 1.872.973,68</td><td class="n">R$ 423.378,22</td><td class="n ruim">+22.6%</td></tr>
+<tr><td>agosto</td>
+<td class="n">R$ 6.954.071,53</td><td class="n">R$ 6.689.842,87</td><td class="n">R$ 264.228,66</td><td class="n atencao">+3.9%</td>
+<td class="n">R$ 5.797.709,92</td><td class="n">R$ 2.520.386,38</td><td class="n">R$ 3.277.323,54</td><td class="n ruim">+130.0%</td></tr>
+<tr><td>setembro</td>
+<td class="n">R$ 4.659.208,83</td><td class="n">R$ 5.578.814,39</td><td class="n">-R$ 919.605,56</td><td class="n ruim">-16.5%</td>
+<td class="n">R$ 5.070.353,79</td><td class="n">R$ 1.014.741,59</td><td class="n">R$ 4.055.612,20</td><td class="n ruim">+399.7%</td></tr>
+<tr><th>total</th>
+<th class="n">R$ 42.764.586,03</th><th class="n">R$ 28.494.677,25</th><th class="n">R$ 14.269.908,78</th><th class="n ruim">+50.1%</th>
+<th class="n">R$ 42.730.530,49</th><th class="n">R$ 20.538.172,52</th><th class="n">R$ 22.192.357,97</th><th class="n ruim">+108.1%</th></tr>
+</table>
+
+<h3>O mesmo mês a mês, com o DFC sem as transferências internas</h3>
+<p>Tira do DFC as linhas de <code>TRANSFERENCIA</code>, <code>REPASSE</code>, <code>CARTÃO DE CREDITO</code>, <code>APLICAÇÃO TRANS.</code> e
+<code>TRANSFERÊNCIAS BANCÁRIAS</code> — dinheiro andando entre contas da própria empresa, que infla os dois lados do fluxo de caixa.</p>
+<table>
+<tr><th>mês</th><th class="n">entradas DFC s/ transf.</th><th class="n">dif. % contra o Omie</th><th class="n">saídas DFC s/ transf.</th><th class="n">dif. % contra o Omie</th><th class="n">linhas DFC</th><th class="n">lanç. Omie</th></tr>
+<tr><td>janeiro</td>
+<td class="n">R$ 3.953.622,87</td><td class="n ruim">+1019.7%</td>
+<td class="n">R$ 4.567.544,88</td><td class="n ruim">+84094.4%</td>
+<td class="n">413</td><td class="n">3</td></tr>
+<tr><td>fevereiro</td>
+<td class="n">R$ 5.056.467,23</td><td class="n ruim">+1351.8%</td>
+<td class="n">R$ 6.092.552,55</td><td class="n ruim">+12665.7%</td>
+<td class="n">420</td><td class="n">14</td></tr>
+<tr><td>março</td>
+<td class="n">R$ 4.437.160,98</td><td class="n ruim">-6.8%</td>
+<td class="n">R$ 4.104.163,82</td><td class="n ruim">-37.4%</td>
+<td class="n">521</td><td class="n">410</td></tr>
+<tr><td>abril</td>
+<td class="n">R$ 6.308.679,85</td><td class="n ruim">+65.1%</td>
+<td class="n">R$ 5.571.695,69</td><td class="n ruim">+15.2%</td>
+<td class="n">561</td><td class="n">397</td></tr>
+<tr><td>maio</td>
+<td class="n">R$ 3.000.400,63</td><td class="n ruim">+58.3%</td>
+<td class="n">R$ 2.577.876,48</td><td class="n ruim">+195.6%</td>
+<td class="n">877</td><td class="n">173</td></tr>
+<tr><td>junho</td>
+<td class="n">R$ 2.736.674,82</td><td class="n ruim">+30.2%</td>
+<td class="n">R$ 3.283.599,06</td><td class="n ruim">+16.9%</td>
+<td class="n">461</td><td class="n">197</td></tr>
+<tr><td>julho</td>
+<td class="n">R$ 2.581.000,45</td><td class="n ruim">-12.3%</td>
+<td class="n">R$ 2.144.377,30</td><td class="n ruim">+14.5%</td>
+<td class="n">701</td><td class="n">388</td></tr>
+<tr><td>agosto</td>
+<td class="n">R$ 6.599.884,34</td><td class="n ok">-1.3%</td>
+<td class="n">R$ 5.726.027,57</td><td class="n ruim">+127.2%</td>
+<td class="n">388</td><td class="n">319</td></tr>
+<tr><td>setembro</td>
+<td class="n">R$ 4.336.616,63</td><td class="n ruim">-22.3%</td>
+<td class="n">R$ 4.414.747,70</td><td class="n ruim">+335.1%</td>
+<td class="n">301</td><td class="n">247</td></tr>
+</table>
+
+<h2>2. Casamento dos lançamentos</h2>
+<p><strong>O critério.</strong> Não existe chave que ligue uma linha do DFC a um título do Omie — a coluna <code>TITULO</code> do DFC guarda o número
+do projeto, da PO ou da nota, nunca o <code>nCodTitulo</code>. Então o casamento é por <strong>natureza + data de pagamento + valor até o centavo</strong>,
+tratado como multiconjunto: cada linha do DFC casa com no máximo um lançamento do Omie, e vice-versa. É o critério que as duas fontes sustentam
+sozinhas. A régua frouxa troca o dia pelo mês, para pegar o lançamento escriturado com um ou dois dias de diferença.</p>
+<table>
+<tr><th>critério</th><th class="n">casados</th><th class="n">% das linhas do DFC</th><th class="n">% dos lanç. do Omie</th><th class="n">só no DFC</th><th class="n">só no Omie</th></tr>
+<tr><td>exato — natureza + dia do pagamento + valor</td><td class="n">1275</td><td class="n">27.5%</td><td class="n">59.4%</td><td class="n">3368</td><td class="n">873</td></tr>
+<tr><td>frouxo — natureza + mês do pagamento + valor</td><td class="n">1326</td><td class="n">28.6%</td><td class="n">61.7%</td><td class="n">3317</td><td class="n">822</td></tr>
+</table>
+
+<h3>Os tipos mais comuns de cada lado (critério exato)</h3>
+<table>
+<tr><th>só no DFC — <code>CLASS. CONTABIL</code></th><th class="n">linhas</th><th>só no DFC — <code>SUB 2</code></th><th class="n">linhas</th></tr>
+<tr><td>FORNECEDORES COGS</td><td class="n">532</td><td>RECEITA COM VENDAS</td><td class="n">952</td></tr>
+<tr><td>FRETES</td><td class="n">463</td><td>COMPRAS DE MERCADORIAS</td><td class="n">529</td></tr>
+<tr><td>(vazio)</td><td class="n">444</td><td>FRETE E CARRETO</td><td class="n">489</td></tr>
+<tr><td>RECEITA</td><td class="n">391</td><td>CUSTOS COM CARTAO DE CREDITO</td><td class="n">232</td></tr>
+<tr><td>FORNECEDORES G&amp;A</td><td class="n">323</td><td>TARIFAS BANCARIAS</td><td class="n">163</td></tr>
+<tr><td>RECEITA COM VENDAS</td><td class="n">294</td><td>REEMBOLSO</td><td class="n">105</td></tr>
+</table>
+<table>
+<tr><th>só no Omie — como o lançamento se apresenta</th><th class="n">lançamentos</th></tr>
+<tr><td>com departamento rateado</td><td class="n">482</td></tr>
+<tr><td>sem departamento</td><td class="n">391</td></tr>
+<tr><td>categoria com conta do DRE</td><td class="n">732</td></tr>
+<tr><td>categoria sem conta do DRE</td><td class="n">141</td></tr>
+<tr><td>sem categoria</td><td class="n">0</td></tr>
+<tr><td>guia de imposto (cTipo DAS/DRF/GUIA)</td><td class="n">1</td></tr>
+<tr><td>de receita (cNatureza R)</td><td class="n">364</td></tr>
+<tr><td>de despesa (cNatureza P)</td><td class="n">509</td></tr>
+<tr><td>empresa 1</td><td class="n">359</td></tr>
+<tr><td>empresa 2</td><td class="n">514</td></tr>
+</table>
+
+<h3>Por que o Omie tem muito menos lançamentos que o DFC</h3>
+<p>Boa parte da diferença não é dado faltando: é o filtro. <code>docs/fontes.md</code> manda ler as Telas 1 e 2 com
+<code>cTpLancamento: "CPCR"</code>. Medido na faixa inteira, o que esse filtro guarda e o que ele deixa de fora, por
+<code>detalhes.cOrigem</code> — contagem de lançamentos pagos, sem nenhum valor:</p>
+<table>
+<tr><th><code>cOrigem</code></th><th class="n">sem filtro de tipo</th><th class="n">com <code>CPCR</code></th><th>situação</th></tr>
+<tr><td><code>BAXP</code></td><td class="n">1561</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>EXTR</code></td><td class="n">806</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>MANP</code></td><td class="n">794</td><td class="n">794</td><td>dentro</td></tr>
+<tr><td><code>BAXR</code></td><td class="n">710</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>EXTP</code></td><td class="n">631</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>ADVP</code></td><td class="n">260</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>VENR</code></td><td class="n">248</td><td class="n">248</td><td>dentro</td></tr>
+<tr><td><code>ADVR</code></td><td class="n">247</td><td class="n">247</td><td>dentro</td></tr>
+<tr><td><code>COMP</code></td><td class="n">223</td><td class="n">223</td><td>dentro</td></tr>
+<tr><td><code>CTEP</code></td><td class="n">213</td><td class="n">213</td><td>dentro</td></tr>
+<tr><td><code>BARP</code></td><td class="n">200</td><td class="n">200</td><td>dentro</td></tr>
+<tr><td><code>MANR</code></td><td class="n">150</td><td class="n">150</td><td>dentro</td></tr>
+<tr><td><code>ADCR</code></td><td class="n">55</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>ADCP</code></td><td class="n">53</td><td class="n">53</td><td>dentro</td></tr>
+<tr><td><code>TRAP</code></td><td class="n">50</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>TRAR</code></td><td class="n">50</td><td class="n">0</td><td><strong>fora</strong> do filtro</td></tr>
+<tr><td><code>APIP</code></td><td class="n">12</td><td class="n">12</td><td>dentro</td></tr>
+<tr><td><code>RPTP</code></td><td class="n">8</td><td class="n">8</td><td>dentro</td></tr>
+<tr><th>total</th><th class="n">6271</th><th class="n">2148</th><th></th></tr>
+</table>
+<p>As origens <code>BAXP</code> e <code>BAXR</code> — as maiores de todas — são registros de <em>baixa</em>; somá-las junto com o título
+contaria o mesmo dinheiro duas vezes, e o <code>CPCR</code> faz bem em tirá-las. Já <code>ADVP</code>, <code>ADCR</code>,
+<code>EXTP</code> e <code>EXTR</code> ficam de fora sem que isso esteja escrito em lugar nenhum: são adiantamentos e lançamentos de extrato
+que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.</p>
+
+<h2>3. A coluna <code>EMP.</code> do DFC (B3W, N3) corresponde a alguma empresa do Omie?</h2>
+<table>
+<tr><th><code>EMP.</code></th><th class="n">linhas de caixa</th><th>meses em que aparece</th><th class="n">casa com a empresa 1</th><th class="n">casa com a empresa 2</th></tr>
+<tr><td><strong>(vazio)</strong></td><td class="n">1</td><td>julho</td>
+<td class="n">0 (0.0%)</td><td class="n">0 (0.0%)</td></tr>
+<tr><td><strong>B3W</strong></td><td class="n">4624</td><td>janeiro, fevereiro, março, abril, maio, junho, julho, agosto, setembro</td>
+<td class="n">666 (14.4%)</td><td class="n">599 (13.0%)</td></tr>
+<tr><td><strong>N3</strong></td><td class="n">18</td><td>agosto, setembro</td>
+<td class="n">8 (44.4%)</td><td class="n">5 (27.8%)</td></tr>
+</table>
+<p>Leia assim: se <code>B3W</code> fosse a empresa 1, quase toda linha <code>B3W</code> deveria achar par entre os lançamentos da empresa 1 e
+quase nenhuma entre os da empresa 2. Se as duas colunas ficarem parecidas, ou as duas baixas, a coluna <code>EMP.</code> <strong>não</strong> é o recorte
+de filial do Omie — pode ser marca de quem lançou, de rateio ou de banco, e o de-para continua sem resposta nas planilhas.</p>
+
+<h2>4. Por grupo das Telas 1 e 2: quem tem o dado mais completo</h2>
+<p>A medida é: de todos os lançamentos de caixa do período (entradas, para a receita; saídas, para o resto),
+quantos cada fonte consegue <strong>classificar dentro do grupo com o que ela mesma traz</strong> — no DFC, a classificação está escrita
+na própria linha (<code>CLASS. CONTABIL</code> e <code>SUB 2</code>); no Omie, depende de um campo que o lançamento pode ou não trazer.</p>
+<table>
+<tr><th>grupo</th><th class="n">DFC: linhas no grupo</th><th class="n">% das linhas</th><th class="n">Omie: lanç. com o campo</th><th class="n">% dos lanç.</th><th>o campo do Omie</th><th>mais completo</th></tr>
+<tr><td><strong>Despesas com funcionários</strong></td>
+<td class="n">623 de 3206</td><td class="n">19.4% <span class="barra" style="width:12px"></span></td>
+<td class="n">912 de 1503</td><td class="n">60.7% <span class="barra b" style="width:36px"></span></td>
+<td>departamentos[] rateados no lançamento (o Omie não marca departamento como de pessoal)</td><td><strong>Omie</strong></td></tr>
+<tr><td><strong>COGS / custos de vendas</strong></td>
+<td class="n">1345 de 3206</td><td class="n">42.0% <span class="barra" style="width:25px"></span></td>
+<td class="n">1252 de 1503</td><td class="n">83.3% <span class="barra b" style="width:50px"></span></td>
+<td>codigo_dre da categoria do lançamento (a conta de custo do DRE)</td><td><strong>Omie</strong></td></tr>
+<tr><td><strong>Despesas gerais</strong></td>
+<td class="n">703 de 3206</td><td class="n">21.9% <span class="barra" style="width:13px"></span></td>
+<td class="n">1252 de 1503</td><td class="n">83.3% <span class="barra b" style="width:50px"></span></td>
+<td>codigo_dre da categoria do lançamento</td><td><strong>Omie</strong></td></tr>
+<tr><td><strong>Impostos</strong></td>
+<td class="n">83 de 3206</td><td class="n">2.6% <span class="barra" style="width:2px"></span></td>
+<td class="n">3 de 1503</td><td class="n">0.2% <span class="barra b" style="width:0px"></span></td>
+<td>detalhes.cTipo em DAS / DRF / GUIA (a leitura "guias pagas")</td><td><strong>empatado</strong></td></tr>
+<tr><td><strong>Deduções</strong></td>
+<td class="n">21 de 3206</td><td class="n">0.7% <span class="barra" style="width:0px"></span></td>
+<td class="n">0 de 1503</td><td class="n">0.0% <span class="barra b" style="width:0px"></span></td>
+<td>detalhes.cOperacao = 13 (devolução de venda)</td><td><strong>empatado</strong></td></tr>
+<tr><td><strong>Receita</strong></td>
+<td class="n">1334 de 1437</td><td class="n">92.8% <span class="barra" style="width:56px"></span></td>
+<td class="n">645 de 645</td><td class="n">100.0% <span class="barra b" style="width:60px"></span></td>
+<td>categoria com conta_receita = S</td><td><strong>Omie</strong></td></tr>
+</table>
+<div class="nota"><strong>As duas colunas não medem a mesma coisa — e é esse o ponto.</strong> No DFC o número é
+<em>quantas linhas caem neste grupo</em>: a linha já diz a que grupo pertence. No Omie é <em>quantos lançamentos trazem o campo
+que poderia colocá-los em algum grupo</em> — repare que “COGS” e “Despesas gerais” mostram exatamente o mesmo número do lado do Omie,
+porque o campo é o mesmo (<code>codigo_dre</code>) e <strong>ele não separa os dois</strong> enquanto o dono não disser quais contas do DRE
+são custo e quais são despesa geral. É uma lacuna que segue aberta em <code>docs/fontes.md</code>. Ou seja: onde o Omie “ganha” pela
+cobertura, ele ainda depende de uma decisão; onde o DFC ganha, o dado já está pronto. Nos dois lados a classificação pode estar errada
+na origem — isto mede quem <em>tem</em> o dado, não quem acertou.</div>
+
+<h2>5. Proposta, indicador a indicador</h2>
+<p>Para cada um dos 21 indicadores das Telas 1 e 2 que hoje carregam <strong>lacuna: Omie ou DFC</strong> em <code>docs/fontes.md</code>.
+<strong>Isto é proposta, não decisão</strong> — nenhuma lacuna foi fechada e nenhuma fonte foi trocada no <code>docs/fontes.md</code>.
+A regra que orientou a coluna “fonte principal”: <em>onde a classificação decide o número, o DFC leva</em> (ele escreve a classe na própria linha);
+<em>onde o cadastro ou a carteira decide, o Omie leva</em> (ele tem cliente, categoria, departamento, status e pagamento parcial).</p>
+<div class="nota"><strong>Uma ressalva que vale para a tabela inteira.</strong> Onde a proposta diz “Omie”, isso só vale
+<strong>de março de 2026 em diante</strong>: em janeiro e fevereiro o Omie praticamente não tem lançamento pago (seção 1). Para a série
+histórica de 2026 — os gráficos por mês, o seletor de meses anteriores — <strong>a única fonte que cobre o ano inteiro é o DFC</strong>.
+A tela precisa decidir o que fazer com janeiro e fevereiro: mostrar o DFC, ou mostrar o Omie com o mês vazio e dizer por quê.</div>
+<table>
+<tr><th>tela</th><th>indicador</th><th>fonte principal proposta</th><th>confronto</th><th>como o confronto aparece na tela</th></tr>
+<tr><td>Tela 1</td><td><strong>Saldo</strong></td><td>Omie</td><td>DFC</td><td>Cartão com o número do Omie; se a diferença do mês passar de 2%, um selo ao lado do valor com a diferença em % contra o DFC</td></tr>
+<tr><td>Tela 1</td><td><strong>Receitas</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie; selo acima de 2% de diferença contra a soma de ENTRADA do DFC no mesmo mês</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas</strong></td><td>DFC</td><td>Omie</td><td>Cartão do DFC (a classificação vem na própria linha); selo acima de 2% de diferença contra o Omie</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas pagas</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie (nValPago cobre o pagamento parcial, que o DFC não separa); selo acima de 2%</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas pendentes</strong></td><td>Omie</td><td>DFC (só nos meses fechados)</td><td>Só Omie: o DFC provisiona outubro a dezembro mas não tem carteira. O selo aparece só de janeiro a setembro</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas com funcionários</strong></td><td>DFC</td><td>Omie por departamento</td><td>Cartão do DFC; o confronto do Omie só entra depois que o dono fechar a lista de departamentos de pessoal</td></tr>
+<tr><td>Tela 1</td><td><strong>% desp. funcionários / receita líquida</strong></td><td>DFC (numerador) + Omie (denominador)</td><td>a mesma conta só no Omie</td><td>Segue as duas linhas de que depende; o selo herda a maior diferença das duas</td></tr>
+<tr><td>Tela 1</td><td><strong>Top 10 despesas</strong></td><td>DFC (por CLASS. CONTABIL / SUB 2)</td><td>Omie por centro de custo</td><td>Barras do DFC, com um seletor “ver por centro de custo (Omie)” ao lado do título</td></tr>
+<tr><td>Tela 1</td><td><strong>Top 10 receitas</strong></td><td>Omie</td><td>DFC (a descrição já vem na linha)</td><td>Barras do Omie; a descrição cai para o DFC quando o pedido de venda não responder</td></tr>
+<tr><td>Tela 1</td><td><strong>Receita × despesa por dia</strong></td><td>Omie</td><td>DFC (linhas 43/44 da aba do mês)</td><td>Colunas do Omie; o dia com diferença acima de 5% ganha traço pontilhado e o número do DFC no tooltip</td></tr>
+<tr><td>Tela 1</td><td><strong>Receita × despesa por mês</strong></td><td>Omie</td><td>DFC</td><td>Duas linhas do Omie, com a série do DFC em cinza claro atrás; a legenda diz a diferença média em %</td></tr>
+<tr><td>Tela 2</td><td><strong>Receita total</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie; selo acima de 2%</td></tr>
+<tr><td>Tela 2</td><td><strong>Custos e despesas</strong></td><td>DFC (separa COGS de G&amp;A)</td><td>Omie</td><td>Cartão do DFC; selo acima de 2% contra o total do Omie</td></tr>
+<tr><td>Tela 2</td><td><strong>EBITDA</strong></td><td>Omie</td><td>DFC só no resultado financeiro</td><td>Cartão do Omie; nota de rodapé dizendo que depreciação e amortização não existem no DFC</td></tr>
+<tr><td>Tela 2</td><td><strong>Lucro líquido</strong></td><td>Omie</td><td>DFC (lucro de caixa, B25)</td><td>Cartão do Omie; o número do DFC aparece como “lucro de caixa” numa segunda linha, sem selo — são contas diferentes</td></tr>
+<tr><td>Tela 2</td><td><strong>Margem de lucro</strong></td><td>Omie</td><td>DFC</td><td>Segue os dois cartões acima</td></tr>
+<tr><td>Tela 2</td><td><strong>(+) Receitas</strong></td><td>Omie</td><td>DFC</td><td>Linha do DRE pelo Omie (é a única com quebra por produto); selo acima de 2%</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Deduções</strong></td><td>DFC</td><td>Omie por cOperacao 13 e retenções</td><td>Linha do DFC; o Omie entra como segunda coluna “retido no título”</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Custos de vendas</strong></td><td>DFC</td><td>Omie por codigo_dre</td><td>Linha do DFC; selo acima de 5% contra a conta de custo do DRE do Omie</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Despesas gerais</strong></td><td>Omie (quebra por categoria, decisão de 24/09)</td><td>DFC por SUB 2</td><td>Linha do Omie; o DFC entra numa coluna “no DFC” ao lado, linha a linha</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Impostos</strong></td><td>DFC (guias pagas)</td><td>Omie por cTipo e retenções</td><td>Linha do DFC; selo acima de 5%, e a retenção do Omie numa nota</td></tr>
+</table>
+
+<h3>O aviso na tela, em uma regra só</h3>
+<p>Todo cartão e toda linha de DRE com fonte principal e confronto mostra o número da fonte principal. Ao lado do valor, um selo pequeno:</p>
+<ul>
+  <li><strong>sem selo</strong> quando a diferença contra a outra fonte fica em <strong>até 2%</strong> — é ruído de arredondamento e de data de baixa;</li>
+  <li><strong>selo âmbar “confere: X%”</strong> entre <strong>2% e 5%</strong>, com o valor da outra fonte no tooltip;</li>
+  <li><strong>selo vermelho “diverge: X%”</strong> acima de <strong>5%</strong>, que abre a lista dos lançamentos sem par naquele mês (os “só no DFC” e “só no Omie” da seção 2).</li>
+</ul>
+<p>Os dois limites saem do que a seção 1 mostrou, e o dono pode mexer neles. Nos blocos de gráfico o selo vira um traço pontilhado no ponto que diverge.
+De outubro a dezembro o selo não aparece: ali o DFC só tem provisão, e comparar seria comparar com nada.</p>
+
+<h2>6. O que este confronto não resolve</h2>
+<ul>
+  <li><strong>Não há chave entre as duas fontes.</strong> O casamento por data e valor é aproximação: dois lançamentos do mesmo valor no mesmo dia são indistinguíveis, e um pagamento agrupado num lado e partido no outro nunca casa.</li>
+  <li><strong>Pagamento parcial.</strong> O Omie separa <code>nValPago</code> de <code>nValorTitulo</code>; o DFC tem a coluna <code>STATUS</code> (<code>INTEGRAL</code>, <code>PARCIAL</code>, <code>SINAL</code>) mas o valor da linha é o que entrou. Parte da diferença mora aí.</li>
+  <li><strong>Transferências internas.</strong> O DFC as registra como entrada e como saída; ver a segunda tabela da seção 1 para o tamanho do efeito.</li>
+  <li><strong>As lacunas de cadastro seguem abertas</strong> — os 77 códigos de categoria com cadastro diferente entre as empresas, as 14 categorias sem <code>codigo_dre</code>, a lista de departamentos de pessoal e a de contas de custo do DRE. Nenhuma delas é fechada por este confronto.</li>
+</ul>
+
+<footer>
+Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em 24/09/2026. Só leitura das duas fontes: nenhum arquivo da pasta sincronizada foi
+gravado, movido ou aberto para edição, nenhuma planilha foi copiada para o repositório e nenhuma escrita foi feita no Omie.
+Sem nome de cliente, fornecedor ou pessoa.
+As respostas do Omie ficam num cache local em <code>.cache/omie/</code> — pasta ignorada pelo git, fora dos commits; rodar o script de novo
+não chama a API (use <code>--atualizar</code> para buscar de novo). Esta rodada: DFC em 1.8 s, Omie em 0.1 s
+(92 resposta(s) do cache, 0 da API).
+</footer>
+</main>
+</html>

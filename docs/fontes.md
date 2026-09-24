@@ -383,7 +383,14 @@ Nenhum indicador trocou de fonte nesta leitura. Onde o DFC é candidato, a linha
 **Onde os dois se sobrepõem — e o que ainda não se sabe:**
 
 - Os dois registram **o mesmo pagamento e o mesmo recebimento**, em regime de caixa. De janeiro a setembro de 2026 há
-  dois números possíveis para quase todo indicador das Telas 1 e 2, e eles **não foram comparados**.
+  dois números possíveis para quase todo indicador das Telas 1 e 2. Os dois números foram **postos lado a lado** em
+  24/09/2026 por `scripts/confronto-dfc-omie.mjs` (só leitura das duas fontes; as respostas do Omie ficam num cache
+  local em `.cache/omie/`, fora do git): mês a mês, entradas e saídas com a diferença em %, a taxa de casamento dos
+  lançamentos, o que a coluna `EMP.` do DFC é (ou não é) no Omie, qual fonte classifica mais lançamentos em cada grupo
+  das telas e uma **proposta** de fonte principal e confronto para cada indicador com **lacuna: Omie ou DFC**. A página
+  é [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html) — é onde ficam os valores em reais. **O confronto não
+  fecha lacuna nenhuma e não troca fonte nenhuma deste documento**: a proposta é proposta, e a escolha segue sendo do
+  dono.
 - **Não há chave que ligue uma linha do DFC a um título do Omie.** A coluna `TITULO` (H) guarda o número do projeto
   (`aaaammdd-xxxxxxxx`), o número da PO ou o da nota — nenhum deles é o `nCodTitulo` nem o `codigo_pedido` do Omie. A
   única ponte declarada entre os dois é a coluna `OBS GU - OMIE` da aba `CARTÃO DE CRÉDITO`, e ela é uma marca de

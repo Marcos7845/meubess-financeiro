@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Confronto DFC × Omie — as quatro unidades e o recorte da MeuBESS (2026)</title>
+<title>Confronto DFC × Omie — o recorte da MeuBESS pelas contas correntes (2026)</title>
 <style>
   :root { --tinta:#1b2430; --fraca:#5b6878; --linha:#e2e7ee; --fundo:#f6f8fb; --ok:#127a4b; --at:#96650a; --ruim:#b02a2a; }
   * { box-sizing:border-box }
@@ -23,6 +23,8 @@
   .ruim { color:var(--ruim); font-weight:600 }
   .nota { background:#fffbe9; border-left:4px solid #e0b700; padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
   .lacuna { background:#fdeeee; border-left:4px solid #b02a2a; padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
+  .resolvido { background:#eef7f1; border-left:4px solid var(--ok); padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
+  .fraca { color:var(--fraca) }
   code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:13px }
   .barra { display:inline-block; height:9px; background:#3b7dd8; border-radius:3px; vertical-align:middle }
   .barra.b { background:#8a9bb0 }
@@ -30,16 +32,24 @@
   footer { color:var(--fraca); font-size:13px; margin-top:48px; border-top:1px solid var(--linha); padding-top:16px }
 </style>
 <main>
-<h1>Confronto DFC × Omie — as quatro unidades e o recorte da MeuBESS</h1>
+<h1>Confronto DFC × Omie — o recorte da MeuBESS pelas contas correntes</h1>
 <p class="sub">Janeiro a setembro de 2026. Leitura de 24/09/2026 por <code>scripts/confronto-dfc-omie.mjs</code>, só leitura das duas fontes.
 Esta página é a única saída com valores em reais; ela fica no repositório e não sai da máquina. Sem nome de cliente, fornecedor ou pessoa.</p>
 
 <div class="cartao">
-  <strong>O que mudou desde o primeiro confronto.</strong> Aquela leitura comparou o DFC da MeuBESS com o Omie das empresas 1 e 2
-  e achou poucas linhas em comum. O dono explicou por quê: <strong>no Omie há outras unidades de negócio, no mesmo CNPJ</strong>, que não são a
-  MeuBESS. Ele mandou o DFC dessas unidades — mais três pastas sincronizadas, ao lado da primeira. Esta página lê as
-  <strong>4</strong> pastas, diz que unidade é cada uma pelo que a própria planilha mostra, soma as quatro contra o Omie e
-  mede o que, dentro do Omie, separa a MeuBESS das demais.
+  <strong>O que mudou nesta rodada.</strong> A leitura anterior mediu que o único campo do Omie capaz de separar as unidades de negócio do mesmo
+  CNPJ é a <strong>conta corrente</strong>, e parou aí: dizer de quem é cada conta era decisão do dono. <strong>Ele disse</strong> — a lista está
+  em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Então o
+  confronto foi refeito com os <strong>dois lados só da MeuBESS</strong>: a pasta do DFC dela contra o Omie cortado nas contas dela. A seção 4 traz a
+  lista, a diferença % mês a mês e a taxa de casamento antes e depois do corte; a seção 7 revê a proposta de cada indicador com esses números.
+  As seções 1 a 3 seguem mostrando as 4 pastas e o teste que levou até a conta corrente.
+</div>
+<div class="cartao">
+  <strong>O que o recorte respondeu, em uma linha.</strong> A contaminação acabou — o número do Omie deixa de ser o do CNPJ inteiro. A diferença
+  entre as duas fontes, não: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 6 dos
+  7 meses comparáveis (março a setembro), e abaixo em março.
+  <strong>A diferença não era outra unidade de negócio dentro do número</strong>; é o filtro <code>cTpLancamento: "CPCR"</code> que as Telas 1 e 2
+  usam (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
 </div>
 
 <h2>1. As 4 pastas: que unidade é cada uma</h2>
@@ -270,226 +280,391 @@ seguintes não muda por causa disso, mas o número não é zero.</div>
 <tr><td>RECEITA COM VENDAS</td><td class="n">294</td><td>RECEITA COM SERVICOS</td><td class="n">159</td></tr>
 </table>
 
-<h2>4. O recorte: o que, no Omie, separa a MeuBESS das outras unidades</h2>
-<p><strong>Como isto foi medido.</strong> Entre os lançamentos do Omie que casaram com uma linha do DFC, já se sabe de que unidade cada um é
-(seção 3). Então, para cada campo candidato, a pergunta é: <em>cada valor desse campo pertence a uma unidade só?</em> Um valor conta como
-<strong>exclusivo</strong> de uma unidade quando ao menos 95% dos seus lançamentos casados são dela, e quando há
-pelo menos 3 casados para a conta querer dizer alguma coisa. O <strong>recorte da MeuBESS</strong> é o conjunto dos valores
-exclusivos dela; <em>% do Omie no recorte</em> é quanto do Omie inteiro esse recorte explica.</p>
+<h2>4. O recorte da MeuBESS: a lista de contas correntes que o dono confirmou</h2>
+<p><strong>A lacuna que a leitura anterior abriu está fechada, e não por dedução.</strong> A rodada de 24/09/2026 mediu que o único campo do Omie
+capaz de separar as unidades de negócio é a <strong>conta corrente</strong> (<code>detalhes.nCodCC</code>) — mas dizer de quem é cada conta era
+decisão do dono, não do script. <strong>O dono disse</strong>, em 24/09/2026, de que negócio é cada conta da tabela desta seção. A lista está gravada
+em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Todos os números
+das seções 4, 6 e 7 já saem com o recorte aplicado.</p>
 <table>
-<tr><th>campo do Omie</th><th class="n">valores distintos</th><th class="n">exclusivos de alguma unidade</th><th class="n">% dos lanç. do Omie que o recorte da MeuBESS pega</th><th class="n">quanto dos lanç. da MeuBESS o recorte cobre</th><th class="n">intrusos (lanç. de outra unidade dentro do recorte)</th></tr>
-<tr><td><strong>conta corrente (detalhes.nCodCC)</strong></td><td class="n">17</td><td class="n">8</td>
-<td class="n ok">89.7%</td>
-<td class="n ok">98.8%</td>
-<td class="n">7 (0.4%)</td></tr>
-<tr><td><strong>departamento (departamentos[].cCodDepartamento)</strong></td><td class="n">26</td><td class="n">18</td>
-<td class="n ok">75.8%</td>
-<td class="n atencao">78.0%</td>
-<td class="n">6 (0.4%)</td></tr>
-<tr><td><strong>categoria (detalhes.cCodCateg)</strong></td><td class="n">113</td><td class="n">49</td>
-<td class="n ok">75.2%</td>
-<td class="n atencao">81.9%</td>
-<td class="n">2 (0.1%)</td></tr>
-<tr><td><strong>projeto (detalhes.cCodProjeto)</strong></td><td class="n">208</td><td class="n">7</td>
-<td class="n atencao">32.3%</td>
-<td class="n ruim">32.2%</td>
-<td class="n">0 (0.0%)</td></tr>
-<tr><td><strong>vendedor (detalhes.cCodVendedor)</strong></td><td class="n">12</td><td class="n">6</td>
-<td class="n ok">51.6%</td>
-<td class="n ruim">46.9%</td>
-<td class="n">1 (0.1%)</td></tr>
-<tr><td><strong>empresa / filial (a chave do Omie)</strong></td><td class="n">2</td><td class="n">1</td>
-<td class="n ok">52.0%</td>
-<td class="n ruim">47.1%</td>
-<td class="n">1 (0.1%)</td></tr>
+<tr><th>negócio</th><th>o que o dono disse</th><th class="n">contas na lista</th></tr>
+<tr><td><strong>MeuBESS</strong> — o recorte das telas</td>
+  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2) e Caixinha</td>
+  <td class="n">14</td></tr>
+<tr><td><strong>MX3</strong></td><td>todas as contas Sicoob, inclusive a <code>Sicoob - B3N</code>, e o cartão Itaú 6826</td>
+  <td class="n">5</td></tr>
+<tr><td><strong>3N Capital</strong></td><td>Safra e o cartão Itaú 9120</td>
+  <td class="n">3</td></tr>
+<tr><td><strong class="ruim">sem dono dito</strong></td><td>o que o dono não citou — fica <strong>fora</strong> do recorte, e o código não adivinha pelo nome</td>
+  <td class="n">21</td></tr>
+<tr><th>total no cadastro do Omie</th><th></th><th class="n">43</th></tr>
 </table>
-
-<h3>O único campo que separa alguma coisa: a conta corrente</h3>
-<p>Cada unidade opera o próprio banco, e o Omie guarda a conta corrente em <code>detalhes.nCodCC</code>. Abaixo, todas as contas correntes
-com movimento no período, com a unidade a que os lançamentos casados daquela conta pertencem. Uma conta "pura" é uma conta que só uma
-unidade usa.</p>
+<p>O cadastro do Omie tem 43 contas correntes somando as duas empresas (a mesma conta física aparece duas vezes quando
+as duas empresas a cadastraram: são duas linhas, uma por empresa). Abaixo, só as que <strong>têm movimento</strong> no período. A coluna
+<em>a leitura confirma?</em> compara o que o dono disse com o que a seção 3 tinha medido sozinha, pelo casamento com o DFC — é conferência da lista,
+não fonte dela.</p>
 <table>
-<tr><th>conta corrente no Omie</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code> (o das telas)</th><th class="n">destes, casaram com o DFC</th><th>unidade dona dos casados</th><th class="n">pureza</th><th>no recorte da MeuBESS?</th></tr>
+<tr><th>conta corrente no Omie</th><th>negócio (dito pelo dono)</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code> (o das telas)</th><th class="n">destes, casaram com o DFC</th><th>unidade dona dos casados (leitura da seção 3)</th><th class="n">pureza</th><th>a leitura confirma?</th><th>no recorte da MeuBESS?</th></tr>
 <tr>
 <td>Itaú Unibanco — banco 341 (CC) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">2682</td>
 <td class="n">880</td><td class="n">554</td>
 <td>MeuBESS 554</td>
 <td class="n">100.0%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Itaú Unibanco — banco 341 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">1934</td>
 <td class="n">729</td><td class="n">605</td>
 <td>MeuBESS 600 · outra (2) 5</td>
 <td class="n">99.2%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Adiantamento de Cliente — banco ADC (AD) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">631</td>
 <td class="n">198</td><td class="n">28</td>
 <td>MeuBESS 27 · outra (2) 1</td>
 <td class="n">96.4%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Sicoob - B3N — banco 756 (CC) <span class="tag">emp. 1</span></td>
+<td>MX3</td>
 <td class="n">427</td>
 <td class="n">190</td><td class="n">143</td>
 <td>outra (2) 136 · MeuBESS 7</td>
 <td class="n">95.1%</td>
-<td>não — outra (2)</td></tr>
+<td><span class="ok">confere</span></td>
+<td>não</td></tr>
 <tr>
 <td>CARTÃO B3W ITAU (1106) — banco 985 (CR) <span class="tag">emp. 1</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">180</td>
 <td class="n">92</td><td class="n">62</td>
 <td>MeuBESS 61 · outra (2) 1</td>
 <td class="n">98.4%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 2</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
 <td class="n">94</td>
 <td class="n">1</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>Banco do Brasil — banco 001 (CC) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">52</td>
 <td class="n">9</td><td class="n">3</td>
 <td>MeuBESS 3</td>
 <td class="n">100.0%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Safra — banco 422 (CC) <span class="tag">emp. 1</span></td>
+<td>3N Capital</td>
 <td class="n">45</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>Banco do Brasil — banco 001 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">37</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>BANCO IMPLEMENTAÇÃO — banco 479 (CC) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">36</td>
 <td class="n">16</td><td class="n">12</td>
 <td>MeuBESS 12</td>
 <td class="n">100.0%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Caixinha — banco 999 (CX) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">31</td>
 <td class="n">10</td><td class="n">2</td>
 <td>MeuBESS 2</td>
 <td class="n">100.0%</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">só 2 casado(s) — não sustenta veredito</span></td>
+<td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Stone — banco 197 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">28</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 1</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
 <td class="n">22</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>CARTÃO B3W ITAU 6826 (7400) — banco 985 (CR) <span class="tag">emp. 1</span></td>
+<td>MX3</td>
 <td class="n">17</td>
 <td class="n">9</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>Sicoob — banco 756 (CC) <span class="tag">emp. 1</span></td>
+<td>MX3</td>
 <td class="n">11</td>
 <td class="n">3</td><td class="n">1</td>
 <td>MeuBESS 1</td>
 <td class="n">100.0%</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">só 1 casado(s) — não sustenta veredito</span></td>
+<td>não</td></tr>
 <tr>
 <td>CARTÃO B3W ITAU 9120 (5806) — banco 985 (CR) <span class="tag">emp. 1</span></td>
+<td>3N Capital</td>
 <td class="n">9</td>
 <td class="n">4</td><td class="n">1</td>
 <td>MeuBESS 1</td>
 <td class="n">100.0%</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">só 1 casado(s) — não sustenta veredito</span></td>
+<td>não</td></tr>
 <tr>
 <td>Cora — banco 403 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">9</td>
 <td class="n">3</td><td class="n">3</td>
 <td>MeuBESS 3</td>
 <td class="n">100.0%</td>
+<td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Sicoob — banco 756 (CC) <span class="tag">emp. 2</span></td>
+<td>MX3</td>
 <td class="n">9</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>Santander — banco 033 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
 <td class="n">5</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 <tr>
 <td>Aplicação financeira Banco do Brasil — banco 001 (CA) <span class="tag">emp. 1</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
 <td class="n">3</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
-<td><span class="ruim">não dá para dizer</span></td></tr>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
+<tr>
+<td>CARTÃO B3W CORA (4309) — banco 985 (CR) <span class="tag">emp. 1</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
+<td class="n">2</td>
+<td class="n">1</td><td class="n">1</td>
+<td>MeuBESS 1</td>
+<td class="n">100.0%</td>
+<td><span class="fraca">—</span></td>
+<td>não</td></tr>
+<tr>
+<td>CARTÃO B3W ITAU (1106) - FILIAL — banco 985 (CR) <span class="tag">emp. 2</span></td>
+<td><strong class="ok">MeuBESS</strong></td>
+<td class="n">2</td>
+<td class="n">1</td><td class="n">1</td>
+<td>MeuBESS 1</td>
+<td class="n">100.0%</td>
+<td><span class="fraca">só 1 casado(s) — não sustenta veredito</span></td>
+<td><strong class="ok">sim</strong></td></tr>
+<tr>
+<td>CARTÃO B3W ITAU 9120 (5806)-FILIAL — banco 985 (CR) <span class="tag">emp. 2</span></td>
+<td>3N Capital</td>
+<td class="n">2</td>
+<td class="n">1</td><td class="n">1</td>
+<td>MeuBESS 1</td>
+<td class="n">100.0%</td>
+<td><span class="fraca">só 1 casado(s) — não sustenta veredito</span></td>
+<td>não</td></tr>
+<tr>
+<td>CARTÃO B3W ITAU 6826 (7400) FILIAL — banco 985 (CR) <span class="tag">emp. 2</span></td>
+<td>MX3</td>
+<td class="n">2</td>
+<td class="n">1</td><td class="n">1</td>
+<td>MeuBESS 1</td>
+<td class="n">100.0%</td>
+<td><span class="fraca">só 1 casado(s) — não sustenta veredito</span></td>
+<td>não</td></tr>
+<tr>
+<td>Bradesco — banco 237 (CC) <span class="tag">emp. 1</span></td>
+<td><strong class="ruim">sem dono dito</strong></td>
+<td class="n">1</td>
+<td class="n">0</td><td class="n">0</td>
+<td>—</td>
+<td class="n">—</td>
+<td><span class="fraca">sem casados: a leitura não opina</span></td>
+<td>não</td></tr>
 </table>
-<p><strong>Duas coisas saltam desta tabela.</strong> A primeira: a conta <code>Sicoob - B3N</code> da empresa 1 <em>se identifica sozinha</em> —
-o nome dela traz a sigla <code>B3N</code>, a mesma sigla da coluna <code>EMP.</code> da pasta <code>(2)</code>, e 95.1% dos 143 lançamentos dela que casaram com o DFC casaram com essa pasta. É o único ponto do Omie em que uma unidade de negócio está escrita.
-A segunda: as contas das pastas <code>(1)</code> (Safra) e <code>(3)</code> (Bradesco) <strong>quase não existem no que as telas leem</strong> —
-o movimento delas aparece na faixa sem filtro de tipo e some com o <code>cTpLancamento: "CPCR"</code>. É por isso que as duas casaram zero
-lançamento na seção 3: não é que o Omie não as tenha, é que a leitura das Telas 1 e 2 não as alcança.</p>
-<p>Em valor: o recorte da MeuBESS por conta corrente pega <strong>R$ 48.330.573,81</strong> dos <strong>R$ 49.032.849,77</strong>
-movimentados no Omie no período — 98.6% do dinheiro, contra 89.7%
+<p><strong>A lista do dono e a leitura concordam em todas as 8 contas que a leitura consegue julgar, e não se contradizem em
+nenhuma</strong> (0 divergência(s)). O caso que mais valia conferir é a <code>Sicoob - B3N</code> da empresa 1: a leitura já a tinha
+marcado como de outra unidade — o nome dela traz a sigla <code>B3N</code>, a mesma da coluna <code>EMP.</code> de uma das outras pastas do DFC —,
+e o dono confirmou que ela é da MX3. O Itaú das duas empresas, que é quase todo o movimento, é da MeuBESS nos dois.</p>
+<p><strong>Onde a lista vai muito além da leitura</strong> é nas contas pequenas — Safra, Stone, Sicoob das duas empresas, os cartões 6826 e 9120,
+a Caixinha. Ali a leitura tem zero, um ou dois lançamentos casados, e um ou dois casados não sustentam veredito nenhum (é o mesmo limite de
+3 casados do teste de pureza da seção 3). Alguns desses poucos casados apontam para a MeuBESS em contas que o dono deu a outro
+negócio — não é contradição, é o casamento por data e valor acertando por acaso num universo de um ou dois lançamentos. <strong>Em toda conta
+pequena, quem responde é o dono, e é a resposta dele que vale.</strong></p>
+
+<h3>As contas com movimento que ficaram sem dono dito</h3>
+<p>O dono não citou estas. Elas ficam <strong>fora</strong> do recorte, e nada aqui tenta adivinhar o dono pelo nome do banco. Todas juntas movimentam
+2 lançamento(s) dentro do filtro <code>CPCR</code> — 0.1%
+dos lançamentos que as telas leem, R$ 41.554,40 de R$ 49.032.849,77.</p>
+<table>
+<tr><th>conta corrente no Omie</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code></th></tr>
+<tr><td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 2</span></td>
+<td class="n">94</td><td class="n">1</td></tr>
+<tr><td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 1</span></td>
+<td class="n">22</td><td class="n">0</td></tr>
+<tr><td>Santander — banco 033 (CC) <span class="tag">emp. 1</span></td>
+<td class="n">5</td><td class="n">0</td></tr>
+<tr><td>Aplicação financeira Banco do Brasil — banco 001 (CA) <span class="tag">emp. 1</span></td>
+<td class="n">3</td><td class="n">0</td></tr>
+<tr><td>CARTÃO B3W CORA (4309) — banco 985 (CR) <span class="tag">emp. 1</span></td>
+<td class="n">2</td><td class="n">1</td></tr>
+<tr><td>Bradesco — banco 237 (CC) <span class="tag">emp. 1</span></td>
+<td class="n">1</td><td class="n">0</td></tr>
+
+</table>
+<p>A maior delas de longe é a <strong>Adiantamento ao Fornecedor</strong>, nas duas empresas: ela tem movimento na faixa e some quase inteira no
+filtro <code>CPCR</code>, que é o que as Telas 1 e 2 leem. <strong>Vale o dono dizer de quem são</strong> — enquanto não disser, elas ficam fora do
+número da tela e não entram em fonte nenhuma.</p>
+
+<h3>O confronto com o recorte: DFC da pasta da MeuBESS × Omie só nas contas da MeuBESS</h3>
+<p>Agora os dois lados falam da mesma unidade de negócio: à esquerda, só a pasta do DFC da MeuBESS; à direita, só os lançamentos do Omie cujo
+<code>detalhes.nCodCC</code> está na lista acima. A base do % é o Omie. A última dupla de colunas tira do DFC as linhas de transferência entre contas
+(cartão, repasse, aplicação), que o <code>CPCR</code> do Omie não traz.</p>
+<table>
+<tr><th>mês</th><th class="n">linhas do DFC da MeuBESS</th><th class="n">lanç. do Omie no recorte</th><th class="n">entradas: DFC</th><th class="n">entradas: Omie</th><th class="n">dif. %</th><th class="n">saídas: DFC</th><th class="n">saídas: Omie</th><th class="n">dif. %</th><th class="n">dif. % entradas, sem transferência</th><th class="n">dif. % saídas, sem transferência</th></tr>
+<tr><td><strong>janeiro</strong></td>
+<td class="n">413</td><td class="n">3</td>
+<td class="n">R$ 4.894.212,02</td><td class="n">R$ 353.093,59</td><td class="n ruim">+1286.1%</td>
+<td class="n">R$ 5.730.394,54</td><td class="n">R$ 5.425,00</td><td class="n ruim">+105529.4%</td>
+<td class="n ruim">+1019.7%</td><td class="n ruim">+83780.2%</td></tr>
+<tr><td><strong>fevereiro</strong></td>
+<td class="n">420</td><td class="n">14</td>
+<td class="n">R$ 5.336.475,20</td><td class="n">R$ 348.297,70</td><td class="n ruim">+1432.2%</td>
+<td class="n">R$ 6.108.443,39</td><td class="n">R$ 47.726,00</td><td class="n ruim">+12699.0%</td>
+<td class="n ruim">+1351.8%</td><td class="n ruim">+12637.9%</td></tr>
+<tr><td><strong>março</strong></td>
+<td class="n">521</td><td class="n">406</td>
+<td class="n">R$ 4.840.887,05</td><td class="n">R$ 4.762.505,85</td><td class="n ok">+1.6%</td>
+<td class="n">R$ 4.579.679,06</td><td class="n">R$ 6.513.425,91</td><td class="n ruim">-29.7%</td>
+<td class="n ruim">-6.8%</td><td class="n ruim">-37.0%</td></tr>
+<tr><td><strong>abril</strong></td>
+<td class="n">570</td><td class="n">396</td>
+<td class="n">R$ 6.849.364,46</td><td class="n">R$ 3.821.401,53</td><td class="n ruim">+79.2%</td>
+<td class="n">R$ 6.186.128,53</td><td class="n">R$ 4.836.615,10</td><td class="n ruim">+27.9%</td>
+<td class="n ruim">+65.2%</td><td class="n ruim">+14.8%</td></tr>
+<tr><td><strong>maio</strong></td>
+<td class="n">877</td><td class="n">161</td>
+<td class="n">R$ 3.117.297,88</td><td class="n">R$ 1.895.836,66</td><td class="n ruim">+64.4%</td>
+<td class="n">R$ 3.071.393,16</td><td class="n">R$ 871.073,09</td><td class="n ruim">+252.6%</td>
+<td class="n ruim">+58.2%</td><td class="n ruim">+188.3%</td></tr>
+<tr><td><strong>junho</strong></td>
+<td class="n">461</td><td class="n">194</td>
+<td class="n">R$ 3.221.174,84</td><td class="n">R$ 2.100.724,89</td><td class="n ruim">+53.3%</td>
+<td class="n">R$ 3.933.555,17</td><td class="n">R$ 2.808.622,73</td><td class="n ruim">+40.1%</td>
+<td class="n ruim">+30.3%</td><td class="n ruim">+16.9%</td></tr>
+<tr><td><strong>julho</strong></td>
+<td class="n">701</td><td class="n">324</td>
+<td class="n">R$ 2.896.930,45</td><td class="n">R$ 2.896.803,12</td><td class="n ok">+0.0%</td>
+<td class="n">R$ 2.296.351,90</td><td class="n">R$ 1.839.968,64</td><td class="n ruim">+24.8%</td>
+<td class="n ruim">-10.9%</td><td class="n ruim">+16.5%</td></tr>
+<tr><td><strong>agosto</strong></td>
+<td class="n">388</td><td class="n">253</td>
+<td class="n">R$ 6.954.071,53</td><td class="n">R$ 6.641.789,77</td><td class="n atencao">+4.7%</td>
+<td class="n">R$ 5.797.709,92</td><td class="n">R$ 2.480.547,68</td><td class="n ruim">+133.7%</td>
+<td class="n ok">-0.6%</td><td class="n ruim">+128.4%</td></tr>
+<tr><td><strong>setembro</strong></td>
+<td class="n">303</td><td class="n">187</td>
+<td class="n">R$ 4.659.208,83</td><td class="n">R$ 5.536.743,79</td><td class="n ruim">-15.8%</td>
+<td class="n">R$ 5.110.431,79</td><td class="n">R$ 932.741,85</td><td class="n ruim">+447.9%</td>
+<td class="n ruim">-21.7%</td><td class="n ruim">+373.3%</td></tr>
+<tr><th>total</th><th class="n">4654</th><th class="n">1938</th>
+<th class="n">R$ 42.769.622,26</th><th class="n">R$ 28.357.196,90</th><th class="n ruim">+50.8%</th>
+<th class="n">R$ 42.814.087,47</th><th class="n">R$ 20.336.146,00</th><th class="n ruim">+110.5%</th>
+<th class="n">+37.6%</th><th class="n">+88.4%</th></tr>
+</table>
+<div class="nota"><strong>Janeiro e fevereiro não são comparação.</strong> O Omie tem 3 e
+14 lançamentos pagos nesses dois meses, contra centenas de linhas no DFC: o percentual explode porque o
+denominador é quase zero, não porque as fontes discordem. A comparação começa em março.</div>
+
+<h3>A taxa de casamento, antes e depois do recorte</h3>
+<p>Mesmo lado do DFC (a pasta da MeuBESS) e mesmo critério (natureza + dia do pagamento + valor até o centavo). Só muda o lado do Omie: antes o
+CNPJ inteiro, depois só as contas correntes da MeuBESS.</p>
+<table>
+<tr><th></th><th class="n">lanç. do Omie no confronto</th><th class="n">casados</th><th class="n">% das 4654 linhas do DFC da MeuBESS</th><th class="n">% dos lanç. do Omie</th><th class="n">só no Omie</th></tr>
+<tr><td><strong>antes do recorte</strong> — Omie inteiro</td><td class="n">2148</td><td class="n">1275</td>
+<td class="n">27.4%</td>
+<td class="n ">59.4%</td><td class="n">873</td></tr>
+<tr><td><strong>depois do recorte</strong> — só as contas da MeuBESS</td><td class="n">1938</td><td class="n">1266</td>
+<td class="n">27.2%</td>
+<td class="n ok">65.3%</td><td class="n">672</td></tr>
+</table>
+<p>O recorte tirou 210 lançamentos do lado do Omie e perdeu 9 casamento(s)
+no caminho — os que a pasta da MeuBESS tinha achado em conta de outro negócio. O saldo é uma taxa de casamento do lado do Omie de
+<strong>59.4% para 65.3%</strong>. Pelo critério frouxo
+(mesmo mês em vez do mesmo dia) o número depois do recorte é 67.6%.</p>
+<p>Em valor: o recorte da MeuBESS pega <strong>R$ 48.693.342,90</strong> dos <strong>R$ 49.032.849,77</strong> movimentados no Omie no
+período — 99.3% do dinheiro, contra 90.2%
 dos lançamentos.</p>
 
-<div class="lacuna">
-  <strong>A resposta: o campo é a conta corrente — e só ela. Mas o que ela separa foi verificado em 66.0% do Omie, não no Omie inteiro.</strong>
+<div class="resolvido">
+  <strong>O que o recorte resolveu, e o que ele deixou à mostra.</strong>
   <ul>
-    <li><strong>A conta corrente separa.</strong> 8 das 17 contas com movimento no
-      período são exclusivas de uma unidade; as da MeuBESS pegam <strong>89.7% dos lançamentos</strong> do Omie e
-      cobrem 98.8% do que se sabe ser da MeuBESS, levando junto 7 lançamento(s) de
-      outra unidade (0.4% do recorte). O Itaú das duas empresas — que é quase todo o movimento — é da
-      MeuBESS; o <code>Sicoob - B3N</code> da empresa 1 é da pasta <code>(2)</code>, e o nome da conta diz isso sozinho.</li>
-    <li><strong>O departamento não serve.</strong> A árvore de departamentos do Omie tem <em>uma raiz só</em> — <code>MEU BESS</code>, estrutura
-      <code>001</code> — e abaixo dela setores (<code>ADMINISTRATIVO</code>, <code>OPERACIONAL</code>, <code>COMERCIAL</code> e seus filhos), iguais nas
-      duas empresas. É um organograma, não uma divisão de unidades de negócio. Além disso só
-      54.6% dos lançamentos trazem departamento
-      rateado, e o recorte por departamento cobriria só 78.0% da MeuBESS.</li>
-    <li><strong>A categoria não serve.</strong> As quatro unidades usam o mesmo plano de categorias — é o mesmo cadastro da empresa. Uma
-      categoria como "Compras de mercadorias" não diz de quem é a compra. O recorte por categoria só parece funcionar
-      (75.2%) porque as unidades novas quase não aparecem no teste, e não
-      porque a categoria carregue a unidade.</li>
-    <li><strong>O projeto e o vendedor não servem</strong>: a maioria esmagadora dos lançamentos vem sem projeto e sem vendedor.</li>
-    <li><strong>A empresa/filial não serve</strong>: as duas filiais têm lançamento das duas coisas.</li>
+    <li><strong>Resolveu a contaminação.</strong> O número do Omie nas Telas 1 e 2 deixa de ser o do CNPJ inteiro. A pergunta "de quem é esta conta"
+      tem resposta do dono, gravada em arquivo, e não depende mais de o lançamento ter achado par no DFC — as contas pequenas, que o teste de pureza
+      nunca conseguiu classificar por falta de casados, agora têm dono.</li>
+    <li><strong>Não fechou a distância entre as duas fontes.</strong> Com os dois lados falando da mesma unidade, o DFC da MeuBESS continua acima do
+      Omie recortado do lado das saídas em <strong>6 dos 7 meses comparáveis</strong> (março a setembro;
+      a exceção é março), com a diferença indo de +14.8% a +373.3% já descontadas as
+      transferências — e do lado das entradas em 6 desses 7 meses. Ou seja: a diferença
+      que se via antes <em>não era</em> outra unidade de negócio dentro do número. É o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e a
+      cobertura do ano. É esse achado que mexeu na proposta de alguns indicadores da seção 7.</li>
+    <li><strong>A lista é uma lista, e quebra no dia em que um negócio lançar na conta do outro.</strong> A seção 3 já achou lançamentos assim em
+      contas que o dono deu à MeuBESS. Enquanto o Omie não tiver uma marca de unidade no próprio lançamento, o recorte é manutenção: conta nova no
+      Omie entra sem dono e fica fora da tela até alguém dizer de quem é. Um departamento-raiz por unidade segue sendo o caminho mais barato para
+      acabar com a manutenção, porque o campo já existe e já é rateável — <strong>e isso é decisão do dono, não deste confronto</strong>.</li>
+    <li><strong>6 conta(s) com movimento seguem sem dono dito</strong> e ficam fora de tudo. Ver a tabela acima.</li>
   </ul>
-  <strong>A ressalva que impede chamar isto de resolvido.</strong> 34.0% dos
-  lançamentos do Omie <em>não acharam par em pasta nenhuma</em> — a unidade deles é desconhecida, e o teste de pureza nada diz sobre eles. Pior:
-  as pastas <code>(1)</code> e <code>(3)</code> casaram <strong>zero</strong> lançamento, então o teste nunca chegou a ver essas duas unidades.
-  Elas movimentam dinheiro no Omie (a tabela acima mostra o Safra com 45
-  lançamentos na faixa), mas <strong>fora do filtro <code>cTpLancamento: "CPCR"</code></strong> que as Telas 1 e 2 usam.
-  <strong>Portanto: há um recorte por conta corrente, ele explica a maior parte do Omie e é o melhor que existe hoje — mas ele não é um campo
-  que diga "esta linha é da MeuBESS". É uma lista de contas mantida à mão, que quebra no dia em que uma unidade lançar na conta da outra
-  (já há 7 caso(s) assim).</strong> Fechar isto é decisão do dono e pede uma marca nova no Omie — um
-  departamento-raiz por unidade é o caminho mais barato, porque o campo já existe e já é rateável. <strong>Nada foi alterado no Omie, e nenhuma
-  lacuna de <code>docs/fontes.md</code> foi fechada por esta leitura.</strong>
+  <strong>Nada foi alterado no Omie nem nas planilhas.</strong> Em <code>docs/fontes.md</code>, esta rodada fecha <em>uma</em> lacuna — a do recorte
+  por conta corrente — e não toca em nenhuma outra.
 </div>
 
 <h2>5. Por que o Omie tem menos lançamentos que o DFC somado</h2>
@@ -524,7 +699,8 @@ contaria o mesmo dinheiro duas vezes, e o <code>CPCR</code> faz bem em tirá-las
 que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.</p>
 
 <h2>6. Por grupo das Telas 1 e 2: quem tem o dado mais completo</h2>
-<p>Agora com o DFC <strong>só da pasta da MeuBESS</strong> — as telas são da MeuBESS, não do grupo. A medida é: de todos os lançamentos de
+<p>Agora com os <strong>dois lados só da MeuBESS</strong>: à esquerda a pasta do DFC dela, à direita o Omie cortado pelas contas correntes da
+lista do dono (seção 4). A medida é: de todos os lançamentos de
 caixa do período (entradas, para a receita; saídas, para o resto), quantos cada fonte consegue <strong>classificar dentro do grupo com o que ela
 mesma traz</strong>. No DFC a classificação está escrita na própria linha (<code>CLASS. CONTABIL</code> e <code>SUB 2</code>); no Omie depende de
 um campo que o lançamento pode ou não trazer.</p>
@@ -532,74 +708,147 @@ um campo que o lançamento pode ou não trazer.</p>
 <tr><th>grupo</th><th class="n">DFC: linhas no grupo</th><th class="n">% das linhas</th><th class="n">Omie: lanç. com o campo</th><th class="n">% dos lanç.</th><th>o campo do Omie</th><th>mais completo</th></tr>
 <tr><td><strong>Despesas com funcionários</strong></td>
 <td class="n">623 de 3215</td><td class="n">19.4% <span class="barra" style="width:12px"></span></td>
-<td class="n">912 de 1503</td><td class="n">60.7% <span class="barra b" style="width:36px"></span></td>
+<td class="n">878 de 1406</td><td class="n">62.4% <span class="barra b" style="width:37px"></span></td>
 <td>departamentos[] rateados no lançamento (o Omie não marca departamento como de pessoal)</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>COGS / custos de vendas</strong></td>
 <td class="n">1345 de 3215</td><td class="n">41.8% <span class="barra" style="width:25px"></span></td>
-<td class="n">1252 de 1503</td><td class="n">83.3% <span class="barra b" style="width:50px"></span></td>
+<td class="n">1173 de 1406</td><td class="n">83.4% <span class="barra b" style="width:50px"></span></td>
 <td>codigo_dre da categoria do lançamento (a conta de custo do DRE)</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>Despesas gerais</strong></td>
 <td class="n">704 de 3215</td><td class="n">21.9% <span class="barra" style="width:13px"></span></td>
-<td class="n">1252 de 1503</td><td class="n">83.3% <span class="barra b" style="width:50px"></span></td>
+<td class="n">1173 de 1406</td><td class="n">83.4% <span class="barra b" style="width:50px"></span></td>
 <td>codigo_dre da categoria do lançamento</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>Impostos</strong></td>
 <td class="n">83 de 3215</td><td class="n">2.6% <span class="barra" style="width:2px"></span></td>
-<td class="n">3 de 1503</td><td class="n">0.2% <span class="barra b" style="width:0px"></span></td>
+<td class="n">3 de 1406</td><td class="n">0.2% <span class="barra b" style="width:0px"></span></td>
 <td>detalhes.cTipo em DAS / DRF / GUIA (a leitura "guias pagas")</td><td><strong>empatado</strong></td></tr>
 <tr><td><strong>Deduções</strong></td>
 <td class="n">21 de 3215</td><td class="n">0.7% <span class="barra" style="width:0px"></span></td>
-<td class="n">0 de 1503</td><td class="n">0.0% <span class="barra b" style="width:0px"></span></td>
+<td class="n">0 de 1406</td><td class="n">0.0% <span class="barra b" style="width:0px"></span></td>
 <td>detalhes.cOperacao = 13 (devolução de venda)</td><td><strong>empatado</strong></td></tr>
 <tr><td><strong>Receita</strong></td>
 <td class="n">1336 de 1439</td><td class="n">92.8% <span class="barra" style="width:56px"></span></td>
-<td class="n">645 de 645</td><td class="n">100.0% <span class="barra b" style="width:60px"></span></td>
+<td class="n">532 de 532</td><td class="n">100.0% <span class="barra b" style="width:60px"></span></td>
 <td>categoria com conta_receita = S</td><td><strong>Omie</strong></td></tr>
 </table>
 <div class="nota"><strong>As duas colunas não medem a mesma coisa — e é esse o ponto.</strong> No DFC o número é
 <em>quantas linhas caem neste grupo</em>: a linha já diz a que grupo pertence. No Omie é <em>quantos lançamentos trazem o campo
-que poderia colocá-los em algum grupo</em> — e o lado do Omie está contando o CNPJ inteiro, as quatro unidades, porque o recorte da seção 4
-não fecha. "COGS" e "Despesas gerais" mostram exatamente o mesmo número do lado do Omie, porque o campo é o mesmo
+que poderia colocá-los em algum grupo</em>. O que mudou nesta rodada é o denominador do lado do Omie: antes ele contava o CNPJ inteiro, as quatro
+unidades; agora conta 1938 lançamentos, só os das contas da MeuBESS. "COGS" e "Despesas gerais" seguem mostrando exatamente o
+mesmo número do lado do Omie, porque o campo é o mesmo
 (<code>codigo_dre</code>) e <strong>ele não separa os dois</strong> enquanto o dono não disser quais contas do DRE são custo e quais são despesa
-geral. É uma lacuna que segue aberta em <code>docs/fontes.md</code>.</div>
+geral. <strong>Essa lacuna segue aberta</strong> em <code>docs/fontes.md</code> — o recorte por conta corrente não tem nada a ver com ela.</div>
 
-<h2>7. Proposta, indicador a indicador, considerando só a MeuBESS</h2>
+<h2>7. Proposta, indicador a indicador, revista com o recorte da MeuBESS</h2>
 <p>Para cada um dos 21 indicadores das Telas 1 e 2 que hoje carregam <strong>lacuna: Omie ou DFC</strong> em <code>docs/fontes.md</code>.
-<strong>Isto é proposta, não decisão</strong> — nenhuma lacuna foi fechada e nenhuma fonte foi trocada no <code>docs/fontes.md</code>.
-A regra que orientou a coluna "fonte principal" segue a mesma: <em>onde a classificação decide o número, o DFC leva</em> (ele escreve a classe na
-própria linha); <em>onde o cadastro ou a carteira decide, o Omie leva</em> (ele tem cliente, categoria, departamento, status e pagamento parcial).
-A coluna nova — <strong>o que muda considerando só a MeuBESS</strong> — é a revisão desta leitura.</p>
-<div class="lacuna"><strong>A ressalva que agora vale para a tabela inteira.</strong> Onde a proposta diz "Omie", o número sai do CNPJ inteiro,
-com as outras unidades de negócio dentro, <em>a menos que a consulta filtre por conta corrente</em>. A seção 4 mostrou que a conta corrente é o
-único campo que separa, que o recorte dela pega 89.7% dos lançamentos — e que ele foi verificado só nos
-66.0% que casaram com o DFC. Então a instrução prática para as telas é:
-<strong>toda consulta ao Omie nas Telas 1 e 2 passa a levar a lista de contas correntes da MeuBESS</strong> (a coluna "no recorte da MeuBESS?"
-da seção 4), e todo número que vier de lá mostra que é um recorte por conta, não uma marca de unidade. Onde o recorte pesa mais que o
-cadastro, vale trocar para o DFC: a pasta do DFC da MeuBESS <strong>já é só dela</strong>. As duas escolhas são do dono.</div>
-<div class="nota">E a ressalva antiga continua de pé: onde a proposta diz "Omie", isso só vale <strong>de março de 2026 em diante</strong> —
-em janeiro e fevereiro o Omie quase não tem lançamento pago. Para a série histórica de 2026, a única fonte que cobre o ano inteiro é o DFC.</div>
+<strong>Isto continua sendo proposta, não decisão</strong> — nenhuma lacuna de fonte foi fechada e nenhuma fonte foi trocada no
+<code>docs/fontes.md</code>; a única lacuna que esta rodada fecha lá é a do recorte por conta corrente, que é outra coisa.
+A regra que orientava a coluna "fonte principal" segue valendo: <em>onde a classificação decide o número, o DFC leva</em> (ele escreve a classe na
+própria linha); <em>onde o cadastro decide, o Omie leva</em> (ele tem cliente, categoria, departamento, status e pagamento parcial).
+<strong>O recorte acrescentou uma terceira:</strong> <em>onde o que decide é a completude do período, o DFC leva</em>.</p>
+<div class="resolvido"><strong>O que mudou, e por quê.</strong> Na rodada anterior a última coluna desta tabela dizia "precisa do recorte" para um
+recorte que não existia, e todo número vindo do Omie carregava a ressalva de estar somando as outras unidades de negócio do mesmo CNPJ.
+<strong>Essa ressalva caiu:</strong> o dono deu a lista de contas (seção 4), ela está em <code>dados/contas-correntes-por-negocio.json</code>, e toda
+consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — 1938 dos 2148 lançamentos do
+período, 99.3% do dinheiro. Com o recorte aplicado, porém, apareceu o que a contaminação escondia:
+<strong>o DFC da MeuBESS fica acima do Omie recortado do lado das saídas em 6 dos 7 meses comparáveis,
+de +14.8% a +373.3% sem contar transferências</strong> (seção 4), e a causa não é unidade
+de negócio — é o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
+Por isso <strong>7 dos 21 indicadores mudaram de fonte principal proposta</strong>, todos na
+mesma direção: do Omie para o DFC, e todos em número de caixa (saldo, receita, despesa paga, as séries por dia e por mês). Os que dependem de
+cadastro — cliente, categoria, conta do DRE, carteira em aberto — <strong>ficaram no Omie</strong>, agora recortado. As duas escolhas seguem sendo
+do dono.</div>
+<div class="nota">E a ressalva antiga continua de pé, só que agora ela é o motivo das trocas e não uma nota de rodapé: onde a proposta diz "Omie",
+o número só existe <strong>de março de 2026 em diante</strong> — em janeiro e fevereiro o Omie tem
+3 e 14 lançamentos pagos no recorte, contra
+413 e 420 linhas no DFC da MeuBESS. Para a série de 2026 inteiro, a única
+fonte que cobre o ano é o DFC.</div>
 <table>
-<tr><th>tela</th><th>indicador</th><th>fonte principal proposta</th><th>confronto</th><th>como o confronto aparece na tela</th><th>o que muda considerando só a MeuBESS</th></tr>
-<tr><td>Tela 1</td><td><strong>Saldo</strong></td><td>Omie</td><td>DFC</td><td>Cartão com o número do Omie; se a diferença do mês passar de 2%, um selo ao lado do valor com a diferença em % contra o DFC</td><td>Saldo é por conta corrente: some só as contas do recorte da MeuBESS. É o indicador em que o recorte funciona melhor, porque o campo do recorte é o próprio campo do indicador.</td></tr>
-<tr><td>Tela 1</td><td><strong>Receitas</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie; selo acima de 2% de diferença contra a soma de ENTRADA do DFC no mesmo mês</td><td>Precisa do recorte: as outras unidades faturam serviço no mesmo CNPJ. Sem o recorte, a receita da tela é a do grupo, não a da MeuBESS.</td></tr>
-<tr><td>Tela 1</td><td><strong>Despesas</strong></td><td>DFC</td><td>Omie</td><td>Cartão do DFC (a classificação vem na própria linha); selo acima de 2% de diferença contra o Omie</td><td>Não muda: a fonte principal é a pasta do DFC da MeuBESS, que já é só dela. O confronto do Omie é que precisa do recorte.</td></tr>
-<tr><td>Tela 1</td><td><strong>Despesas pagas</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie (nValPago cobre o pagamento parcial, que o DFC não separa); selo acima de 2%</td><td>Precisa do recorte, pelo mesmo motivo das Receitas.</td></tr>
-<tr><td>Tela 1</td><td><strong>Despesas pendentes</strong></td><td>Omie</td><td>DFC (só nos meses fechados)</td><td>Só Omie: o DFC provisiona outubro a dezembro mas não tem carteira. O selo aparece só de janeiro a setembro</td><td>Precisa do recorte e é o caso mais frágil: a carteira em aberto não casa com nada no DFC, então não dá nem para medir quanto do pendente é de outra unidade.</td></tr>
-<tr><td>Tela 1</td><td><strong>Despesas com funcionários</strong></td><td>DFC</td><td>Omie por departamento</td><td>Cartão do DFC; o confronto do Omie só entra depois que o dono fechar a lista de departamentos de pessoal</td><td>O departamento do Omie NÃO separa unidade: a árvore inteira pende de uma raiz só, MEU BESS, e os filhos são setores. Serve para dizer que gasto é de pessoal, não de quem é o gasto.</td></tr>
-<tr><td>Tela 1</td><td><strong>% desp. funcionários / receita líquida</strong></td><td>DFC (numerador) + Omie (denominador)</td><td>a mesma conta só no Omie</td><td>Segue as duas linhas de que depende; o selo herda a maior diferença das duas</td><td>O denominador vem do Omie e precisa do recorte; o numerador já é só da MeuBESS. Sem recorte o percentual sai menor do que é.</td></tr>
-<tr><td>Tela 1</td><td><strong>Top 10 despesas</strong></td><td>DFC (por CLASS. CONTABIL / SUB 2)</td><td>Omie por centro de custo</td><td>Barras do DFC, com um seletor “ver por centro de custo (Omie)” ao lado do título</td><td>Não muda no principal. No seletor do Omie, o recorte precisa entrar antes de agrupar, ou uma unidade grande de fora entra no Top 10.</td></tr>
-<tr><td>Tela 1</td><td><strong>Top 10 receitas</strong></td><td>Omie</td><td>DFC (a descrição já vem na linha)</td><td>Barras do Omie; a descrição cai para o DFC quando o pedido de venda não responder</td><td>Precisa do recorte. É o indicador que mais expõe o problema: cliente de outra unidade apareceria nomeado no Top 10 da MeuBESS.</td></tr>
-<tr><td>Tela 1</td><td><strong>Receita × despesa por dia</strong></td><td>Omie</td><td>DFC (linhas 43/44 da aba do mês)</td><td>Colunas do Omie; o dia com diferença acima de 5% ganha traço pontilhado e o número do DFC no tooltip</td><td>Precisa do recorte.</td></tr>
-<tr><td>Tela 1</td><td><strong>Receita × despesa por mês</strong></td><td>Omie</td><td>DFC</td><td>Duas linhas do Omie, com a série do DFC em cinza claro atrás; a legenda diz a diferença média em %</td><td>Precisa do recorte. E a série do DFC atrás tem de ser só a da pasta da MeuBESS — somar as quatro pastas aqui seria comparar grupo com unidade.</td></tr>
-<tr><td>Tela 2</td><td><strong>Receita total</strong></td><td>Omie</td><td>DFC</td><td>Cartão do Omie; selo acima de 2%</td><td>Precisa do recorte.</td></tr>
-<tr><td>Tela 2</td><td><strong>Custos e despesas</strong></td><td>DFC (separa COGS de G&amp;A)</td><td>Omie</td><td>Cartão do DFC; selo acima de 2% contra o total do Omie</td><td>Não muda no principal; o confronto precisa do recorte.</td></tr>
-<tr><td>Tela 2</td><td><strong>EBITDA</strong></td><td>Omie</td><td>DFC só no resultado financeiro</td><td>Cartão do Omie; nota de rodapé dizendo que depreciação e amortização não existem no DFC</td><td>Precisa do recorte por conta corrente. Sem ele o EBITDA da tela é do CNPJ inteiro — e este é o indicador em que a contaminação menos aparece na conferência, porque não há número do DFC para confrontar.</td></tr>
-<tr><td>Tela 2</td><td><strong>Lucro líquido</strong></td><td>Omie</td><td>DFC (lucro de caixa, B25)</td><td>Cartão do Omie; o número do DFC aparece como “lucro de caixa” numa segunda linha, sem selo — são contas diferentes</td><td>Precisa do recorte. O “lucro de caixa” do DFC continua sendo o da pasta da MeuBESS.</td></tr>
-<tr><td>Tela 2</td><td><strong>Margem de lucro</strong></td><td>Omie</td><td>DFC</td><td>Segue os dois cartões acima</td><td>Precisa do recorte nos dois termos — e um recorte parcial distorce a margem duas vezes.</td></tr>
-<tr><td>Tela 2</td><td><strong>(+) Receitas</strong></td><td>Omie</td><td>DFC</td><td>Linha do DRE pelo Omie (é a única com quebra por produto); selo acima de 2%</td><td>Precisa do recorte. A quebra por produto é do Omie e produto de outra unidade entraria na linha.</td></tr>
-<tr><td>Tela 2</td><td><strong>(−) Deduções</strong></td><td>DFC</td><td>Omie por cOperacao 13 e retenções</td><td>Linha do DFC; o Omie entra como segunda coluna “retido no título”</td><td>Não muda no principal; o confronto precisa do recorte.</td></tr>
-<tr><td>Tela 2</td><td><strong>(−) Custos de vendas</strong></td><td>DFC</td><td>Omie por codigo_dre</td><td>Linha do DFC; selo acima de 5% contra a conta de custo do DRE do Omie</td><td>Não muda no principal. Repare que as outras unidades quase não têm custo de mercadoria — elas vendem serviço —, então esta linha é a menos contaminada de todas.</td></tr>
-<tr><td>Tela 2</td><td><strong>(−) Despesas gerais</strong></td><td>Omie (quebra por categoria, decisão de 24/09)</td><td>DFC por SUB 2</td><td>Linha do Omie; o DFC entra numa coluna “no DFC” ao lado, linha a linha</td><td>Precisa do recorte. As categorias são as mesmas nas quatro unidades: a categoria NÃO separa unidade.</td></tr>
-<tr><td>Tela 2</td><td><strong>(−) Impostos</strong></td><td>DFC (guias pagas)</td><td>Omie por cTipo e retenções</td><td>Linha do DFC; selo acima de 5%, e a retenção do Omie numa nota</td><td>Não muda no principal; o confronto precisa do recorte.</td></tr>
+<tr><th>tela</th><th>indicador</th><th>fonte principal proposta</th><th>confronto</th><th>como o confronto aparece na tela</th><th>o que o recorte muda neste indicador</th><th>mudou?</th></tr>
+<tr><td>Tela 1</td><td><strong>Saldo</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC (<code>ENTRADA</code> − <code>SAIDA</code> pelo mês de <code>DIA PG</code>); selo ao lado do valor quando a diferença contra o Omie recortado passar de 2%</td><td>O recorte resolve a contaminação (a conta corrente é o próprio campo do indicador) e não resolve a distância: saldo é entrada menos saída, e o lado da saída é onde as duas fontes mais se afastam mesmo depois do corte.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 1</td><td><strong>Receitas</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC (<code>ENTRADA</code> de <code>FLUXO DE CAIXA</code>, pelo mês de <code>DIA PG</code>); selo acima de 2% contra o Omie recortado</td><td>O recorte tirou as receitas das outras unidades e as entradas encostaram em alguns meses, mas seguem longe em outros. O que pesou para a troca foi o período: o Omie quase não tem lançamento pago em janeiro e fevereiro, e a tela precisa do ano.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas</strong></td>
+<td>DFC</td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC (a classificação vem na própria linha); selo acima de 2% de diferença contra o Omie recortado</td><td>Não muda: a fonte principal é a pasta do DFC da MeuBESS, que já é só dela. O recorte entra só no confronto — e mostra que o Omie recortado fica abaixo do DFC em quase todo mês comparável, março à parte.</td>
+<td>não</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas pagas</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC (<code>SAIDA</code> das linhas com <code>PAGAMENTO</code> = <code>PAGO</code>); o <code>nValPago</code> do Omie entra no tooltip, porque é ele que separa o pagamento parcial</td><td>O recorte resolveu a contaminação e deixou o buraco à mostra: o Omie recortado fica abaixo do DFC em quase todo mês comparável, março à parte. A vantagem do Omie aqui (o pagamento parcial) não compensa uma diferença desse tamanho, então ela vira nota, não número da tela.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas pendentes</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC (só nos meses fechados)</td>
+<td>Só Omie: o DFC provisiona outubro a dezembro mas não tem carteira. O selo aparece só de janeiro a setembro</td><td>É o caso que o recorte menos alcança: a carteira em aberto não casa com nada no DFC, então o corte por conta corrente vale pelo cadastro da conta, não por conferência. Segue sendo o indicador mais frágil da tela.</td>
+<td>não</td></tr>
+<tr><td>Tela 1</td><td><strong>Despesas com funcionários</strong></td>
+<td>DFC</td><td>Omie por departamento (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC; o confronto do Omie só entra depois que o dono fechar a lista de departamentos de pessoal</td><td>O recorte não substitui o departamento e o departamento não substitui o recorte: a árvore de departamentos do Omie pende de uma raiz só e os filhos são setores, não unidades de negócio. Agora as duas coisas convivem — a conta corrente diz de quem é o gasto, o departamento diz que gasto é.</td>
+<td>não</td></tr>
+<tr><td>Tela 1</td><td><strong>% desp. funcionários / receita líquida</strong></td>
+<td><strong class="ok">DFC (numerador) + DFC (denominador)</strong></td><td>a mesma conta no Omie recortado</td>
+<td>Segue as duas linhas de que depende; o selo herda a maior diferença das duas</td><td>Mudou por arrasto: o denominador seguia a receita, que passou para o DFC. As duas pontas agora vêm da mesma fonte e do mesmo recorte, que era o defeito antigo desta linha — antes ela misturava um numerador só da MeuBESS com um denominador do CNPJ inteiro.</td>
+<td><strong class="atencao">mudou</strong> — era <em>DFC (numerador) + Omie (denominador)</em></td></tr>
+<tr><td>Tela 1</td><td><strong>Top 10 despesas</strong></td>
+<td>DFC (por CLASS. CONTABIL / SUB 2)</td><td>Omie por centro de custo (só nas contas da MeuBESS)</td>
+<td>Barras do DFC, com um seletor “ver por centro de custo (Omie)” ao lado do título</td><td>Não muda no principal. No seletor do Omie, o recorte entra antes de agrupar — é o que impede uma despesa grande de outra unidade de subir no Top 10 da MeuBESS.</td>
+<td>não</td></tr>
+<tr><td>Tela 1</td><td><strong>Top 10 receitas</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC (a descrição já vem na linha)</td>
+<td>Barras do Omie; a descrição cai para o DFC quando o pedido de venda não responder</td><td>É o indicador em que o recorte mais serve, e por isso a fonte não mudou: aqui o que decide é o cadastro (cliente e pedido de venda), que só o Omie tem, e era exatamente aqui que um cliente de outra unidade apareceria nomeado no Top 10 da MeuBESS. Com a lista do dono isso deixa de acontecer.</td>
+<td>não</td></tr>
+<tr><td>Tela 1</td><td><strong>Receita × despesa por dia</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Colunas do DFC (aba do mês, linhas <code>Entradas</code> 43 e <code>Gastos</code> 44, um dia por coluna — o bloco já existe pronto); o dia com diferença acima de 5% contra o Omie recortado ganha traço pontilhado</td><td>O bloco mistura entrada e saída, e o lado da saída não fecha nem depois do recorte. Com o DFC ele também deixa de sumir em janeiro e fevereiro.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 1</td><td><strong>Receita × despesa por mês</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Duas linhas do DFC da pasta da MeuBESS, com a série do Omie recortado em cinza claro atrás; a legenda diz a diferença média em %</td><td>Mesmo motivo do bloco por dia, e mais um: é a série do ano inteiro, e só o DFC cobre o ano inteiro. A série de trás agora é a do Omie recortado — somar as quatro pastas aqui seria comparar grupo com unidade, e somar o Omie inteiro, idem.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 2</td><td><strong>Receita total</strong></td>
+<td><strong class="ok">DFC</strong></td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC (linhas de receita de <code>FLUXO DE CAIXA</code>, ou a linha <code>Receitas</code> B15 da aba do mês); selo acima de 2% contra o Omie recortado</td><td>Mesma troca do cartão de Receitas da Tela 1, pelo mesmo motivo — e as duas telas precisam mostrar o mesmo número de receita.</td>
+<td><strong class="atencao">mudou</strong> — era <em>Omie</em></td></tr>
+<tr><td>Tela 2</td><td><strong>Custos e despesas</strong></td>
+<td>DFC (separa COGS de G&amp;A)</td><td>Omie (só nas contas da MeuBESS)</td>
+<td>Cartão do DFC; selo acima de 2% contra o total do Omie recortado</td><td>Não muda no principal; o confronto passa a ser contra o Omie recortado. A separação entre COGS e G&A continua só no DFC.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>EBITDA</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC só no resultado financeiro</td>
+<td>Cartão do Omie; nota de rodapé dizendo que depreciação e amortização não existem no DFC</td><td>O recorte resolve o que dava para resolver: o EBITDA deixa de ser o do CNPJ inteiro. Não resolve o resto — depreciação e amortização não saem do caixa e não existem no DFC, então esta linha não tem para onde ir, e segue sem número do DFC para confrontar.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>Lucro líquido</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC (lucro de caixa, B25)</td>
+<td>Cartão do Omie; o número do DFC aparece como “lucro de caixa” numa segunda linha, sem selo — são contas diferentes</td><td>Fonte mantida: o lucro do DRE depende de cadastro (categoria e conta do DRE), que só o Omie tem, e o <code>Lucro Liquido</code> do DFC é de caixa, outra conta. O recorte entra nos dois lados — o do DFC é a pasta da MeuBESS.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>Margem de lucro</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC</td>
+<td>Segue os dois cartões acima</td><td>O recorte entra nos dois termos. Sem ele a margem saía distorcida duas vezes; com ele ela passa a ser a margem da MeuBESS — mas continua herdando a lacuna de depreciação e amortização do EBITDA.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>(+) Receitas</strong></td>
+<td>Omie (só nas contas da MeuBESS)</td><td>DFC</td>
+<td>Linha do DRE pelo Omie (é a única com quebra por produto); selo acima de 2%</td><td>Fonte mantida, ao contrário do cartão de Receita total: aqui o que decide é a quebra por produto, que só o pedido de venda do Omie tem. O recorte impede que produto de outra unidade entre na linha.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Deduções</strong></td>
+<td>DFC</td><td>Omie por cOperacao 13 e retenções (só nas contas da MeuBESS)</td>
+<td>Linha do DFC; o Omie entra como segunda coluna “retido no título”</td><td>Não muda no principal. O recorte deixou claro por quê: nenhum lançamento do Omie recortado no período traz <code>cOperacao = 13</code>, então o confronto se apoia só nas retenções.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Custos de vendas</strong></td>
+<td>DFC</td><td>Omie por codigo_dre (só nas contas da MeuBESS)</td>
+<td>Linha do DFC; selo acima de 5% contra a conta de custo do DRE do Omie</td><td>Não muda no principal, e era a linha menos contaminada de todas — as outras unidades quase não têm custo de mercadoria, vendem serviço. O recorte muda pouco aqui, e é esperado.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Despesas gerais</strong></td>
+<td>Omie (quebra por categoria, decisão de 24/09; só nas contas da MeuBESS)</td><td>DFC por SUB 2</td>
+<td>Linha do Omie; o DFC entra numa coluna “no DFC” ao lado, linha a linha</td><td>Fonte mantida porque a quebra por categoria é decisão do dono de 24/09 e só o Omie a tem. O recorte era indispensável aqui: as categorias são as mesmas nas quatro unidades, então a categoria nunca separou nada — quem separa é a conta corrente.</td>
+<td>não</td></tr>
+<tr><td>Tela 2</td><td><strong>(−) Impostos</strong></td>
+<td>DFC (guias pagas)</td><td>Omie por cTipo e retenções (só nas contas da MeuBESS)</td>
+<td>Linha do DFC; selo acima de 5%, e a retenção do Omie numa nota</td><td>Não muda no principal, e o recorte reforçou a escolha: no período inteiro o Omie recortado tem um punhado de lançamentos com <code>cTipo</code> em DAS/DRF/GUIA, contra dezenas de linhas de imposto no DFC.</td>
+<td>não</td></tr>
 </table>
 
 <h3>O aviso na tela, em uma regra só</h3>
@@ -608,17 +857,24 @@ em janeiro e fevereiro o Omie quase não tem lançamento pago. Para a série his
   <li><strong>sem selo</strong> quando a diferença contra a outra fonte fica em <strong>até 2%</strong> — é ruído de arredondamento e de data de baixa;</li>
   <li><strong>selo âmbar "confere: X%"</strong> entre <strong>2% e 5%</strong>, com o valor da outra fonte no tooltip;</li>
   <li><strong>selo vermelho "diverge: X%"</strong> acima de <strong>5%</strong>, que abre a lista dos lançamentos sem par naquele mês.</li>
-  <li><strong>selo cinza "sem recorte"</strong> — <em>novo</em> — em todo número que vem do Omie enquanto o recorte da MeuBESS não existir, dizendo
-    no tooltip que aquele valor inclui as outras unidades de negócio do mesmo CNPJ.</li>
+  <li><strong>O selo cinza "sem recorte" some.</strong> Ele existia para avisar que o número do Omie incluía as outras unidades de negócio; com a
+    lista do dono aplicada, não inclui mais. No lugar dele, o rodapé da tela diz de onde vem o recorte e quando a lista foi atualizada, e as contas
+    <em>sem dono dito</em> ficam fora do número — nenhuma delas entra silenciosamente.</li>
 </ul>
 <p>Os três primeiros limites saem do que a seção 2 mostrou, e o dono pode mexer neles. De outubro a dezembro o selo de diferença não aparece:
-ali o DFC só tem provisão, e comparar seria comparar com nada.</p>
+ali o DFC só tem provisão, e comparar seria comparar com nada. <strong>Com as trocas acima, na maior parte dos cartões o selo passa a comparar um
+número do DFC contra um número do Omie recortado</strong> — a diferença que a seção 4 mede mês a mês —, e ele vai acender vermelho com frequência
+enquanto a diferença do filtro <code>CPCR</code> não for explicada. Isso é o selo funcionando, não o selo quebrado.</p>
 
 <h2>8. O que este confronto não resolve</h2>
 <ul>
-  <li><strong>O recorte da MeuBESS no Omie é uma lista de contas, não um campo</strong> (seção 4). É a lacuna nova desta leitura: enquanto
-    o Omie não tiver uma marca de unidade, o recorte é mantido à mão, vale 89.7% dos lançamentos e foi
-    verificado só nos 66.0% que casaram com o DFC.</li>
+  <li><strong>O recorte da MeuBESS no Omie é uma lista de contas, não um campo</strong> (seção 4). A lacuna de <em>quem responde</em> está
+    fechada — o dono respondeu, e a resposta está em <code>dados/contas-correntes-por-negocio.json</code>. O que fica é manutenção: enquanto o Omie
+    não tiver uma marca de unidade no próprio lançamento, conta corrente nova entra sem dono e fica fora da tela até alguém dizer de quem é, e a
+    lista quebra no dia em que um negócio lançar na conta do outro.</li>
+  <li><strong>O recorte não explica a diferença entre as duas fontes</strong> — este é o achado que mais mexeu na proposta da seção 7. Com os dois
+    lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 6 dos 7 meses comparáveis. A causa está na seção 5, não na unidade de
+    negócio.</li>
   <li><strong>Duas das unidades novas não aparecem no que as telas leem.</strong> As pastas <code>(1)</code> e <code>(3)</code> casaram zero
     lançamento: o movimento delas fica fora do filtro <code>cTpLancamento: "CPCR"</code>. Isso é bom para a tela — menos contaminação — e ruim
     para a conferência: não dá para medir o que não se vê.</li>
@@ -636,7 +892,9 @@ ali o DFC só tem provisão, e comparar seria comparar com nada.</p>
 </ul>
 
 <footer>
-Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em 24/09/2026. Só leitura das duas fontes: nenhum arquivo das 4 pastas
+Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em 24/09/2026. O recorte da MeuBESS vem de
+<code>dados/contas-correntes-por-negocio.json</code> (lista dita pelo dono em 2026-09-24), que é o mesmo arquivo que o
+código dos dashboards lê. Só leitura das duas fontes: nenhum arquivo das 4 pastas
 sincronizadas foi gravado, movido ou aberto para edição, nenhuma planilha foi copiada para o repositório e nenhuma escrita foi feita no Omie.
 Sem nome de cliente, fornecedor ou pessoa.
 As respostas do Omie ficam num cache local em <code>.cache/omie/</code> — pasta ignorada pelo git, fora dos commits; rodar o script de novo

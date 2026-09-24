@@ -55,6 +55,20 @@ const semSinal = (p, casas = 1) => (p === null ? "—" : `${p.toFixed(casas)}%`)
 const empilhar = (mapa, chave, valor = 1) => mapa.set(chave, (mapa.get(chave) ?? 0) + valor);
 const maiorDe = (mapa) => [...mapa.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["—", 0];
 
+// ============================================================ o recorte da MeuBESS: a lista de contas dita pelo dono
+//
+// O dono disse, em 24/09/2026, de que negócio é cada conta corrente do Omie. A lista mora em
+// `dados/contas-correntes-por-negocio.json` — é de lá que o código dos dashboards vai ler, e é de lá que este script
+// lê. Nada aqui deduz dono pelo nome do banco nem pelo movimento: conta que o dono não citou fica SEM DONO DITO e
+// FORA do recorte.
+const LISTA_CONTAS = JSON.parse(fs.readFileSync(new URL("../dados/contas-correntes-por-negocio.json", import.meta.url), "utf8"));
+const NEGOCIO_ALVO = LISTA_CONTAS.recorte_das_telas;                    // "MeuBESS"
+const NEGOCIO_DA_CONTA = new Map(LISTA_CONTAS.contas.map((c) => [c.chave, c.negocio]));
+const CADASTRO_DA_CONTA = new Map(LISTA_CONTAS.contas.map((c) => [c.chave, c]));
+const RECORTE = new Set(LISTA_CONTAS.contas.filter((c) => c.negocio === NEGOCIO_ALVO).map((c) => c.chave));
+const negocioDa = (chave) => NEGOCIO_DA_CONTA.get(chave) ?? null;       // null = sem dono dito
+const noRecorteDaMeuBess = (l) => RECORTE.has(l.conta);
+
 // ============================================================ lado DFC: ler o .xlsx (zip + xml, sem dependência)
 
 function lerZip(buf) {
@@ -655,53 +669,103 @@ function medirGrupos(dfc, omie) {
 
 // ============================================================ a proposta, por indicador
 //
-// Sexta coluna nova: o que muda quando a tela é SÓ da MeuBESS — que é o caso, porque as outras unidades de negócio
-// não são o assunto das três telas. Enquanto o recorte da MeuBESS no Omie não fechar, todo indicador cuja fonte
-// principal proposta é o Omie precisa dizer como corta.
+// A sexta coluna mudou de assunto: antes ela dizia "precisa do recorte" para um recorte que não existia. O dono disse
+// a lista de contas em 24/09/2026, o recorte existe e está aplicado nos números desta página — então a coluna agora diz
+// o que o recorte resolve e o que ele NÃO resolve naquele indicador. E a sétima coluna diz o que a proposta era antes,
+// quando ela mudou.
+//
+// O QUE O RECORTE MOSTROU, e que mudou algumas propostas: o recorte responde à pergunta da contaminação (quais contas
+// são da MeuBESS) e NÃO fecha a distância entre as duas fontes. Com o Omie cortado só nas contas da MeuBESS, o DFC da
+// pasta da MeuBESS continua acima do Omie do lado das saídas em quase todos os meses comparáveis (março a setembro;
+// março é a exceção), e na maior parte deles do lado das entradas. A diferença não era unidade de negócio: é o filtro
+// cTpLancamento "CPCR" das Telas 1 e 2 (seção 5) e a
+// cobertura do ano. Daí a regra nova: onde o que decide é a COMPLETUDE do período, o DFC leva.
 
 const PROPOSTA = [
-  ["Tela 1", "Saldo", "Omie", "DFC", "Cartão com o número do Omie; se a diferença do mês passar de 2%, um selo ao lado do valor com a diferença em % contra o DFC",
-    "Saldo é por conta corrente: some só as contas do recorte da MeuBESS. É o indicador em que o recorte funciona melhor, porque o campo do recorte é o próprio campo do indicador."],
-  ["Tela 1", "Receitas", "Omie", "DFC", "Cartão do Omie; selo acima de 2% de diferença contra a soma de ENTRADA do DFC no mesmo mês",
-    "Precisa do recorte: as outras unidades faturam serviço no mesmo CNPJ. Sem o recorte, a receita da tela é a do grupo, não a da MeuBESS."],
-  ["Tela 1", "Despesas", "DFC", "Omie", "Cartão do DFC (a classificação vem na própria linha); selo acima de 2% de diferença contra o Omie",
-    "Não muda: a fonte principal é a pasta do DFC da MeuBESS, que já é só dela. O confronto do Omie é que precisa do recorte."],
-  ["Tela 1", "Despesas pagas", "Omie", "DFC", "Cartão do Omie (nValPago cobre o pagamento parcial, que o DFC não separa); selo acima de 2%",
-    "Precisa do recorte, pelo mesmo motivo das Receitas."],
-  ["Tela 1", "Despesas pendentes", "Omie", "DFC (só nos meses fechados)", "Só Omie: o DFC provisiona outubro a dezembro mas não tem carteira. O selo aparece só de janeiro a setembro",
-    "Precisa do recorte e é o caso mais frágil: a carteira em aberto não casa com nada no DFC, então não dá nem para medir quanto do pendente é de outra unidade."],
-  ["Tela 1", "Despesas com funcionários", "DFC", "Omie por departamento", "Cartão do DFC; o confronto do Omie só entra depois que o dono fechar a lista de departamentos de pessoal",
-    "O departamento do Omie NÃO separa unidade: a árvore inteira pende de uma raiz só, MEU BESS, e os filhos são setores. Serve para dizer que gasto é de pessoal, não de quem é o gasto."],
-  ["Tela 1", "% desp. funcionários / receita líquida", "DFC (numerador) + Omie (denominador)", "a mesma conta só no Omie", "Segue as duas linhas de que depende; o selo herda a maior diferença das duas",
-    "O denominador vem do Omie e precisa do recorte; o numerador já é só da MeuBESS. Sem recorte o percentual sai menor do que é."],
-  ["Tela 1", "Top 10 despesas", "DFC (por CLASS. CONTABIL / SUB 2)", "Omie por centro de custo", "Barras do DFC, com um seletor “ver por centro de custo (Omie)” ao lado do título",
-    "Não muda no principal. No seletor do Omie, o recorte precisa entrar antes de agrupar, ou uma unidade grande de fora entra no Top 10."],
-  ["Tela 1", "Top 10 receitas", "Omie", "DFC (a descrição já vem na linha)", "Barras do Omie; a descrição cai para o DFC quando o pedido de venda não responder",
-    "Precisa do recorte. É o indicador que mais expõe o problema: cliente de outra unidade apareceria nomeado no Top 10 da MeuBESS."],
-  ["Tela 1", "Receita × despesa por dia", "Omie", "DFC (linhas 43/44 da aba do mês)", "Colunas do Omie; o dia com diferença acima de 5% ganha traço pontilhado e o número do DFC no tooltip",
-    "Precisa do recorte."],
-  ["Tela 1", "Receita × despesa por mês", "Omie", "DFC", "Duas linhas do Omie, com a série do DFC em cinza claro atrás; a legenda diz a diferença média em %",
-    "Precisa do recorte. E a série do DFC atrás tem de ser só a da pasta da MeuBESS — somar as quatro pastas aqui seria comparar grupo com unidade."],
-  ["Tela 2", "Receita total", "Omie", "DFC", "Cartão do Omie; selo acima de 2%",
-    "Precisa do recorte."],
-  ["Tela 2", "Custos e despesas", "DFC (separa COGS de G&A)", "Omie", "Cartão do DFC; selo acima de 2% contra o total do Omie",
-    "Não muda no principal; o confronto precisa do recorte."],
-  ["Tela 2", "EBITDA", "Omie", "DFC só no resultado financeiro", "Cartão do Omie; nota de rodapé dizendo que depreciação e amortização não existem no DFC",
-    "Precisa do recorte por conta corrente. Sem ele o EBITDA da tela é do CNPJ inteiro — e este é o indicador em que a contaminação menos aparece na conferência, porque não há número do DFC para confrontar."],
-  ["Tela 2", "Lucro líquido", "Omie", "DFC (lucro de caixa, B25)", "Cartão do Omie; o número do DFC aparece como “lucro de caixa” numa segunda linha, sem selo — são contas diferentes",
-    "Precisa do recorte. O “lucro de caixa” do DFC continua sendo o da pasta da MeuBESS."],
-  ["Tela 2", "Margem de lucro", "Omie", "DFC", "Segue os dois cartões acima",
-    "Precisa do recorte nos dois termos — e um recorte parcial distorce a margem duas vezes."],
-  ["Tela 2", "(+) Receitas", "Omie", "DFC", "Linha do DRE pelo Omie (é a única com quebra por produto); selo acima de 2%",
-    "Precisa do recorte. A quebra por produto é do Omie e produto de outra unidade entraria na linha."],
-  ["Tela 2", "(−) Deduções", "DFC", "Omie por cOperacao 13 e retenções", "Linha do DFC; o Omie entra como segunda coluna “retido no título”",
-    "Não muda no principal; o confronto precisa do recorte."],
-  ["Tela 2", "(−) Custos de vendas", "DFC", "Omie por codigo_dre", "Linha do DFC; selo acima de 5% contra a conta de custo do DRE do Omie",
-    "Não muda no principal. Repare que as outras unidades quase não têm custo de mercadoria — elas vendem serviço —, então esta linha é a menos contaminada de todas."],
-  ["Tela 2", "(−) Despesas gerais", "Omie (quebra por categoria, decisão de 24/09)", "DFC por SUB 2", "Linha do Omie; o DFC entra numa coluna “no DFC” ao lado, linha a linha",
-    "Precisa do recorte. As categorias são as mesmas nas quatro unidades: a categoria NÃO separa unidade."],
-  ["Tela 2", "(−) Impostos", "DFC (guias pagas)", "Omie por cTipo e retenções", "Linha do DFC; selo acima de 5%, e a retenção do Omie numa nota",
-    "Não muda no principal; o confronto precisa do recorte."],
+  { tela: "Tela 1", indicador: "Saldo", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC (<code>ENTRADA</code> − <code>SAIDA</code> pelo mês de <code>DIA PG</code>); selo ao lado do valor quando a diferença contra o Omie recortado passar de 2%",
+    recorte: "O recorte resolve a contaminação (a conta corrente é o próprio campo do indicador) e não resolve a distância: saldo é entrada menos saída, e o lado da saída é onde as duas fontes mais se afastam mesmo depois do corte.",
+    antes: "Omie" },
+  { tela: "Tela 1", indicador: "Receitas", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC (<code>ENTRADA</code> de <code>FLUXO DE CAIXA</code>, pelo mês de <code>DIA PG</code>); selo acima de 2% contra o Omie recortado",
+    recorte: "O recorte tirou as receitas das outras unidades e as entradas encostaram em alguns meses, mas seguem longe em outros. O que pesou para a troca foi o período: o Omie quase não tem lançamento pago em janeiro e fevereiro, e a tela precisa do ano.",
+    antes: "Omie" },
+  { tela: "Tela 1", indicador: "Despesas", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC (a classificação vem na própria linha); selo acima de 2% de diferença contra o Omie recortado",
+    recorte: "Não muda: a fonte principal é a pasta do DFC da MeuBESS, que já é só dela. O recorte entra só no confronto — e mostra que o Omie recortado fica abaixo do DFC em quase todo mês comparável, março à parte.",
+    antes: null },
+  { tela: "Tela 1", indicador: "Despesas pagas", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC (<code>SAIDA</code> das linhas com <code>PAGAMENTO</code> = <code>PAGO</code>); o <code>nValPago</code> do Omie entra no tooltip, porque é ele que separa o pagamento parcial",
+    recorte: "O recorte resolveu a contaminação e deixou o buraco à mostra: o Omie recortado fica abaixo do DFC em quase todo mês comparável, março à parte. A vantagem do Omie aqui (o pagamento parcial) não compensa uma diferença desse tamanho, então ela vira nota, não número da tela.",
+    antes: "Omie" },
+  { tela: "Tela 1", indicador: "Despesas pendentes", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC (só nos meses fechados)",
+    comoNaTela: "Só Omie: o DFC provisiona outubro a dezembro mas não tem carteira. O selo aparece só de janeiro a setembro",
+    recorte: "É o caso que o recorte menos alcança: a carteira em aberto não casa com nada no DFC, então o corte por conta corrente vale pelo cadastro da conta, não por conferência. Segue sendo o indicador mais frágil da tela.",
+    antes: null },
+  { tela: "Tela 1", indicador: "Despesas com funcionários", fonte: "DFC", confronto: "Omie por departamento (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC; o confronto do Omie só entra depois que o dono fechar a lista de departamentos de pessoal",
+    recorte: "O recorte não substitui o departamento e o departamento não substitui o recorte: a árvore de departamentos do Omie pende de uma raiz só e os filhos são setores, não unidades de negócio. Agora as duas coisas convivem — a conta corrente diz de quem é o gasto, o departamento diz que gasto é.",
+    antes: null },
+  { tela: "Tela 1", indicador: "% desp. funcionários / receita líquida", fonte: "DFC (numerador) + DFC (denominador)", confronto: "a mesma conta no Omie recortado",
+    comoNaTela: "Segue as duas linhas de que depende; o selo herda a maior diferença das duas",
+    recorte: "Mudou por arrasto: o denominador seguia a receita, que passou para o DFC. As duas pontas agora vêm da mesma fonte e do mesmo recorte, que era o defeito antigo desta linha — antes ela misturava um numerador só da MeuBESS com um denominador do CNPJ inteiro.",
+    antes: "DFC (numerador) + Omie (denominador)" },
+  { tela: "Tela 1", indicador: "Top 10 despesas", fonte: "DFC (por CLASS. CONTABIL / SUB 2)", confronto: "Omie por centro de custo (só nas contas da MeuBESS)",
+    comoNaTela: "Barras do DFC, com um seletor “ver por centro de custo (Omie)” ao lado do título",
+    recorte: "Não muda no principal. No seletor do Omie, o recorte entra antes de agrupar — é o que impede uma despesa grande de outra unidade de subir no Top 10 da MeuBESS.",
+    antes: null },
+  { tela: "Tela 1", indicador: "Top 10 receitas", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC (a descrição já vem na linha)",
+    comoNaTela: "Barras do Omie; a descrição cai para o DFC quando o pedido de venda não responder",
+    recorte: "É o indicador em que o recorte mais serve, e por isso a fonte não mudou: aqui o que decide é o cadastro (cliente e pedido de venda), que só o Omie tem, e era exatamente aqui que um cliente de outra unidade apareceria nomeado no Top 10 da MeuBESS. Com a lista do dono isso deixa de acontecer.",
+    antes: null },
+  { tela: "Tela 1", indicador: "Receita × despesa por dia", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Colunas do DFC (aba do mês, linhas <code>Entradas</code> 43 e <code>Gastos</code> 44, um dia por coluna — o bloco já existe pronto); o dia com diferença acima de 5% contra o Omie recortado ganha traço pontilhado",
+    recorte: "O bloco mistura entrada e saída, e o lado da saída não fecha nem depois do recorte. Com o DFC ele também deixa de sumir em janeiro e fevereiro.",
+    antes: "Omie" },
+  { tela: "Tela 1", indicador: "Receita × despesa por mês", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Duas linhas do DFC da pasta da MeuBESS, com a série do Omie recortado em cinza claro atrás; a legenda diz a diferença média em %",
+    recorte: "Mesmo motivo do bloco por dia, e mais um: é a série do ano inteiro, e só o DFC cobre o ano inteiro. A série de trás agora é a do Omie recortado — somar as quatro pastas aqui seria comparar grupo com unidade, e somar o Omie inteiro, idem.",
+    antes: "Omie" },
+  { tela: "Tela 2", indicador: "Receita total", fonte: "DFC", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC (linhas de receita de <code>FLUXO DE CAIXA</code>, ou a linha <code>Receitas</code> B15 da aba do mês); selo acima de 2% contra o Omie recortado",
+    recorte: "Mesma troca do cartão de Receitas da Tela 1, pelo mesmo motivo — e as duas telas precisam mostrar o mesmo número de receita.",
+    antes: "Omie" },
+  { tela: "Tela 2", indicador: "Custos e despesas", fonte: "DFC (separa COGS de G&A)", confronto: "Omie (só nas contas da MeuBESS)",
+    comoNaTela: "Cartão do DFC; selo acima de 2% contra o total do Omie recortado",
+    recorte: "Não muda no principal; o confronto passa a ser contra o Omie recortado. A separação entre COGS e G&A continua só no DFC.",
+    antes: null },
+  { tela: "Tela 2", indicador: "EBITDA", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC só no resultado financeiro",
+    comoNaTela: "Cartão do Omie; nota de rodapé dizendo que depreciação e amortização não existem no DFC",
+    recorte: "O recorte resolve o que dava para resolver: o EBITDA deixa de ser o do CNPJ inteiro. Não resolve o resto — depreciação e amortização não saem do caixa e não existem no DFC, então esta linha não tem para onde ir, e segue sem número do DFC para confrontar.",
+    antes: null },
+  { tela: "Tela 2", indicador: "Lucro líquido", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC (lucro de caixa, B25)",
+    comoNaTela: "Cartão do Omie; o número do DFC aparece como “lucro de caixa” numa segunda linha, sem selo — são contas diferentes",
+    recorte: "Fonte mantida: o lucro do DRE depende de cadastro (categoria e conta do DRE), que só o Omie tem, e o <code>Lucro Liquido</code> do DFC é de caixa, outra conta. O recorte entra nos dois lados — o do DFC é a pasta da MeuBESS.",
+    antes: null },
+  { tela: "Tela 2", indicador: "Margem de lucro", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC",
+    comoNaTela: "Segue os dois cartões acima",
+    recorte: "O recorte entra nos dois termos. Sem ele a margem saía distorcida duas vezes; com ele ela passa a ser a margem da MeuBESS — mas continua herdando a lacuna de depreciação e amortização do EBITDA.",
+    antes: null },
+  { tela: "Tela 2", indicador: "(+) Receitas", fonte: "Omie (só nas contas da MeuBESS)", confronto: "DFC",
+    comoNaTela: "Linha do DRE pelo Omie (é a única com quebra por produto); selo acima de 2%",
+    recorte: "Fonte mantida, ao contrário do cartão de Receita total: aqui o que decide é a quebra por produto, que só o pedido de venda do Omie tem. O recorte impede que produto de outra unidade entre na linha.",
+    antes: null },
+  { tela: "Tela 2", indicador: "(−) Deduções", fonte: "DFC", confronto: "Omie por cOperacao 13 e retenções (só nas contas da MeuBESS)",
+    comoNaTela: "Linha do DFC; o Omie entra como segunda coluna “retido no título”",
+    recorte: "Não muda no principal. O recorte deixou claro por quê: nenhum lançamento do Omie recortado no período traz <code>cOperacao = 13</code>, então o confronto se apoia só nas retenções.",
+    antes: null },
+  { tela: "Tela 2", indicador: "(−) Custos de vendas", fonte: "DFC", confronto: "Omie por codigo_dre (só nas contas da MeuBESS)",
+    comoNaTela: "Linha do DFC; selo acima de 5% contra a conta de custo do DRE do Omie",
+    recorte: "Não muda no principal, e era a linha menos contaminada de todas — as outras unidades quase não têm custo de mercadoria, vendem serviço. O recorte muda pouco aqui, e é esperado.",
+    antes: null },
+  { tela: "Tela 2", indicador: "(−) Despesas gerais", fonte: "Omie (quebra por categoria, decisão de 24/09; só nas contas da MeuBESS)", confronto: "DFC por SUB 2",
+    comoNaTela: "Linha do Omie; o DFC entra numa coluna “no DFC” ao lado, linha a linha",
+    recorte: "Fonte mantida porque a quebra por categoria é decisão do dono de 24/09 e só o Omie a tem. O recorte era indispensável aqui: as categorias são as mesmas nas quatro unidades, então a categoria nunca separou nada — quem separa é a conta corrente.",
+    antes: null },
+  { tela: "Tela 2", indicador: "(−) Impostos", fonte: "DFC (guias pagas)", confronto: "Omie por cTipo e retenções (só nas contas da MeuBESS)",
+    comoNaTela: "Linha do DFC; selo acima de 5%, e a retenção do Omie numa nota",
+    recorte: "Não muda no principal, e o recorte reforçou a escolha: no período inteiro o Omie recortado tem um punhado de lançamentos com <code>cTipo</code> em DAS/DRF/GUIA, contra dezenas de linhas de imposto no DFC.",
+    antes: null },
 ];
 
 // ============================================================ execução
@@ -771,14 +835,20 @@ const dfcMeuBess = dfcTodos.filter((l) => l.unidade === U0);
 const dfcOutras = dfcTodos.filter((l) => l.unidade !== U0);
 const dfcSemTransf = dfcTodos.filter((l) => !l.transferencia);
 const omieTodos = omie.lancamentos;
+// O RECORTE, agora que o dono disse a lista: só os lançamentos do Omie cuja conta corrente é da MeuBESS.
+const omieRecorte = omieTodos.filter(noRecorteDaMeuBess);
+const omieForaDoRecorte = omieTodos.filter((l) => !noRecorteDaMeuBess(l));
+const omieSemDonoDito = omieTodos.filter((l) => negocioDa(l.conta) === null);
 
 const mDfc = porMes(dfcTodos);
 const mDfcMB = porMes(dfcMeuBess);
 const mDfcST = porMes(dfcSemTransf);
+const mDfcMBst = porMes(dfcMeuBess.filter((l) => !l.transferencia));
 const mOmie = porMes(omieTodos);
+const mOmieRec = porMes(omieRecorte);
 
 const linhasMes = MESES.map((m) => {
-  const d = mDfc.get(m), b = mDfcMB.get(m), ds = mDfcST.get(m), o = mOmie.get(m);
+  const d = mDfc.get(m), b = mDfcMB.get(m), ds = mDfcST.get(m), o = mOmie.get(m), r = mOmieRec.get(m), bs = mDfcMBst.get(m);
   const unidadesNoMes = unidades.filter((u) => u.mesesFechados.includes(m));
   return {
     mes: m, nome: NOME_MES[m],
@@ -787,10 +857,17 @@ const linhasMes = MESES.map((m) => {
     mbR: b.R, mbP: b.P, mbNR: b.nR, mbNP: b.nP,
     dfcStR: ds.R, dfcStP: ds.P,
     omieR: o.R, omieP: o.P, omieNR: o.nR, omieNP: o.nP,
+    recR: r.R, recP: r.P, recNR: r.nR, recNP: r.nP,
     difR: d.R - o.R, difP: d.P - o.P,
     pctR: pct(d.R - o.R, o.R), pctP: pct(d.P - o.P, o.P),
     pctMbR: pct(b.R - o.R, o.R), pctMbP: pct(b.P - o.P, o.P),
     pctStR: pct(ds.R - o.R, o.R), pctStP: pct(ds.P - o.P, o.P),
+    // O confronto do recorte: DFC da pasta da MeuBESS contra o Omie só nas contas correntes da MeuBESS.
+    difRecR: b.R - r.R, difRecP: b.P - r.P,
+    pctRecR: pct(b.R - r.R, r.R), pctRecP: pct(b.P - r.P, r.P),
+    // o mesmo, tirando do DFC as linhas de transferência entre contas (o CPCR do Omie não as traz)
+    mbStR: bs.R, mbStP: bs.P,
+    pctRecStR: pct(bs.R - r.R, r.R), pctRecStP: pct(bs.P - r.P, r.P),
   };
 });
 
@@ -803,11 +880,37 @@ for (const l of linhasMes) {
 const exato = casar(dfcTodos, omieTodos, chaveExata);
 const frouxo = casar(dfcTodos, omieTodos, chaveFrouxa);
 const soMeuBess = casar(dfcMeuBess, omieTodos, chaveExata);
+// ANTES e DEPOIS do recorte, com o mesmo lado do DFC (a pasta da MeuBESS) e o mesmo critério exato: só muda o lado do
+// Omie — antes o CNPJ inteiro, depois só as contas correntes da MeuBESS.
+const recAntes = soMeuBess;
+const recDepois = casar(dfcMeuBess, omieRecorte, chaveExata);
+const recFrouxoDepois = casar(dfcMeuBess, omieRecorte, chaveFrouxa);
 console.log("\n== casamento dos lançamentos ==");
 console.log(`  critério exato (natureza + dia do pagamento + valor até o centavo), as ${unidades.length} pastas somadas: ${exato.casados} de ${dfcTodos.length} linhas do DFC (${semSinal(pct(exato.casados, dfcTodos.length))}) e de ${omieTodos.length} lançamentos do Omie (${semSinal(pct(exato.casados, omieTodos.length))})`);
 console.log(`    só no DFC: ${exato.soDfc.length} | só no Omie: ${exato.soOmie.length} | com chave disputada por mais de uma pasta: ${exato.disputados}`);
 console.log(`  só a pasta da MeuBESS, mesmo critério: ${soMeuBess.casados} de ${dfcMeuBess.length} linhas (${semSinal(pct(soMeuBess.casados, dfcMeuBess.length))}) e ${semSinal(pct(soMeuBess.casados, omieTodos.length))} do Omie`);
 console.log(`  critério frouxo (natureza + mês do pagamento + valor): ${frouxo.casados} (${semSinal(pct(frouxo.casados, dfcTodos.length))} do DFC, ${semSinal(pct(frouxo.casados, omieTodos.length))} do Omie)`);
+
+console.log("\n== taxa de casamento ANTES e DEPOIS do recorte (DFC da pasta da MeuBESS dos dois lados, critério exato) ==");
+console.log(`  ANTES  (Omie inteiro, ${omieTodos.length} lanç.): ${recAntes.casados} casados = ${semSinal(pct(recAntes.casados, dfcMeuBess.length))} das ${dfcMeuBess.length} linhas do DFC da MeuBESS e ${semSinal(pct(recAntes.casados, omieTodos.length))} do Omie`);
+console.log(`  DEPOIS (só contas da MeuBESS, ${omieRecorte.length} lanç.): ${recDepois.casados} casados = ${semSinal(pct(recDepois.casados, dfcMeuBess.length))} das linhas do DFC da MeuBESS e ${semSinal(pct(recDepois.casados, omieRecorte.length))} do Omie no recorte`);
+console.log(`  (frouxo, depois do recorte: ${recFrouxoDepois.casados} = ${semSinal(pct(recFrouxoDepois.casados, dfcMeuBess.length))} do DFC da MeuBESS, ${semSinal(pct(recFrouxoDepois.casados, omieRecorte.length))} do Omie no recorte)`);
+
+console.log("\n== por mês, COM o recorte: DFC da pasta da MeuBESS contra o Omie só nas contas da MeuBESS ==");
+console.log("  mês        | linhas DFC MB | lanç. Omie rec. | entradas % | saídas % | entr. % s/ transf. | saíd. % s/ transf.");
+for (const l of linhasMes) {
+  console.log(`  ${l.nome.padEnd(10)} | ${String(l.mbNR + l.mbNP).padStart(13)} | ${String(l.recNR + l.recNP).padStart(15)} | ${fmtPct(l.pctRecR).padStart(10)} | ${fmtPct(l.pctRecP).padStart(8)} | ${fmtPct(l.pctRecStR).padStart(18)} | ${fmtPct(l.pctRecStP).padStart(18)}`);
+}
+
+// as contas com movimento que o dono não citou
+const semDonoComMovimento = [...new Set([...contaTodas.keys(), ...omieTodos.map((l) => l.conta)])]
+  .filter((c) => negocioDa(c) === null)
+  .map((c) => ({ chave: c, semFiltro: contaTodas.get(c) ?? 0, cpcr: omieTodos.filter((l) => l.conta === c).length }))
+  .filter((c) => c.semFiltro > 0 || c.cpcr > 0)
+  .sort((a, b) => b.semFiltro - a.semFiltro || b.cpcr - a.cpcr);
+console.log("\n== contas com movimento que o dono NÃO citou (sem dono dito, fora do recorte) ==");
+for (const c of semDonoComMovimento) console.log(`  ${nomeDaConta(c.chave).padEnd(52)} emp. ${c.chave.split("|")[0]} — ${c.semFiltro} lanç. sem filtro, ${c.cpcr} com CPCR`);
+if (!semDonoComMovimento.length) console.log("  nenhuma");
 
 const casadosPorUnidade = unidades.map((u) => {
   const n = exato.unidadeDoOmie.filter((x) => x === u.id).length;
@@ -846,7 +949,7 @@ if (melhor) {
   }
 }
 
-const grupos = medirGrupos(dfcMeuBess, omieTodos);
+const grupos = medirGrupos(dfcMeuBess, omieRecorte);
 console.log("\n== por grupo das Telas 1 e 2: quem classifica mais lançamentos (DFC só da MeuBESS) ==");
 for (const g of grupos) {
   console.log(`  ${g.nome}`);
@@ -874,17 +977,42 @@ const linhasConta = [...new Set([...contaTodas.keys(), ...(contaRecorte?.valores
     const v = contaRecorte?.valores.find((x) => x.valor === chave);
     return { chave, semFiltro: contaTodas.get(chave) ?? 0, total: 0, casados: 0, pureza: null, exclusivo: false, dono: null, porUnidade: new Map(), ...(v ?? {}) };
   })
-  .filter((l) => l.semFiltro >= 3 || l.total >= 3)
+  .filter((l) => l.semFiltro > 0 || l.total > 0)
+  .map((l) => ({ ...l, negocio: negocioDa(l.chave), cadastro: CADASTRO_DA_CONTA.get(l.chave) ?? null }))
   .sort((a, b) => b.semFiltro - a.semFiltro || b.total - a.total);
 // o que o recorte explica, em valor — a página é o único lugar em que valor em reais pode aparecer
 const valorTotalOmie = omieTodos.reduce((s, l) => s + l.valor, 0);
-const valorNoRecorte = contaRecorte ? omieTodos.filter((l) => contaRecorte.noRecorte.has(l.conta)).reduce((s, l) => s + l.valor, 0) : 0;
+const valorNoRecorte = omieRecorte.reduce((s, l) => s + l.valor, 0);
+const valorSemDono = omieSemDonoDito.reduce((s, l) => s + l.valor, 0);
+// De quantos meses o DFC da MeuBESS fica ACIMA do Omie recortado, e em que faixa — o texto da página sai daqui, para
+// não afirmar "todos os meses" quando não são todos. Janeiro e fevereiro ficam de fora: ali o Omie é quase zero e o
+// percentual não quer dizer nada.
+const MESES_COMPARAVEIS = linhasMes.filter((l) => l.mes >= 3);
+const acimaP = MESES_COMPARAVEIS.filter((l) => l.difRecP > 0);
+const abaixoP = MESES_COMPARAVEIS.filter((l) => l.difRecP < 0);
+const acimaR = MESES_COMPARAVEIS.filter((l) => l.difRecR > 0);
+const faixaStP = acimaP.map((l) => l.pctRecStP).filter((x) => x !== null && x > 0);
+const faixaSaidas = faixaStP.length
+  ? `de ${fmtPct(Math.min(...faixaStP))} a ${fmtPct(Math.max(...faixaStP))}`
+  : "—";
+const listaMeses = (ls) => ls.map((l) => l.nome).join(", ") || "nenhum";
+// quanto da lista do dono a leitura empírica da seção 3 confirma, conta a conta
+const confereComALeitura = (l) => {
+  if (!l.casados || !l.dono) return "sem casados";                      // a leitura não tem o que dizer
+  if (l.negocio === null) return "sem dono dito";
+  // com um ou dois casados a conta não sustenta veredito nenhum: é o mesmo limite do teste de pureza da seção 3
+  if (l.casados < CASADOS_MINIMOS) return "poucos casados";
+  const donoLido = l.dono === U0 ? NEGOCIO_ALVO : "outra unidade";
+  return (l.negocio === NEGOCIO_ALVO) === (donoLido === NEGOCIO_ALVO) ? "confere" : "diverge";
+};
+const nDiverge = linhasConta.filter((l) => confereComALeitura(l) === "diverge").length;
+const nConfere = linhasConta.filter((l) => confereComALeitura(l) === "confere").length;
 
 const html = `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Confronto DFC × Omie — as quatro unidades e o recorte da MeuBESS (2026)</title>
+<title>Confronto DFC × Omie — o recorte da MeuBESS pelas contas correntes (2026)</title>
 <style>
   :root { --tinta:#1b2430; --fraca:#5b6878; --linha:#e2e7ee; --fundo:#f6f8fb; --ok:#127a4b; --at:#96650a; --ruim:#b02a2a; }
   * { box-sizing:border-box }
@@ -905,6 +1033,8 @@ const html = `<!doctype html>
   .ruim { color:var(--ruim); font-weight:600 }
   .nota { background:#fffbe9; border-left:4px solid #e0b700; padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
   .lacuna { background:#fdeeee; border-left:4px solid #b02a2a; padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
+  .resolvido { background:#eef7f1; border-left:4px solid var(--ok); padding:12px 16px; margin:16px 0; border-radius:0 8px 8px 0 }
+  .fraca { color:var(--fraca) }
   code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:13px }
   .barra { display:inline-block; height:9px; background:#3b7dd8; border-radius:3px; vertical-align:middle }
   .barra.b { background:#8a9bb0 }
@@ -912,16 +1042,24 @@ const html = `<!doctype html>
   footer { color:var(--fraca); font-size:13px; margin-top:48px; border-top:1px solid var(--linha); padding-top:16px }
 </style>
 <main>
-<h1>Confronto DFC × Omie — as quatro unidades e o recorte da MeuBESS</h1>
+<h1>Confronto DFC × Omie — o recorte da MeuBESS pelas contas correntes</h1>
 <p class="sub">Janeiro a setembro de ${ANO}. Leitura de ${esc(hoje)} por <code>scripts/confronto-dfc-omie.mjs</code>, só leitura das duas fontes.
 Esta página é a única saída com valores em reais; ela fica no repositório e não sai da máquina. Sem nome de cliente, fornecedor ou pessoa.</p>
 
 <div class="cartao">
-  <strong>O que mudou desde o primeiro confronto.</strong> Aquela leitura comparou o DFC da MeuBESS com o Omie das empresas 1 e 2
-  e achou poucas linhas em comum. O dono explicou por quê: <strong>no Omie há outras unidades de negócio, no mesmo CNPJ</strong>, que não são a
-  MeuBESS. Ele mandou o DFC dessas unidades — mais três pastas sincronizadas, ao lado da primeira. Esta página lê as
-  <strong>${unidades.length}</strong> pastas, diz que unidade é cada uma pelo que a própria planilha mostra, soma as quatro contra o Omie e
-  mede o que, dentro do Omie, separa a MeuBESS das demais.
+  <strong>O que mudou nesta rodada.</strong> A leitura anterior mediu que o único campo do Omie capaz de separar as unidades de negócio do mesmo
+  CNPJ é a <strong>conta corrente</strong>, e parou aí: dizer de quem é cada conta era decisão do dono. <strong>Ele disse</strong> — a lista está
+  em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Então o
+  confronto foi refeito com os <strong>dois lados só da MeuBESS</strong>: a pasta do DFC dela contra o Omie cortado nas contas dela. A seção 4 traz a
+  lista, a diferença % mês a mês e a taxa de casamento antes e depois do corte; a seção 7 revê a proposta de cada indicador com esses números.
+  As seções 1 a 3 seguem mostrando as ${unidades.length} pastas e o teste que levou até a conta corrente.
+</div>
+<div class="cartao">
+  <strong>O que o recorte respondeu, em uma linha.</strong> A contaminação acabou — o número do Omie deixa de ser o do CNPJ inteiro. A diferença
+  entre as duas fontes, não: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em ${acimaP.length} dos
+  ${MESES_COMPARAVEIS.length} meses comparáveis (março a setembro)${abaixoP.length ? `, e abaixo em ${listaMeses(abaixoP)}` : ""}.
+  <strong>A diferença não era outra unidade de negócio dentro do número</strong>; é o filtro <code>cTpLancamento: "CPCR"</code> que as Telas 1 e 2
+  usam (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
 </div>
 
 <h2>1. As ${unidades.length} pastas: que unidade é cada uma</h2>
@@ -1038,76 +1176,129 @@ ${(() => {
 })()}
 </table>
 
-<h2>4. O recorte: o que, no Omie, separa a MeuBESS das outras unidades</h2>
-<p><strong>Como isto foi medido.</strong> Entre os lançamentos do Omie que casaram com uma linha do DFC, já se sabe de que unidade cada um é
-(seção 3). Então, para cada campo candidato, a pergunta é: <em>cada valor desse campo pertence a uma unidade só?</em> Um valor conta como
-<strong>exclusivo</strong> de uma unidade quando ao menos ${Math.round(PUREZA_MINIMA * 100)}% dos seus lançamentos casados são dela, e quando há
-pelo menos ${CASADOS_MINIMOS} casados para a conta querer dizer alguma coisa. O <strong>recorte da MeuBESS</strong> é o conjunto dos valores
-exclusivos dela; <em>% do Omie no recorte</em> é quanto do Omie inteiro esse recorte explica.</p>
+<h2>4. O recorte da MeuBESS: a lista de contas correntes que o dono confirmou</h2>
+<p><strong>A lacuna que a leitura anterior abriu está fechada, e não por dedução.</strong> A rodada de 24/09/2026 mediu que o único campo do Omie
+capaz de separar as unidades de negócio é a <strong>conta corrente</strong> (<code>detalhes.nCodCC</code>) — mas dizer de quem é cada conta era
+decisão do dono, não do script. <strong>O dono disse</strong>, em 24/09/2026, de que negócio é cada conta da tabela desta seção. A lista está gravada
+em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Todos os números
+das seções 4, 6 e 7 já saem com o recorte aplicado.</p>
 <table>
-<tr><th>campo do Omie</th><th class="n">valores distintos</th><th class="n">exclusivos de alguma unidade</th><th class="n">% dos lanç. do Omie que o recorte da MeuBESS pega</th><th class="n">quanto dos lanç. da MeuBESS o recorte cobre</th><th class="n">intrusos (lanç. de outra unidade dentro do recorte)</th></tr>
-${recortes.map((r) => `<tr><td><strong>${esc(r.nome)}</strong></td><td class="n">${r.distintos}</td><td class="n">${r.exclusivos}</td>
-<td class="n ${r.pctDentro !== null && r.pctDentro >= 50 ? "ok" : "atencao"}">${semSinal(r.pctDentro)}</td>
-<td class="n ${r.cobertura !== null && r.cobertura >= 90 ? "ok" : r.cobertura !== null && r.cobertura >= 60 ? "atencao" : "ruim"}">${semSinal(r.cobertura)}</td>
-<td class="n">${r.intrusos} (${semSinal(r.pctIntrusos)})</td></tr>`).join("\n")}
+<tr><th>negócio</th><th>o que o dono disse</th><th class="n">contas na lista</th></tr>
+<tr><td><strong>${esc(NEGOCIO_ALVO)}</strong> — o recorte das telas</td>
+  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2) e Caixinha</td>
+  <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === "MeuBESS").length}</td></tr>
+<tr><td><strong>MX3</strong></td><td>todas as contas Sicoob, inclusive a <code>Sicoob - B3N</code>, e o cartão Itaú 6826</td>
+  <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === "MX3").length}</td></tr>
+<tr><td><strong>3N Capital</strong></td><td>Safra e o cartão Itaú 9120</td>
+  <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === "3N Capital").length}</td></tr>
+<tr><td><strong class="ruim">sem dono dito</strong></td><td>o que o dono não citou — fica <strong>fora</strong> do recorte, e o código não adivinha pelo nome</td>
+  <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === null).length}</td></tr>
+<tr><th>total no cadastro do Omie</th><th></th><th class="n">${LISTA_CONTAS.contas.length}</th></tr>
 </table>
-
-${contaRecorte ? `<h3>O único campo que separa alguma coisa: a conta corrente</h3>
-<p>Cada unidade opera o próprio banco, e o Omie guarda a conta corrente em <code>detalhes.nCodCC</code>. Abaixo, todas as contas correntes
-com movimento no período, com a unidade a que os lançamentos casados daquela conta pertencem. Uma conta "pura" é uma conta que só uma
-unidade usa.</p>
+<p>O cadastro do Omie tem ${LISTA_CONTAS.contas.length} contas correntes somando as duas empresas (a mesma conta física aparece duas vezes quando
+as duas empresas a cadastraram: são duas linhas, uma por empresa). Abaixo, só as que <strong>têm movimento</strong> no período. A coluna
+<em>a leitura confirma?</em> compara o que o dono disse com o que a seção 3 tinha medido sozinha, pelo casamento com o DFC — é conferência da lista,
+não fonte dela.</p>
 <table>
-<tr><th>conta corrente no Omie</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code> (o das telas)</th><th class="n">destes, casaram com o DFC</th><th>unidade dona dos casados</th><th class="n">pureza</th><th>no recorte da MeuBESS?</th></tr>
-${linhasConta.map((v) => `<tr>
+<tr><th>conta corrente no Omie</th><th>negócio (dito pelo dono)</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code> (o das telas)</th><th class="n">destes, casaram com o DFC</th><th>unidade dona dos casados (leitura da seção 3)</th><th class="n">pureza</th><th>a leitura confirma?</th><th>no recorte da MeuBESS?</th></tr>
+${linhasConta.map((v) => {
+  const conf = confereComALeitura(v);
+  const noRec = RECORTE.has(v.chave);
+  return `<tr>
 <td>${esc(nomeDaConta(v.chave))} <span class="tag">emp. ${esc(v.chave.split("|")[0])}</span></td>
+<td>${v.negocio === null ? '<strong class="ruim">sem dono dito</strong>' : v.negocio === NEGOCIO_ALVO ? `<strong class="ok">${esc(v.negocio)}</strong>` : esc(v.negocio)}</td>
 <td class="n">${v.semFiltro}</td>
 <td class="n">${v.total}</td><td class="n">${v.casados}</td>
 <td>${v.casados ? [...v.porUnidade.entries()].sort((a, b) => b[1] - a[1]).map(([u, q]) => `${esc(curtoUnidade(u))} ${q}`).join(" · ") : "—"}</td>
 <td class="n">${v.pureza === null ? "—" : semSinal(v.pureza * 100)}</td>
-<td>${v.exclusivo && v.dono === U0 ? '<strong class="ok">sim</strong>' : v.exclusivo ? `não — ${esc(curtoUnidade(v.dono))}` : '<span class="ruim">não dá para dizer</span>'}</td></tr>`).join("\n")}
+<td>${conf === "confere" ? '<span class="ok">confere</span>' : conf === "diverge" ? '<strong class="ruim">diverge</strong>' : conf === "poucos casados" ? `<span class="fraca">só ${v.casados} casado(s) — não sustenta veredito</span>` : conf === "sem dono dito" ? '<span class="fraca">—</span>' : '<span class="fraca">sem casados: a leitura não opina</span>'}</td>
+<td>${noRec ? '<strong class="ok">sim</strong>' : "não"}</td></tr>`;
+}).join("\n")}
 </table>
-<p><strong>Duas coisas saltam desta tabela.</strong> A primeira: a conta <code>Sicoob - B3N</code> da empresa 1 <em>se identifica sozinha</em> —
-o nome dela traz a sigla <code>B3N</code>, a mesma sigla da coluna <code>EMP.</code> da pasta <code>(2)</code>, e ${(() => {
-  const l = linhasConta.find((x) => /B3N/i.test(nomeDaConta(x.chave)));
-  return l && l.casados ? `${semSinal(pct(l.porUnidade.get("u2") ?? 0, l.casados))} dos ${l.casados} lançamentos dela que casaram com o DFC casaram com essa pasta` : "os lançamentos dela casam com essa pasta";
-})()}. É o único ponto do Omie em que uma unidade de negócio está escrita.
-A segunda: as contas das pastas <code>(1)</code> (Safra) e <code>(3)</code> (Bradesco) <strong>quase não existem no que as telas leem</strong> —
-o movimento delas aparece na faixa sem filtro de tipo e some com o <code>cTpLancamento: "CPCR"</code>. É por isso que as duas casaram zero
-lançamento na seção 3: não é que o Omie não as tenha, é que a leitura das Telas 1 e 2 não as alcança.</p>
-<p>Em valor: o recorte da MeuBESS por conta corrente pega <strong>${brl(valorNoRecorte)}</strong> dos <strong>${brl(valorTotalOmie)}</strong>
-movimentados no Omie no período — ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro, contra ${semSinal(contaRecorte.pctDentro)}
-dos lançamentos.</p>` : ""}
+<p><strong>A lista do dono e a leitura concordam em todas as ${nConfere} contas que a leitura consegue julgar, e não se contradizem em
+nenhuma</strong> (${nDiverge} divergência(s)). O caso que mais valia conferir é a <code>Sicoob - B3N</code> da empresa 1: a leitura já a tinha
+marcado como de outra unidade — o nome dela traz a sigla <code>B3N</code>, a mesma da coluna <code>EMP.</code> de uma das outras pastas do DFC —,
+e o dono confirmou que ela é da MX3. O Itaú das duas empresas, que é quase todo o movimento, é da MeuBESS nos dois.</p>
+<p><strong>Onde a lista vai muito além da leitura</strong> é nas contas pequenas — Safra, Stone, Sicoob das duas empresas, os cartões 6826 e 9120,
+a Caixinha. Ali a leitura tem zero, um ou dois lançamentos casados, e um ou dois casados não sustentam veredito nenhum (é o mesmo limite de
+${CASADOS_MINIMOS} casados do teste de pureza da seção 3). Alguns desses poucos casados apontam para a MeuBESS em contas que o dono deu a outro
+negócio — não é contradição, é o casamento por data e valor acertando por acaso num universo de um ou dois lançamentos. <strong>Em toda conta
+pequena, quem responde é o dono, e é a resposta dele que vale.</strong></p>
 
-<div class="lacuna">
-  <strong>A resposta: o campo é a conta corrente — e só ela. Mas o que ela separa foi verificado em ${semSinal(pct(exato.casados, Math.max(omieTodos.length, 1)))} do Omie, não no Omie inteiro.</strong>
+<h3>As contas com movimento que ficaram sem dono dito</h3>
+<p>O dono não citou estas. Elas ficam <strong>fora</strong> do recorte, e nada aqui tenta adivinhar o dono pelo nome do banco. Todas juntas movimentam
+${omieSemDonoDito.length} lançamento(s) dentro do filtro <code>CPCR</code> — ${semSinal(pct(omieSemDonoDito.length, Math.max(omieTodos.length, 1)))}
+dos lançamentos que as telas leem, ${brl(valorSemDono)} de ${brl(valorTotalOmie)}.</p>
+<table>
+<tr><th>conta corrente no Omie</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code></th></tr>
+${semDonoComMovimento.map((c) => `<tr><td>${esc(nomeDaConta(c.chave))} <span class="tag">emp. ${esc(c.chave.split("|")[0])}</span></td>
+<td class="n">${c.semFiltro}</td><td class="n">${c.cpcr}</td></tr>`).join("\n")}
+${semDonoComMovimento.length ? "" : '<tr><td colspan="3">nenhuma</td></tr>'}
+</table>
+<p>A maior delas de longe é a <strong>Adiantamento ao Fornecedor</strong>, nas duas empresas: ela tem movimento na faixa e some quase inteira no
+filtro <code>CPCR</code>, que é o que as Telas 1 e 2 leem. <strong>Vale o dono dizer de quem são</strong> — enquanto não disser, elas ficam fora do
+número da tela e não entram em fonte nenhuma.</p>
+
+<h3>O confronto com o recorte: DFC da pasta da MeuBESS × Omie só nas contas da MeuBESS</h3>
+<p>Agora os dois lados falam da mesma unidade de negócio: à esquerda, só a pasta do DFC da MeuBESS; à direita, só os lançamentos do Omie cujo
+<code>detalhes.nCodCC</code> está na lista acima. A base do % é o Omie. A última dupla de colunas tira do DFC as linhas de transferência entre contas
+(cartão, repasse, aplicação), que o <code>CPCR</code> do Omie não traz.</p>
+<table>
+<tr><th>mês</th><th class="n">linhas do DFC da MeuBESS</th><th class="n">lanç. do Omie no recorte</th><th class="n">entradas: DFC</th><th class="n">entradas: Omie</th><th class="n">dif. %</th><th class="n">saídas: DFC</th><th class="n">saídas: Omie</th><th class="n">dif. %</th><th class="n">dif. % entradas, sem transferência</th><th class="n">dif. % saídas, sem transferência</th></tr>
+${linhasMes.map((l) => `<tr><td><strong>${esc(l.nome)}</strong></td>
+<td class="n">${l.mbNR + l.mbNP}</td><td class="n">${l.recNR + l.recNP}</td>
+<td class="n">${brl(l.mbR)}</td><td class="n">${brl(l.recR)}</td><td class="n ${classePct(l.pctRecR)}">${fmtPct(l.pctRecR)}</td>
+<td class="n">${brl(l.mbP)}</td><td class="n">${brl(l.recP)}</td><td class="n ${classePct(l.pctRecP)}">${fmtPct(l.pctRecP)}</td>
+<td class="n ${classePct(l.pctRecStR)}">${fmtPct(l.pctRecStR)}</td><td class="n ${classePct(l.pctRecStP)}">${fmtPct(l.pctRecStP)}</td></tr>`).join("\n")}
+<tr><th>total</th><th class="n">${dfcMeuBess.length}</th><th class="n">${omieRecorte.length}</th>
+<th class="n">${brl(soma("mbR"))}</th><th class="n">${brl(soma("recR"))}</th><th class="n ${classePct(pct(soma("mbR") - soma("recR"), soma("recR")))}">${fmtPct(pct(soma("mbR") - soma("recR"), soma("recR")))}</th>
+<th class="n">${brl(soma("mbP"))}</th><th class="n">${brl(soma("recP"))}</th><th class="n ${classePct(pct(soma("mbP") - soma("recP"), soma("recP")))}">${fmtPct(pct(soma("mbP") - soma("recP"), soma("recP")))}</th>
+<th class="n">${fmtPct(pct(soma("mbStR") - soma("recR"), soma("recR")))}</th><th class="n">${fmtPct(pct(soma("mbStP") - soma("recP"), soma("recP")))}</th></tr>
+</table>
+<div class="nota"><strong>Janeiro e fevereiro não são comparação.</strong> O Omie tem ${linhasMes[0].recNR + linhasMes[0].recNP} e
+${linhasMes[1].recNR + linhasMes[1].recNP} lançamentos pagos nesses dois meses, contra centenas de linhas no DFC: o percentual explode porque o
+denominador é quase zero, não porque as fontes discordem. A comparação começa em março.</div>
+
+<h3>A taxa de casamento, antes e depois do recorte</h3>
+<p>Mesmo lado do DFC (a pasta da MeuBESS) e mesmo critério (natureza + dia do pagamento + valor até o centavo). Só muda o lado do Omie: antes o
+CNPJ inteiro, depois só as contas correntes da MeuBESS.</p>
+<table>
+<tr><th></th><th class="n">lanç. do Omie no confronto</th><th class="n">casados</th><th class="n">% das ${dfcMeuBess.length} linhas do DFC da MeuBESS</th><th class="n">% dos lanç. do Omie</th><th class="n">só no Omie</th></tr>
+<tr><td><strong>antes do recorte</strong> — Omie inteiro</td><td class="n">${omieTodos.length}</td><td class="n">${recAntes.casados}</td>
+<td class="n">${semSinal(pct(recAntes.casados, dfcMeuBess.length))}</td>
+<td class="n ${classePct(null)}">${semSinal(pct(recAntes.casados, omieTodos.length))}</td><td class="n">${recAntes.soOmie.length}</td></tr>
+<tr><td><strong>depois do recorte</strong> — só as contas da MeuBESS</td><td class="n">${omieRecorte.length}</td><td class="n">${recDepois.casados}</td>
+<td class="n">${semSinal(pct(recDepois.casados, dfcMeuBess.length))}</td>
+<td class="n ok">${semSinal(pct(recDepois.casados, omieRecorte.length))}</td><td class="n">${recDepois.soOmie.length}</td></tr>
+</table>
+<p>O recorte tirou ${omieTodos.length - omieRecorte.length} lançamentos do lado do Omie e perdeu ${recAntes.casados - recDepois.casados} casamento(s)
+no caminho — os que a pasta da MeuBESS tinha achado em conta de outro negócio. O saldo é uma taxa de casamento do lado do Omie de
+<strong>${semSinal(pct(recAntes.casados, omieTodos.length))} para ${semSinal(pct(recDepois.casados, omieRecorte.length))}</strong>. Pelo critério frouxo
+(mesmo mês em vez do mesmo dia) o número depois do recorte é ${semSinal(pct(recFrouxoDepois.casados, omieRecorte.length))}.</p>
+<p>Em valor: o recorte da MeuBESS pega <strong>${brl(valorNoRecorte)}</strong> dos <strong>${brl(valorTotalOmie)}</strong> movimentados no Omie no
+período — ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro, contra ${semSinal(pct(omieRecorte.length, Math.max(omieTodos.length, 1)))}
+dos lançamentos.</p>
+
+<div class="resolvido">
+  <strong>O que o recorte resolveu, e o que ele deixou à mostra.</strong>
   <ul>
-    <li><strong>A conta corrente separa.</strong> ${contaRecorte?.exclusivos ?? 0} das ${contaRecorte?.distintos ?? 0} contas com movimento no
-      período são exclusivas de uma unidade; as da MeuBESS pegam <strong>${semSinal(contaRecorte?.pctDentro)} dos lançamentos</strong> do Omie e
-      cobrem ${semSinal(contaRecorte?.cobertura)} do que se sabe ser da MeuBESS, levando junto ${contaRecorte?.intrusos ?? 0} lançamento(s) de
-      outra unidade (${semSinal(contaRecorte?.pctIntrusos)} do recorte). O Itaú das duas empresas — que é quase todo o movimento — é da
-      MeuBESS; o <code>Sicoob - B3N</code> da empresa 1 é da pasta <code>(2)</code>, e o nome da conta diz isso sozinho.</li>
-    <li><strong>O departamento não serve.</strong> A árvore de departamentos do Omie tem <em>uma raiz só</em> — <code>MEU BESS</code>, estrutura
-      <code>001</code> — e abaixo dela setores (<code>ADMINISTRATIVO</code>, <code>OPERACIONAL</code>, <code>COMERCIAL</code> e seus filhos), iguais nas
-      duas empresas. É um organograma, não uma divisão de unidades de negócio. Além disso só
-      ${semSinal(pct(omieTodos.filter((l) => l.temDepartamento).length, Math.max(omieTodos.length, 1)))} dos lançamentos trazem departamento
-      rateado${deptRecorte ? `, e o recorte por departamento cobriria só ${semSinal(deptRecorte.cobertura)} da MeuBESS` : ""}.</li>
-    <li><strong>A categoria não serve.</strong> As quatro unidades usam o mesmo plano de categorias — é o mesmo cadastro da empresa. Uma
-      categoria como "Compras de mercadorias" não diz de quem é a compra. O recorte por categoria só parece funcionar
-      (${semSinal(recortes.find((r) => r.campo === "categoria")?.pctDentro)}) porque as unidades novas quase não aparecem no teste, e não
-      porque a categoria carregue a unidade.</li>
-    <li><strong>O projeto e o vendedor não servem</strong>: a maioria esmagadora dos lançamentos vem sem projeto e sem vendedor.</li>
-    <li><strong>A empresa/filial não serve</strong>: as duas filiais têm lançamento das duas coisas.</li>
+    <li><strong>Resolveu a contaminação.</strong> O número do Omie nas Telas 1 e 2 deixa de ser o do CNPJ inteiro. A pergunta "de quem é esta conta"
+      tem resposta do dono, gravada em arquivo, e não depende mais de o lançamento ter achado par no DFC — as contas pequenas, que o teste de pureza
+      nunca conseguiu classificar por falta de casados, agora têm dono.</li>
+    <li><strong>Não fechou a distância entre as duas fontes.</strong> Com os dois lados falando da mesma unidade, o DFC da MeuBESS continua acima do
+      Omie recortado do lado das saídas em <strong>${acimaP.length} dos ${MESES_COMPARAVEIS.length} meses comparáveis</strong> (março a setembro;
+      ${abaixoP.length ? `a exceção é ${listaMeses(abaixoP)}` : "sem exceção"}), com a diferença indo ${faixaSaidas} já descontadas as
+      transferências — e do lado das entradas em ${acimaR.length} desses ${MESES_COMPARAVEIS.length} meses. Ou seja: a diferença
+      que se via antes <em>não era</em> outra unidade de negócio dentro do número. É o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e a
+      cobertura do ano. É esse achado que mexeu na proposta de alguns indicadores da seção 7.</li>
+    <li><strong>A lista é uma lista, e quebra no dia em que um negócio lançar na conta do outro.</strong> A seção 3 já achou lançamentos assim em
+      contas que o dono deu à MeuBESS. Enquanto o Omie não tiver uma marca de unidade no próprio lançamento, o recorte é manutenção: conta nova no
+      Omie entra sem dono e fica fora da tela até alguém dizer de quem é. Um departamento-raiz por unidade segue sendo o caminho mais barato para
+      acabar com a manutenção, porque o campo já existe e já é rateável — <strong>e isso é decisão do dono, não deste confronto</strong>.</li>
+    <li><strong>${semDonoComMovimento.length} conta(s) com movimento seguem sem dono dito</strong> e ficam fora de tudo. Ver a tabela acima.</li>
   </ul>
-  <strong>A ressalva que impede chamar isto de resolvido.</strong> ${semSinal(pct(exato.soOmie.length, Math.max(omieTodos.length, 1)))} dos
-  lançamentos do Omie <em>não acharam par em pasta nenhuma</em> — a unidade deles é desconhecida, e o teste de pureza nada diz sobre eles. Pior:
-  as pastas <code>(1)</code> e <code>(3)</code> casaram <strong>zero</strong> lançamento, então o teste nunca chegou a ver essas duas unidades.
-  Elas movimentam dinheiro no Omie (a tabela acima mostra o Safra com ${linhasConta.find((x) => /Safra/i.test(nomeDaConta(x.chave)))?.semFiltro ?? 0}
-  lançamentos na faixa), mas <strong>fora do filtro <code>cTpLancamento: "CPCR"</code></strong> que as Telas 1 e 2 usam.
-  <strong>Portanto: há um recorte por conta corrente, ele explica a maior parte do Omie e é o melhor que existe hoje — mas ele não é um campo
-  que diga "esta linha é da MeuBESS". É uma lista de contas mantida à mão, que quebra no dia em que uma unidade lançar na conta da outra
-  (já há ${contaRecorte?.intrusos ?? 0} caso(s) assim).</strong> Fechar isto é decisão do dono e pede uma marca nova no Omie — um
-  departamento-raiz por unidade é o caminho mais barato, porque o campo já existe e já é rateável. <strong>Nada foi alterado no Omie, e nenhuma
-  lacuna de <code>docs/fontes.md</code> foi fechada por esta leitura.</strong>
+  <strong>Nada foi alterado no Omie nem nas planilhas.</strong> Em <code>docs/fontes.md</code>, esta rodada fecha <em>uma</em> lacuna — a do recorte
+  por conta corrente — e não toca em nenhuma outra.
 </div>
 
 <h2>5. Por que o Omie tem menos lançamentos que o DFC somado</h2>
@@ -1128,7 +1319,8 @@ contaria o mesmo dinheiro duas vezes, e o <code>CPCR</code> faz bem em tirá-las
 que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.</p>
 
 <h2>6. Por grupo das Telas 1 e 2: quem tem o dado mais completo</h2>
-<p>Agora com o DFC <strong>só da pasta da MeuBESS</strong> — as telas são da MeuBESS, não do grupo. A medida é: de todos os lançamentos de
+<p>Agora com os <strong>dois lados só da MeuBESS</strong>: à esquerda a pasta do DFC dela, à direita o Omie cortado pelas contas correntes da
+lista do dono (seção 4). A medida é: de todos os lançamentos de
 caixa do período (entradas, para a receita; saídas, para o resto), quantos cada fonte consegue <strong>classificar dentro do grupo com o que ela
 mesma traz</strong>. No DFC a classificação está escrita na própria linha (<code>CLASS. CONTABIL</code> e <code>SUB 2</code>); no Omie depende de
 um campo que o lançamento pode ou não trazer.</p>
@@ -1144,29 +1336,42 @@ ${grupos.map((g) => {
 </table>
 <div class="nota"><strong>As duas colunas não medem a mesma coisa — e é esse o ponto.</strong> No DFC o número é
 <em>quantas linhas caem neste grupo</em>: a linha já diz a que grupo pertence. No Omie é <em>quantos lançamentos trazem o campo
-que poderia colocá-los em algum grupo</em> — e o lado do Omie está contando o CNPJ inteiro, as quatro unidades, porque o recorte da seção 4
-não fecha. "COGS" e "Despesas gerais" mostram exatamente o mesmo número do lado do Omie, porque o campo é o mesmo
+que poderia colocá-los em algum grupo</em>. O que mudou nesta rodada é o denominador do lado do Omie: antes ele contava o CNPJ inteiro, as quatro
+unidades; agora conta ${omieRecorte.length} lançamentos, só os das contas da MeuBESS. "COGS" e "Despesas gerais" seguem mostrando exatamente o
+mesmo número do lado do Omie, porque o campo é o mesmo
 (<code>codigo_dre</code>) e <strong>ele não separa os dois</strong> enquanto o dono não disser quais contas do DRE são custo e quais são despesa
-geral. É uma lacuna que segue aberta em <code>docs/fontes.md</code>.</div>
+geral. <strong>Essa lacuna segue aberta</strong> em <code>docs/fontes.md</code> — o recorte por conta corrente não tem nada a ver com ela.</div>
 
-<h2>7. Proposta, indicador a indicador, considerando só a MeuBESS</h2>
+<h2>7. Proposta, indicador a indicador, revista com o recorte da MeuBESS</h2>
 <p>Para cada um dos ${PROPOSTA.length} indicadores das Telas 1 e 2 que hoje carregam <strong>lacuna: Omie ou DFC</strong> em <code>docs/fontes.md</code>.
-<strong>Isto é proposta, não decisão</strong> — nenhuma lacuna foi fechada e nenhuma fonte foi trocada no <code>docs/fontes.md</code>.
-A regra que orientou a coluna "fonte principal" segue a mesma: <em>onde a classificação decide o número, o DFC leva</em> (ele escreve a classe na
-própria linha); <em>onde o cadastro ou a carteira decide, o Omie leva</em> (ele tem cliente, categoria, departamento, status e pagamento parcial).
-A coluna nova — <strong>o que muda considerando só a MeuBESS</strong> — é a revisão desta leitura.</p>
-<div class="lacuna"><strong>A ressalva que agora vale para a tabela inteira.</strong> Onde a proposta diz "Omie", o número sai do CNPJ inteiro,
-com as outras unidades de negócio dentro, <em>a menos que a consulta filtre por conta corrente</em>. A seção 4 mostrou que a conta corrente é o
-único campo que separa, que o recorte dela pega ${semSinal(contaRecorte?.pctDentro)} dos lançamentos — e que ele foi verificado só nos
-${semSinal(pct(exato.casados, Math.max(omieTodos.length, 1)))} que casaram com o DFC. Então a instrução prática para as telas é:
-<strong>toda consulta ao Omie nas Telas 1 e 2 passa a levar a lista de contas correntes da MeuBESS</strong> (a coluna "no recorte da MeuBESS?"
-da seção 4), e todo número que vier de lá mostra que é um recorte por conta, não uma marca de unidade. Onde o recorte pesa mais que o
-cadastro, vale trocar para o DFC: a pasta do DFC da MeuBESS <strong>já é só dela</strong>. As duas escolhas são do dono.</div>
-<div class="nota">E a ressalva antiga continua de pé: onde a proposta diz "Omie", isso só vale <strong>de março de ${ANO} em diante</strong> —
-em janeiro e fevereiro o Omie quase não tem lançamento pago. Para a série histórica de ${ANO}, a única fonte que cobre o ano inteiro é o DFC.</div>
+<strong>Isto continua sendo proposta, não decisão</strong> — nenhuma lacuna de fonte foi fechada e nenhuma fonte foi trocada no
+<code>docs/fontes.md</code>; a única lacuna que esta rodada fecha lá é a do recorte por conta corrente, que é outra coisa.
+A regra que orientava a coluna "fonte principal" segue valendo: <em>onde a classificação decide o número, o DFC leva</em> (ele escreve a classe na
+própria linha); <em>onde o cadastro decide, o Omie leva</em> (ele tem cliente, categoria, departamento, status e pagamento parcial).
+<strong>O recorte acrescentou uma terceira:</strong> <em>onde o que decide é a completude do período, o DFC leva</em>.</p>
+<div class="resolvido"><strong>O que mudou, e por quê.</strong> Na rodada anterior a última coluna desta tabela dizia "precisa do recorte" para um
+recorte que não existia, e todo número vindo do Omie carregava a ressalva de estar somando as outras unidades de negócio do mesmo CNPJ.
+<strong>Essa ressalva caiu:</strong> o dono deu a lista de contas (seção 4), ela está em <code>dados/contas-correntes-por-negocio.json</code>, e toda
+consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — ${omieRecorte.length} dos ${omieTodos.length} lançamentos do
+período, ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro. Com o recorte aplicado, porém, apareceu o que a contaminação escondia:
+<strong>o DFC da MeuBESS fica acima do Omie recortado do lado das saídas em ${acimaP.length} dos ${MESES_COMPARAVEIS.length} meses comparáveis,
+${faixaSaidas} sem contar transferências</strong> (seção 4), e a causa não é unidade
+de negócio — é o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
+Por isso <strong>${PROPOSTA.filter((p) => p.antes).length} dos ${PROPOSTA.length} indicadores mudaram de fonte principal proposta</strong>, todos na
+mesma direção: do Omie para o DFC, e todos em número de caixa (saldo, receita, despesa paga, as séries por dia e por mês). Os que dependem de
+cadastro — cliente, categoria, conta do DRE, carteira em aberto — <strong>ficaram no Omie</strong>, agora recortado. As duas escolhas seguem sendo
+do dono.</div>
+<div class="nota">E a ressalva antiga continua de pé, só que agora ela é o motivo das trocas e não uma nota de rodapé: onde a proposta diz "Omie",
+o número só existe <strong>de março de ${ANO} em diante</strong> — em janeiro e fevereiro o Omie tem
+${linhasMes[0].recNR + linhasMes[0].recNP} e ${linhasMes[1].recNR + linhasMes[1].recNP} lançamentos pagos no recorte, contra
+${linhasMes[0].mbNR + linhasMes[0].mbNP} e ${linhasMes[1].mbNR + linhasMes[1].mbNP} linhas no DFC da MeuBESS. Para a série de ${ANO} inteiro, a única
+fonte que cobre o ano é o DFC.</div>
 <table>
-<tr><th>tela</th><th>indicador</th><th>fonte principal proposta</th><th>confronto</th><th>como o confronto aparece na tela</th><th>o que muda considerando só a MeuBESS</th></tr>
-${PROPOSTA.map(([t, i, f, c, v, r]) => `<tr><td>${esc(t)}</td><td><strong>${esc(i)}</strong></td><td>${esc(f)}</td><td>${esc(c)}</td><td>${esc(v)}</td><td>${esc(r)}</td></tr>`).join("\n")}
+<tr><th>tela</th><th>indicador</th><th>fonte principal proposta</th><th>confronto</th><th>como o confronto aparece na tela</th><th>o que o recorte muda neste indicador</th><th>mudou?</th></tr>
+${PROPOSTA.map((p) => `<tr><td>${esc(p.tela)}</td><td><strong>${esc(p.indicador)}</strong></td>
+<td>${p.antes ? `<strong class="ok">${esc(p.fonte)}</strong>` : esc(p.fonte)}</td><td>${esc(p.confronto)}</td>
+<td>${p.comoNaTela}</td><td>${p.recorte}</td>
+<td>${p.antes ? `<strong class="atencao">mudou</strong> — era <em>${esc(p.antes)}</em>` : "não"}</td></tr>`).join("\n")}
 </table>
 
 <h3>O aviso na tela, em uma regra só</h3>
@@ -1175,17 +1380,24 @@ ${PROPOSTA.map(([t, i, f, c, v, r]) => `<tr><td>${esc(t)}</td><td><strong>${esc(
   <li><strong>sem selo</strong> quando a diferença contra a outra fonte fica em <strong>até 2%</strong> — é ruído de arredondamento e de data de baixa;</li>
   <li><strong>selo âmbar "confere: X%"</strong> entre <strong>2% e 5%</strong>, com o valor da outra fonte no tooltip;</li>
   <li><strong>selo vermelho "diverge: X%"</strong> acima de <strong>5%</strong>, que abre a lista dos lançamentos sem par naquele mês.</li>
-  <li><strong>selo cinza "sem recorte"</strong> — <em>novo</em> — em todo número que vem do Omie enquanto o recorte da MeuBESS não existir, dizendo
-    no tooltip que aquele valor inclui as outras unidades de negócio do mesmo CNPJ.</li>
+  <li><strong>O selo cinza "sem recorte" some.</strong> Ele existia para avisar que o número do Omie incluía as outras unidades de negócio; com a
+    lista do dono aplicada, não inclui mais. No lugar dele, o rodapé da tela diz de onde vem o recorte e quando a lista foi atualizada, e as contas
+    <em>sem dono dito</em> ficam fora do número — nenhuma delas entra silenciosamente.</li>
 </ul>
 <p>Os três primeiros limites saem do que a seção 2 mostrou, e o dono pode mexer neles. De outubro a dezembro o selo de diferença não aparece:
-ali o DFC só tem provisão, e comparar seria comparar com nada.</p>
+ali o DFC só tem provisão, e comparar seria comparar com nada. <strong>Com as trocas acima, na maior parte dos cartões o selo passa a comparar um
+número do DFC contra um número do Omie recortado</strong> — a diferença que a seção 4 mede mês a mês —, e ele vai acender vermelho com frequência
+enquanto a diferença do filtro <code>CPCR</code> não for explicada. Isso é o selo funcionando, não o selo quebrado.</p>
 
 <h2>8. O que este confronto não resolve</h2>
 <ul>
-  <li><strong>O recorte da MeuBESS no Omie é uma lista de contas, não um campo</strong> (seção 4). É a lacuna nova desta leitura: enquanto
-    o Omie não tiver uma marca de unidade, o recorte é mantido à mão, vale ${semSinal(contaRecorte?.pctDentro)} dos lançamentos e foi
-    verificado só nos ${semSinal(pct(exato.casados, Math.max(omieTodos.length, 1)))} que casaram com o DFC.</li>
+  <li><strong>O recorte da MeuBESS no Omie é uma lista de contas, não um campo</strong> (seção 4). A lacuna de <em>quem responde</em> está
+    fechada — o dono respondeu, e a resposta está em <code>dados/contas-correntes-por-negocio.json</code>. O que fica é manutenção: enquanto o Omie
+    não tiver uma marca de unidade no próprio lançamento, conta corrente nova entra sem dono e fica fora da tela até alguém dizer de quem é, e a
+    lista quebra no dia em que um negócio lançar na conta do outro.</li>
+  <li><strong>O recorte não explica a diferença entre as duas fontes</strong> — este é o achado que mais mexeu na proposta da seção 7. Com os dois
+    lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em ${acimaP.length} dos ${MESES_COMPARAVEIS.length} meses comparáveis. A causa está na seção 5, não na unidade de
+    negócio.</li>
   <li><strong>Duas das unidades novas não aparecem no que as telas leem.</strong> As pastas <code>(1)</code> e <code>(3)</code> casaram zero
     lançamento: o movimento delas fica fora do filtro <code>cTpLancamento: "CPCR"</code>. Isso é bom para a tela — menos contaminação — e ruim
     para a conferência: não dá para medir o que não se vê.</li>
@@ -1203,7 +1415,9 @@ ali o DFC só tem provisão, e comparar seria comparar com nada.</p>
 </ul>
 
 <footer>
-Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em ${esc(hoje)}. Só leitura das duas fontes: nenhum arquivo das ${unidades.length} pastas
+Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em ${esc(hoje)}. O recorte da MeuBESS vem de
+<code>dados/contas-correntes-por-negocio.json</code> (lista dita pelo dono em ${esc(LISTA_CONTAS.atualizado_em)}), que é o mesmo arquivo que o
+código dos dashboards lê. Só leitura das duas fontes: nenhum arquivo das ${unidades.length} pastas
 sincronizadas foi gravado, movido ou aberto para edição, nenhuma planilha foi copiada para o repositório e nenhuma escrita foi feita no Omie.
 Sem nome de cliente, fornecedor ou pessoa.
 As respostas do Omie ficam num cache local em <code>.cache/omie/</code> — pasta ignorada pelo git, fora dos commits; rodar o script de novo

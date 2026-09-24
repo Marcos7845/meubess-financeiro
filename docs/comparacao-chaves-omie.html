@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qual chave do Omie abre a empresa da MeuBESS</title>
+<style>
+  :root{
+    --tinta:#14181f; --fraca:#5b6472; --linha:#e3e7ee; --fundo:#f7f8fa;
+    --papel:#fff; --sim:#0f7a4d; --nao:#9aa2ad; --destaque:#0b5fd0;
+    --barra:#cfd6e2; --barra-forte:#0b5fd0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--tinta);
+       font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;}
+  .env{max-width:940px;margin:0 auto;padding:40px 24px 64px}
+  h1{font-size:28px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--fraca);margin:0 0 32px;font-size:15px}
+  .achado{background:var(--papel);border:1px solid var(--linha);border-left:4px solid var(--destaque);
+          border-radius:8px;padding:18px 22px;margin:0 0 32px}
+  .achado p{margin:0;font-size:17px}
+  .achado strong{font-weight:600}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--fraca);
+     margin:36px 0 12px;font-weight:600}
+  table{width:100%;border-collapse:collapse;background:var(--papel);
+        border:1px solid var(--linha);border-radius:8px;overflow:hidden;font-size:15px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--linha);vertical-align:top}
+  th{background:#eef1f6;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--fraca)}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .alvo{background:#f2f8ff}
+  .sim{color:var(--sim);font-weight:600}
+  .nao{color:var(--nao)}
+  .chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;
+        background:#e8f3ec;color:var(--sim);font-weight:600;margin-left:6px}
+  .barra{background:var(--barra);height:10px;border-radius:99px;min-width:2px;display:block}
+  .barra.forte{background:var(--barra-forte)}
+  .nota{color:var(--fraca);font-size:13.5px;margin-top:10px}
+  code{background:#eef1f6;padding:1px 6px;border-radius:4px;font-size:13px;
+       font-family:ui-monospace,Consolas,monospace}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--linha);
+         color:var(--fraca);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="env">
+
+  <h1>Qual chave do Omie abre a empresa da MeuBESS</h1>
+  <p class="sub">Leitura das três chaves do Omie em 24/09/2026 · só métodos de listagem e consulta</p>
+
+  <div class="achado">
+    <p><strong>É a chave 2.</strong> Ela abre o CNPJ 32.589.565/0002-23, tem o maior movimento
+    (2.682 registros) e os quatro códigos da plataforma existem lá. Nas chaves 1 e 3 nenhum deles existe.</p>
+  </div>
+
+  <h2>As três chaves lado a lado</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Chave no <code>.env</code></th>
+        <th>CNPJ</th>
+        <th class="num">Pedidos de venda</th>
+        <th class="num">Contas a receber</th>
+        <th class="num">Contas a pagar</th>
+        <th class="num">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OMIE_MEUBESS_1</td>
+        <td>32.589.565/0001-42</td>
+        <td class="num">20</td>
+        <td class="num">131</td>
+        <td class="num">1.529</td>
+        <td class="num">1.680</td>
+      </tr>
+      <tr class="alvo">
+        <td>OMIE_MEUBESS_2 <span class="chip">a da MeuBESS</span></td>
+        <td>32.589.565/0002-23</td>
+        <td class="num">783</td>
+        <td class="num">814</td>
+        <td class="num">1.085</td>
+        <td class="num">2.682</td>
+      </tr>
+      <tr>
+        <td>OMIE_MEUBESS_3</td>
+        <td>32.589.565/0003-04</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">17</td>
+        <td class="num">17</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">As três chaves abrem a mesma razão social, NON IMPORTACAO E DISTRIBUICAO LTDA;
+  o que muda é a filial (0001, 0002 e 0003).</p>
+
+  <h2>Volume total de registros</h2>
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:170px">OMIE_MEUBESS_1</td>
+        <td><span class="barra" style="width:62.6%"></span></td>
+        <td class="num" style="width:80px">1.680</td>
+      </tr>
+      <tr class="alvo">
+        <td>OMIE_MEUBESS_2</td>
+        <td><span class="barra forte" style="width:100%"></span></td>
+        <td class="num">2.682</td>
+      </tr>
+      <tr>
+        <td>OMIE_MEUBESS_3</td>
+        <td><span class="barra" style="width:0.6%"></span></td>
+        <td class="num">17</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Data do registro mais recente</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Chave</th>
+        <th>Pedidos de venda</th>
+        <th>Contas a receber</th>
+        <th>Contas a pagar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>OMIE_MEUBESS_1</td>
+        <td>16/09/2026</td>
+        <td>28/09/2026</td>
+        <td>20/10/2026</td>
+      </tr>
+      <tr class="alvo">
+        <td>OMIE_MEUBESS_2</td>
+        <td>30/09/2026</td>
+        <td>25/09/2026</td>
+        <td>06/02/2027</td>
+      </tr>
+      <tr>
+        <td>OMIE_MEUBESS_3</td>
+        <td>—</td>
+        <td>—</td>
+        <td>06/10/2026</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">Datas futuras são de previsão e vencimento, que o Omie guarda junto do lançamento.
+  Nas listas com mais de uma página, a data saiu da primeira e da última página.</p>
+
+  <h2>Os códigos da plataforma existem em qual chave</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Código da plataforma</th>
+        <th>Chave 1</th>
+        <th>Chave 2</th>
+        <th>Chave 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>pedido 5232347200</td><td class="nao">não</td><td class="sim">sim</td><td class="nao">não</td></tr>
+      <tr><td>pedido 5299465950</td><td class="nao">não</td><td class="sim">sim</td><td class="nao">não</td></tr>
+      <tr><td>cliente 5299465472</td><td class="nao">não</td><td class="sim">sim</td><td class="nao">não</td></tr>
+      <tr><td>produto 5298040801</td><td class="nao">não</td><td class="sim">sim</td><td class="nao">não</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    Gerado de <code>mapa-omie-meubess_1.log</code>, <code>mapa-omie-meubess_2.log</code> e
+    <code>mapa-omie-meubess_3.log</code>, saída de
+    <code>node scripts/mapear-omie.mjs chave=… pedido=… cliente=… produto=…</code> em 24/09/2026.
+    Os logs ficam fora do git. Nenhuma chave, valor, nome ou documento de cliente foi lido para esta página.
+  </footer>
+
+</div>
+</body>
+</html>

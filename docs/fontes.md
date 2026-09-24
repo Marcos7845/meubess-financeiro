@@ -399,6 +399,7 @@ Nenhum indicador trocou de fonte nesta leitura. Onde o DFC é candidato, a linha
   `SUB 2` do DFC, que não usam código nenhum.
 - **O recorte de empresa não bate de saída**: as telas somam as filiais `/0001-42` e `/0002-23` do Omie; o DFC separa
   por `B3W` e `N3` e não diz qual é qual.
+- **O Omie tem outras unidades de negócio no mesmo CNPJ, e elas não são a MeuBESS** (explicação do dono, 24/09/2026; o DFC das três outras unidades foi lido em 24/09/2026 por `scripts/confronto-dfc-omie.mjs`, só leitura, e está em [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html)). **O único campo do Omie que separa é a conta corrente** (`detalhes.nCodCC`): 8 das 17 contas com movimento em 2026 são exclusivas de uma unidade, e as da MeuBESS pegam **89,7% dos lançamentos** do período, cobrindo 98,8% do que casou com o DFC da MeuBESS, com 0,4% de intrusos. Departamento **não** separa (a árvore inteira pende de uma raiz só, `MEU BESS`, e os filhos são setores), categoria, projeto e vendedor também não. **lacuna:** o recorte é uma lista de contas mantida à mão, não um campo que diga a unidade, e foi verificado só nos 66,0% dos lançamentos do Omie que acharam par no DFC — as duas unidades menores casaram zero, porque o movimento delas fica fora do filtro `cTpLancamento: "CPCR"`. Nenhuma fonte deste documento mudou por causa disto.
 
 ## Navegação
 

@@ -106,7 +106,9 @@ async function chamar(servico, metodo, param) {
       json = await resp.json();
     } catch (e) {
       const estourou = e?.name === "TimeoutError" || e?.name === "AbortError";
-      return { erro: estourou ? `sem resposta em ${TEMPO_LIMITE_MS / 1000}s` : "sem resposta utilizável do Omie" };
+      // motivo: só o nome do erro ou o código de rede (ex.: ECONNRESET), nunca a mensagem nem a URL
+      const motivo = estourou ? `tempo limite de ${TEMPO_LIMITE_MS / 1000}s` : String(e?.cause?.code ?? e?.name ?? "falha de rede");
+      return { erro: estourou ? `sem resposta em ${TEMPO_LIMITE_MS / 1000}s` : "sem resposta utilizável do Omie", motivo };
     }
     const code = String(json.faultcode ?? "");
     // Client-1880: o Omie ainda processa a requisição anterior deste método; espera e repete
@@ -123,7 +125,16 @@ async function chamar(servico, metodo, param) {
     }
     return { json };
   }
-  return { erro: "o Omie não liberou o método depois de várias tentativas" };
+  return { erro: "o Omie não liberou o método depois de várias tentativas", motivo: "Omie ocupado depois de várias tentativas" };
+}
+
+// Rótulo de uma consulta por código. "não encontrado" só quando o Omie respondeu com um erro que traz código;
+// tempo limite, falha de rede e resposta sem código não provam ausência do registro e saem como "sem resposta".
+// Nunca imprime a mensagem do Omie (pode trazer dado do cadastro), só o faultcode inteiro (ex.: SOAP-ENV:Client-8020).
+function rotuloConsulta(r) {
+  if (!r.erro) return "encontrado";
+  if (r.code && r.code !== "?") return `não encontrado (Omie ${r.code})`;
+  return `sem resposta (${r.motivo ?? "o Omie devolveu erro sem código"})`;
 }
 
 
@@ -234,8 +245,7 @@ async function mapear() {
   for (const [tipo, codigo] of aConsultar) {
     const [servico, metodo, monta] = CONSULTAS[tipo];
     const r = await chamar(servico, metodo, monta(codigo));
-    // o faultcode inteiro do Omie (ex.: SOAP-ENV:Client-8020) — nunca a mensagem, que pode trazer dado do cadastro
-    registrar(`${tipo} ${codigo}: ${r.erro ? `não encontrado (Omie ${r.code ?? "?"})` : "encontrado"}`);
+    registrar(`${tipo} ${codigo}: ${rotuloConsulta(r)}`);
   }
 }
 

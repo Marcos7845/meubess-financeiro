@@ -1,7 +1,8 @@
 # Fontes dos dashboards
 
 O contrato do projeto: cada indicador das três telas, de onde vem e como é calculado. Indicador sem linha aqui não entra
-na tela. "Conferido" é a data em que o número da tela bateu com a fonte num caso real.
+na tela. "Conferido" diz o que já foi verificado contra o Omie num caso real, e o que ainda não: a data em que o número
+da tela bateu com a fonte — ou, enquanto a tela não existe, quais campos foram lidos de verdade e em que leitura.
 
 As referências (`referencias/`) valem pelo **layout e pela disposição das informações**, não pelas cores. Os números que
 aparecem nelas são de exemplo — nenhum é da MeuBESS.
@@ -53,20 +54,57 @@ período.
 **Pedido de venda — `produtos/pedido` → `ListarPedidos` (lista) e `ConsultarPedido` (um pedido, por `codigo_pedido`).**
 É o elo anterior ao título financeiro: a plataforma MeuBESS cria o pedido de venda no Omie (no arquivo de integrações do
 dono, 171 `Order` com código do Omie, de 17/04 a 23/09/2026) e o título a receber só aparece depois do faturamento. O
-título não tem descrição nem produto; o pedido tem. O que ele traz, pelos nomes da documentação do Omie:
+título não tem descrição nem produto; o pedido tem.
 
-- `cabecalho` — `codigo_pedido`, `numero_pedido`, `codigo_cliente`, `data_previsao`, `etapa`;
-- `det[]`, um item por linha — `produto.codigo_produto`, `produto.descricao`, `produto.quantidade`,
-  `produto.valor_unitario`, `produto.valor_total`;
-- `total_pedido.valor_total_pedido`;
-- `informacoes_adicionais.codigo_categoria`.
+**Conferido no Omie em 24/09/2026** (`scripts/conferir-pedido-titulo.mjs`, só leitura, chave `OMIE_MEUBESS_2`), num
+pedido faturado de verdade — pedido `numero_pedido` 827, `codigo_pedido` 5298679806, `etapa` `"60"` e
+`infoCadastro.faturado` `"S"`. Os treze campos que este documento citava existiam todos no retorno do `ConsultarPedido`,
+com o nome certo:
+
+| campo do pedido | conferido |
+|---|---|
+| `cabecalho.codigo_pedido` | existe |
+| `cabecalho.numero_pedido` | existe |
+| `cabecalho.codigo_cliente` | existe |
+| `cabecalho.data_previsao` | existe |
+| `cabecalho.etapa` | existe |
+| `det[]` (um item por linha) | existe |
+| `det[].produto.codigo_produto` | existe |
+| `det[].produto.descricao` | existe (preenchida em todos os itens do pedido lido) |
+| `det[].produto.quantidade` | existe |
+| `det[].produto.valor_unitario` | existe |
+| `det[].produto.valor_total` | existe |
+| `total_pedido.valor_total_pedido` | existe |
+| `informacoes_adicionais.codigo_categoria` | existe |
+
+Vale saber que **a `etapa` sozinha não diz se o pedido foi faturado**: na página lida havia pedido em `etapa` `"80"` com
+`infoCadastro.faturado` `"N"`. Quem responde isso é `infoCadastro.faturado` (`S` / `N`), ao lado de `cancelado`,
+`denegado`, `devolvido` e `devolvido_parcial`. O `ListarPedidos` devolve em ordem crescente de código e não aceita
+`ordenar_por` nem `ordem_decrescente` — os pedidos recentes estão na **última** página.
+
+**O campo que liga título e pedido: `nCodOS`.** O nome vem de "ordem de serviço", mas é nele que o Omie guarda o código
+do pedido de venda que gerou o título — foi o que a leitura mostrou.
+
+- No título, `cabecTitulo.nCodOS` = `cabecalho.codigo_pedido` do pedido, e `cabecTitulo.cNumOS` =
+  `cabecalho.numero_pedido`. Em `financas/mf` → `ListarMovimentos` os mesmos dois vêm como `detalhes.nCodOS` e
+  `detalhes.cNumOS`. No `financas/contareceber` → `ListarContasReceber` o campo se chama `nCodPedido` (e há também
+  `numero_pedido`), mas as três telas não usam esse serviço.
+- **A ligação funciona nos dois sentidos.** Do título para o pedido: `ConsultarPedido` com
+  `codigo_pedido = cabecTitulo.nCodOS` devolveu o pedido 827. Do pedido para o título: `nCodOS` também é aceito como
+  **filtro** — `PesquisarLancamentos` com `cNatureza: "R"` e `nCodOS: 5298679806` devolveu exatamente o título
+  `nCodTitulo` 5298681207, e o `ListarMovimentos` com `nCodOS` devolveu o mesmo lançamento. Ou seja, dá para ler os
+  títulos do período e buscar os pedidos pelos `nCodOS` que vierem, sem varrer os 783 pedidos.
+- **Não confundir com `cNumTitulo`.** Num primeiro pedido lido o `cNumTitulo` era igual ao `numero_pedido` por
+  coincidência; no pedido 827 o `cNumTitulo` veio **vazio**, e numa amostra de 100 títulos a receber 97 estavam sem ele.
+  O que liga é `nCodOS`, não `cNumTitulo`.
+- **Cobertura, na mesma amostra de 100 títulos a receber** (de 814): 93 com `nCodOS` preenchido e 7 sem. A divisão é
+  limpa por `cabecTitulo.cOrigem` — `VENR` (venda, 55) e `ADVR` (adiantamento de venda, 38) têm todos `nCodOS`; `MANR`
+  (lançamento manual, 7) não tem nenhum. Bate com a regra de negócio: receita da plataforma nasce em pedido, despesa e
+  lançamento avulso entram à mão. Título com `cOrigem = "MANR"` fica sem descrição de pedido.
 
 O que o pedido **não** é: não traz data de pagamento nem quanto já foi recebido, então não substitui o
 `ListarMovimentos` nos números (o regime de caixa continua no título). Ele entra só onde o título não responde —
-descrição e produto — e essas linhas dizem "pedido de venda" na coluna de filtro. **Ainda não conferido contra o Omie:**
-os nomes de campo acima (vêm da documentação, não de um pedido lido) e qual campo do título aponta para o pedido de
-origem; sem esse elo não se liga o título ao pedido. Os dois se conferem numa leitura de um pedido real da filial
-`/0002-23`, e a coluna "conferido" das linhas que usam o pedido fica vazia até lá.
+descrição e produto — e essas linhas dizem "pedido de venda" na coluna de filtro.
 
 ## Navegação
 
@@ -106,7 +144,7 @@ Mais um botão **Fluxo de caixa** (leva à visão de fluxo, fora do escopo agora
 | bloco | forma | indicador | fonte | tabela/aba e filtro | conferido |
 |---|---|---|---|---|---|
 | Top 10 despesas | barras horizontais | total por centro de custo, as 10 maiores | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa) e `cExibirDepartamentos: "S"`; agrupa `departamentos[].cCodDepartamento` somando `nDistrValor` e pega as 10 maiores; nome em `geral/departamentos` → `ListarDepartamentos` (`codigo` → `descricao`). **lacuna:** o que fazer com despesa sem rateio de departamento (ficar de fora, ou virar "sem centro de custo") — decisão da MeuBESS | |
-| Top 10 receitas | barras horizontais | maiores lançamentos de receita (data, status, descrição) | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa), ordenado no app por `detalhes.nValorTitulo`; data em `detalhes.dDtVenc`, status em `detalhes.cStatus`. **"Descrição":** o título do Omie não tem campo de descrição, mas o pedido de venda que o originou tem — `produtos/pedido` → `ListarPedidos` / `ConsultarPedido`: `det[].produto.descricao` (com `codigo_produto`) dos itens e `cabecalho.numero_pedido`. **lacuna:** (a) o que aparece como "descrição" — a descrição dos produtos do pedido, o número do pedido, `detalhes.observacao` (só vem com `lDadosCad: true`), `cNumTitulo` ou a `descricao` da categoria — é decisão da MeuBESS; (b) a receita que não nasceu de pedido (não veio da plataforma) fica sem descrição de pedido; (c) o campo do título que aponta para o pedido ainda não foi conferido no Omie | |
+| Top 10 receitas | barras horizontais | maiores lançamentos de receita (data, status, descrição) | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` no período do filtro (caixa), ordenado no app por `detalhes.nValorTitulo`; data em `detalhes.dDtVenc`, status em `detalhes.cStatus`. **"Descrição":** o título do Omie não tem campo de descrição, mas o pedido de venda que o originou tem — o elo é `detalhes.nCodOS` do lançamento, que é o `cabecalho.codigo_pedido`, e com ele `produtos/pedido` → `ConsultarPedido` traz `det[].produto.descricao` (com `codigo_produto`) e `cabecalho.numero_pedido` (= `detalhes.cNumOS`). **lacuna:** (a) o que aparece como "descrição" — a descrição dos produtos do pedido, o número do pedido, `detalhes.observacao` (só vem com `lDadosCad: true`) ou a `descricao` da categoria — é decisão da MeuBESS; (b) a receita que não nasceu de pedido (`cOrigem = "MANR"`, 7 em 100 na amostra) fica sem descrição de pedido | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207); o número da tela, não |
 | Receita × despesa por dia | colunas (receita acima, despesa abaixo) | totais diários no mês escolhido | Omie | `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CPCR"` e `dDtPagtoDe` / `dDtPagtoAte` no mês (caixa); agrupa pelo dia dessa mesma data (`detalhes.dDtPagamento`) e separa por `detalhes.cNatureza` | |
 | Receita × despesa por mês | duas linhas | totais mensais, com seletor de meses anteriores | Omie | a mesma chamada do bloco de cima, com `dDtPagtoDe` / `dDtPagtoAte` cobrindo a faixa de meses do seletor; agrupa por ano-mês de `detalhes.dDtPagamento` | |
 
@@ -145,7 +183,7 @@ para toda a tabela e os cartões — o filtro de data é o de pagamento do Omie,
 
 | linha | fonte | contas do plano / abas | conferido |
 |---|---|---|---|
-| (+) Receitas: outras receitas, vendas de produtos | Omie | categorias com `conta_receita = "S"` e `totalizadora = "N"` em `geral/categorias` → `ListarCategorias`, agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` (caixa). **"Vendas de produtos":** o título não diz qual produto foi vendido, o pedido de venda diz — `produtos/pedido` → `ListarPedidos` / `ConsultarPedido`, com os itens em `det[].produto` (`codigo_produto`, `descricao`, `valor_total`), o total em `total_pedido.valor_total_pedido` e a categoria do pedido em `informacoes_adicionais.codigo_categoria`. **lacuna:** (a) a quebra entre "outras receitas" e "vendas de produtos" depende de como a MeuBESS montou o plano de contas e o DRE no Omie — esses nomes não existem no cadastro padrão, e se "outras receitas" é a receita que não vem de pedido de produto é decisão dela; (b) como repartir o valor recebido de um título entre os produtos do pedido (proporcional ao `valor_total` dos itens ou o pedido inteiro numa linha) é decisão dela; (c) o campo do título que aponta para o pedido ainda não foi conferido no Omie | |
+| (+) Receitas: outras receitas, vendas de produtos | Omie | categorias com `conta_receita = "S"` e `totalizadora = "N"` em `geral/categorias` → `ListarCategorias`, agrupadas pelo `codigo_dre`; valores de `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CR"` e `dDtPagtoDe` / `dDtPagtoAte` (caixa). **"Vendas de produtos":** o título não diz qual produto foi vendido, o pedido de venda diz — chega-se nele por `detalhes.nCodOS` (= `cabecalho.codigo_pedido`) e `produtos/pedido` → `ConsultarPedido`, com os itens em `det[].produto` (`codigo_produto`, `descricao`, `valor_total`), o total em `total_pedido.valor_total_pedido` e a categoria do pedido em `informacoes_adicionais.codigo_categoria`. **lacuna:** (a) a quebra entre "outras receitas" e "vendas de produtos" depende de como a MeuBESS montou o plano de contas e o DRE no Omie — esses nomes não existem no cadastro padrão, e se "outras receitas" é a receita que não vem de pedido de produto é decisão dela; (b) como repartir o valor recebido de um título entre os produtos do pedido (proporcional ao `valor_total` dos itens ou o pedido inteiro numa linha) é decisão dela | ligação `nCodOS` e os campos de `det[].produto` e `total_pedido` conferidos no Omie em 24/09/2026 (pedido 827); a quebra em linhas do DRE, não |
 | (=) Receita bruta | Omie (calculado) | soma das linhas de receita; no Omie a conta totalizadora é a que tem `totalizaDRE = "S"` em `geral/dre` → `ListarCadastroDRE` | |
 | (−) Deduções: devoluções, taxas de serviço | Omie | **lacuna:** o Omie não marca categoria como "dedução". Há pistas — `detalhes.cOperacao = "13"` (devolução de venda) e os campos de retenção do título (`nValorPIS`, `nValorCOFINS`, `nValorCSLL`, `nValorIR`, `nValorISS`, `nValorINSS`, com o `cRet…` correspondente em `"S"`) — mas quais categorias entram nesta linha é decisão da MeuBESS | |
 | (=) Receita líquida | Omie (calculado) | receita bruta − deduções; depende da lacuna da linha acima | |
@@ -188,5 +226,5 @@ decisão da MeuBESS; abaixo eles estão como pendente e como recebido-em-parte, 
 |---|---|---|---|---|---|
 | Lançamentos por mês e status | colunas empilhadas (pago, atrasado, em aberto) | quantidade de títulos por mês | Omie | a mesma consulta; agrupa pelo ano-mês de `cabecTitulo.dDtVenc` e conta os títulos por faixa. **lacuna:** o de-para dos oito `cStatus` do Omie (`CANCELADO`, `RECEBIDO`, `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE`, `AVENCER`, `ATRASADO`) para as três faixas da tela é decisão da MeuBESS | |
 | Valor previsto por cliente e status | barras horizontais empilhadas | valor por cliente, dividido por status | Omie | a mesma consulta; agrupa por `cabecTitulo.nCodCliente` somando `nValorTitulo` e separa por `cStatus`; nome do cliente em `geral/clientes` → `ListarClientesResumido` | |
-| Lista de títulos | tabela com total | código, cliente, categoria, descrição, valor previsto, vencimento, status | Omie | a mesma consulta, um título por linha: código `cabecTitulo.nCodTitulo` (e `cNumTitulo`, que é o que aparece na tela do ERP), cliente por `nCodCliente` em `geral/clientes` → `ListarClientesResumido`, categoria `cCodCateg` com a `descricao` de `geral/categorias` → `ListarCategorias`, valor `nValorTitulo`, vencimento `dDtVenc`, status `cStatus`. **"Descrição":** o título não tem esse campo no Omie; o pedido de venda de origem tem — `produtos/pedido` → `ListarPedidos` / `ConsultarPedido` (`det[].produto.descricao`, `cabecalho.numero_pedido`), como na Tela 1. **lacuna:** o que aparece como "descrição" é decisão da MeuBESS, título sem pedido fica sem ela e o campo do título que aponta para o pedido ainda não foi conferido no Omie | |
+| Lista de títulos | tabela com total | código, cliente, categoria, descrição, valor previsto, vencimento, status | Omie | a mesma consulta, um título por linha: código `cabecTitulo.nCodTitulo` (o `cNumTitulo` **não serve** como código visível: veio vazio em 97 dos 100 títulos lidos em 24/09/2026; o número legível que sobra é o do pedido, `cNumOS` — se é esse mesmo que a tela do ERP mostra não foi conferido), cliente por `nCodCliente` em `geral/clientes` → `ListarClientesResumido`, categoria `cCodCateg` com a `descricao` de `geral/categorias` → `ListarCategorias`, valor `nValorTitulo`, vencimento `dDtVenc`, status `cStatus`. **"Descrição":** o título não tem esse campo no Omie; o pedido de venda de origem tem, e o elo é `cabecTitulo.nCodOS` (= `cabecalho.codigo_pedido`) — `produtos/pedido` → `ConsultarPedido` (`det[].produto.descricao`, `cabecalho.numero_pedido`), como na Tela 1. **lacuna:** o que aparece como "descrição" é decisão da MeuBESS, e título sem pedido (`cOrigem = "MANR"`) fica sem ela | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207), nos dois sentidos; `cNumTitulo` conferido como vazio na maioria. O número da tela, não |
 | Lançamentos por status | rosca com o total no centro | quantidade e % por status | Omie | a mesma consulta; conta os títulos por `cStatus` e usa `nTotRegistros` como total do centro. Mesma lacuna de de-para do primeiro bloco | |

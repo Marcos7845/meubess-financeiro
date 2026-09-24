@@ -55,7 +55,7 @@
   <div class="cartao"><b>77</b><span>mesmo código, cadastro diferente</span></div>
   <div class="cartao"><b>20 · 4</b><span>só na empresa 1 · só na empresa 2</span></div>
   <div class="cartao"><b>16</b><span>departamentos nas duas somadas</span></div>
-  <div class="cartao"><b>2.572 · 2.845</b><span>lançamentos de 2026 contados (E1 · E2)</span></div>
+  <div class="cartao"><b>2.569 · 2.845</b><span>lançamentos de 2026 contados (E1 · E2)</span></div>
 </div>
 
 <div class="nota">
@@ -65,7 +65,7 @@
   <code>conta_despesa</code>, <code>totalizadora</code>, <code>transferencia</code>), não uma classificação nossa; quando
   o cadastro diverge entre as empresas, o tipo e a descrição mostrados são os da empresa 2.<br>
   <b>Como ler a contagem:</b> lançamentos do <code>financas/mf</code> com emissão em 2026, sem os cancelados
-  (23 de 2.595 na empresa 1, 211 de 3.056 na empresa 2). Cada lançamento conta uma
+  (24 de 2.593 na empresa 1, 211 de 3.056 na empresa 2). Cada lançamento conta uma
   vez por categoria e uma vez por departamento; um título rateado em vários departamentos aparece em cada um.
   Sem valores em reais e sem nomes de clientes, fornecedores ou funcionários.
 </div>
@@ -165,11 +165,11 @@
 <tr class="semuso sofalta"><td class="cod">2.01.87</td><td>Vale Transporte- Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">0</td><td>—</td><td class="n">—</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.01.01 — Despesas Variáveis <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">21 categoria(s) · 675 lançamento(s) na empresa 1 · 1.296 na empresa 2 · <b class="alertatxt">19 divergente(s)</b></p>
+<p class="resumo">21 categoria(s) · 674 lançamento(s) na empresa 1 · 1.296 na empresa 2 · <b class="alertatxt">19 divergente(s)</b></p>
 <table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
 <tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
 <tr class="diverge"><td class="cod">2.01.02</td><td>Fretes s/ compras<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 1.21.03 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">1</td><td>ativa</td><td class="n">620</td><td class="n forte">621</td></tr>
-<tr class="diverge"><td class="cod">2.01.03</td><td>Compras de Materia Prima<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">77</td><td>ativa</td><td class="n">376</td><td class="n forte">453</td></tr>
+<tr class="diverge"><td class="cod">2.01.03</td><td>Compras de Materia Prima<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE — × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">76</td><td>ativa</td><td class="n">376</td><td class="n forte">452</td></tr>
 <tr class="diverge"><td class="cod">2.10.99</td><td>Adiantamentos a Fornecedores<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE — × 2.01.01</span> <span class="sub">“Implantação de saldos (saidas)” × “Adiantamentos a Fornecedores”</span></td><td>despesa</td><td>ativa</td><td class="n">159</td><td>ativa</td><td class="n">104</td><td class="n forte">263</td></tr>
 <tr class="diverge"><td class="cod">2.02.02</td><td>Desp com Rep. Comercial - AJUDA DE CUSTO PJS<br><span class="tag alerta">conta do DRE diferente</span> <span class="sub">DRE 2.11.04 × 2.01.01</span></td><td>despesa</td><td>ativa</td><td class="n">167</td><td>ativa</td><td class="n">0</td><td class="n forte">167</td></tr>
 <tr class="diverge"><td class="cod">2.04.96</td><td>Certificado Digital<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.11.02 × 2.01.01</span> <span class="sub">“Despesas Indedutíveis” × “Certificado Digital”</span></td><td>despesa</td><td>ativa</td><td class="n">152</td><td>ativa</td><td class="n">2</td><td class="n forte">154</td></tr>
@@ -202,7 +202,7 @@
 <tr class="semuso diverge"><td class="cod">1.04.02</td><td>Receb. de Reembolso de Despesas<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Recebimento de Reembolso de Despesas” × “Receb. de Reembolso de Despesas”</span></td><td>receita</td><td>ativa</td><td class="n">0</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>2.11.01 — Despesas com Pessoal <span class="sub">nível 3 · sinal - · não totalizadora</span></h3>
-<p class="resumo">19 categoria(s) · 261 lançamento(s) na empresa 1 · 4 na empresa 2 · <b class="alertatxt">6 divergente(s)</b> · 1 só numa das empresas</p>
+<p class="resumo">19 categoria(s) · 260 lançamento(s) na empresa 1 · 4 na empresa 2 · <b class="alertatxt">6 divergente(s)</b> · 1 só numa das empresas</p>
 <table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
 <tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
 <tr class="diverge"><td class="cod">2.02.01</td><td>Desp repr. Comercial- COMISSÕES s/ vendas<br><span class="tag alerta">descrição e conta do DRE diferentes</span> <span class="sub">DRE 2.01.01 × 2.11.01</span> <span class="sub">“Desp com Rep. Comercial- COMISSÕES s/ vendas” × “Desp repr. Comercial- COMISSÕES s/ vendas”</span></td><td>despesa</td><td>ativa</td><td class="n">98</td><td>ativa</td><td class="n">1</td><td class="n forte">99</td></tr>
@@ -210,8 +210,8 @@
 <tr class=""><td class="cod">2.03.10</td><td>Assistência Médica e social -Adm</td><td>despesa</td><td>ativa</td><td class="n">24</td><td>inativa</td><td class="n">0</td><td class="n forte">24</td></tr>
 <tr class=""><td class="cod">2.03.12</td><td>Vale Refeição-Adm</td><td>despesa</td><td>ativa</td><td class="n">21</td><td>ativa</td><td class="n">0</td><td class="n forte">21</td></tr>
 <tr class=""><td class="cod">2.03.11</td><td>Vale Transporte- Adm</td><td>despesa</td><td>ativa</td><td class="n">18</td><td>ativa</td><td class="n">0</td><td class="n forte">18</td></tr>
-<tr class=""><td class="cod">2.03.99</td><td>Terceiros e Estagiários- ADM</td><td>despesa</td><td>ativa</td><td class="n">16</td><td>inativa</td><td class="n">0</td><td class="n forte">16</td></tr>
 <tr class="diverge"><td class="cod">2.03.14</td><td>Outros Benefícios<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Outros Benefícios- ADM” × “Outros Benefícios”</span></td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">3</td><td class="n forte">15</td></tr>
+<tr class=""><td class="cod">2.03.99</td><td>Terceiros e Estagiários- ADM</td><td>despesa</td><td>ativa</td><td class="n">15</td><td>inativa</td><td class="n">0</td><td class="n forte">15</td></tr>
 <tr class="sofalta"><td class="cod">2.01.79</td><td>Sistema de Ponto<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">13</td><td>—</td><td class="n">—</td><td class="n forte">13</td></tr>
 <tr class=""><td class="cod">2.03.07</td><td>FGTS- Adm</td><td>despesa</td><td>ativa</td><td class="n">12</td><td>ativa</td><td class="n">0</td><td class="n forte">12</td></tr>
 <tr class="diverge"><td class="cod">2.03.02</td><td>Adiantamento de Salário<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Adiantamento de Salário- Adm” × “Adiantamento de Salário”</span></td><td>despesa</td><td>ativa</td><td class="n">5</td><td>ativa</td><td class="n">0</td><td class="n forte">5</td></tr>
@@ -311,13 +311,13 @@
 <tr class="semuso sofalta"><td class="cod">2.07.99</td><td>Consórcio<br><span class="tag falta">só na empresa 2</span></td><td>despesa</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">0</td><td class="n forte">0</td></tr>
 </tbody></table></section>
 <section class="grupo"><h3>Sem conta do DRE <span class="sub">categorias sem <code>codigo_dre</code> no cadastro</span></h3>
-<p class="resumo">54 categoria(s) · 75 lançamento(s) na empresa 1 · 111 na empresa 2 · <b class="alertatxt">9 divergente(s)</b> · 6 só numa das empresas</p>
+<p class="resumo">54 categoria(s) · 74 lançamento(s) na empresa 1 · 111 na empresa 2 · <b class="alertatxt">9 divergente(s)</b> · 6 só numa das empresas</p>
 <table><thead><tr><th rowspan="2">código</th><th rowspan="2">descrição</th><th rowspan="2">tipo</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
 <tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>
 <tr class="sofalta"><td class="cod">2.10.96</td><td>Implantação de saldos (saidas)<br><span class="tag falta">só na empresa 2</span></td><td>despesa</td><td>—</td><td class="n">—</td><td>ativa</td><td class="n">111</td><td class="n forte">111</td></tr>
 <tr class="diverge"><td class="cod">2.10.98</td><td>Pagamento empréstimo Intercompany B3N<br><span class="tag alerta">descrição diferente</span> <span class="sub">“Pagamento Pacianotto - Adto acordo Juridico” × “Pagamento empréstimo Intercompany B3N”</span></td><td>despesa</td><td>ativa</td><td class="n">30</td><td>inativa</td><td class="n">0</td><td class="n forte">30</td></tr>
 <tr class=""><td class="cod">2.02</td><td>Despesas de Vendas e Marketing</td><td>totalizadora</td><td>ativa</td><td class="n">24</td><td>ativa</td><td class="n">0</td><td class="n forte">24</td></tr>
-<tr class=""><td class="cod">2.01</td><td>Custos/Despesas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">11</td><td>ativa</td><td class="n">0</td><td class="n forte">11</td></tr>
+<tr class=""><td class="cod">2.01</td><td>Custos/Despesas Diretas</td><td>totalizadora</td><td>ativa</td><td class="n">10</td><td>ativa</td><td class="n">0</td><td class="n forte">10</td></tr>
 <tr class="sofalta"><td class="cod">2.01.82</td><td>Uniformes e equipamentos de Segurança - Custo (estoque)<br><span class="tag falta">só na empresa 1</span></td><td>despesa</td><td>ativa</td><td class="n">4</td><td>—</td><td class="n">—</td><td class="n forte">4</td></tr>
 <tr class=""><td class="cod">2.11</td><td>DESPESAS DIRETORIA</td><td>totalizadora</td><td>ativa</td><td class="n">2</td><td>ativa</td><td class="n">0</td><td class="n forte">2</td></tr>
 <tr class=""><td class="cod">1.04.99</td><td>Recebimento de Empréstimo Intercompany B3N</td><td>receita</td><td>ativa</td><td class="n">2</td><td>inativa</td><td class="n">0</td><td class="n forte">2</td></tr>
@@ -374,7 +374,7 @@
 
 <h2>Departamentos (centros de custo)</h2>
 <div class="grupo">
-<p class="resumo">16 nome(s) de departamento nas duas empresas · 16 existem nas duas · da mais usada para a menos usada · sem departamento: 1.142 lançamento(s) na empresa 1, 1.138 lançamento(s) na empresa 2</p>
+<p class="resumo">16 nome(s) de departamento nas duas empresas · 16 existem nas duas · da mais usada para a menos usada · sem departamento: 1.139 lançamento(s) na empresa 1, 1.138 lançamento(s) na empresa 2</p>
 <p class="resumo"><b class="alertatxt">A tabela casa os departamentos pelo NOME, não pelo código.</b> O código do departamento é próprio de cada empresa — das 16 da empresa 1 e 16 da empresa 2, 0 código(s) coincidem. Somar as duas empresas por <code>cCodDepartamento</code> separaria em dois o que é o mesmo centro de custo.</p>
 <table><thead><tr><th rowspan="2">descrição</th><th rowspan="2">códigos</th><th rowspan="2">onde existe</th><th colspan="2" class="e1">Empresa 1 · /0001-42</th><th colspan="2" class="e2">Empresa 2 · /0002-23</th><th rowspan="2" class="n">soma 2026</th></tr>
 <tr><th class="e1">situação</th><th class="e1 n">lanç. 2026</th><th class="e2">situação</th><th class="e2 n">lanç. 2026</th></tr></thead><tbody>

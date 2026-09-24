@@ -34,7 +34,87 @@ Toda consulta roda nas duas chaves e os resultados se somam. Medido no Omie em 2
 Nenhum lançamento usa código fora do cadastro, nas duas empresas. As divergências não são cosméticas: o código `2.01.89`
 é "Pensão Alimentícia- Custo (estoque)" (DRE `1.21.03`) na empresa 1 e "Gas para empilhadeira -Custos" (DRE `2.11.02`)
 na empresa 2; o `2.01.02` é "Fretes s/ compras" nas duas, mas cai em `1.21.03` numa e em `2.01.01` na outra.
-**lacuna:** a decisão do dono (24/09/2026) é que o contador unifica os planos no Omie — mesmo código com a mesma descrição e a mesma conta do DRE nas duas empresas — e isso ainda não foi feito. Enquanto os 77 códigos tiverem cadastro diferente, somar por categoria junta coisas distintas, e as 46 com `codigo_dre` diferente caem em linhas diferentes do DRE. A soma por categoria só vale depois da unificação, que será conferida com uma nova leitura e comparação dos dois planos.
+**lacuna:** a decisão do dono (24/09/2026) é que o contador unifica os planos no Omie — mesmo código com a mesma descrição e a mesma conta do DRE nas duas empresas. **Leitura refeita em 24/09/2026** (`scripts/plano-de-contas-omie.mjs`, só leitura) depois de o contador ter avisado que unificou: **a unificação não aparece no Omie.** Os números são os mesmos da primeira leitura — 187 códigos, 86 iguais, **77 com cadastro diferente** (63 na descrição, 46 na conta do DRE, 32 nas duas), 20 só na empresa 1 e 4 só na empresa 2 — e o cadastro de categorias lido é idêntico ao da leitura anterior; só mudou a contagem de lançamentos de 2026 da empresa 1 (2.572 para 2.569). Enquanto os 77 códigos tiverem cadastro diferente, somar por categoria junta coisas distintas, e as 46 com `codigo_dre` diferente caem em linhas diferentes do DRE. A soma por categoria só vale quando uma nova leitura mostrar zero divergências; a lacuna fecha nesse dia. Os 77 que ainda divergem, por código (nome de terceiro que aparece em 3 descrições está trocado por `[terceiro]`):
+
+| código | descrição na empresa 1 | descrição na empresa 2 | difere em |
+|---|---|---|---|
+| `1.01.02` | Rendimento Bancários | Clientes - Serviços Prestados | descrição e conta do DRE |
+| `1.01.97` | Marketing | `<Disponível>` | descrição |
+| `1.01.98` | Comissão de Venda | `<Disponível>` | descrição |
+| `1.01.99` | RECEITA DE SERVIÇOS PRESTADOS | `<Disponível>` | descrição e conta do DRE |
+| `1.02` | Receitas Indiretas | Receitas Indiretas/Outras receitas | descrição |
+| `1.02.98` | `<Disponível>` | Outras receitas - Aluguel (sublocação barracão) | descrição e conta do DRE |
+| `1.03` | Devoluções | Devoluções de Compras | descrição |
+| `1.03.04` | Devoluções de Compra de Ativo | Devoluções de Compra de Ativo | conta do DRE |
+| `1.04.01` | Adiantamento de Clientes | Adiantamento de Clientes | conta do DRE |
+| `1.04.02` | Recebimento de Reembolso de Despesas | Receb. de Reembolso de Despesas | descrição |
+| `1.04.95` | Rendimento Bancário | Prêmios de Seguros / Sinistros | descrição e conta do DRE |
+| `1.04.96` | `<Disponível>` | Transferencia | descrição e conta do DRE |
+| `1.04.97` | TRANSFERENCIA | Prêmios de Seguros / Sinistros | descrição e conta do DRE |
+| `1.04.98` | Implantação de saldo (entradas) | Implantação de saldos (entradas) | descrição |
+| `2.01.01` | Compras de Mercadorias para Revenda | Compras de Mercadorias para Revenda | conta do DRE |
+| `2.01.02` | Fretes s/ compras | Fretes s/ compras | conta do DRE |
+| `2.01.03` | Compras de Materia Prima | Compras de Materia Prima | conta do DRE |
+| `2.01.89` | Pensão Alimentícia- Custo (estoque) | Gas para empilhadeira -Custos | descrição e conta do DRE |
+| `2.01.90` | IRRF S/ Salários-  Custo (estoque) | Vigilância e Monitoramento -Custos | descrição e conta do DRE |
+| `2.01.91` | FGTS-  Custo (estoque) | Locação de Máquinas e Equipamentos-Custos | descrição e conta do DRE |
+| `2.01.92` | INSS-  Custo (estoque) | Armanezagem e manuseio de Carga -Custos | descrição e conta do DRE |
+| `2.01.93` | 13º Salário- Custo (estoque) | Seguros de carga -Custo | descrição e conta do DRE |
+| `2.01.94` | Rescisões- Custo (estoque) | IPTU- Custo | descrição e conta do DRE |
+| `2.01.95` | Férias - Custo (estoque) | Telefone e Internet -Custo | descrição e conta do DRE |
+| `2.01.96` | Adiantamento de Salário (custo) | Energia Elétrica-Custo | descrição e conta do DRE |
+| `2.01.97` | Salários - Custo (estoque) | Água e Esgoto-Custo | descrição e conta do DRE |
+| `2.01.98` | Disponível2 | Aluguel -Custo | descrição e conta do DRE |
+| `2.01.99` | Gás para empilhadeira - Custos | CUSTO DOS PRODUTOS VENDIDOS | descrição |
+| `2.02.01` | Desp com Rep. Comercial- COMISSÕES s/ vendas | Desp repr. Comercial- COMISSÕES s/ vendas | descrição e conta do DRE |
+| `2.02.02` | Desp com Rep. Comercial - AJUDA DE CUSTO PJS | Desp com Rep. Comercial - AJUDA DE CUSTO PJS | conta do DRE |
+| `2.02.04` | Bonificações/Brindes a clientes | Bonificações | descrição |
+| `2.02.95` | Despesa vendas: Combustíveis | Despesa Marketing | descrição e conta do DRE |
+| `2.02.96` | Despesas vendas: Lanches/Refeições | Estorno de venda | descrição |
+| `2.02.97` | Despesas vendas:  Pedágio/Uber/99 | Reembolso por cancelamento | descrição |
+| `2.02.98` | Despesas Vendas - Propaganda e Marketing | Despesas Vendas - Propaganda e Marketing | conta do DRE |
+| `2.02.99` | Despesas vendas: Hospedagens /passagens | Despesas de Viagens (Vendas e MKT) | descrição e conta do DRE |
+| `2.03` | Despesas com Pessoal | Despesas com Pessoal-ADM | descrição |
+| `2.03.02` | Adiantamento de Salário- Adm | Adiantamento de Salário | descrição |
+| `2.03.09` | Pensão Alimentícia - Adm | Pensão Alimentícia | descrição |
+| `2.03.14` | Outros Benefícios- ADM | Outros Benefícios | descrição |
+| `2.03.96` | Acordo Trabalhista | Aluguel - PE | descrição e conta do DRE |
+| `2.03.97` | Mensalidade/Contribuição Sindical- Adm | Mensalidade/Contribuição Sindical-ADM | descrição |
+| `2.03.98` | Uniformes e equipamentos de Segurança -Adm | Uniformes e equipamentos de Segurança -Adm | conta do DRE |
+| `2.04.91` | Despesa Insumo Escritório | Emprestimo | descrição e conta do DRE |
+| `2.04.92` | Despesas com Brindes - Endomarketing | Cartão de Crédito | descrição |
+| `2.04.93` | Locação de Software- Adm | Mantimentos | descrição |
+| `2.04.94` | Despesas com confraternizações | Mensalidade Hardware | descrição |
+| `2.04.95` | Locação de veículos | Brindes e Marketing | descrição |
+| `2.04.96` | Despesas Indedutíveis | Certificado Digital | descrição e conta do DRE |
+| `2.04.97` | Agua e esgoto -ADM | Despesa Insumos Escritório | descrição e conta do DRE |
+| `2.04.99` | Mensalidades de Software-ADM | Mensalidades de Software | descrição |
+| `2.05.98` | `<Disponível>` | Transferencia | descrição e conta do DRE |
+| `2.05.99` | Transferência Intercompany | Tarifas Bancarias | descrição |
+| `2.06.02` | IPI | IPI A RECOLHER | descrição |
+| `2.06.03` | PIS SOBRE VENDAS | PIS A RECOLHER | descrição |
+| `2.06.04` | COFINS SOBRE VENDAS | COFINS A RECOLHER | descrição |
+| `2.06.05` | IRPJ | IRPJ/CSLL | descrição |
+| `2.07` | Investimento | Investimento/ Imobilizado | descrição |
+| `2.07.01` | Máquinas e Equipamentos | Máquinas e Equipamentos | conta do DRE |
+| `2.07.02` | Consórcio | Veículos | descrição e conta do DRE |
+| `2.07.03` | Instalações | Instalações | conta do DRE |
+| `2.07.04` | Equipamentos de Informática | Equipamentos de Informática | conta do DRE |
+| `2.07.05` | Móveis e Utensílios | Móveis e Utensílios | conta do DRE |
+| `2.07.06` | Comunicação | Comunicação | conta do DRE |
+| `2.08.01` | Adiantamento/Retirada de Sócio | Adiantamento/Retirada de Sócio | conta do DRE |
+| `2.08.02` | Pagamento empréstimo Intercompany [terceiro] | Outras Despesas | descrição e conta do DRE |
+| `2.08.98` | Reembolso | `<Disponível>` | descrição e conta do DRE |
+| `2.08.99` | OUTRAS DESPESAS | Reembolso - Custo | descrição e conta do DRE |
+| `2.09.02` | Devoluções de Vendas de Serviços Prestados | Devoluções de Vendas de Produtos | descrição |
+| `2.10.97` | Adiantamentos a Fornecedores | Pagamento [terceiro] - adto Juridico | descrição e conta do DRE |
+| `2.10.98` | Pagamento [terceiro] - Adto acordo Juridico | Pagamento empréstimo Intercompany [terceiro] | descrição |
+| `2.10.99` | Implantação de saldos (saidas) | Adiantamentos a Fornecedores | descrição e conta do DRE |
+| `2.11.98` | Cartão de Credito | Seguro de Vida - Diretoria | descrição e conta do DRE |
+| `2.11.99` | Aluguel Veiculo | Veiculos | descrição e conta do DRE |
+| `2.12.97` | Aguá / Esgoto | Energia Eletrica | descrição |
+| `2.12.98` | Energia Elétrica | [terceiro] | descrição |
+| `2.12.99` | Aluguel | Aluguel do Barracão | descrição |
 
 **2. Lançamentos entre as duas empresas, que contariam duas vezes na soma: 3 em 2026.** Os três foram lidos na empresa 2
 e têm a `/0001-42` como contraparte (`detalhes.cCPFCNPJCliente` com a mesma raiz de CNPJ, filial diferente): 2 a receber,

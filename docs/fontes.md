@@ -637,8 +637,11 @@ A tela sai de uma chamada só: `financas/pesquisartitulos` → `PesquisarLancame
 filtros indo direto para a API — vencimento em `dDtVencDe` / `dDtVencAte`, status em `cStatus`, cliente em
 `nCodCliente`, categoria em `cCodCateg`. O retorno traz, por título, `cabecTitulo` (o cabeçalho), `resumo`
 (`cLiquidado`, `nValPago`, `nValAberto`) e `lancamentos[]` (as baixas). O mesmo dá para fazer com `financas/mf` →
-`ListarMovimentos` e `cTpLancamento: "CR"`. **lacuna:** onde entram `VENCEHOJE` e `PAGTO_PARCIAL` nas faixas da tela é
-decisão da MeuBESS; abaixo eles estão como pendente e como recebido-em-parte, que é a leitura mais direta dos campos.
+`ListarMovimentos` e `cTpLancamento: "CR"`. **Decisão do dono (25/09/2026) — de-para dos oito `cStatus` do Omie para as
+três faixas da tela:** **pago** = `RECEBIDO` e `LIQUIDADO`; **atrasado** = `ATRASADO`; **em aberto** = `EMABERTO`,
+`AVENCER`, `VENCEHOJE` e `PAGTO_PARCIAL`; `CANCELADO` fica **fora da tela**. Fecha as duas lacunas de status: onde entram
+`VENCEHOJE` e `PAGTO_PARCIAL` (os dois na faixa em aberto) e o de-para completo. No `financas/mf` o parcial se escreve
+`PAGTOPARCIAL`, sem o sublinhado; é o mesmo status. Vale para os cartões e os blocos abaixo que usam faixa.
 
 **Esta tela fica no Omie, inteira.** O DFC não entra: ele é caixa — registra o que entrou e o que saiu, não a carteira
 em aberto — e não tem cadastro de cliente nem os oito `cStatus`. O que mais se aproxima é a aba `PROVISÃO`
@@ -651,15 +654,15 @@ Nenhum dos dois cobre a tela. Ver "O que o DFC pode alimentar e o que fica no Om
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
 |---|---|---|---|---|
 | Valor previsto | Omie | `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"` e `dDtVencDe` / `dDtVencAte` no período; soma `cabecTitulo.nValorTitulo`, fora os `cStatus = "CANCELADO"` | soma dos títulos do período | |
-| Valor recebido | Omie | a mesma consulta; soma `resumo.nValPago` (pega inteiro o `RECEBIDO` / `LIQUIDADO` e a parte já paga do `PAGTO_PARCIAL`) | títulos com baixa | |
-| Valor pendente | Omie | a mesma consulta, títulos com `cStatus` em `AVENCER`, `EMABERTO` ou `VENCEHOJE`; soma `resumo.nValAberto` | em aberto e ainda não vencidos | |
-| Valor vencido | Omie | a mesma consulta, títulos com `cStatus = "ATRASADO"`; soma `resumo.nValAberto` | em aberto e vencidos | |
+| Valor recebido | Omie | a mesma consulta, títulos da faixa **pago** (`cStatus` `RECEBIDO` ou `LIQUIDADO`); soma `resumo.nValPago`. O `PAGTO_PARCIAL` está na faixa em aberto (decisão do dono, 25/09/2026), então a parte já paga dele não entra neste cartão | títulos com baixa total | |
+| Valor pendente | Omie | a mesma consulta, títulos da faixa **em aberto** (`cStatus` `EMABERTO`, `AVENCER`, `VENCEHOJE` ou `PAGTO_PARCIAL`, decisão do dono, 25/09/2026); soma `resumo.nValAberto` | faixa em aberto | |
+| Valor vencido | Omie | a mesma consulta, títulos da faixa **atrasado** (`cStatus = "ATRASADO"`); soma `resumo.nValAberto` | faixa atrasado | |
 
 **Blocos:**
 
 | bloco | forma | indicador | fonte | tabela/aba e filtro | conferido |
 |---|---|---|---|---|---|
-| Lançamentos por mês e status | colunas empilhadas (pago, atrasado, em aberto) | quantidade de títulos por mês | Omie | a mesma consulta; agrupa pelo ano-mês de `cabecTitulo.dDtVenc` e conta os títulos por faixa. **lacuna:** o de-para dos oito `cStatus` do Omie (`CANCELADO`, `RECEBIDO`, `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE`, `AVENCER`, `ATRASADO`) para as três faixas da tela é decisão da MeuBESS | |
-| Valor previsto por cliente e status | barras horizontais empilhadas | valor por cliente, dividido por status | Omie | a mesma consulta; agrupa por `cabecTitulo.nCodCliente` somando `nValorTitulo` e separa por `cStatus`; nome do cliente em `geral/clientes` → `ListarClientesResumido` | |
+| Lançamentos por mês e status | colunas empilhadas (pago, atrasado, em aberto) | quantidade de títulos por mês | Omie | a mesma consulta; agrupa pelo ano-mês de `cabecTitulo.dDtVenc` e conta os títulos por faixa. **Decisão do dono (25/09/2026) — de-para dos oito `cStatus` do Omie (`CANCELADO`, `RECEBIDO`, `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE`, `AVENCER`, `ATRASADO`) para as três faixas da tela:** pago = `RECEBIDO` e `LIQUIDADO`; atrasado = `ATRASADO`; em aberto = `EMABERTO`, `AVENCER`, `VENCEHOJE` e `PAGTO_PARCIAL`; `CANCELADO` fica fora da tela | **Contagem no cache local do Omie (25/09/2026, sem chamar a API), recorte da MeuBESS por `detalhes.nCodCC`, 2026, a receber (`cNatureza = "R"`), 544 títulos únicos:** por `cStatus`, `RECEBIDO` 544 e os outros sete (`CANCELADO`, `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE`, `AVENCER`, `ATRASADO`) 0; por faixa, pago 544, atrasado 0, em aberto 0. **Os zeros não dizem que não existem:** o cache foi lido por data de pagamento (`dDtPagtoDe` / `dDtPagtoAte`, 01/01 a 30/09/2026) e só traz título com baixa, então só aparece `RECEBIDO`; a contagem de atrasado e em aberto pede a leitura por vencimento, que a tela faz e o cache não tem |
+| Valor previsto por cliente e status | barras horizontais empilhadas | valor por cliente, dividido por status | Omie | a mesma consulta; agrupa por `cabecTitulo.nCodCliente` somando `nValorTitulo` e separa pela faixa do `cStatus` (pago, atrasado, em aberto, pelo de-para do dono de 25/09/2026, `CANCELADO` fora); nome do cliente em `geral/clientes` → `ListarClientesResumido` | |
 | Lista de títulos | tabela com total | código, cliente, categoria, descrição, valor previsto, vencimento, status | Omie | a mesma consulta, um título por linha: código `cabecTitulo.nCodTitulo` (o `cNumTitulo` **não serve** como código visível: veio vazio em 97 dos 100 títulos lidos em 24/09/2026; o número legível que sobra é o do pedido, `cNumOS` — se é esse mesmo que a tela do ERP mostra não foi conferido), cliente por `nCodCliente` em `geral/clientes` → `ListarClientesResumido`, categoria `cCodCateg` com a `descricao` de `geral/categorias` → `ListarCategorias`, valor `nValorTitulo`, vencimento `dDtVenc`, status `cStatus`. **"Descrição":** o título não tem esse campo no Omie; o pedido de venda de origem tem, e o elo é `cabecTitulo.nCodOS` (= `cabecalho.codigo_pedido`) — `produtos/pedido` → `ConsultarPedido` (`det[].produto.descricao`, `cabecalho.numero_pedido`), como na Tela 1. **lacuna:** o que aparece como "descrição" é decisão da MeuBESS, e título sem pedido (`cOrigem = "MANR"`) fica sem ela | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207), nos dois sentidos; `cNumTitulo` conferido como vazio na maioria. O número da tela, não |
-| Lançamentos por status | rosca com o total no centro | quantidade e % por status | Omie | a mesma consulta; conta os títulos por `cStatus` e usa `nTotRegistros` como total do centro. Mesma lacuna de de-para do primeiro bloco | |
+| Lançamentos por status | rosca com o total no centro | quantidade e % por faixa | Omie | a mesma consulta; conta os títulos por faixa do `cStatus` (pago, atrasado, em aberto) e usa `nTotRegistros` como total do centro, sem os `CANCELADO`. Mesmo de-para do primeiro bloco (decisão do dono, 25/09/2026) | |

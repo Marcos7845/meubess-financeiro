@@ -39,5 +39,8 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
   A conferência de um mês fechado, indicador por indicador, está em [`docs/conferencia.md`](docs/conferencia.md)
   (a mesma coisa como página: [`docs/conferencia.html`](docs/conferencia.html)), gerada por
   `scripts/numeros-das-telas.mjs`: quantos lançamentos entram, a fonte e o filtro, e um caso real achado de volta na
-  fonte pelo código. Ela não traz valor em dinheiro — só contagem, código, data e campo de cadastro.
+  fonte pelo código — dos dois lados, o do Omie e o da planilha do DFC. Ela não traz valor em dinheiro — só contagem,
+  código, data e campo de cadastro. As leituras do Omie que ela usa saem do cache local `.cache/omie/` (fora do git),
+  gravado por `scripts/confronto-dfc-omie.mjs` e por `scripts/ler-omie-faltante.mjs`, os dois só com métodos de
+  consulta.
 - **Número financeiro não sai da máquina para ser medido ou classificado** por serviço de terceiros.

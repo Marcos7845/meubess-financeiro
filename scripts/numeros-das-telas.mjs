@@ -21,7 +21,8 @@
 // Os valores em reais ficam em `docs/confronto-dfc-omie.html`, que não é gerado por este script. Antes de gravar, o
 // script varre o próprio texto atrás de "R$" e de número com centavos e se recusa a gravar se achar (ver GUARDA).
 // Nome de pessoa também não entra: nenhum campo de nome é lido — nem `cCPFCNPJCliente`, nem razão social, nem a
-// coluna `FORNECEDOR / CLIENTE` do DFC.
+// coluna `FORNECEDOR / CLIENTE` do DFC. Do cadastro de clientes o script só guarda o CÓDIGO e um sim/não dizendo se
+// o nome está preenchido; o nome em si nunca sai do cache local.
 //
 // TRAVAS. Além da conferência caso a caso, o script refaz as contagens de janeiro a setembro que `docs/fontes.md` já
 // publica e compara com elas (ver CONFERENCIAS_DO_FONTES). É o que prova que o filtro implementado aqui é o mesmo do
@@ -80,9 +81,19 @@ const LEITURA_MF = (n) => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: `01/01/
 // passadas (até hoje e a vencer) — é a leitura que `docs/fontes.md` descreve no bloco "Lançamentos por mês e status".
 const LEITURA_TIT_R = (n, de, ate) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'R', dDtVencDe: de, dDtVencAte: ate });
 const FAIXAS_TIT_R = [[`01/01/${ANO}`, `25/09/${ANO}`], [`26/09/${ANO}`, `31/12/${ANO}`]];
-// A LEITURA DOS TÍTULOS A PAGAR, por vencimento — a que sobra para "Despesas pendentes", já que a leitura de
-// `financas/mf` com `cTpLancamento: "CP"` por vencimento que `docs/fontes.md` pede não está no cache.
+// A LEITURA DOS TÍTULOS A PAGAR de `financas/pesquisartitulos`, por vencimento. Fica como segunda opinião do cartão
+// "Despesas pendentes": traz os mesmos campos da leitura abaixo, por outro serviço.
 const LEITURA_TIT_P = (n) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'P', dDtVencDe: `01/01/${ANO}`, dDtVencAte: `31/12/${ANO}` });
+// A LEITURA DO CARTÃO "Despesas pendentes", exatamente como `docs/fontes.md` a pede: `financas/mf` →
+// `ListarMovimentos` com `cTpLancamento: "CP"` por VENCIMENTO. `scripts/ler-omie-faltante.mjs` a grava no cache.
+const LEITURA_CP_VENC = (n) => ({ nPagina: n, nRegPorPagina: 100, cTpLancamento: 'CP', dDtVencDe: `01/01/${ANO}`, dDtVencAte: `31/12/${ANO}` });
+// A LEITURA DO CONFRONTO DO "Top 10 despesas": a mesma leitura de caixa de cima, COM `cExibirDepartamentos: "S"`,
+// que é o único jeito de o rateio por centro de custo vir no retorno (nenhum método do Omie filtra por departamento).
+const LEITURA_MF_DEP = (n) => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: `01/01/${ANO}`, dDtPagtoAte: `30/09/${ANO}`, cExibirDepartamentos: 'S' });
+// OS DOIS CADASTROS que faltavam: o de clientes (o eixo do gráfico da Tela 3) e o das contas do DRE (o `totalizaDRE`
+// da linha "(=) Receita bruta").
+const LEITURA_CLIENTES = (n) => ({ pagina: n, registros_por_pagina: 100, apenas_importado_api: 'N' });
+const LEITURA_DRE = { apenasContasAtivas: 'N' };
 
 function paginas(emp, servico, call, param, campo) {
   const primeira = arqCache(emp, servico, call, param(1));
@@ -101,6 +112,9 @@ function paginas(emp, servico, call, param, campo) {
 
 const EMPRESAS = ['1', '2'];
 const movimentos = {}, titulosR = {}, titulosP = {}, categorias = {}, departamentos = {}, pedidos = {};
+// As quatro leituras que `scripts/ler-omie-faltante.mjs` acrescentou ao cache. Se alguma faltar, o indicador que
+// depende dela sai "a conferir:" dizendo isso, e o resto da página segue.
+const cpVenc = {}, comDep = {}, clientes = {}, contasDre = {};
 for (const emp of EMPRESAS) {
   movimentos[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_MF, 'movimentos');
   if (!movimentos[emp]) falhar(`empresa ${emp}: a leitura de financas/mf por data de pagamento (sem cTpLancamento, 01/01 a 30/09/${ANO}) não está inteira no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
@@ -124,6 +138,19 @@ for (const emp of EMPRESAS) {
   for (const f of arquivosDoCache.filter((x) => x.startsWith(`${emp}-produtos-pedido`)))
     for (const p of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).pedido_venda_produto ?? [])
       pedidos[emp].set(String(p.cabecalho?.codigo_pedido), p);
+
+  cpVenc[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_CP_VENC, 'movimentos');
+  comDep[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_MF_DEP, 'movimentos');
+  // DO CADASTRO DE CLIENTES SÓ SAI O CÓDIGO. `clientes[emp]` é o conjunto dos códigos cujo nome está preenchido no
+  // cadastro; o nome nunca é guardado nem impresso.
+  const cru = paginas(emp, 'geral/clientes', 'ListarClientesResumido', LEITURA_CLIENTES, 'clientes_cadastro_resumido');
+  clientes[emp] = cru && {
+    total: cru.length,
+    comNome: new Set(cru.filter((c) => String(c.razao_social ?? '').trim() || String(c.nome_fantasia ?? '').trim())
+      .map((c) => String(c.codigo_cliente))),
+  };
+  const arqDre = arqCache(emp, 'geral/dre', 'ListarCadastroDRE', LEITURA_DRE);
+  contasDre[emp] = fs.existsSync(arqDre) ? (JSON.parse(fs.readFileSync(arqDre, 'utf8')).dreLista ?? []) : null;
 }
 
 // ================================================================ o recorte e os filtros de docs/fontes.md
@@ -260,6 +287,21 @@ function acharTituloCru(emp, nCodTitulo) {
     }
   }
   return null;
+}
+
+// A mesma volta, nas leituras que `scripts/ler-omie-faltante.mjs` acrescentou: reabre as páginas cruas e acha o
+// registro pelo código. `param` é a leitura; `campo` é o que se compara em `detalhes`.
+function acharCru(emp, param, campo, valor) {
+  const achados = [];
+  let total = 1;
+  for (let n = 1; n <= total; n++) {
+    const arq = arqCache(emp, 'financas/mf', 'ListarMovimentos', param(n));
+    if (!fs.existsSync(arq)) break;
+    const j = JSON.parse(fs.readFileSync(arq, 'utf8'));
+    total = Number(j.nTotPaginas) || 1;
+    for (const m of j.movimentos ?? []) if (String(m.detalhes?.[campo]) === String(valor)) achados.push({ ...m, _pagina: n });
+  }
+  return achados;
 }
 
 // Compara o que o filtro usou. Devolve a lista de diferenças (vazia = confere).
@@ -486,6 +528,11 @@ function dataDaCelula(c) {
   if (!m) return null;
   return { a: +m[3] < 100 ? 2000 + +m[3] : +m[3], m: +m[2], d: +m[1] };
 }
+// As colunas de dia do bloco pronto da aba do mês: de `D` a `AH`, como `docs/fontes.md` escreve.
+const COLUNAS_DE_DIA = new Set([
+  ...'DEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  ...'ABCDEFGH'.split('').map((c) => `A${c}`),
+]);
 const SUB2_SALDO = new Set(['SALDO INICIAL', 'SALDO FINAL', 'SALDO INICIAL PROVISAO', 'SALDO FINAL PROVISAO']);
 const COLUNAS_DE_DATA = ['DIA PG', 'VENCIMENTO', 'TIPO'];
 const BAIXADO = (p) => p !== '' && p !== 'A PAGAR' && p !== 'A RECEBER';
@@ -546,12 +593,106 @@ function lerDfc() {
     let dt = null;
     for (const rot of COLUNAS_DE_DATA) { dt = dataDaCelula(l.cel.get(mapa.get(rot))); if (dt) break; }
     if (!dt || dt.a !== ANO || dt.m !== MES) continue;
-    linhas.push({ linha: l.n, classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: sub2 || '(vazio)', natureza: bruto > 0 ? 'R' : 'P', pagamento });
+    linhas.push({ linha: l.n, classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: sub2 || '(vazio)', natureza: bruto > 0 ? 'R' : 'P', pagamento, dia: dt.d });
   }
-  return { ok: true, arquivo: arq, linhas };
+  // A VOLTA, para conferir o caso: relê a MESMA aba do zero, sem filtro nenhum, e guarda uma entrada por número de
+  // linha. É o caminho contrário do de cima — como a releitura das páginas cruas do cache no lado do Omie.
+  const cruas = new Map();
+  {
+    let m2 = null;
+    for (const l of lerAba(zip, aba.parte, ss)) {
+      const textos = [...l.cel.entries()].filter(([, c]) => c.t);
+      const rotulos = textos.map(([, c]) => norm(c.t));
+      if (rotulos.includes('VENCIMENTO') && rotulos.includes('DIA PG')) { m2 = new Map(textos.map(([col, c]) => [norm(c.t), col])); continue; }
+      if (!m2) continue;
+      const texto = (r) => { const c = l.cel.get(m2.get(r)); return c?.t ? c.t.trim() : ''; };
+      const numero = (r) => { const c = l.cel.get(m2.get(r)); return c?.v !== undefined ? c.v : 0; };
+      let dt = null;
+      for (const rot of COLUNAS_DE_DATA) { dt = dataDaCelula(l.cel.get(m2.get(rot))); if (dt) break; }
+      const k = numero('ENTRADA'), lv = numero('SAIDA');
+      const bruto = cent(k) !== 0 ? k : lv;
+      cruas.set(l.n, {
+        classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: norm(texto('SUB 2')) || '(vazio)',
+        pagamento: norm(texto('PAGAMENTO')), natureza: cent(bruto) === 0 ? '(sem)' : (bruto > 0 ? 'R' : 'P'),
+        mes: dt ? `${dt.m}/${dt.a}` : '(sem data)', dia: dt?.d ?? null,
+      });
+    }
+  }
+  // A ABA DO MÊS: o bloco pronto que os dois gráficos de "Receita × despesa" usam — `Inicial` (42), `Entradas` (43),
+  // `Gastos` (44) e `Final` (45), uma coluna por dia. Só a forma do bloco é lida; nenhum valor é guardado.
+  const abaDoMes = blocoDoMes(zip, ss, abasDo(zip));
+  // A SÉRIE DO ANO: um arquivo por mês na mesma pasta. Só o bloco `Entradas`/`Gastos` de cada um.
+  const serie = [];
+  for (let m = 1; m <= 12; m++) {
+    const a = pasta.arquivos.find((f) => new RegExp(`^0?${m}\\s*-`).test(f));
+    if (!a) { serie.push({ mes: m, ok: false, motivo: 'sem arquivo na pasta' }); continue; }
+    try {
+      const z = lerZip(fs.readFileSync(path.join(pasta.caminho, a)));
+      const b = blocoDoMes(z, sharedStrings(z), abasDo(z));
+      serie.push({ mes: m, ok: Boolean(b?.temEntradas && b?.temGastos), colunas: b?.colunas ?? 0, motivo: b ? null : 'sem o bloco Entradas/Gastos' });
+    } catch (e) { serie.push({ mes: m, ok: false, motivo: `não deu para abrir: ${e.message}` }); }
+  }
+  return { ok: true, arquivo: arq, linhas, cruas, abaDoMes, serie };
+}
+
+// O bloco `Inicial` / `Entradas` / `Gastos` / `Final` da primeira aba do arquivo do mês, achado pelo RÓTULO da linha
+// (coluna B) e não pelo número dela. Devolve só a forma: qual linha tem cada rótulo e quantas colunas de dia existem.
+function blocoDoMes(zip, ss, abas) {
+  for (const a of abas) {
+    const linhas = lerAba(zip, a.parte, ss);
+    if (!linhas) continue;
+    const rotulo = new Map();
+    for (const l of linhas) for (const [col, c] of l.cel) if (col === 'B' && c.t) rotulo.set(norm(c.t), l.n);
+    const nEnt = rotulo.get('ENTRADAS'), nGas = rotulo.get('GASTOS');
+    if (!nEnt || !nGas || nEnt === nGas) continue;
+    const daLinha = (n) => linhas.find((l) => l.n === n);
+    const colunas = [...(daLinha(nEnt)?.cel ?? new Map()).keys()].filter((c) => COLUNAS_DE_DIA.has(c)).length;
+    return {
+      aba: a.nome, colunas,
+      temInicial: rotulo.has('INICIAL'), temEntradas: true, temGastos: true, temFinal: rotulo.has('FINAL'),
+      linhaInicial: rotulo.get('INICIAL') ?? null, linhaEntradas: nEnt, linhaGastos: nGas, linhaFinal: rotulo.get('FINAL') ?? null,
+      linhaReceitas: rotulo.get('RECEITAS') ?? null,
+    };
+  }
+  return null;
 }
 const DFC = lerDfc();
 const MOTIVO_DFC = DFC.ok ? null : DFC.motivo;
+
+// O VOCABULÁRIO DO DFC, como `docs/fontes.md` o escreve — já passado pelo `norm` (maiúscula, sem acento), que é como
+// as linhas da planilha são guardadas. Nenhuma lista aqui é heurística: cada uma copia a linha do documento.
+const DFC_RECEITA = ['RECEITA COM VENDAS', 'RECEITA COM SERVICOS', 'OUTRAS RECEITAS', 'REEMBOLSO RECEITA', 'RENDIMENTO FINANCEIRO'];
+const DFC_PESSOAL_CLASSE = ['FOLHA, IMPOSTOS E ADIANTAMENTOS', 'PESSOAL PJ', 'DESPESA CLT', 'DESPESA PJ', 'RESCISAO'];
+const DFC_PESSOAL_SUB2 = ['DESPESAS CLT', 'DESPESAS PJ', 'PRO-LABORE ( RETIRADA DE SOCIO )', 'COMISSAO DE VENDAS', 'REEMBOLSO'];
+const DFC_CUSTO_CLASSE = ['FORNECEDORES COGS', 'COMPRA DE MERCADORIA'];
+const DFC_CUSTO_SUB2 = ['COMPRAS DE MERCADORIAS', 'FRETE E CARRETO', 'ARMAZENAGEM E MANUSEIO'];
+const DFC_IMPOSTO_SUB2 = ['ISS', 'INSS', 'IRPJ / CSLL'];
+const DFC_FINANCEIRO_SUB2 = ['JUROS', 'RENDIMENTO FINANCEIRO', 'EMPRESTIMO', 'TARIFAS BANCARIAS'];
+const ePessoalDfc = (l) => l.natureza === 'P' && (DFC_PESSOAL_CLASSE.includes(l.classe) || DFC_PESSOAL_SUB2.includes(l.sub2));
+
+// A CONFERÊNCIA DO LADO DO DFC. Conta as linhas da planilha que o filtro da linha pega, escolhe a de MENOR número de
+// linha — para o caso ser sempre o mesmo — e vai buscá-la de volta na releitura crua da aba, comparando os campos que
+// o filtro usou. Nenhum valor é comparado: só a classificação, o sentido (entrada ou saída), a baixa e o mês.
+function conferirDfc(filtra) {
+  const pega = DFC.linhas.filter(filtra);
+  if (!pega.length) return { quantas: 0, ok: false, vazio: true };
+  const l = pega.slice().sort((a, b) => a.linha - b.linha)[0];
+  const cru = DFC.cruas.get(l.linha);
+  const dif = [];
+  if (!cru) dif.push(`a linha ${l.linha} não foi achada de volta na segunda leitura da aba`);
+  else {
+    for (const [campo, usou, veio] of [
+      ['CLASS. CONTABIL', l.classe, cru.classe], ['SUB 2', l.sub2, cru.sub2],
+      ['PAGAMENTO', l.pagamento, cru.pagamento], ['sentido', l.natureza, cru.natureza], ['dia', l.dia, cru.dia],
+    ]) if (String(veio ?? '') !== String(usou ?? '')) dif.push(`\`${campo}\` veio "${veio ?? '(ausente)'}" e o cálculo usou "${usou}"`);
+    if (cru && cru.mes !== `${MES}/${ANO}`) dif.push(`a data da linha caiu em ${cru.mes} e o cálculo a contou em ${MES2}/${ANO}`);
+  }
+  return { quantas: pega.length, linha: l, ok: dif.length === 0, dif };
+}
+
+const textoDoCasoDfc = (r) => r.vazio
+  ? null
+  : `linha ${r.linha.linha} da aba \`FLUXO DE CAIXA\` do arquivo \`${DFC.arquivo}\` (\`CLASS. CONTABIL\` ${r.linha.classe}, \`SUB 2\` ${r.linha.sub2}, \`PAGAMENTO\` ${r.linha.pagamento}, ${r.linha.natureza === 'R' ? 'entrada' : 'saída'}, dia ${r.linha.dia}) — ${r.ok ? 'achada de volta pelo número da linha numa segunda leitura da aba, com os mesmos campos' : `**não conferiu**: ${r.dif.join('; ')}`}`;
 
 // ================================================================ os indicadores
 //
@@ -575,19 +716,54 @@ const FILTRO_CAIXA = `\`financas/mf\` → \`ListarMovimentos\` **sem \`cTpLancam
 
 // Atalho para os indicadores das Telas 1 e 2 cuja fonte principal é o DFC. Todos ficam "a conferir:" quando as
 // planilhas não foram lidas, mas a linha ainda traz a contagem do lado do Omie, que é o confronto deles.
-function linhaDoDfc({ tela, nome, fonte, filtro, contagem, porEmpresa, extraMotivo = null }) {
+// A linha de um indicador cuja FONTE PRINCIPAL é o DFC. Confere os dois lados: a linha da planilha que o filtro do
+// DFC pega (`dfc`) e o lançamento do Omie que o confronto pega (`porEmpresa`). `dfcCaso` troca a conferência da
+// planilha quando o indicador não lê o `FLUXO DE CAIXA` e sim o bloco pronto da aba do mês.
+function linhaDoDfc({ tela, nome, fonte, filtro, contagem, porEmpresa, dfc = null, dfcCaso = null, dfcRotulo = 'linhas do `FLUXO DE CAIXA` no mês', extraMotivo = null, casoExtra = null }) {
   const caso = conferirPrimeiro(porEmpresa);
   const motivos = [];
-  if (MOTIVO_DFC) motivos.push(`a fonte principal deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`);
+  let contagemDfc = null, casoDfc = null, dfcOk = false;
+  if (MOTIVO_DFC) {
+    motivos.push(`a fonte principal deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`);
+  } else if (dfcCaso) {
+    contagemDfc = dfcCaso.contagem; casoDfc = dfcCaso.texto; dfcOk = dfcCaso.ok;
+    if (!dfcOk) motivos.push(dfcCaso.motivo);
+  } else if (dfc) {
+    const r = conferirDfc(dfc);
+    contagemDfc = `${n(r.quantas)} ${dfcRotulo}`;
+    casoDfc = textoDoCasoDfc(r);
+    dfcOk = r.ok;
+    if (r.vazio) motivos.push('o filtro escrito em `docs/fontes.md` não pegou nenhuma linha do `FLUXO DE CAIXA` no arquivo do mês, então não há caso real do lado da fonte principal');
+    else if (!r.ok) motivos.push(`a linha do DFC não conferiu: ${r.dif.join('; ')}`);
+  } else {
+    motivos.push('este indicador não tem, neste script, um filtro do lado do DFC para conferir');
+  }
   if (extraMotivo) motivos.push(extraMotivo);
-  if (!motivos.length && caso && !caso.r.ok) motivos.push('o caso do lado do Omie não conferiu');
+  if (caso && !caso.r.ok) motivos.push('o caso do lado do Omie não conferiu');
+  const conferido = dfcOk && !extraMotivo && (!caso || caso.r.ok);
+  const naoConferiu = dfcOk && !extraMotivo && caso && !caso.r.ok;
   add({
-    tela, nome, fonte, filtro, contagem,
-    estado: MOTIVO_DFC || extraMotivo ? 'a-conferir' : (caso && !caso.r.ok ? 'divergente' : 'conferido'),
+    tela, nome, fonte, filtro,
+    contagem: contagemDfc ? `${contagemDfc}, do lado do DFC; ${contagem}` : contagem,
+    estado: conferido ? 'conferido' : (naoConferiu ? 'divergente' : 'a-conferir'),
     motivo: motivos.join('; ') || null,
-    caso: textoDoCaso(caso, 'no lado do Omie, que é o confronto deste indicador: '),
+    caso: [
+      casoDfc ? `no DFC, que é a fonte principal: ${casoDfc}` : null,
+      textoDoCaso(caso, 'no lado do Omie, que é o confronto deste indicador: ',
+        'no lado do Omie, que é o confronto deste indicador: nenhum lançamento entrou neste mês, e a coluna de confronto fica zerada'),
+      casoExtra,
+    ].filter(Boolean).join('; '),
   });
 }
+
+// As linhas CALCULADAS: não têm leitura própria, são aritmética sobre linhas que esta mesma página já confere. O que
+// dá para conferir nelas é o caso do lado do Omie — e, quando o DFC foi lido, as linhas que elas consomem já vêm
+// conferidas cada uma na linha dela.
+const calc = (porEmpresa) => {
+  const caso = conferirPrimeiro(porEmpresa);
+  if (!caso) return { ok: false, motivo: 'nenhum lançamento entrou neste mês, então não há caso real para conferir' };
+  return { ok: caso.r.ok, motivo: caso.r.ok ? null : (caso.r.motivo ?? caso.r.dif.join('; ')) };
+};
 
 // ---------------------------------------------------------------- Tela 1, cartões
 
@@ -596,6 +772,7 @@ linhaDoDfc({
   filtro: `DFC: aba \`FLUXO DE CAIXA\` do arquivo do mês, na pasta da MeuBESS — \`ENTRADA\` (K) menos \`SAIDA\` (L), pelo mês de \`DIA PG\` (F). Omie: ${FILTRO_CAIXA}; separa entrada de saída por \`detalhes.cNatureza\``,
   contagem: `${soma(MES_R) + soma(MES_P)} lançamentos no Omie recortado (${soma(MES_R)} de entrada e ${soma(MES_P)} de saída) — nas entradas, ${trincaTexto(MES_R)}; nas saídas, ${trincaTexto(MES_P)}`,
   porEmpresa: ambos(MES_R, MES_P),
+  dfc: () => true, dfcRotulo: 'linhas de lançamento baixado no mês, entradas e saídas',
 });
 
 linhaDoDfc({
@@ -603,6 +780,7 @@ linhaDoDfc({
   filtro: `DFC: \`ENTRADA\` (K) de \`FLUXO DE CAIXA\`, somada pelo mês de \`DIA PG\` (F). Omie: ${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\``,
   contagem: `${soma(MES_R)} lançamentos no Omie recortado — ${trincaTexto(MES_R)}`,
   porEmpresa: porEmp(MES_R),
+  dfc: (l) => l.natureza === 'R', dfcRotulo: 'linhas de entrada no mês',
 });
 
 linhaDoDfc({
@@ -610,6 +788,7 @@ linhaDoDfc({
   filtro: `DFC: \`SAIDA\` (L) de \`FLUXO DE CAIXA\`, pelo mês de \`DIA PG\` (F) — a classificação vem escrita na própria linha. Omie: ${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\``,
   contagem: `${soma(MES_P)} lançamentos no Omie recortado — ${trincaTexto(MES_P)}`,
   porEmpresa: porEmp(MES_P),
+  dfc: (l) => l.natureza === 'P', dfcRotulo: 'linhas de saída no mês',
 });
 
 linhaDoDfc({
@@ -617,32 +796,53 @@ linhaDoDfc({
   filtro: `DFC: \`SAIDA\` (L) das linhas com \`PAGAMENTO\` (N) = \`PAGO\`, pelo mês de \`DIA PG\` (F). Omie: ${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\`; soma \`resumo.nValPago\` dos três baldes`,
   contagem: `${soma(MES_P)} lançamentos no Omie recortado — ${trincaTexto(MES_P)}; é a mesma leitura do cartão "Despesas", porque o filtro por data de pagamento só devolve título já baixado`,
   porEmpresa: porEmp(MES_P),
+  dfc: (l) => l.natureza === 'P' && l.pagamento === 'PAGO', dfcRotulo: 'linhas de saída com `PAGAMENTO` = `PAGO` no mês',
 });
 
-// Despesas pendentes: a leitura que docs/fontes.md pede (financas/mf com cTpLancamento "CP", por vencimento) NÃO está
-// no cache. O que há é a pesquisa de títulos a pagar por vencimento, que traz os mesmos campos (`cLiquidado`,
-// `nValAberto`, `nCodCC`); docs/fontes.md conferiu em 25/09/2026 que o recorte por `cabecTitulo.nCodCC` pega os mesmos
-// títulos que o por `detalhes.nCodCC`. Entra como substituto, e a linha diz que é substituto.
+// Despesas pendentes: a leitura que `docs/fontes.md` pede é `financas/mf` → `ListarMovimentos` com
+// `cTpLancamento: "CP"` por VENCIMENTO, e ela está no cache desde `scripts/ler-omie-faltante.mjs`. O ano inteiro é
+// lido de uma vez e o mês é recortado dele pela `dDtVenc` de cada lançamento — o mesmo que a consulta do mês daria.
+// A pesquisa de títulos a pagar (`financas/pesquisartitulos`) fica como SEGUNDA OPINIÃO: outro serviço, mesmos campos.
 {
-  const pend = {};
-  for (const emp of EMPRESAS) pend[emp] = titulosP[emp].filter((t) => {
-    const c = t.cabecTitulo ?? {};
-    return c.cStatus !== 'CANCELADO' && RECORTE.has(`${emp}|${c.nCodCC}`) && noMes(c.dDtVenc) && (t.resumo?.cLiquidado ?? 'N') === 'N';
-  });
+  const pend = {}, seg = {};
+  let falta = EMPRESAS.filter((emp) => !cpVenc[emp]);
+  for (const emp of EMPRESAS) {
+    pend[emp] = (cpVenc[emp] ?? []).map((m) => ({ ...m.detalhes, _resumo: m.resumo ?? {} })).filter((d) =>
+      d.cStatus !== 'CANCELADO' && RECORTE.has(`${emp}|${d.nCodCC}`) && noMes(d.dDtVenc) && (d._resumo.cLiquidado ?? 'N') === 'N');
+    seg[emp] = titulosP[emp].filter((t) => {
+      const c = t.cabecTitulo ?? {};
+      return c.cStatus !== 'CANCELADO' && RECORTE.has(`${emp}|${c.nCodCC}`) && noMes(c.dDtVenc) && (t.resumo?.cLiquidado ?? 'N') === 'N';
+    });
+  }
   const total = pend[1].length + pend[2].length;
-  let caso = 'nenhum título a pagar do recorte vence neste mês em aberto';
-  if (total) {
+  const totalSeg = seg[1].length + seg[2].length;
+  let caso = 'nenhum título a pagar do recorte vence neste mês em aberto', estado = 'conferido', motivo = null;
+  if (falta.length) {
+    estado = 'a-conferir';
+    motivo = `a leitura que \`docs/fontes.md\` pede — \`financas/mf\` → \`ListarMovimentos\` com \`cTpLancamento: "CP"\` por vencimento — não está no cache da(s) empresa(s) ${falta.join(' e ')}; rode antes \`node scripts/ler-omie-faltante.mjs\``;
+  } else if (!total) {
+    estado = 'a-conferir';
+    motivo = 'nenhum título a pagar do recorte vence neste mês em aberto, então não há caso real para conferir (a contagem é zero, que é o que a tela mostraria)';
+  } else {
     const emp = pend[1].length ? '1' : '2';
-    const c = menorPor(pend[emp].map((t) => t.cabecTitulo), 'nCodTitulo');
-    caso = `no substituto, nCodTitulo ${c.nCodTitulo} (empresa ${emp}, \`cNatureza\` ${c.cNatureza}, \`cStatus\` ${c.cStatus}, \`nCodCC\` ${c.nCodCC}, \`cCodCateg\` ${c.cCodCateg}, vence em ${c.dDtVenc}, \`resumo.cLiquidado\` N) — achado na leitura de títulos a pagar por vencimento que está no cache`;
+    const d = menorPor(pend[emp], 'nCodTitulo');
+    const crus = acharCru(emp, LEITURA_CP_VENC, 'nCodTitulo', d.nCodTitulo);
+    const dif = crus.length !== 1
+      ? [`o \`nCodTitulo\` ${d.nCodTitulo} aparece ${crus.length} vez(es) na leitura crua, e o cálculo o contou uma`]
+      : [...comparar(crus[0].detalhes, { cGrupo: d.cGrupo, cNatureza: d.cNatureza, cStatus: d.cStatus, nCodCC: d.nCodCC, cCodCateg: d.cCodCateg, dDtVenc: d.dDtVenc }),
+        ...comparar(crus[0].resumo ?? {}, { cLiquidado: d._resumo.cLiquidado })];
+    caso = `nCodTitulo ${d.nCodTitulo} (empresa ${emp}, \`${d.cGrupo}\`, \`cNatureza\` ${d.cNatureza}, \`cStatus\` ${d.cStatus}, \`nCodCC\` ${d.nCodCC}, \`cCodCateg\` ${d.cCodCateg}, vence em ${d.dDtVenc}, \`resumo.cLiquidado\` ${d._resumo.cLiquidado}) — ${dif.length ? `**não conferiu**: ${dif.join('; ')}` : `achado de volta na página ${crus[0]._pagina} da leitura crua do cache com os mesmos campos`}`;
+    if (dif.length) { estado = 'divergente'; motivo = dif.join('; '); }
+    else if (total !== totalSeg) {
+      estado = 'divergente';
+      motivo = `a segunda opinião não bate: \`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "P"\` por vencimento, com o mesmo recorte e o mesmo \`cLiquidado\`, dá ${totalSeg} título(s) e esta leitura dá ${total}`;
+    }
   }
   add({
     tela: 'Tela 1', nome: 'Despesas pendentes', fonte: 'Omie recortado (principal) / DFC (confronto)',
     filtro: `\`financas/mf\` → \`ListarMovimentos\` com \`cTpLancamento: "CP"\`, \`dDtVencDe\`/\`dDtVencAte\` em ${PERIODO} (exceção ao regime de caixa: sem baixa não há data de pagamento) e \`resumo.cLiquidado = "N"\`; soma \`resumo.nValAberto\`, com o recorte da MeuBESS por \`detalhes.nCodCC\``,
-    contagem: `${total} títulos a pagar em aberto (${pend[1].length} na empresa 1 e ${pend[2].length} na 2), medidos no substituto descrito no motivo`,
-    estado: 'a-conferir',
-    motivo: 'a leitura que `docs/fontes.md` pede para este cartão — `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` por **vencimento** — não está no cache local, que só tem a leitura por data de pagamento; a contagem ao lado saiu de um substituto, `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "P"` por vencimento, que traz os mesmos campos (`cabecTitulo.nCodCC`, `resumo.cLiquidado`, `resumo.nValAberto`) e cujo recorte `docs/fontes.md` já conferiu em 25/09/2026 como igual ao das Telas 1 e 2 — mas é outro serviço, então o número não foi conferido contra a fonte que o contrato manda usar',
-    caso,
+    contagem: `${total} títulos a pagar em aberto (${pend[1].length} na empresa 1 e ${pend[2].length} na 2)${falta.length ? '' : `; a segunda opinião, \`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "P"\` por vencimento, dá ${totalSeg}`}`,
+    estado, motivo, caso,
   });
 }
 
@@ -656,6 +856,7 @@ linhaDoDfc({
     filtro: `DFC: \`SAIDA\` (L) das linhas de pessoal, pelo mês de \`DIA PG\` (F) — \`CLASS. CONTABIL\` (I) em \`FOLHA, IMPOSTOS E ADIANTAMENTOS\`, \`PESSOAL PJ\`, \`DESPESA CLT\`, \`DESPESA PJ\`, \`RESCISÃO\`, e \`SUB 2\` (J) em \`DESPESAS CLT\`, \`DESPESAS PJ\`, \`PRÓ-LABORE ( retirada de sócio )\`, \`COMISSÃO DE VENDAS\`, \`REEMBOLSO\`. Omie: a mesma leitura de caixa, \`detalhes.cNatureza = "P"\` e \`detalhes.cStatus = "PAGO"\`, em qualquer departamento, com \`detalhes.cCodCateg\` na lista de pessoal do dono (${PESSOAL[1].length} códigos na empresa 1 e ${PESSOAL[2].length} na 2, decisão de 25/09/2026)`,
     contagem: `${pagos[1].length + pagos[2].length} lançamentos pagos nas categorias de pessoal (${pagos[1].length} na empresa 1 e ${pagos[2].length} na 2)`,
     porEmpresa: pagos,
+    dfc: ePessoalDfc, dfcRotulo: 'linhas de saída de pessoal no mês, pela classificação escrita na própria linha',
     extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(' e ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(' e ')})`,
   });
 }
@@ -665,17 +866,77 @@ linhaDoDfc({
   filtro: 'DFC: numerador, o cartão acima; denominador, a receita líquida de caixa montada no DFC — `ENTRADA` (K) das linhas de receita menos as de dedução (`SUB 2` (J) = `DEVOLUCÃO`, `CLASS. CONTABIL` (I) = `ESTORNO`). Omie: a mesma razão feita toda no Omie recortado, com as 11 categorias de dedução do dono pesando no denominador; o selo herda a maior das duas diferenças',
   contagem: `no denominador, do lado do Omie, os ${soma(MES_R)} lançamentos de receita do mês menos os das categorias de dedução; no numerador, os do cartão acima`,
   porEmpresa: porEmp(MES_R),
+  dfc: ePessoalDfc, dfcRotulo: 'linhas de pessoal no mês, que são o numerador desta razão',
 });
 
 // ---------------------------------------------------------------- Tela 1, blocos
 
-linhaDoDfc({
-  tela: 'Tela 1', nome: 'Top 10 despesas', fonte: 'DFC (principal) / Omie recortado por centro de custo (confronto)',
-  filtro: 'DFC: `SAIDA` (L) no período por `DIA PG` (F), agrupada por `CLASS. CONTABIL` (I) ou por `SUB 2` (J); pega as 10 maiores, e cada linha tem uma classificação só, sem rateio. Omie: a mesma leitura de caixa **com `cExibirDepartamentos: "S"`**, somando `movimentos[].departamentos[].nDistrValor` por nome de departamento (as duas empresas juntas pelo nome, decisão do dono de 25/09/2026), com uma barra "sem centro de custo" para o que vem sem rateio',
-  contagem: `${soma(MES_P)} lançamentos de despesa do mês, que é o que o agrupamento por centro de custo receberia — ${trincaTexto(MES_P)}`,
-  porEmpresa: porEmp(MES_P),
-  extraMotivo: 'a leitura do confronto pede `cExibirDepartamentos: "S"`, e a leitura do cache que `docs/fontes.md` conta foi feita **sem** esse parâmetro: nenhum dos lançamentos dela traz `departamentos[]`, então o agrupamento por centro de custo não pôde ser calculado nem conferido. O cache tem uma segunda leitura de `financas/mf` da mesma faixa, essa **com** `cExibirDepartamentos: "S"`, mas ela é `cTpLancamento: "CPCR"` e traz só os títulos — deixa de fora o lançamento avulso de conta corrente, que é a maior parte da despesa do mês, e por isso não serve para esta linha',
-});
+// Top 10 despesas: o agrupamento por centro de custo só existe se a leitura pedir `cExibirDepartamentos: "S"` —
+// nenhum método do Omie filtra por departamento, o rateio só vem no retorno. A leitura que `docs/fontes.md` conta é
+// feita SEM esse parâmetro; a leitura irmã, com ele, está no cache desde `scripts/ler-omie-faltante.mjs`. As duas
+// são a mesma faixa e o mesmo filtro, e o script confere que, no mês, elas trazem o MESMO conjunto de lançamentos
+// antes de usar o rateio da segunda (a de fora do mês pode ter crescido: ela foi lida depois).
+{
+  const chave = (d) => `${d.cGrupo}|${d.nCodTitulo ?? 0}|${d.nCodMovCC ?? 0}`;
+  let faltaLeitura = EMPRESAS.filter((emp) => !comDep[emp]);
+  let mesmoConjunto = true, comRateio = 0, semRateio = 0, foraDoCadastro = 0;
+  const nomes = new Set();
+  const porChave = {};
+  if (!faltaLeitura.length) {
+    for (const emp of EMPRESAS) {
+      porChave[emp] = new Map(comDep[emp].map((m) => [chave(m.detalhes ?? {}), m]));
+      const doMes = new Set(comDep[emp]
+        .filter((m) => m.detalhes?.cStatus !== 'CANCELADO' && RECORTE.has(`${emp}|${m.detalhes?.nCodCC}`) && noMes(m.detalhes?.dDtPagamento))
+        .map((m) => chave(m.detalhes ?? {})));
+      const meus = new Set(base(emp, noMes).linhas.map(chave));
+      if (doMes.size !== meus.size || [...meus].some((k) => !doMes.has(k))) mesmoConjunto = false;
+      for (const d of MES_P[emp].todos) {
+        const deps = porChave[emp].get(chave(d))?.departamentos ?? [];
+        if (!deps.length) { semRateio++; continue; }
+        comRateio++;
+        for (const x of deps) {
+          const cad = departamentos[emp].get(String(x.cCodDepartamento));
+          if (cad?.descricao) nomes.add(norm(cad.descricao)); else foraDoCadastro++;
+        }
+      }
+    }
+  }
+  // O caso: o lançamento de menor código, entre os que têm rateio, achado de volta na leitura crua com departamento.
+  let casoDep = null, difDep = null;
+  if (!faltaLeitura.length && comRateio) {
+    for (const emp of EMPRESAS) {
+      const comR = MES_P[emp].todos.filter((d) => (porChave[emp].get(chave(d))?.departamentos ?? []).length);
+      if (!comR.length) continue;
+      const titulos = comR.filter((d) => d.cGrupo === 'CONTA_A_PAGAR');
+      const d = titulos.length ? menorPor(titulos, 'nCodTitulo') : menorPor(comR, 'nCodMovCC');
+      const eTitulo = d.cGrupo === 'CONTA_A_PAGAR';
+      const crus = acharCru(emp, LEITURA_MF_DEP, eTitulo ? 'nCodTitulo' : 'nCodMovCC', eTitulo ? d.nCodTitulo : d.nCodMovCC)
+        .filter((m) => m.detalhes.cGrupo === d.cGrupo);
+      if (crus.length !== 1) { difDep = `o código do caso aparece ${crus.length} vez(es) na leitura crua com departamentos, e o cálculo o contou uma`; break; }
+      const dif = comparar(crus[0].detalhes, { cGrupo: d.cGrupo, cNatureza: d.cNatureza, cStatus: d.cStatus, nCodCC: d.nCodCC, cCodCateg: d.cCodCateg, dDtPagamento: d.dDtPagamento });
+      const deps = crus[0].departamentos ?? [];
+      const cad = deps.length ? departamentos[emp].get(String(deps[0].cCodDepartamento)) : null;
+      if (!cad) dif.push(`o \`cCodDepartamento\` do rateio não está no cadastro \`geral/departamentos\` da empresa ${emp}`);
+      if (dif.length) { difDep = dif.join('; '); break; }
+      casoDep = `${casoDoLancamento(emp, d)}, com ${pl(deps.length, 'linha de rateio', 'linhas de rateio')} em \`departamentos[]\` (a primeira no \`cCodDepartamento\` ${deps[0].cCodDepartamento}, que está em \`geral/departamentos\` da empresa ${emp} com \`descricao\` preenchida) — achado de volta na página ${crus[0]._pagina} da leitura crua com \`cExibirDepartamentos: "S"\`, com os mesmos campos`;
+      break;
+    }
+  }
+  const problema = faltaLeitura.length
+    ? `a leitura do confronto — a mesma leitura de caixa **com \`cExibirDepartamentos: "S"\`** — não está no cache da(s) empresa(s) ${faltaLeitura.join(' e ')}; rode antes \`node scripts/ler-omie-faltante.mjs\``
+    : (!mesmoConjunto
+      ? 'a leitura com `cExibirDepartamentos: "S"` e a leitura que `docs/fontes.md` conta não trazem o mesmo conjunto de lançamentos no mês, então o rateio de uma não pode ser colado na contagem da outra'
+      : (foraDoCadastro ? `${foraDoCadastro} linha(s) de rateio apontam um \`cCodDepartamento\` que não está em \`geral/departamentos\`` : (difDep || null)));
+  linhaDoDfc({
+    tela: 'Tela 1', nome: 'Top 10 despesas', fonte: 'DFC (principal) / Omie recortado por centro de custo (confronto)',
+    filtro: 'DFC: `SAIDA` (L) no período por `DIA PG` (F), agrupada por `CLASS. CONTABIL` (I) ou por `SUB 2` (J); pega as 10 maiores, e cada linha tem uma classificação só, sem rateio. Omie: a mesma leitura de caixa **com `cExibirDepartamentos: "S"`**, somando `movimentos[].departamentos[].nDistrValor` por nome de departamento (as duas empresas juntas pelo nome, decisão do dono de 25/09/2026), com uma barra "sem centro de custo" para o que vem sem rateio',
+    contagem: `${soma(MES_P)} lançamentos de despesa do mês — ${trincaTexto(MES_P)} —, dos quais ${comRateio} trazem rateio em \`departamentos[]\` e ${semRateio} caem na barra "sem centro de custo"; o rateio se distribui por ${pl(nomes.size, 'nome de departamento', 'nomes de departamento')}`,
+    porEmpresa: porEmp(MES_P),
+    dfc: (l) => l.natureza === 'P', dfcRotulo: `linhas de saída no mês, em ${new Set(DFC.ok ? DFC.linhas.filter((l) => l.natureza === 'P').map((l) => l.classe) : []).size} \`CLASS. CONTABIL\` distintas`,
+    extraMotivo: problema,
+    casoExtra: casoDep ? `no centro de custo, que é o confronto: ${casoDep}` : null,
+  });
+}
 
 // Top 10 receitas: Omie principal, e dá para conferir inteiro — inclusive a descrição, porque `produtos/pedido` →
 // `ListarPedidos` está no cache com o `det[]` de cada pedido.
@@ -705,19 +966,45 @@ linhaDoDfc({
   });
 }
 
-linhaDoDfc({
-  tela: 'Tela 1', nome: 'Receita × despesa por dia', fonte: 'DFC (principal) / Omie recortado (confronto)',
-  filtro: 'DFC: aba do mês do arquivo da pasta da MeuBESS, linhas `Entradas` (43) e `Gastos` (44), uma coluna por dia de `D` a `AH`, com `Inicial` (42) e `Final` (45). Omie: a mesma leitura de caixa, agrupada pelo dia de `detalhes.dDtPagamento` e separada por `detalhes.cNatureza`',
-  contagem: `${soma(MES_R) + soma(MES_P)} lançamentos no mês (${soma(MES_R)} de entrada e ${soma(MES_P)} de saída), distribuídos pelos dias de \`dDtPagamento\``,
-  porEmpresa: ambos(MES_R, MES_P),
-});
+// Os dois gráficos de "Receita × despesa" não leem o `FLUXO DE CAIXA`: leem o bloco pronto da aba do mês — `Inicial`,
+// `Entradas`, `Gastos` e `Final`, uma coluna por dia. A conferência aqui é da FORMA do bloco (que linha tem cada
+// rótulo e quantas colunas de dia existem), achada pelo rótulo escrito na coluna B, e não pelo número da linha.
+{
+  const b = DFC.ok ? DFC.abaDoMes : null;
+  const falta = b ? ['Inicial', 'Entradas', 'Gastos', 'Final'].filter((r) => !b[`tem${r}`]) : null;
+  linhaDoDfc({
+    tela: 'Tela 1', nome: 'Receita × despesa por dia', fonte: 'DFC (principal) / Omie recortado (confronto)',
+    filtro: 'DFC: aba do mês do arquivo da pasta da MeuBESS, linhas `Entradas` (43) e `Gastos` (44), uma coluna por dia de `D` a `AH`, com `Inicial` (42) e `Final` (45). Omie: a mesma leitura de caixa, agrupada pelo dia de `detalhes.dDtPagamento` e separada por `detalhes.cNatureza`',
+    contagem: `${soma(MES_R) + soma(MES_P)} lançamentos no mês (${soma(MES_R)} de entrada e ${soma(MES_P)} de saída), distribuídos pelos dias de \`dDtPagamento\``,
+    porEmpresa: ambos(MES_R, MES_P),
+    dfcCaso: !b
+      ? { ok: false, contagem: 'nenhuma', texto: null, motivo: 'o arquivo do mês não tem, em nenhuma aba, o bloco com os rótulos `Entradas` e `Gastos` na coluna B' }
+      : {
+        ok: falta.length === 0 && b.colunas > 0,
+        contagem: `${b.colunas} colunas de dia no bloco pronto`,
+        texto: `linha ${b.linhaEntradas} (\`Entradas\`) e linha ${b.linhaGastos} (\`Gastos\`) da aba \`${b.aba}\` do arquivo \`${DFC.arquivo}\`, com \`Inicial\` na ${b.linhaInicial ?? '(ausente)'} e \`Final\` na ${b.linhaFinal ?? '(ausente)'} e ${b.colunas} colunas de dia — as quatro linhas foram achadas pelo rótulo escrito na coluna B, e não pelo número da linha`,
+        motivo: falta.length ? `o bloco da aba do mês não tem ${falta.join(', ')}` : 'o bloco da aba do mês não tem nenhuma coluna de dia',
+      },
+  });
 
-linhaDoDfc({
-  tela: 'Tela 1', nome: 'Receita × despesa por mês', fonte: 'DFC (principal) / Omie recortado (confronto)',
-  filtro: 'DFC: um arquivo por mês na pasta da MeuBESS, somando `Entradas` (43) e `Gastos` (44) da aba do mês na faixa do seletor — é a única fonte que cobre o ano. Omie: a mesma leitura de caixa, agrupada pelo ano-mês de `detalhes.dDtPagamento`',
-  contagem: `${soma(MES_R) + soma(MES_P)} lançamentos na coluna do mês; na série inteira que o Omie cobre (jan–set), ${n(totalJanSet[1].R.total + totalJanSet[2].R.total)} de entrada e ${n(totalJanSet[1].P.total + totalJanSet[2].P.total)} de saída`,
-  porEmpresa: ambos(MES_R, MES_P),
-});
+  // A série do ano: um arquivo por mês na mesma pasta. Conferir é abrir cada um e achar o mesmo bloco.
+  const ok = DFC.ok ? DFC.serie.filter((x) => x.ok) : [];
+  const semArquivo = DFC.ok ? DFC.serie.filter((x) => !x.ok) : [];
+  linhaDoDfc({
+    tela: 'Tela 1', nome: 'Receita × despesa por mês', fonte: 'DFC (principal) / Omie recortado (confronto)',
+    filtro: 'DFC: um arquivo por mês na pasta da MeuBESS, somando `Entradas` (43) e `Gastos` (44) da aba do mês na faixa do seletor — é a única fonte que cobre o ano. Omie: a mesma leitura de caixa, agrupada pelo ano-mês de `detalhes.dDtPagamento`',
+    contagem: `${soma(MES_R) + soma(MES_P)} lançamentos na coluna do mês; na série inteira que o Omie cobre (jan–set), ${n(totalJanSet[1].R.total + totalJanSet[2].R.total)} de entrada e ${n(totalJanSet[1].P.total + totalJanSet[2].P.total)} de saída`,
+    porEmpresa: ambos(MES_R, MES_P),
+    dfcCaso: {
+      ok: ok.length === 12,
+      contagem: `${ok.length} dos 12 meses de ${ANO} com o bloco \`Entradas\`/\`Gastos\``,
+      texto: ok.length
+        ? `os arquivos dos meses ${ok.map((x) => String(x.mes).padStart(2, '0')).join(', ')} da pasta da MeuBESS foram abertos um a um e cada um trouxe o bloco \`Entradas\`/\`Gastos\` na aba do mês (o de ${MES2} com ${DFC.abaDoMes?.colunas ?? 0} colunas de dia)`
+        : null,
+      motivo: `não deu para montar a série inteira: ${semArquivo.map((x) => `mês ${String(x.mes).padStart(2, '0')} (${x.motivo})`).join('; ')}`,
+    },
+  });
+}
 
 // ---------------------------------------------------------------- Tela 2, cartões
 
@@ -726,6 +1013,7 @@ linhaDoDfc({
   filtro: 'DFC: `ENTRADA` (K) das linhas de receita (`SUB 2` (J) em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`), somada pelo mês de `DIA PG` (F) — ou, pronta, a linha `Receitas` (B15) da aba do mês. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "R"`. É o mesmo número do cartão "Receitas" da Tela 1, de propósito',
   contagem: `${soma(MES_R)} lançamentos no Omie recortado — ${trincaTexto(MES_R)}`,
   porEmpresa: porEmp(MES_R),
+  dfc: (l) => l.natureza === 'R' && DFC_RECEITA.includes(l.sub2), dfcRotulo: 'linhas de entrada no mês com `SUB 2` de receita',
 });
 
 linhaDoDfc({
@@ -733,6 +1021,7 @@ linhaDoDfc({
   filtro: 'DFC: `SAIDA` (L) agrupada por `CLASS. CONTABIL` (I), pelo mês de `DIA PG` (F) — `FORNECEDORES COGS` é custo e `FORNECEDORES G&A` é despesa geral, separação que só existe no DFC. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "P"`, contra o total',
   contagem: `${soma(MES_P)} lançamentos no Omie recortado — ${trincaTexto(MES_P)}`,
   porEmpresa: porEmp(MES_P),
+  dfc: (l) => l.natureza === 'P', dfcRotulo: 'linhas de saída no mês, agrupáveis por `CLASS. CONTABIL`',
 });
 
 // Os três cartões calculados da Tela 2 dependem, na aritmética, de linhas cuja fonte principal é o DFC — deduções,
@@ -743,13 +1032,16 @@ for (const c of [
   { nome: 'Lucro líquido', conta: 'EBITDA + resultado financeiro − impostos pagos (guias), também sem depreciação e sem amortização', depende: '"(−) Deduções", "(−) Custos de vendas" e "(−) Impostos pagos (guias)"' },
   { nome: 'Margem de lucro', conta: 'lucro líquido ÷ receita, os dois termos do Omie recortado', depende: 'as mesmas linhas do lucro líquido' },
 ]) {
+  const caso = conferirPrimeiro(ambos(MES_R, MES_P));
   add({
     tela: 'Tela 2', nome: c.nome, fonte: 'Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto)',
     filtro: `não tem leitura própria: ${c.conta}, sobre as linhas da tabela do DRE, todas vindas da mesma leitura de caixa (${FILTRO_CAIXA})`,
     contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês, que passam pelas linhas que o compõem (${soma(MES_R)} de receita e ${soma(MES_P)} de despesa), antes de cada linha aplicar a lista de categorias dela`,
-    estado: 'a-conferir',
-    motivo: `a conta deste cartão consome ${c.depende}, cuja fonte principal é o DFC${MOTIVO_DFC ? ` — ${MOTIVO_DFC}` : ''}, então o número do cartão não pôde ser fechado nem conferido só com o cache do Omie`,
-    caso: textoDoCaso(conferirPrimeiro(ambos(MES_R, MES_P)), 'no lado do Omie: '),
+    estado: MOTIVO_DFC ? 'a-conferir' : (caso && caso.r.ok ? 'conferido' : 'divergente'),
+    motivo: MOTIVO_DFC
+      ? `a conta deste cartão consome ${c.depende}, cuja fonte principal é o DFC — ${MOTIVO_DFC}, então o número do cartão não pôde ser fechado nem conferido só com o cache do Omie`
+      : (caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento entrou neste mês')),
+    caso: `${textoDoCaso(caso, 'no lado do Omie: ')}; o cartão não tem leitura própria — é aritmética sobre ${c.depende} e as demais linhas da tabela, cada uma conferida na linha dela nesta página, com o DFC lido do arquivo do mês`,
   });
 }
 
@@ -783,14 +1075,28 @@ for (const c of [
     caso: casoTexto,
   });
 
+  // A conta totalizadora da receita bruta no Omie é a que tem `totalizaDRE = "S"` em `geral/dre`. O cadastro está no
+  // cache desde `scripts/ler-omie-faltante.mjs`, e o script o relê aqui em vez de citar a leitura de 24/09/2026.
+  const semDre = EMPRESAS.filter((emp) => !contasDre[emp]);
+  const totalizadoras = semDre.length ? null : Object.fromEntries(EMPRESAS.map((emp) =>
+    [emp, (contasDre[emp] ?? []).filter((c) => c.totalizaDRE === 'S')]));
+  const iguais = totalizadoras && EMPRESAS.every((emp) => totalizadoras[emp].length === totalizadoras[1].length);
+  const dreOk = Boolean(totalizadoras) && totalizadoras[1].length > 0 && iguais;
+  const receitaBruta = dreOk
+    ? totalizadoras[1].slice().sort((a, b) => String(a.codigoDRE).localeCompare(String(b.codigoDRE)))[0]
+    : null;
   add({
     tela: 'Tela 2', nome: '(=) Receita bruta', fonte: 'Omie recortado, calculado',
     filtro: 'soma das duas linhas de receita acima; no Omie a conta totalizadora é a que tem `totalizaDRE = "S"` em `geral/dre` → `ListarCadastroDRE`. Não tem leitura própria: os lançamentos são exatamente os da linha "(+) Receitas"',
-    contagem: `${total} lançamentos — os mesmos da linha "(+) Receitas"`,
-    estado: caso && caso.r.ok ? 'conferido' : 'divergente',
-    motivo: caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento de receita entrou neste mês'),
+    contagem: `${total} lançamentos — os mesmos da linha "(+) Receitas"${dreOk ? `; o cadastro do DRE tem ${n(contasDre[1].length)} contas em cada empresa, ${totalizadoras[1].length} delas com \`totalizaDRE = "S"\`` : ''}`,
+    estado: (caso && caso.r.ok && dreOk) ? 'conferido' : 'divergente',
+    motivo: [
+      caso ? (caso.r.ok ? null : (caso.r.motivo ?? caso.r.dif.join('; '))) : 'nenhum lançamento de receita entrou neste mês',
+      semDre.length ? `o cadastro \`geral/dre\` → \`ListarCadastroDRE\` não está no cache da(s) empresa(s) ${semDre.join(' e ')}; rode antes \`node scripts/ler-omie-faltante.mjs\`` : null,
+      totalizadoras && !iguais ? `as duas empresas têm número diferente de contas com \`totalizaDRE = "S"\` (${EMPRESAS.map((e) => `empresa ${e}: ${totalizadoras[e].length}`).join(', ')})` : null,
+    ].filter(Boolean).join('; ') || null,
     caso: caso
-      ? `${textoDoCaso(caso)} — é o mesmo caso da linha "(+) Receitas". Ressalva: o cadastro \`geral/dre\` → \`ListarCadastroDRE\` **não** está no cache local, então o \`totalizaDRE\` das nove contas totalizadoras é o que \`docs/fontes.md\` registrou da leitura de 24/09/2026, e não foi relido aqui; o que esta linha soma, porém, não depende dele — são os lançamentos da linha acima`
+      ? `${textoDoCaso(caso)} — é o mesmo caso da linha "(+) Receitas"${dreOk ? `; e a conta totalizadora que dá nome a esta linha foi relida no cadastro: \`codigoDRE\` ${receitaBruta.codigoDRE} (\`nivelDRE\` ${receitaBruta.nivelDRE}, \`sinalDRE\` ${receitaBruta.sinalDRE}, \`totalizaDRE\` S, \`naoExibirDRE\` ${receitaBruta.naoExibirDRE ?? '(vazio)'}), uma das ${totalizadoras[1].length} totalizadoras que as duas empresas têm em \`geral/dre\`` : ''}`
       : 'nenhum lançamento de receita entrou neste mês',
   });
 }
@@ -807,6 +1113,7 @@ for (const c of [
     filtro: 'DFC: a devolução vem marcada na própria linha — `SUB 2` (J) = `DEVOLUCÃO`, com `ESTORNO` em `CLASS. CONTABIL` (I) —, pelo mês de `DIA PG` (F). Omie: `detalhes.cOperacao = "13"` (devolução de venda) e as 11 categorias que o dono decidiu em 24/09/2026 (5 na empresa 1 e 6 na 2; o ISS retido `2.06.07` saiu da lista em 25/09/2026, opção A). Os campos de retenção do título não entram',
     contagem: `${ded[1].total + ded[2].total} lançamentos nas categorias de dedução (${ded[1].total} na empresa 1 e ${ded[2].total} na 2), mais ${oper13[1].length + oper13[2].length} com \`cOperacao = "13"\` no recorte do mês`,
     porEmpresa: { 1: ded[1].todos, 2: ded[2].todos },
+    dfc: (l) => l.sub2 === 'DEVOLUCAO' || l.classe === 'ESTORNO', dfcRotulo: 'linhas de dedução no mês, pelas duas marcas que `docs/fontes.md` lista (`SUB 2` = `DEVOLUCÃO` ou `CLASS. CONTABIL` = `ESTORNO`)',
   });
 }
 
@@ -814,9 +1121,11 @@ add({
   tela: 'Tela 2', nome: '(=) Receita líquida', fonte: 'mistura as duas, calculado',
   filtro: 'receita bruta (Omie recortado, linha acima) − deduções (DFC, linha acima). Não tem leitura própria',
   contagem: `no minuendo, os ${soma(MES_R)} lançamentos de receita do Omie; o subtraendo vem das linhas de dedução do DFC`,
-  estado: 'a-conferir',
-  motivo: `é a soma que a decisão de 24/09/2026 deixou com uma fonte de cada lado: o subtraendo é a linha "(−) Deduções", do DFC${MOTIVO_DFC ? ` — ${MOTIVO_DFC}` : ''}`,
-  caso: textoDoCaso(conferirPrimeiro(porEmp(MES_R)), 'no minuendo, que é do Omie: ', 'nenhum lançamento de receita entrou neste mês'),
+  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_R)).ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC
+    ? `é a soma que a decisão de 24/09/2026 deixou com uma fonte de cada lado: o subtraendo é a linha "(−) Deduções", do DFC — ${MOTIVO_DFC}`
+    : calc(porEmp(MES_R)).motivo,
+  caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_R)), 'no minuendo, que é do Omie: ', 'nenhum lançamento de receita entrou neste mês')}; o subtraendo é a linha "(−) Deduções", conferida na linha dela nesta página, no arquivo do mês do DFC`,
 });
 
 // (−) Custos de vendas — DFC principal, confronto do Omie pela lista de 35 códigos.
@@ -829,6 +1138,7 @@ add({
     filtro: 'DFC: `SAIDA` (L) pelo mês de `DIA PG` (F), com `CLASS. CONTABIL` (I) = `FORNECEDORES COGS` ou `COMPRA DE MERCADORIA` e `SUB 2` (J) em `COMPRAS DE MERCADORIAS`, `FRETE E CARRETO` e `ARMAZENAGEM E MANUSEIO`. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "P"`, fora o par do adiantamento, pela lista de 35 códigos que o dono decidiu em 25/09/2026 (22 na empresa 1 e 13 na 2) — **pelo código da categoria, e não por `codigo_dre`**',
     contagem: `${cv[1].total + cv[2].total} lançamentos — ${cv[1].titulos.size} títulos + ${cv[1].baixas.size} baixas de parcial + ${cv[1].avulsos.size} avulsos na empresa 1 e ${cv[2].titulos.size} + ${cv[2].baixas.size} + ${cv[2].avulsos.size} na 2`,
     porEmpresa: { 1: cv[1].todos, 2: cv[2].todos },
+    dfc: (l) => DFC_CUSTO_CLASSE.includes(l.classe) && DFC_CUSTO_SUB2.includes(l.sub2), dfcRotulo: 'linhas de custo no mês (`CLASS. CONTABIL` de COGS com `SUB 2` de compra, frete ou armazenagem)',
     extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(', ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(', ')})`,
   });
 }
@@ -837,9 +1147,11 @@ add({
   tela: 'Tela 2', nome: '(=) Lucro bruto', fonte: 'mistura as duas, calculado',
   filtro: 'receita líquida (linha acima, que já mistura) − custos de vendas (DFC). Não tem leitura própria',
   contagem: `${soma(MES_R)} lançamentos de receita e ${soma(MES_P)} de despesa do Omie, que passam pelas linhas que a compõem, antes de cada linha aplicar a lista dela`,
-  estado: 'a-conferir',
-  motivo: `é consequência aritmética de "(=) Receita líquida" e de "(−) Custos de vendas", as duas com o DFC de um lado${MOTIVO_DFC ? ` — ${MOTIVO_DFC}` : ''}`,
-  caso: textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: '),
+  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC
+    ? `é consequência aritmética de "(=) Receita líquida" e de "(−) Custos de vendas", as duas com o DFC de um lado — ${MOTIVO_DFC}`
+    : calc(porEmp(MES_P)).motivo,
+  caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}; é aritmética de "(=) Receita líquida" e "(−) Custos de vendas", conferidas nas linhas delas nesta página, no arquivo do mês do DFC`,
 });
 
 // (−) Despesas gerais — Omie inteiro, e conferível.
@@ -867,9 +1179,11 @@ add({
   tela: 'Tela 2', nome: '(=) EBITDA', fonte: 'Omie recortado, calculado',
   filtro: 'lucro bruto − despesas gerais, isto é, receita líquida − custos de vendas − despesas gerais, antes do resultado financeiro, dos impostos, da depreciação e da amortização. Não tem leitura própria',
   contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês, que passam pelas linhas que a compõem`,
-  estado: 'a-conferir',
-  motivo: `segue o cartão "EBITDA" do topo: a conta consome "(−) Deduções" e "(−) Custos de vendas", cuja fonte principal é o DFC${MOTIVO_DFC ? ` — ${MOTIVO_DFC}` : ''}`,
-  caso: textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: '),
+  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC
+    ? `segue o cartão "EBITDA" do topo: a conta consome "(−) Deduções" e "(−) Custos de vendas", cuja fonte principal é o DFC — ${MOTIVO_DFC}`
+    : calc(porEmp(MES_P)).motivo,
+  caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}; segue o cartão "EBITDA" do topo — as linhas que a conta consome estão conferidas nas linhas delas nesta página`,
 });
 
 // (+/−) Resultado financeiro — Omie inteiro, e conferível.
@@ -908,6 +1222,7 @@ add({
     filtro: 'DFC: `SAIDA` (L) pelo mês de `DIA PG` (F), com `CLASS. CONTABIL` (I) = `IMPOSTOS E CONTRIBUIÇÕES` e `SUB 2` (J) em `ISS`, `INSS` e `IRPJ / CSLL`. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "P"`, reconhecendo a guia **pela categoria e não pelo `cTipo`** — `2.06.05`, `2.06.06`, `2.06.07`, `2.03.06` e, só na empresa 1, `2.01.92` (decisão do dono, 25/09/2026, opção A: a Tela 2 tem só esta linha de impostos)',
     contagem: `${imp[1].total + imp[2].total} lançamentos — ${pl(imp[1].titulos.size + imp[2].titulos.size, "título", "títulos")}, ${pl(imp[1].baixas.size + imp[2].baixas.size, "baixa de parcial", "baixas de parcial")} e ${pl(imp[1].avulsos.size + imp[2].avulsos.size, "avulso", "avulsos")}, somando as duas empresas`,
     porEmpresa: { 1: imp[1].todos, 2: imp[2].todos },
+    dfc: (l) => l.classe === 'IMPOSTOS E CONTRIBUICOES' && DFC_IMPOSTO_SUB2.includes(l.sub2), dfcRotulo: 'linhas de guia no mês (`IMPOSTOS E CONTRIBUIÇÕES` com `SUB 2` em ISS, INSS ou IRPJ / CSLL)',
     extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(', ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(', ')})`,
   });
 }
@@ -916,9 +1231,11 @@ add({
   tela: 'Tela 2', nome: '(=) Lucro líquido', fonte: 'Omie recortado, calculado',
   filtro: 'EBITDA (linha acima) + resultado financeiro − impostos pagos (guias). Não tem leitura própria; sai sem depreciação e sem amortização, e a linha "(−) Impostos retidos na nota" não existe mais (decisão do dono, 25/09/2026, opção A)',
   contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês, que passam pelas linhas que a compõem`,
-  estado: 'a-conferir',
-  motivo: `segue o cartão "Lucro líquido" do topo: a conta consome "(−) Deduções", "(−) Custos de vendas" e "(−) Impostos pagos (guias)", as três com o DFC como fonte principal${MOTIVO_DFC ? ` — ${MOTIVO_DFC}` : ''}`,
-  caso: textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: '),
+  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC
+    ? `segue o cartão "Lucro líquido" do topo: a conta consome "(−) Deduções", "(−) Custos de vendas" e "(−) Impostos pagos (guias)", as três com o DFC como fonte principal — ${MOTIVO_DFC}`
+    : calc(porEmp(MES_P)).motivo,
+  caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}; segue o cartão "Lucro líquido" do topo — as três linhas que a conta consome estão conferidas nas linhas delas nesta página`,
 });
 
 // (=) sem conta — Omie inteiro, e conferível.
@@ -962,13 +1279,13 @@ const SOBRA_DE_STATUS = t3Total(T3_OUTRO)
   ? `; ${t3Total(T3_OUTRO)} título(s) vieram com \`cStatus\` fora das três faixas do de-para — o Omie escreve \`"A VENCER"\` com espaço, e este script o trata como \`AVENCER\`, na faixa em aberto`
   : '';
 
-function linhaT3({ nome, filtro, contagem, lista, motivoExtra = null, estadoForcado = null }) {
+function linhaT3({ nome, filtro, contagem, lista, motivoExtra = null, estadoForcado = null, casoExtra = null }) {
   const candidatos = EMPRESAS.flatMap((emp) => (lista[emp] ?? []).map((t) => ({ emp, cab: t.cabecTitulo ?? {}, resumo: t.resumo ?? {} })));
-  let caso = 'nenhum título do recorte vence neste mês nessa faixa', estado = 'conferido', motivo = motivoExtra;
+  let caso = 'nenhum título do recorte vence neste mês nessa faixa', estado = motivoExtra ? 'a-conferir' : 'conferido', motivo = motivoExtra;
   if (candidatos.length) {
     const e = candidatos.slice().sort((a, b) => Number(a.cab.nCodTitulo) - Number(b.cab.nCodTitulo))[0];
     const r = conferirTituloR(e.emp, e.cab);
-    caso = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'}) — ${r.ok ? `achado de volta na página ${r.pagina} da leitura crua do cache com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}`;
+    caso = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'}) — ${r.ok ? `achado de volta na página ${r.pagina} da leitura crua do cache com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}${casoExtra ? `, ${casoExtra}` : ''}`;
     if (!r.ok) { estado = 'divergente'; motivo = [motivo, r.motivo ?? r.dif.join('; ')].filter(Boolean).join('; '); }
   } else if (!estadoForcado) {
     estado = 'a-conferir';
@@ -1003,13 +1320,24 @@ linhaT3({
   lista: T3_NA_TELA,
 });
 {
-  const clientes = new Set(EMPRESAS.flatMap((emp) => T3_NA_TELA[emp].map((t) => `${emp}|${t.cabecTitulo?.nCodCliente}`)));
+  // O eixo deste gráfico é o NOME do cliente. O cadastro está no cache desde `scripts/ler-omie-faltante.mjs`, e o
+  // script confere que todo `nCodCliente` do mês tem nome lá. O NOME EM SI NÃO ENTRA NESTA PÁGINA: só o código e a
+  // contagem de quantos têm nome.
+  const codigos = {};
+  for (const emp of EMPRESAS) codigos[emp] = new Set(T3_NA_TELA[emp].map((t) => String(t.cabecTitulo?.nCodCliente ?? '')));
+  const quantosCodigos = EMPRESAS.reduce((a, emp) => a + codigos[emp].size, 0);
+  const semCadastro = EMPRESAS.filter((emp) => !clientes[emp]);
+  const semNome = semCadastro.length ? [] : EMPRESAS.flatMap((emp) => [...codigos[emp]].filter((c) => !clientes[emp].comNome.has(c)).map((c) => `${emp}|${c}`));
   linhaT3({
     nome: 'Valor previsto por cliente e status',
     filtro: `${FILTRO_T3}; agrupa por \`cabecTitulo.nCodCliente\` somando \`nValorTitulo\` e separa pela faixa do \`cStatus\`; o nome do cliente sai de \`geral/clientes\` → \`ListarClientesResumido\``,
-    contagem: `${t3Total(T3_NA_TELA)} títulos, em ${pl(clientes.size, "código de cliente distinto", "códigos de cliente distintos")}`,
-    lista: T3_NA_TELA, estadoForcado: 'a-conferir',
-    motivoExtra: 'o cadastro `geral/clientes` → `ListarClientesResumido` não está no cache local, então o eixo deste gráfico — que é o **nome** do cliente, não o código — não pôde ser montado nem conferido; o agrupamento por `nCodCliente` e a divisão por faixa de status, esses sim',
+    contagem: `${t3Total(T3_NA_TELA)} títulos, em ${pl(quantosCodigos, "código de cliente distinto", "códigos de cliente distintos")}${semCadastro.length ? '' : `; os ${quantosCodigos} estão no cadastro de clientes (${n(clientes[1].total)} na empresa 1 e ${n(clientes[2].total)} na 2) e ${semNome.length ? `${semNome.length} deles vêm sem nome` : 'todos vêm com nome preenchido'}`}`,
+    lista: T3_NA_TELA,
+    motivoExtra: semCadastro.length
+      ? `o cadastro \`geral/clientes\` → \`ListarClientesResumido\` não está no cache da(s) empresa(s) ${semCadastro.join(' e ')}, então o eixo deste gráfico — que é o **nome** do cliente — não pôde ser conferido; rode antes \`node scripts/ler-omie-faltante.mjs\``
+      : (semNome.length ? `${semNome.length} dos ${quantosCodigos} códigos de cliente do mês não têm nome preenchido em \`geral/clientes\` (empresa|código: ${semNome.join(', ')}), e o eixo do gráfico ficaria sem rótulo neles` : null),
+    estadoForcado: semCadastro.length ? 'a-conferir' : (semNome.length ? 'divergente' : null),
+    casoExtra: semCadastro.length ? null : `e o \`nCodCliente\` dele está em \`geral/clientes\` da empresa dele com o nome preenchido (o nome não entra nesta página, de propósito)`,
   });
 }
 {
@@ -1096,16 +1424,25 @@ em reais ficam em [\`docs/confronto-dfc-omie.html\`](confronto-dfc-omie.html), q
 pessoa também não entra: nenhum campo de nome é lido.
 
 **Como o caso é conferido.** O cálculo trabalha sobre estruturas já filtradas e deduplicadas; a conferência faz o
-caminho contrário — reabre as páginas cruas do cache, acha o registro pelo código e compara \`cGrupo\`, \`cNatureza\`,
-\`cStatus\`, \`nCodCC\`, \`cCodCateg\`, \`cOrigem\` e a data (nos títulos da Tela 3, \`cNatureza\`, \`cStatus\`, \`nCodCC\`,
-\`cCodCateg\` e \`dDtVenc\`). O caso escolhido é sempre o de menor código entre os que entraram, para a conferência ser
-repetível.
+caminho contrário. **No Omie**, reabre as páginas cruas do cache, acha o registro pelo código e compara \`cGrupo\`,
+\`cNatureza\`, \`cStatus\`, \`nCodCC\`, \`cCodCateg\`, \`cOrigem\` e a data (nos títulos da Tela 3, \`cNatureza\`,
+\`cStatus\`, \`nCodCC\`, \`cCodCateg\` e \`dDtVenc\`). **No DFC**, relê a aba \`FLUXO DE CAIXA\` do zero, sem filtro
+nenhum, acha a linha pelo número dela e compara \`CLASS. CONTABIL\`, \`SUB 2\`, \`PAGAMENTO\`, o sentido (entrada ou
+saída) e o dia — nos dois gráficos de "Receita × despesa", que leem o bloco pronto da aba do mês, o que se confere é
+a forma do bloco, achada pelo rótulo escrito na coluna B e não pelo número da linha. O caso escolhido é sempre o de
+menor código, ou de menor número de linha, entre os que entraram, para a conferência ser repetível.
 
-**De onde vieram os números.** O **Omie** sai do cache local \`.cache/omie/\` (fora do git): a leitura de \`financas/mf\` →
-\`ListarMovimentos\` **sem \`cTpLancamento\`** por data de pagamento de 01/01 a 30/09/${ANO}, e a de
-\`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "R"\` por vencimento; ${NOME_DO_MES} é recortado
-delas pela data de cada lançamento, que é o que a consulta do mês devolveria. O **DFC** ${DFC.ok
-    ? `saiu do arquivo \`${DFC.arquivo}\` da pasta da MeuBESS, aba \`FLUXO DE CAIXA\` — ${DFC.linhas.length} linhas de lançamento no mês`
+**De onde vieram os números.** O **Omie** sai do cache local \`.cache/omie/\` (fora do git), que
+[\`scripts/confronto-dfc-omie.mjs\`](../scripts/confronto-dfc-omie.mjs) e
+[\`scripts/ler-omie-faltante.mjs\`](../scripts/ler-omie-faltante.mjs) gravam, só com métodos de consulta: \`financas/mf\` →
+\`ListarMovimentos\` **sem \`cTpLancamento\`** por data de pagamento de 01/01 a 30/09/${ANO} (e a leitura irmã dela, com
+\`cExibirDepartamentos: "S"\`, para o rateio por centro de custo); \`financas/mf\` → \`ListarMovimentos\` com
+\`cTpLancamento: "CP"\` por vencimento, para as despesas pendentes; \`financas/pesquisartitulos\` →
+\`PesquisarLancamentos\` com \`cNatureza: "R"\` e com \`cNatureza: "P"\` por vencimento; e os cadastros
+\`geral/categorias\`, \`geral/departamentos\`, \`geral/clientes\` → \`ListarClientesResumido\`, \`geral/dre\` →
+\`ListarCadastroDRE\` e \`produtos/pedido\`. As leituras do ano são recortadas em ${NOME_DO_MES} pela data de cada
+lançamento, que é o que a consulta do mês devolveria. O **DFC** ${DFC.ok
+    ? `saiu das planilhas da pasta da MeuBESS, abertas só para leitura: o arquivo \`${DFC.arquivo}\`, com ${DFC.linhas.length} linhas de lançamento no mês na aba \`FLUXO DE CAIXA\` e o bloco \`Entradas\`/\`Gastos\` na aba \`${DFC.abaDoMes?.aba ?? '(sem)'}\`, e os arquivos dos outros meses do ano, de onde sai a série mensal (${DFC.serie.filter((x) => x.ok).length} dos 12 com o bloco)`
     : `**não foi lido nesta rodada**: ${DFC.motivo}`}.
 
 **${indicadores.length} indicadores**: ${quantos('conferido')} conferidos, ${quantos('divergente')} divergentes e ${quantos('a-conferir')} a conferir.
@@ -1193,9 +1530,9 @@ mesmos campos. <strong>Não há valor em dinheiro nesta página, de propósito.<
  <div><b style="color:var(--div)">${quantos('divergente')}</b><span>divergentes</span></div>
  <div><b style="color:var(--pend)">${quantos('a-conferir')}</b><span>a conferir</span></div>
 </div>
-<p>O <strong>Omie</strong> sai do cache local <code>.cache/omie/</code>, fora do git; ${NOME_DO_MES} é recortado da
-leitura de 01/01 a 30/09/${ANO} pela data de cada lançamento. O <strong>DFC</strong> ${DFC.ok
-    ? `saiu do arquivo <code>${esc(DFC.arquivo)}</code>, aba <code>FLUXO DE CAIXA</code>, com ${DFC.linhas.length} linhas de lançamento no mês`
+<p>O <strong>Omie</strong> sai do cache local <code>.cache/omie/</code>, fora do git; ${NOME_DO_MES} é recortado das
+leituras do ano pela data de cada lançamento. O <strong>DFC</strong> ${DFC.ok
+    ? `saiu das planilhas da pasta da MeuBESS, abertas só para leitura: o arquivo <code>${esc(DFC.arquivo)}</code>, com ${DFC.linhas.length} linhas de lançamento no mês na aba <code>FLUXO DE CAIXA</code> e o bloco <code>Entradas</code>/<code>Gastos</code> na aba <code>${esc(DFC.abaDoMes?.aba ?? '(sem)')}</code>, e os arquivos dos outros meses do ano, de onde sai a série mensal (${DFC.serie.filter((x) => x.ok).length} dos 12 com o bloco)`
     : `<strong>não foi lido nesta rodada</strong>: ${inline(DFC.motivo)}`}.</p>
 <h2>As contagens de jan–set de <code>docs/fontes.md</code>, refeitas</h2>
 <p>Antes de aplicar o filtro ao mês, o script refaz as contagens que o documento já publica. É o que prova que a regra

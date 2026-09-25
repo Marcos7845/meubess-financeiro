@@ -9,7 +9,8 @@
 // `scripts/confronto-dfc-omie.mjs` já gravou no cache. Nada é escrito no Omie nem nas planilhas.
 //
 // O QUE ELE NÃO FAZ: ele não decide nada. Quem decide é o dono; esta página é material para a decisão. O grupo (a) foi
-// decidido em 24/09/2026 (ver DECIDIDO_A abaixo, que só REGISTRA a resposta do dono); (b), (c) e (d) seguem abertos.
+// decidido em 24/09/2026 e o grupo (b) em 25/09/2026 (ver DECIDIDO_A e DECIDIDO_B abaixo, que só REGISTRAM a resposta do
+// dono); (c) e (d) seguem abertos.
 //
 //   node scripts/categorias-do-dre.mjs
 
@@ -89,6 +90,16 @@ const PELO_NOME = {
 const DECIDIDO_A = new Set(['1:2.06.07', '2:2.06.07', '2:2.02.97']);
 const DECISAO_A = '24/09/2026';
 
+// DECISÃO DO DONO, 25/09/2026 (resposta "c" à pergunta do grupo b): custo de vendas = as sugeridas do grupo (b) mais as 17
+// "em dúvida" COM movimento que a página apontou só pelo NOME (compras de matéria-prima e de mercadorias, fretes sobre
+// compras e os gastos com "Custo" no nome). Ficam de fora as 2 apontadas só pela conta do DRE (1:2.08.99 OUTRAS DESPESAS e
+// 1:2.08.98 Reembolso) e as 6 em dúvida sem movimento. Chave: `empresa:código`. Isto REGISTRA a decisão; não é heurística.
+const DECIDIDO_B = new Set([
+  '2:2.01.02', '2:2.01.03', '2:2.01.01', '1:2.01.03', '2:2.01.91', '1:2.01.01', '1:2.01.97', '2:2.01.93', '2:2.01.98',
+  '2:2.01.94', '2:2.08.99', '1:2.01.82', '2:2.01.90', '1:2.01.83', '1:2.04.88', '2:2.01.95', '2:2.01.97',
+]);
+const DECISAO_B = '25/09/2026';
+
 const GRUPOS = {
   a: {
     titulo: 'Dedução da receita',
@@ -162,6 +173,16 @@ if (adicionadasA.length !== DECIDIDO_A.size) {
   process.exit(1);
 }
 
+// Grupo (b): mesma conta — as sugeridas mais as em dúvida que o dono incluiu; o resto em dúvida ficou de fora dela.
+const adicionadasB = emDuvida.b.filter(r => DECIDIDO_B.has(`${r.emp}:${r.codigo}`));
+const decididasB = [...sugeridas.b, ...adicionadasB]
+  .sort((x, y) => x.emp.localeCompare(y.emp) || x.codigo.localeCompare(y.codigo));
+emDuvida.b = emDuvida.b.filter(r => !DECIDIDO_B.has(`${r.emp}:${r.codigo}`));
+if (adicionadasB.length !== DECIDIDO_B.size || adicionadasB.some(r => r.n === 0 || r.pista !== 'nome')) {
+  console.error(`a decisão do dono cita ${DECIDIDO_B.size} categorias fora das sugeridas (com movimento, só pelo nome) e o cache achou ${adicionadasB.length}.`);
+  process.exit(1);
+}
+
 // ---------------------------------------------------------------- a página
 
 const linha = (r, comPista) => `<tr>
@@ -194,6 +215,23 @@ function bloco(g) {
   <p class="nota">Empresa 1: ${decididasA.filter(r => r.emp === '1').length} códigos. Empresa 2: ${decididasA.filter(r => r.emp === '2').length} códigos.
   ISS RETIDO e Reembolso por cancelamento não eram sugeridas (a conta do DRE delas é outra); entraram por decisão do dono.</p>
   ${tabela(decididasA, false)}`;
+  } else if (g === 'b') {
+    corpo += `<div class="decidido">
+    <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_B}.</strong> Custo de vendas são as ${sug.length}
+    sugeridas mais ${adicionadasB.length} das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
+    matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome): ${decididasB.length} códigos.
+    Ficaram de fora as 2 apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
+    <code>2.08.98</code> Reembolso) e as ${semMov.length} em dúvida sem movimento.</p>
+  </div>
+  <div class="chamada">
+    <p style="margin:0"><strong>A tela reclassifica pela lista, não pela conta do DRE.</strong> Várias das decididas hoje estão
+    numa conta de despesa do DRE no Omie (Despesas Variáveis, Despesas Administrativas, Despesas com Pessoal) ou sem conta;
+    a Tela 2 leva o lançamento para (−) Custos de vendas pelo código da categoria, e não pela conta em que ela está pendurada.</p>
+  </div>
+  <h3>Decididas: ${decididasB.length} códigos</h3>
+  <p class="nota">Empresa 1: ${decididasB.filter(r => r.emp === '1').length} códigos. Empresa 2: ${decididasB.filter(r => r.emp === '2').length} códigos.
+  ${sug.length} eram sugeridas; ${adicionadasB.length} entraram por decisão do dono.</p>
+  ${tabela(decididasB, false)}`;
   } else if (sug.length) {
     corpo += `<h3>Sugeridas: ${sug.length}</h3>
   <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
@@ -216,8 +254,8 @@ function bloco(g) {
   }
 
   if (comMov.length) {
-    corpo += `<h3>${g === 'a' ? 'Ficaram de fora da decisão' : 'Em dúvida'}: ${comMov.length} com movimento no período</h3>
-  <p class="nota">${g === 'a' ? 'A decisão do dono não incluiu estas. ' : ''}Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+    corpo += `<h3>${g === 'a' || g === 'b' ? 'Ficaram de fora da decisão' : 'Em dúvida'}: ${comMov.length} com movimento no período</h3>
+  <p class="nota">${g === 'a' || g === 'b' ? 'A decisão do dono não incluiu estas. ' : ''}Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   ${tabela(comMov, true)}`;
   }
@@ -313,14 +351,15 @@ const html = `<!doctype html>
   o <strong>nome</strong> da categoria e a <strong>conta do DRE</strong> em que ela já está pendurada hoje.</p>
 
   <div class="chamada">
-    <p style="margin:0"><strong>Isto é sugestão, não decisão — exceto o grupo a.</strong> Nenhuma categoria foi mexida
+    <p style="margin:0"><strong>Isto é sugestão, não decisão — exceto os grupos a e b.</strong> Nenhuma categoria foi mexida
     no Omie. O <strong>grupo a</strong> (dedução da receita) foi <strong>decidido pelo dono em ${DECISAO_A}</strong> e
-    aparece marcado assim; os grupos b, c e d seguem como sugestão. Onde as duas pistas concordam, a sugestão é
+    e o <strong>grupo b</strong> (custo de vendas) em <strong>${DECISAO_B}</strong>; os dois aparecem marcados assim
+    e os grupos c e d seguem como sugestão. Onde as duas pistas concordam, a sugestão é
     firme; onde elas discordam, a categoria vai para "em dúvida" com o motivo ao lado. A palavra final é do dono.</p>
   </div>
 
   <div class="placar">
-    <div><b>${totalSug}</b><span>categorias sugeridas, somando os quatro grupos (o grupo a já decidido)</span></div>
+    <div><b>${totalSug}</b><span>categorias sugeridas, somando os quatro grupos (os grupos a e b já decididos)</span></div>
     <div><b>${totalDuv}</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>${consideradas}</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>${vistos[1].size + vistos[2].size}</b><span>lançamentos contados, ${FAIXA}</span></div>
@@ -328,7 +367,7 @@ const html = `<!doctype html>
 
   <ul class="indice">
     <li><a href="#grupo-a">a · Dedução da receita — decidido (${decididasA.length})</a></li>
-    <li><a href="#grupo-b">b · Custo de vendas (${sugeridas.b.length})</a></li>
+    <li><a href="#grupo-b">b · Custo de vendas — decidido (${decididasB.length})</a></li>
     <li><a href="#grupo-c">c · Depreciação e amortização (${sugeridas.c.length})</a></li>
     <li><a href="#grupo-d">d · Resultado financeiro (${sugeridas.d.length})</a></li>
   </ul>
@@ -353,17 +392,18 @@ ${['a', 'b', 'c', 'd'].map(bloco).join('\n\n')}
 <section class="aviso" style="border-radius:10px">
   <h2 style="font-size:1.1rem">O que esta página responde — e o que ela não fecha</h2>
   <p>Ela dá material para lacunas de <code>docs/fontes.md</code>. A do grupo <strong>a</strong> o dono fechou em
-  ${DECISAO_A}; as outras <strong>seguem abertas</strong>:</p>
+  ${DECISAO_A} e a do grupo <strong>b</strong> em ${DECISAO_B}; as outras <strong>seguem abertas</strong>:</p>
   <ul>
     <li>a linha <strong>(−) Deduções</strong> da Tela 2 — quais categorias do Omie são dedução: grupo <strong>a</strong>
         (<strong>decidido</strong> em ${DECISAO_A});</li>
-    <li>a linha <strong>(−) Custos de vendas</strong> — quais contas do DRE são de custo: grupo <strong>b</strong>;</li>
+    <li>a linha <strong>(−) Custos de vendas</strong> — quais categorias são custo de vendas: grupo <strong>b</strong>
+        (<strong>decidido</strong> em ${DECISAO_B});</li>
     <li>o cartão de <strong>EBITDA</strong> — quais categorias são depreciação, amortização e resultado financeiro:
         grupos <strong>c</strong> e <strong>d</strong>;</li>
     <li>o cartão <strong>% desp. funcionários / receita líquida</strong> da Tela 1, que depende da receita líquida e,
         por ela, do grupo <strong>a</strong> (<strong>decidido</strong>, no confronto do Omie).</li>
   </ul>
-  <p style="margin-bottom:0">Enquanto o dono não escolher, os grupos b, c e d seguem escritos como lacuna em
+  <p style="margin-bottom:0">Enquanto o dono não escolher, os grupos c e d seguem escritos como lacuna em
   <code>docs/fontes.md</code>, e o EBITDA da tela continua sem se distinguir do lucro operacional.</p>
 </section>
 

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O que aparece como "descrição" de um título a receber: quatro opções lado a lado</title>
+<style>
+  :root { --tinta: #1b2430; --fraco: #5d6b7a; --linha: #e2e8ef; --fundo: #fbfcfd; --caixa: #fff; --b: #0f7b6c; --d: #1f5fa8; --duvida: #fff8e6; --duvidab: #e8c86a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0 1.2rem 4rem; background: var(--fundo); color: var(--tinta);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 74rem; margin: 0 auto; }
+  header { padding: 2.4rem 0 1.3rem; border-bottom: 2px solid var(--linha); margin-bottom: 1.6rem; }
+  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .9rem; letter-spacing: -.01em; }
+  h2 { font-size: 1.28rem; margin: 0 0 .7rem; }
+  p { margin: 0 0 .85rem; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .86em; background: #eef2f6; padding: .1em .35em; border-radius: 3px; }
+  section { background: var(--caixa); border: 1px solid var(--linha); border-radius: 10px; padding: 1.5rem 1.6rem; margin: 0 0 1.5rem; }
+  .chamada { background: #eef4fb; border-left: 4px solid var(--d); padding: .9rem 1.2rem; border-radius: 0 6px 6px 0; margin: 0 0 1rem; }
+  .sugestao { background: #eef8f1; border-left: 4px solid var(--b); padding: .9rem 1.2rem; border-radius: 0 6px 6px 0; margin: 0 0 1rem; }
+  .nota { font-size: .9rem; color: var(--fraco); }
+  table { width: 100%; border-collapse: collapse; margin: .6rem 0 0; font-size: .88rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  th { font-size: .76rem; text-transform: uppercase; letter-spacing: .04em; color: var(--fraco); border-bottom: 2px solid var(--linha); }
+  td.num { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.meta { font-size: .8rem; color: var(--fraco); white-space: nowrap; line-height: 1.45; }
+  .id { font-size: .75rem; }
+  .vazia { color: #a15c00; font-style: italic; font-size: .85rem; }
+  .exemplos td:nth-child(n+3) { min-width: 11rem; }
+  .exemplos tbody tr:nth-child(-n+5) td:first-child { border-left: 4px solid #c9a227; }
+  tbody tr:hover { background: #f7fafc; }
+  .placar { display: flex; flex-wrap: wrap; gap: .8rem; margin: 1rem 0 0; }
+  .placar div { flex: 1 1 9rem; background: var(--caixa); border: 1px solid var(--linha); border-radius: 8px; padding: .7rem .9rem; }
+  .placar b { display: block; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .placar span { font-size: .82rem; color: var(--fraco); }
+  ul { margin: 0 0 .85rem; padding-left: 1.3rem; }
+  footer { margin-top: 2rem; padding-top: 1.2rem; border-top: 2px solid var(--linha); font-size: .86rem; color: var(--fraco); }
+  @media (max-width: 48rem) { section { padding: 1.1rem .9rem; } table { font-size: .8rem; } .exemplos { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>O que aparece como "descrição" de um título a receber?</h1>
+  <p>O título a receber do Omie <strong>não tem um campo de descrição</strong>. A Tela 1 (Top 10 receitas) e a Tela 3 (Lista de títulos)
+  precisam de um texto curto ao lado de cada título, e há quatro candidatos. <strong>A decisão é sua</strong>: abaixo, dez títulos reais
+  com as quatro opções lado a lado, e em quantos títulos de 2026 cada opção vem vazia.</p>
+  <div class="chamada">
+    <p style="margin:0"><strong>De onde vêm os números.</strong> 728 títulos a receber com vencimento em 2026, das empresas 1 e 2, nas contas
+    correntes da MeuBESS, sem os cancelados. Lidos no Omie em 25/09/2026, só leitura. Nenhum valor em reais e nenhum nome de cliente aparece nesta página.</p>
+  </div>
+</header>
+
+<section id="vazios">
+  <h2>Em quantos títulos cada opção vem vazia</h2>
+  <div class="placar">
+    <div><b>51</b><span>vazios na opção 1 (produtos do pedido)</span></div>
+    <div><b>51</b><span>vazios na opção 2 (número do pedido)</span></div>
+    <div><b>389</b><span>vazios na opção 3 (observação)</span></div>
+    <div><b>0</b><span>vazios na opção 4 (categoria)</span></div>
+  </div>
+  <table>
+    <thead><tr><th>opção</th><th>vazios</th><th>% dos 728</th><th>vazios sem pedido (MANR)</th><th>vazios com pedido</th><th>textos diferentes</th><th>o que se vê</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><strong>1 · produtos do pedido</strong></td>
+      <td class="num">51</td>
+      <td class="num">7,0%</td>
+      <td class="num">51</td>
+      <td class="num">0</td>
+      <td class="num">299</td>
+      <td>descreve o que foi vendido; é o mesmo texto para todas as parcelas do mesmo pedido (677 títulos, 370 pedidos)</td>
+    </tr>
+    <tr>
+      <td><strong>2 · número do pedido</strong></td>
+      <td class="num">51</td>
+      <td class="num">7,0%</td>
+      <td class="num">51</td>
+      <td class="num">0</td>
+      <td class="num">370</td>
+      <td>só um número curto, sem dizer o que foi vendido; repete nas parcelas do mesmo pedido</td>
+    </tr>
+    <tr>
+      <td><strong>3 · observação do título</strong></td>
+      <td class="num">389</td>
+      <td class="num">53,4%</td>
+      <td class="num">25</td>
+      <td class="num">364</td>
+      <td class="num">338</td>
+      <td>vem preenchida em 311 dos 311 adiantamentos (texto gerado pelo sistema), em 2 das 366 vendas e em 26 dos 51 lançamentos manuais</td>
+    </tr>
+    <tr>
+      <td><strong>4 · categoria</strong></td>
+      <td class="num">0</td>
+      <td class="num">0,0%</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">6</td>
+      <td>nunca vazia, mas só 6 textos: quase tudo é "RECEITA DE VENDA DE PRODUTOS"</td>
+    </tr>
+    </tbody>
+  </table>
+  <p class="nota">Os 51 títulos sem pedido são todos de origem <code>MANR</code> (lançados à mão, sem pedido de venda). Neles as opções 1 e 2 vêm sempre vazias;
+  a opção 3 tem texto em 26 e está vazia em 25; só a opção 4 responde nos 51. Todos os
+  677 títulos com <code>nCodOS</code> acharam o pedido no Omie. Entre os 51 lançamentos manuais, 9 estão em categorias que não são venda (rendimento de aplicação, receita não identificada, empréstimo entre as empresas).</p>
+</section>
+
+<section id="exemplos">
+  <h2>Dez títulos, quatro opções lado a lado</h2>
+  <p class="nota">Os cinco primeiros (faixa amarela) são <code>MANR</code>, sem pedido. Os cinco últimos têm pedido; os dois adiantamentos do mesmo pedido (linhas 8 e 9) mostram que as opções 1, 2 e 4 repetem
+  na parcela seguinte e só a 3 as distingue. Texto lido do Omie sem alteração.</p>
+  <table class="exemplos">
+    <thead><tr><th>#</th><th>título</th><th>1 · produtos do pedido<br><span class="nota">det[].produto.descricao</span></th><th>2 · número do pedido<br><span class="nota">cNumOS</span></th><th>3 · observação<br><span class="nota">detalhes.observacao</span></th><th>4 · categoria<br><span class="nota">descricao da categoria</span></th></tr></thead>
+    <tbody>
+    <tr>
+      <td class="num">1</td>
+      <td class="meta">empresa 1<br><code>MANR</code><br>recebido<br>venc. 11/03/2026<br><span class="id">título 5987053449</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td>REND PAGO APLIC AUT APR</td>
+      <td>Rendimentos de Aplicações</td>
+    </tr>
+<tr>
+      <td class="num">2</td>
+      <td class="meta">empresa 1<br><code>MANR</code><br>recebido<br>venc. 15/04/2026<br><span class="id">título 5999815177</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td>RECEBIMENTO REF AO RATEIO SEDE ADM</td>
+      <td>Recebimento de Empréstimo Intercompany B3N</td>
+    </tr>
+<tr>
+      <td class="num">3</td>
+      <td class="meta">empresa 2<br><code>MANR</code><br>recebido<br>venc. 02/03/2026<br><span class="id">título 5214732204</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: ninguém escreveu observação</span></td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">4</td>
+      <td class="meta">empresa 2<br><code>MANR</code><br>recebido<br>venc. 17/04/2026<br><span class="id">título 5232692329</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td>20260407-23535121</td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">5</td>
+      <td class="meta">empresa 2<br><code>MANR</code><br>recebido<br>venc. 27/03/2026<br><span class="id">título 5222891230</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td><span class="vazia">vazio: título sem pedido</span></td>
+      <td>Conta a Receber gerada a partir da cópia de outra conta com vencimento: 26/03/2026 e parcela: 001/001||</td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">6</td>
+      <td class="meta">empresa 2<br><code>VENR</code><br>recebido<br>venc. 03/03/2026<br><span class="id">título 5211031235</span></td>
+      <td>610 Wp - JA SOLAR</td>
+      <td>28</td>
+      <td><span class="vazia">vazio: ninguém escreveu observação</span></td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">7</td>
+      <td class="meta">empresa 2<br><code>VENR</code><br>atrasado<br>venc. 09/05/2026<br><span class="id">título 5228925710</span></td>
+      <td>Kit Gerador Fotovoltaico 13.42kWp - 20260213-18932473</td>
+      <td>72</td>
+      <td><span class="vazia">vazio: ninguém escreveu observação</span></td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">8</td>
+      <td class="meta">empresa 2<br><code>ADVR</code><br>recebido<br>venc. 27/02/2026<br><span class="id">título 5211490568</span></td>
+      <td>Kit Gerador Fotovoltaico 82.96kWp - 20260225-19980364</td>
+      <td>33</td>
+      <td>Adiantamento da parcela 001/002 (Pedido de Venda - Manual nº 33)</td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">9</td>
+      <td class="meta">empresa 2<br><code>ADVR</code><br>recebido<br>venc. 02/03/2026<br><span class="id">título 5211490571</span></td>
+      <td>Kit Gerador Fotovoltaico 82.96kWp - 20260225-19980364</td>
+      <td>33</td>
+      <td>Adiantamento da parcela 002/002 (Pedido de Venda - Manual nº 33)</td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+<tr>
+      <td class="num">10</td>
+      <td class="meta">empresa 2<br><code>ADVR</code><br>atrasado<br>venc. 04/03/2026<br><span class="id">título 5213577202</span></td>
+      <td>Kit Gerador Fotovoltaico 0kWp - 20260226-20082928</td>
+      <td>66</td>
+      <td>Adiantamento da parcela 002/002 (Pedido de Venda - Manual nº 66)</td>
+      <td>RECEITA DE VENDA DE PRODUTOS</td>
+    </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="sugestao">
+  <h2>Minha sugestão (a decisão é sua)</h2>
+  <div class="sugestao">
+    <p style="margin:0">Usar a <strong>opção 1</strong>, a descrição dos produtos do pedido: é a única que diz o que foi vendido e cobre 677 dos 728 títulos (93,0%); para os 51 lançamentos manuais sem pedido, cair na <strong>opção 4</strong> (categoria), que nunca vem vazia.</p>
+  </div>
+  <p class="nota">A opção 3 fica de fora como texto principal porque vem vazia na quase totalidade das vendas e, nos adiantamentos, repete uma frase padrão do sistema. Ressalva sobre a opção 1: algumas descrições são só uma peça
+  ("610 Wp - JA SOLAR") ou um kit com "0kWp" (linhas 6 e 10), então o texto nem sempre é uma frase completa do que foi vendido.</p>
+  <p>Escolhida a opção, a mesma resposta fecha as duas lacunas de <code>docs/fontes.md</code>: a do Top 10 receitas (Tela 1) e a da Lista de títulos (Tela 3).</p>
+</section>
+
+<footer>
+  Fonte: <code>financas/pesquisartitulos</code> → <code>PesquisarLancamentos</code> (título, <code>cNumOS</code>, <code>cOrigem</code>, <code>nCodOS</code>, categoria), <code>produtos/pedido</code> → <code>ListarPedidos</code>
+  (<code>det[].produto.descricao</code>), <code>financas/mf</code> → <code>ListarMovimentos</code> com <code>lDadosCad: true</code> (<code>detalhes.observacao</code>) e <code>geral/categorias</code> → <code>ListarCategorias</code>.
+  Empresas 1 e 2, contas com <code>negocio = "MeuBESS"</code> em <code>dados/contas-correntes-por-negocio.json</code>. Nada foi escrito no Omie.
+</footer>
+
+</div>
+</body>
+</html>

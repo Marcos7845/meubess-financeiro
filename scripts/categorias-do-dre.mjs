@@ -9,8 +9,8 @@
 // `scripts/confronto-dfc-omie.mjs` já gravou no cache. Nada é escrito no Omie nem nas planilhas.
 //
 // O QUE ELE NÃO FAZ: ele não decide nada. Quem decide é o dono; esta página é material para a decisão. O grupo (a) foi
-// decidido em 24/09/2026 e os grupos (b), (c) e (d) em 25/09/2026 (ver DECIDIDO_A, DECIDIDO_B, DECISAO_C e DECIDIDO_D
-// abaixo, que só REGISTRAM a resposta do dono); os quatro estão decididos.
+// decidido em 24/09/2026 (e revisto em 25/09/2026, sem o ISS RETIDO) e os grupos (b), (c) e (d) em 25/09/2026 (ver
+// DECIDIDO_A, DECIDIDO_B, DECISAO_C e DECIDIDO_D abaixo, que só REGISTRAM a resposta do dono); os quatro estão decididos.
 //
 //   node scripts/categorias-do-dre.mjs
 
@@ -85,10 +85,13 @@ const PELO_NOME = {
 };
 
 // DECISÃO DO DONO, 24/09/2026 (resposta "c" à pergunta do grupo a): dedução da receita = as sugeridas do grupo (a) mais
-// ISS RETIDO (2.06.07, empresas 1 e 2) e Reembolso por cancelamento (2.02.97, empresa 2). Chave: `empresa:código`.
-// Isto REGISTRA a decisão; não é heurística. Os outros grupos não têm decisão.
-const DECIDIDO_A = new Set(['1:2.06.07', '2:2.06.07', '2:2.02.97']);
+// Reembolso por cancelamento (2.02.97, empresa 2). Chave: `empresa:código`. A decisão de 24/09/2026 incluía também o
+// ISS RETIDO (2.06.07, empresas 1 e 2); em 25/09/2026 o dono decidiu (opção A) que ele NÃO é dedução: a retenção da
+// MeuBESS é do que ela desconta ao pagar fornecedor e já sai pela guia paga. Por isso ele saiu da lista e volta a
+// aparecer entre as que ficaram de fora da decisão. Isto REGISTRA a decisão; não é heurística.
+const DECIDIDO_A = new Set(['2:2.02.97']);
 const DECISAO_A = '24/09/2026';
+const DECISAO_A_ISS = '25/09/2026';
 
 // DECISÃO DO DONO, 25/09/2026 (resposta "c" à pergunta do grupo b): custo de vendas = as sugeridas do grupo (b) mais as 17
 // "em dúvida" COM movimento que a página apontou só pelo NOME (compras de matéria-prima e de mercadorias, fretes sobre
@@ -250,12 +253,14 @@ function bloco(g) {
   if (g === 'a') {
     corpo += `<div class="decidido">
     <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_A}.</strong> Deduções da receita são as ${sug.length}
-    sugeridas abaixo mais ISS RETIDO (<code>2.06.07</code>, empresas 1 e 2) e Reembolso por cancelamento
-    (<code>2.02.97</code>, empresa 2): ${decididasA.length} códigos, ${decididasA.length - 1} categorias contando ISS RETIDO uma vez só.</p>
+    sugeridas abaixo mais Reembolso por cancelamento (<code>2.02.97</code>, empresa 2): ${decididasA.length} códigos.</p>
+    <p style="margin:6px 0 0"><strong>Revisto em ${DECISAO_A_ISS} (opção A):</strong> ISS RETIDO (<code>2.06.07</code>, empresas 1 e 2),
+    que a decisão de ${DECISAO_A} incluía, <strong>não é dedução</strong>. A retenção da MeuBESS é do que ela desconta ao pagar
+    fornecedor e já sai pela guia paga; ele aparece mais abaixo, entre as que ficaram de fora da decisão.</p>
   </div>
   <h3>Decididas: ${decididasA.length} códigos</h3>
   <p class="nota">Empresa 1: ${decididasA.filter(r => r.emp === '1').length} códigos. Empresa 2: ${decididasA.filter(r => r.emp === '2').length} códigos.
-  ISS RETIDO e Reembolso por cancelamento não eram sugeridas (a conta do DRE delas é outra); entraram por decisão do dono.</p>
+  Reembolso por cancelamento não era sugerida (a conta do DRE dela é outra); entrou por decisão do dono.</p>
   ${tabela(decididasA, false)}`;
   } else if (g === 'b') {
     corpo += `<div class="decidido">

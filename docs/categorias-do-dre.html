@@ -84,13 +84,13 @@
 
   <div class="placar">
     <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
-    <div><b>18</b><span>em dúvida — as duas pistas discordam</span></div>
+    <div><b>20</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>2171</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
   </div>
 
   <ul class="indice">
-    <li><a href="#grupo-a">a · Dedução da receita — decidido (13)</a></li>
+    <li><a href="#grupo-a">a · Dedução da receita — decidido (11)</a></li>
     <li><a href="#grupo-b">b · Custo de vendas — decidido (35)</a></li>
     <li><a href="#grupo-c">c · Depreciação e amortização — decidido (sem categorias)</a></li>
     <li><a href="#grupo-d">d · Resultado financeiro — decidido (15)</a></li>
@@ -117,12 +117,14 @@
   <p class="onde">Na Tela 2, na linha <strong>(−) Deduções</strong> — logo abaixo da receita bruta.</p>
   <div class="decidido">
     <p style="margin:0"><strong>Decidido pelo dono em 24/09/2026.</strong> Deduções da receita são as 10
-    sugeridas abaixo mais ISS RETIDO (<code>2.06.07</code>, empresas 1 e 2) e Reembolso por cancelamento
-    (<code>2.02.97</code>, empresa 2): 13 códigos, 12 categorias contando ISS RETIDO uma vez só.</p>
+    sugeridas abaixo mais Reembolso por cancelamento (<code>2.02.97</code>, empresa 2): 11 códigos.</p>
+    <p style="margin:6px 0 0"><strong>Revisto em 25/09/2026 (opção A):</strong> ISS RETIDO (<code>2.06.07</code>, empresas 1 e 2),
+    que a decisão de 24/09/2026 incluía, <strong>não é dedução</strong>. A retenção da MeuBESS é do que ela desconta ao pagar
+    fornecedor e já sai pela guia paga; ele aparece mais abaixo, entre as que ficaram de fora da decisão.</p>
   </div>
-  <h3>Decididas: 13 códigos</h3>
-  <p class="nota">Empresa 1: 6 códigos. Empresa 2: 7 códigos.
-  ISS RETIDO e Reembolso por cancelamento não eram sugeridas (a conta do DRE delas é outra); entraram por decisão do dono.</p>
+  <h3>Decididas: 11 códigos</h3>
+  <p class="nota">Empresa 1: 5 códigos. Empresa 2: 6 códigos.
+  Reembolso por cancelamento não era sugerida (a conta do DRE dela é outra); entrou por decisão do dono.</p>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
     <tbody>
@@ -146,13 +148,6 @@
       <td>COFINS SOBRE VENDAS</td>
       <td><code>1.01.03</code> Deduções de Receita</td>
       <td class="num">0</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.06.07</code></td>
-      <td>ISS RETIDO</td>
-      <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">6</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -198,13 +193,6 @@
     </tr>
 <tr>
       <td class="emp">2</td>
-      <td><code>2.06.07</code></td>
-      <td>ISS RETIDO</td>
-      <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">6</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
       <td><code>2.09.01</code></td>
       <td>Devoluções de Vendas de Mercadoria</td>
       <td><code>1.01.03</code> Deduções de Receita</td>
@@ -216,6 +204,29 @@
       <td>Devoluções de Vendas de Produtos</td>
       <td><code>1.01.03</code> Deduções de Receita</td>
       <td class="num">0</td>
+    </tr>
+    </tbody>
+  </table><h3>Ficaram de fora da decisão: 2 com movimento no período</h3>
+  <p class="nota">A decisão do dono não incluiu estas. Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.07</code></td>
+      <td>ISS RETIDO</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.07</code></td>
+      <td>ISS RETIDO</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
     </tr>
     </tbody>
   </table><details><summary>Mais 5 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>

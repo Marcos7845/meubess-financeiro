@@ -572,7 +572,23 @@ pagar na empresa 1, em 8 títulos, e 24 de títulos a receber na empresa 2, em 1
 seguiam com saldo em aberto e 1 foi quitado depois da leitura, por isso também ficou sem a linha de título. Por
 isso a regra de não contar duas vezes, abaixo, guarda essa baixa: descartá-la fazia o pagamento parcial sumir da conta. A baixa
 traz `cCodCateg`, mas não `nCodOS`, `categorias[]` nem `departamentos[]` — quem os tem é o título, que esta leitura não devolve.
-A leitura de títulos a pagar sem filtro de data, que traria o título parcial inteiro, fica para depois.
+**A leitura do título a pagar inteiro — feita em 25/09/2026, das 15h23 às 15h24 (só leitura; `financas/pesquisartitulos` →
+`PesquisarLancamentos`, `cNatureza = "P"`, em duas passadas, `dDtVencDe` / `dDtVencAte` e `dDtEmisDe` / `dDtEmisAte` de
+01/01 a 31/12/2026, com as chaves `OMIE_MEUBESS_1` e `OMIE_MEUBESS_2`; a leitura ficou no cache local `.cache/omie/`,
+fora do git):** empresa 1, 1.518 títulos a pagar de 2026 (1.507 por vencimento, 1.438 por emissão, 11 só por emissão),
+1.380 no recorte da MeuBESS; empresa 2, 1.087 títulos (1.086 e 1.064, 1 só por emissão), 1.084 no recorte. As duas
+passadas juntas cobrem tudo o que a leitura por data de pagamento traz: os 823 títulos de despesa da empresa 1 e os 591
+da 2 que aparecem nela, no recorte da MeuBESS e em 2026, estão todos aqui — nenhum título pago em 2026 tem vencimento
+**e** emissão fora de 2026. **Títulos a pagar em parte pagos, com pagamento em 2026: 6 na empresa 1 e 3 na 2.** Nenhum
+dos nove vem com `cStatus = "PAGTO_PARCIAL"` — todos vêm como `"PAGO"`, e quem os identifica é `resumo.cLiquidado = "N"`
+com `resumo.nValPago` acima de zero e uma baixa em `lancamentos[]` (uma cada). **Quantos a regra nova já pega:** na
+empresa 1, 5 dos 6, como baixa de conta corrente; o sexto (`nCodTitulo` 6051143704) ficou de fora só porque foi baixado
+em 24/09/2026, depois da leitura daquele dia (14h46) — não aparece nela em conta nenhuma. Na empresa 2, nenhum dos 3
+(`nCodTitulo` 5228016911, 5232855897 e 5237326453): a baixa dos três saiu de conta corrente sem dono dito em
+`dados/contas-correntes-por-negocio.json`, fora do recorte da MeuBESS, ainda que o `cabecTitulo.nCodCC` do título seja de
+conta da MeuBESS — quem os deixa de fora é o recorte por conta corrente, não a regra de não contar duas vezes. **Nada
+muda nas contagens das linhas de despesa:** esta leitura confirma as 8 baixas de título a pagar da empresa 1, em 8
+títulos (cinco seguem em parte pagos e três foram quitados depois da leitura de 24/09), e nenhuma na empresa 2.
 
 **Cartões no topo (linha de 7):**
 
@@ -628,7 +644,11 @@ pagar na empresa 1, em 8 títulos, e 24 de títulos a receber na empresa 2, em 1
 seguiam com saldo em aberto e 1 foi quitado depois da leitura, por isso também ficou sem a linha de título. Por
 isso a regra de não contar duas vezes, abaixo, guarda essa baixa: descartá-la fazia o pagamento parcial sumir da conta. A baixa
 traz `cCodCateg`, mas não `nCodOS`, `categorias[]` nem `departamentos[]` — quem os tem é o título, que esta leitura não devolve.
-A leitura de títulos a pagar sem filtro de data, que traria o título parcial inteiro, fica para depois.
+**A leitura do título a pagar inteiro foi feita em 25/09/2026, das 15h23 às 15h24** (`financas/pesquisartitulos` →
+`PesquisarLancamentos`, `cNatureza = "P"`, por vencimento e por emissão em 2026, empresas 1 e 2, no cache local): dos
+títulos a pagar em parte pagos com pagamento em 2026 — 6 na empresa 1 e 3 na 2 —, 5 já entram pela regra nova, como baixa
+de conta corrente, e 4 não; nada muda nas contagens desta tela. A contagem inteira, com os `nCodTitulo` e o motivo de
+cada um ficar de fora, está no parágrafo igual a este, na Tela 1.
 
 **Cartões no topo (5, cada um com a linha do período embaixo):**
 

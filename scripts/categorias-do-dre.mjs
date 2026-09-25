@@ -8,12 +8,24 @@
 // SÓ LEITURA, E NEM ISSO NA API: este script não chama o Omie. Ele lê as respostas que o
 // `scripts/confronto-dfc-omie.mjs` já gravou no cache. Nada é escrito no Omie nem nas planilhas.
 //
+// UMA LEITURA SÓ, E É A DO FONTES.MD (corrigido em 25/09/2026, como o `scripts/categorias-de-receita.mjs` em 1a64df7): o
+// cache tem três leituras de `financas/mf` da mesma faixa — a sem `cTpLancamento` (a que o `docs/fontes.md` conta), a com
+// `cTpLancamento: "CPCR"` e uma só de títulos a receber, de 25/09/2026, que traz título em aberto e título baixado depois.
+// Juntar todas, como este script fazia, contava título que a leitura do fontes.md não tem (1 na empresa 1 e 184 na 2) e,
+// pior, contava cada avulso de conta corrente como se fosse um só: a deduplicação era pelo `nCodTitulo`, que no avulso
+// vem 0, então os 431 avulsos da empresa 1 e os 1.146 da 2 viravam um registro cada. Agora só entram as páginas da
+// leitura que o fontes.md descreve, achadas no cache pela mesma chave que o `scripts/confronto-dfc-omie.mjs` usa para
+// gravá-las (sha1 dos parâmetros; ver LEITURA_DO_FONTES), com a mesma regra de contagem das Telas 1 e 2 — recorte da
+// MeuBESS, sem transferência, sem o par do adiantamento ao fornecedor, e a baixa de parcial como terceiro balde — e uma
+// TRAVA que para o script se a contagem divergir do fontes.md (ver CONTAGEM_DO_FONTES).
+//
 // O QUE ELE NÃO FAZ: ele não decide nada. Quem decide é o dono; esta página é material para a decisão. O grupo (a) foi
 // decidido em 24/09/2026 (e revisto em 25/09/2026, sem o ISS RETIDO) e os grupos (b), (c) e (d) em 25/09/2026 (ver
 // DECIDIDO_A, DECIDIDO_B, DECISAO_C e DECIDIDO_D abaixo, que só REGISTRAM a resposta do dono); os quatro estão decididos.
 //
 //   node scripts/categorias-do-dre.mjs
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +34,33 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = path.join(RAIZ, '.cache', 'omie');
 const SAIDA = path.join(RAIZ, 'docs', 'categorias-do-dre.html');
 const LEITURA = '24/09/2026';
+const LEITURA_MOVIMENTOS = '24/09/2026, 14h46 às 14h49';
 const FAIXA = '01/01/2026 a 30/09/2026';
+
+// A LEITURA DE MOVIMENTOS QUE VALE: a única que o fontes.md conta, `financas/mf` → `ListarMovimentos` SEM
+// `cTpLancamento`, por data de pagamento na faixa. O `scripts/confronto-dfc-omie.mjs` grava cada página no cache com o
+// nome `<empresa>-financas-mf-ListarMovimentos-<sha1 dos parâmetros, 12 dígitos>.json`; aqui os parâmetros são
+// remontados iguais (a mesma ordem de campos, que o `JSON.stringify` respeita) para achar essas páginas e só elas. É o
+// mesmo par de linhas do `scripts/categorias-de-receita.mjs`, de propósito: as duas páginas contam a mesma leitura.
+const LEITURA_DO_FONTES = n => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: '01/01/2026', dDtPagtoAte: '30/09/2026' });
+const arquivoDaPagina = (emp, n) => path.join(CACHE,
+  `${emp}-financas-mf-ListarMovimentos-${crypto.createHash('sha1').update(JSON.stringify(LEITURA_DO_FONTES(n))).digest('hex').slice(0, 12)}.json`);
+
+// A TRAVA: a contagem de 2026 já escrita em docs/fontes.md (linhas de receita e de despesa das Telas 1 e 2), por empresa
+// e por natureza, em [títulos, baixas de parcial, avulsos]. Se o cache der outra coisa, o script para em vez de gravar
+// uma página que discorda da fonte. É a mesma trava do `scripts/categorias-de-receita.mjs`, com o lado da despesa junto.
+const CONTAGEM_DO_FONTES = { 1: { R: [9, 0, 159], P: [804, 8, 272] }, 2: { R: [523, 24, 607], P: [550, 3, 539] } };
+
+// AS CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B): transferência entre contas não é
+// receita nem despesa, e o fontes.md conta sem elas. O cadastro do Omie marca duas (`transferencia = "S"`: 0.01.01 e
+// 0.01.02); as de baixo se chamam "Transferência" sem a marca. A 1.04.96 e a 2.05.98 se chamam assim nas duas empresas;
+// a 1.04.97 só na empresa 1, porque na empresa 2 o mesmo código é "Prêmios de Seguros / Sinistros" e conta.
+const TRANSFERENCIA_SEM_MARCA = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
+
+// O PAR DO ADIANTAMENTO AO FORNECEDOR (decisão do dono, 25/09/2026, opção A): a ida do banco para a conta
+// `Adiantamento ao Fornecedor` é dinheiro andando entre duas contas da MeuBESS, e a despesa conta uma vez só, quando o
+// fornecedor é pago. Ficam fora (a) todo lançamento com `cOrigem = "ADCR"` (a chegada) e (b) todo lançamento de um
+// título que tenha, na mesma leitura, alguma linha com `cOrigem = "ADCP"` — o título da ida E a baixa dele.
 
 // O Omie devolve a descrição com entidades HTML dentro (`&lt;Disponível&gt;`); e nomes de terceiros saem mascarados,
 // com a mesma convenção de `docs/fontes.md`.
@@ -43,31 +81,81 @@ for (const emp of ['1', '2'])
   for (const f of arquivos.filter(x => x.startsWith(`${emp}-geral-categorias`)))
     categorias[emp].push(...(JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).categoria_cadastro ?? []));
 
-// Contagem de lançamentos por categoria. O cache tem duas passadas da mesma faixa (uma com `cTpLancamento: "CPCR"` e
-// outra sem), então cada título é contado uma vez só, pelo `nCodTitulo`. Fora os `CANCELADO`.
+// As páginas da leitura do fontes.md, e nenhuma outra. Se faltar página, o cache está incompleto: melhor parar do que
+// contar meia leitura.
+function movimentosDaLeitura(emp) {
+  if (!fs.existsSync(arquivoDaPagina(emp, 1))) {
+    console.error(`empresa ${emp}: a leitura por data de pagamento (sem cTpLancamento, ${FAIXA}) não está no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
+    process.exit(1);
+  }
+  const movimentos = [];
+  let paginas = 1;
+  for (let n = 1; n <= paginas; n++) {
+    const f = arquivoDaPagina(emp, n);
+    if (!fs.existsSync(f)) {
+      console.error(`empresa ${emp}: falta a página ${n} de ${paginas} da leitura por data de pagamento no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
+      process.exit(1);
+    }
+    const p = JSON.parse(fs.readFileSync(f, 'utf8'));
+    paginas = Number(p.nTotPaginas) || 1;
+    movimentos.push(...(p.movimentos ?? []));
+  }
+  return movimentos;
+}
+
+// Contagem de lançamentos por categoria, com a regra das Telas 1 e 2 (docs/fontes.md), receita e despesa juntas: uma
+// leitura só, recorte da MeuBESS por conta corrente, pagamento em 2026, fora os CANCELADO, fora as categorias de
+// transferência e fora o par do adiantamento ao fornecedor. SEM CONTAR DUAS VEZES: o título baixado volta na mesma
+// leitura como CONTA_A_PAGAR / CONTA_A_RECEBER e como CONTA_CORRENTE_PAG / CONTA_CORRENTE_REC com o mesmo `nCodTitulo`;
+// fica o título, um por `nCodTitulo`, e do conta corrente entram os dois que não têm título irmão nesta leitura, cada um
+// uma vez por `nCodMovCC`: o AVULSO, que vem com `nCodTitulo` 0, e a BAIXA DO TÍTULO QUITADO SÓ EM PARTE, que vem com
+// `nCodTitulo` preenchido e cujo título a leitura por data de pagamento não devolve.
+const contasMeuBess = new Set(JSON.parse(fs.readFileSync(path.join(RAIZ, 'dados', 'contas-correntes-por-negocio.json'), 'utf8'))
+  .contas.filter(c => c.negocio === 'MeuBESS').map(c => c.chave));
+const cadastro = { 1: new Map(), 2: new Map() };
+for (const emp of ['1', '2']) for (const c of categorias[emp]) cadastro[emp].set(String(c.codigo), c);
+const eTransferencia = (emp, cod) =>
+  cadastro[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA[emp].includes(String(cod));
+
 const lancamentos = { 1: new Map(), 2: new Map() };
-const vistos = { 1: new Set(), 2: new Set() };
-const arquivosDeMovimento = arquivos.filter(x => /-financas-mf-/.test(x));
-// De que dia é cada resposta do cache. O cache cresce: um script novo, com outra pergunta, grava mais respostas nele, e
-// a contagem desta página sobe junto. Por isso a data sai do próprio arquivo (data de gravação) e não de uma constante
-// escrita à mão, que envelhece sem avisar.
-const diasDoCache = [...new Set(arquivosDeMovimento.map(f =>
-  fs.statSync(path.join(CACHE, f)).mtime.toLocaleDateString('pt-BR')))].sort((a, b) =>
-  a.split('/').reverse().join('').localeCompare(b.split('/').reverse().join('')));
-const LEITURA_MOVIMENTOS = diasDoCache.length === 1
-  ? `leitura de ${diasDoCache[0]}`
-  : `leituras de ${diasDoCache.slice(0, -1).join(', ')} e ${diasDoCache.at(-1)}`;
-for (const f of arquivosDeMovimento) {
-  const emp = f[0];
-  if (!vistos[emp]) continue;
-  for (const mov of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).movimentos ?? []) {
-    const d = mov.detalhes ?? {};
-    if (d.cStatus === 'CANCELADO' || vistos[emp].has(d.nCodTitulo)) continue;
-    vistos[emp].add(d.nCodTitulo);
-    const c = d.cCodCateg || '(sem categoria)';
-    lancamentos[emp].set(c, (lancamentos[emp].get(c) ?? 0) + 1);
+const contados = { 1: null, 2: null };
+for (const emp of ['1', '2']) {
+  const noRecorte = movimentosDaLeitura(emp).map(m => m.detalhes ?? {}).filter(d =>
+    d.cStatus !== 'CANCELADO' && contasMeuBess.has(`${emp}|${d.nCodCC}`) && /\/2026$/.test(d.dDtPagamento ?? ''));
+  const titulosDoAdiantamento = new Set(noRecorte.filter(d => d.cOrigem === 'ADCP' && d.nCodTitulo).map(d => d.nCodTitulo));
+  const balde = { R: null, P: null };
+  for (const nat of ['R', 'P']) {
+    const titulos = new Map(), baixas = new Map(), avulsos = new Map();
+    for (const d of noRecorte) {
+      if (d.cNatureza !== nat) continue;
+      if (eTransferencia(emp, d.cCodCateg)) continue;
+      if (d.cOrigem === 'ADCR') continue;
+      if (d.nCodTitulo && titulosDoAdiantamento.has(d.nCodTitulo)) continue;
+      if (d.cGrupo === 'CONTA_A_RECEBER' || d.cGrupo === 'CONTA_A_PAGAR') titulos.set(d.nCodTitulo, d);
+      else if (d.cGrupo === 'CONTA_CORRENTE_REC' || d.cGrupo === 'CONTA_CORRENTE_PAG') (d.nCodTitulo ? baixas : avulsos).set(d.nCodMovCC, d);
+    }
+    // Do conta corrente com título, fica só a baixa cujo título esta leitura não traz: a do pagamento parcial. A do
+    // título quitado é a segunda cara do mesmo dinheiro e sai.
+    for (const [mov, d] of baixas) if (titulos.has(d.nCodTitulo)) baixas.delete(mov);
+    for (const lista of [titulos, baixas, avulsos]) for (const d of lista.values()) {
+      const c = d.cCodCateg || '(sem categoria)';
+      lancamentos[emp].set(c, (lancamentos[emp].get(c) ?? 0) + 1);
+    }
+    balde[nat] = [titulos.size, baixas.size, avulsos.size];
+  }
+  contados[emp] = balde;
+}
+// A trava: o cache tem de dar exatamente o que docs/fontes.md diz.
+const rotuloNat = { R: 'entradas', P: 'saídas' };
+for (const emp of ['1', '2']) for (const nat of ['R', 'P']) {
+  const meu = contados[emp][nat], dito = CONTAGEM_DO_FONTES[emp][nat];
+  if (meu.some((x, i) => x !== dito[i])) {
+    console.error(`empresa ${emp}, ${rotuloNat[nat]}: o cache dá ${meu[0]} títulos + ${meu[1]} baixas de parcial + ${meu[2]} avulsos, e docs/fontes.md diz ${dito[0]} + ${dito[1]} + ${dito[2]}.`);
+    process.exit(1);
   }
 }
+const totalLancamentos = ['1', '2'].reduce((s, emp) =>
+  s + ['R', 'P'].reduce((t, nat) => t + contados[emp][nat].reduce((a, b) => a + b, 0), 0), 0);
 
 // ---------------------------------------------------------------- as duas pistas
 
@@ -120,6 +208,9 @@ const DECISAO_B = '25/09/2026';
 // movimento: empréstimos bancários e financiamento de veículo) ficam anotadas como "decidir depois". Cuidado com o código:
 // 2.05.99 é "Transferência Intercompany" na empresa 1 e "Tarifas Bancarias" (resultado financeiro) na 2; 2.10.98 é
 // intercompany só na empresa 2. Por isso a chave é sempre `empresa:código`. Isto REGISTRA a decisão; não é heurística.
+// A decisão falava das sobras como "sem movimento"; com a contagem corrigida em 25/09/2026 (uma leitura só), uma delas —
+// Financiamento Veiculo (1:2.11.95) — tem 1 lançamento. A DECISÃO NÃO MUDA: ela segue como "decidir depois"; o que muda é
+// que a página a mostra na tabela visível, e não escondida atrás do "mostrar mais" das sem movimento.
 const DECIDIDO_D = new Set(['1:1.02.02', '1:2.06.95', '2:1.02.02', '2:2.06.95']);
 const FORA_D = new Map([
   ['1:2.11.98', 'despesas gerais'], ['1:2.11.99', 'despesas gerais'],
@@ -217,6 +308,13 @@ if (adicionadasB.length !== DECIDIDO_B.size || adicionadasB.some(r => r.n === 0 
   process.exit(1);
 }
 
+// O QUE A CONTAGEM CORRIGIDA MEXE NO GRUPO (b), SEM MEXER NA DECISÃO. O critério do dono, em 25/09/2026, foi "as em
+// dúvida COM movimento apontadas só pelo nome". A contagem daquele dia era a antiga (três leituras juntas e todo avulso
+// de conta corrente contado como um só), e por ela algumas categorias apareciam com ZERO. Com a leitura única elas têm
+// movimento e seguiriam o mesmo critério — mas a DECISÃO NÃO MUDA aqui: elas continuam fora, e a página as aponta para o
+// dono decidir. Esta lista é calculada, não escrita à mão.
+const novasComMovimentoB = emDuvida.b.filter(r => r.n > 0 && r.pista === 'nome');
+
 // Grupo (d): as sugeridas mais as quatro em dúvida que o dono incluiu; sete em dúvida têm destino escrito (despesas gerais ou
 // fora do DRE); o que sobra em dúvida fica como "decidir depois".
 const chaveD = r => `${r.emp}:${r.codigo}`;
@@ -226,8 +324,8 @@ const decididasD = [...sugeridas.d, ...adicionadasD]
 const foraD = emDuvida.d.filter(r => FORA_D.has(chaveD(r)))
   .sort((x, y) => FORA_D.get(chaveD(x)).localeCompare(FORA_D.get(chaveD(y))) || x.emp.localeCompare(y.emp) || x.codigo.localeCompare(y.codigo));
 emDuvida.d = emDuvida.d.filter(r => !DECIDIDO_D.has(chaveD(r)) && !FORA_D.has(chaveD(r)));
-if (adicionadasD.length !== DECIDIDO_D.size || foraD.length !== FORA_D.size || emDuvida.d.some(r => r.n > 0)) {
-  console.error(`a decisão do dono cita ${DECIDIDO_D.size} incluídas e ${FORA_D.size} com destino, o cache achou ${adicionadasD.length} e ${foraD.length}, ou sobrou "decidir depois" com movimento.`);
+if (adicionadasD.length !== DECIDIDO_D.size || foraD.length !== FORA_D.size) {
+  console.error(`a decisão do dono cita ${DECIDIDO_D.size} incluídas e ${FORA_D.size} com destino, e o cache achou ${adicionadasD.length} e ${foraD.length}.`);
   process.exit(1);
 }
 
@@ -277,9 +375,18 @@ function bloco(g) {
     <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_B}.</strong> Custo de vendas são as ${sug.length}
     sugeridas mais ${adicionadasB.length} das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
     matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome): ${decididasB.length} códigos.
-    Ficaram de fora as 2 apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
-    <code>2.08.98</code> Reembolso) e as ${semMov.length} em dúvida sem movimento.</p>
-  </div>
+    Ficaram de fora as apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
+    <code>2.08.98</code> Reembolso) e as que, na contagem daquele dia, não tinham movimento.</p>
+  </div>${novasComMovimentoB.length ? `
+  <div class="aviso" style="border-radius:0 6px 6px 0">
+    <p style="margin:0"><strong>A contagem mudou depois da decisão — ${novasComMovimentoB.length} categorias merecem uma segunda olhada.</strong>
+    A decisão de ${DECISAO_B} usou a contagem antiga desta página, que juntava as três leituras do cache e contava todos os
+    lançamentos avulsos de conta corrente como um só. Corrigida (uma leitura só, a do <code>docs/fontes.md</code>), estas
+    ${novasComMovimentoB.length}, que naquele dia apareciam com <strong>zero</strong> lançamento e por isso ficaram de fora,
+    aparecem agora <strong>com movimento e apontadas pelo nome</strong> — o mesmo critério que o dono usou para incluir as
+    ${adicionadasB.length}: ${novasComMovimentoB.map(r => `<code>${esc(r.codigo)}</code> ${esc(r.desc)} (empresa ${r.emp}, ${r.n} lanç.)`).join(', ')}.
+    <strong>A decisão não foi mexida:</strong> elas seguem fora do custo de vendas, na tabela abaixo. Vale o dono dizer se entram.</p>
+  </div>` : ''}
   <div class="chamada">
     <p style="margin:0"><strong>A tela reclassifica pela lista, não pela conta do DRE.</strong> Várias das decididas hoje estão
     numa conta de despesa do DRE no Omie (Despesas Variáveis, Despesas Administrativas, Despesas com Pessoal) ou sem conta;
@@ -340,13 +447,13 @@ function bloco(g) {
   }
 
   if (comMov.length) {
-    corpo += `<h3>${g === 'a' || g === 'b' ? 'Ficaram de fora da decisão' : 'Em dúvida'}: ${comMov.length} com movimento no período</h3>
-  <p class="nota">${g === 'a' || g === 'b' ? 'A decisão do dono não incluiu estas. ' : ''}Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+    corpo += `<h3>${g === 'a' || g === 'b' || g === 'd' ? 'Ficaram de fora da decisão' : 'Em dúvida'}: ${comMov.length} com movimento no período</h3>
+  <p class="nota">${g === 'a' || g === 'b' ? 'A decisão do dono não incluiu estas. ' : ''}${g === 'd' ? 'A decisão do dono deixou estas como "decidir depois". ' : ''}Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   ${tabela(comMov, true)}`;
   }
   if (semMov.length) {
-    corpo += `<details><summary>${g === 'd' ? `Ficaram de fora da decisão: ${semMov.length} sem nenhum lançamento de ${FAIXA} (empréstimos bancários e financiamento de veículo) — decidir depois` : `Mais ${semMov.length} em dúvida, sem nenhum lançamento de ${FAIXA} — cadastro parado, decidir depois`}</summary>
+    corpo += `<details><summary>${g === 'd' ? `Ficaram de fora da decisão: ${semMov.length} sem nenhum lançamento de ${FAIXA} — decidir depois` : `Mais ${semMov.length} em dúvida, sem nenhum lançamento de ${FAIXA} — cadastro parado, decidir depois`}</summary>
   ${tabela(semMov, true)}</details>`;
   }
   if (!comMov.length && !semMov.length && sug.length) corpo += `<p class="nota">Nenhuma categoria ficou em dúvida neste grupo.</p>`;
@@ -450,7 +557,7 @@ const html = `<!doctype html>
     <div><b>${totalSug}</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
     <div><b>${totalDuv}</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>${consideradas}</b><span>categorias olhadas (empresas 1 e 2)</span></div>
-    <div><b>${vistos[1].size + vistos[2].size}</b><span>lançamentos contados, ${FAIXA}</span></div>
+    <div><b>${totalLancamentos}</b><span>lançamentos contados, ${FAIXA}, no recorte da MeuBESS</span></div>
   </div>
 
   <ul class="indice">
@@ -501,9 +608,18 @@ ${['a', 'b', 'c', 'd'].map(bloco).join('\n\n')}
   ${LEITURA} (<code>geral/categorias</code> → <code>ListarCategorias</code>, ${categorias[1].length} categorias na
   empresa 1 e ${categorias[2].length} na 2), com a conta do DRE de cada uma vindo do próprio retorno
   (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem de
-  <code>financas/mf</code> → <code>ListarMovimentos</code>, de <strong>todas</strong> as respostas que estão no cache local
-  (${LEITURA_MOVIMENTOS}), na faixa de ${FAIXA} por data de pagamento,
-  fora os <code>CANCELADO</code>, contando cada título uma vez pelo <code>nCodTitulo</code>.</p>
+  <code>financas/mf</code> → <code>ListarMovimentos</code>, <strong>sem</strong> <code>cTpLancamento</code>, por data de
+  pagamento de ${FAIXA}, a leitura de ${LEITURA_MOVIMENTOS} e <strong>só ela</strong>: o cache tem outras duas leituras da
+  mesma faixa (uma com <code>cTpLancamento: "CPCR"</code> e uma só de títulos a receber, de 25/09/2026), e juntá-las
+  trazia título que esta não tem — 1 na empresa 1 e 184 na 2. A regra de contagem é a das Telas 1 e 2, escrita em
+  <code>docs/fontes.md</code>: só as contas correntes com <code>negocio = "MeuBESS"</code>, pagamento em 2026, fora os
+  <code>CANCELADO</code>, fora as categorias de transferência e fora o par do adiantamento ao fornecedor
+  (<code>cOrigem</code> <code>ADCR</code> e os títulos <code>ADCP</code>), contando cada título uma vez pelo
+  <code>nCodTitulo</code> e, do conta corrente, os dois que não têm título irmão nesta leitura — o <strong>avulso</strong>
+  e a <strong>baixa do título quitado só em parte</strong> —, cada um uma vez pelo <code>nCodMovCC</code>. Dá
+  ${CONTAGEM_DO_FONTES[1].R.reduce((a, b) => a + b, 0)} entradas e ${CONTAGEM_DO_FONTES[1].P.reduce((a, b) => a + b, 0)} saídas
+  na empresa 1 e ${CONTAGEM_DO_FONTES[2].R.reduce((a, b) => a + b, 0)} e ${CONTAGEM_DO_FONTES[2].P.reduce((a, b) => a + b, 0)}
+  na 2, exatamente o que o <code>docs/fontes.md</code> diz — o script <strong>para</strong> se divergir.</p>
   <p>Ficaram de fora da conta: ${totalizadoras} categorias totalizadoras (são somas, não recebem lançamento),
   ${slotsVazios} vagas <code>&lt;Disponível&gt;</code> do plano padrão do Omie e ${transferencias} de transferência
   entre contas. Nome de terceiro aparece como <code>[terceiro]</code>, como em <code>docs/fontes.md</code>.</p>

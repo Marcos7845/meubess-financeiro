@@ -86,7 +86,7 @@
     <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
     <div><b>20</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
-    <div><b>2356</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
+    <div><b>3498</b><span>lançamentos contados, 01/01/2026 a 30/09/2026, no recorte da MeuBESS</span></div>
   </div>
 
   <ul class="indice">
@@ -154,7 +154,7 @@
       <td><code>2.09.01</code></td>
       <td>Devoluções de Vendas de Mercadoria</td>
       <td><code>1.01.03</code> Deduções de Receita</td>
-      <td class="num">0</td>
+      <td class="num">2</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -168,7 +168,7 @@
       <td><code>2.02.97</code></td>
       <td>Reembolso por cancelamento</td>
       <td><code>2.01.01</code> Despesas Variáveis</td>
-      <td class="num">4</td>
+      <td class="num">5</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -206,20 +206,12 @@
       <td class="num">0</td>
     </tr>
     </tbody>
-  </table><h3>Ficaram de fora da decisão: 2 com movimento no período</h3>
+  </table><h3>Ficaram de fora da decisão: 3 com movimento no período</h3>
   <p class="nota">A decisão do dono não incluiu estas. Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
     <tbody>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.06.07</code></td>
-      <td>ISS RETIDO</td>
-      <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">6</td>
-      <td class="pista">só nome</td>
-    </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.06.07</code></td>
@@ -228,8 +220,24 @@
       <td class="num">6</td>
       <td class="pista">só nome</td>
     </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.07</code></td>
+      <td>ISS RETIDO</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">5</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.02.96</code></td>
+      <td>Estorno de venda</td>
+      <td><code>2.01.01</code> Despesas Variáveis</td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
     </tbody>
-  </table><details><summary>Mais 5 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  </table><details><summary>Mais 4 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
     <tbody>
@@ -246,14 +254,6 @@
       <td><code>2.06.99</code></td>
       <td>Simples Nacional (DAS)</td>
       <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.02.96</code></td>
-      <td>Estorno de venda</td>
-      <td><code>2.01.01</code> Despesas Variáveis</td>
       <td class="num">0</td>
       <td class="pista">só nome</td>
     </tr>
@@ -285,8 +285,17 @@
     <p style="margin:0"><strong>Decidido pelo dono em 25/09/2026.</strong> Custo de vendas são as 18
     sugeridas mais 17 das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
     matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome): 35 códigos.
-    Ficaram de fora as 2 apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
-    <code>2.08.98</code> Reembolso) e as 6 em dúvida sem movimento.</p>
+    Ficaram de fora as apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
+    <code>2.08.98</code> Reembolso) e as que, na contagem daquele dia, não tinham movimento.</p>
+  </div>
+  <div class="aviso" style="border-radius:0 6px 6px 0">
+    <p style="margin:0"><strong>A contagem mudou depois da decisão — 3 categorias merecem uma segunda olhada.</strong>
+    A decisão de 25/09/2026 usou a contagem antiga desta página, que juntava as três leituras do cache e contava todos os
+    lançamentos avulsos de conta corrente como um só. Corrigida (uma leitura só, a do <code>docs/fontes.md</code>), estas
+    3, que naquele dia apareciam com <strong>zero</strong> lançamento e por isso ficaram de fora,
+    aparecem agora <strong>com movimento e apontadas pelo nome</strong> — o mesmo critério que o dono usou para incluir as
+    17: <code>2.01.96</code> Energia Elétrica-Custo (empresa 2, 6 lanç.), <code>2.01.89</code> Gas para empilhadeira -Custos (empresa 2, 5 lanç.), <code>2.01.92</code> Armanezagem e manuseio de Carga -Custos (empresa 2, 3 lanç.).
+    <strong>A decisão não foi mexida:</strong> elas seguem fora do custo de vendas, na tabela abaixo. Vale o dono dizer se entram.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>A tela reclassifica pela lista, não pela conta do DRE.</strong> Várias das decididas hoje estão
@@ -311,14 +320,14 @@
       <td><code>2.01.02</code></td>
       <td>Fretes s/ compras</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">0</td>
+      <td class="num">4</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.01.03</code></td>
       <td>Compras de Materia Prima</td>
       <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">26</td>
+      <td class="num">32</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -353,7 +362,7 @@
       <td><code>2.01.85</code></td>
       <td>Seguro de Vida- Custo (estoque)</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">2</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -381,7 +390,7 @@
       <td><code>2.01.89</code></td>
       <td>Pensão Alimentícia- Custo (estoque)</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">6</td>
+      <td class="num">8</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -395,7 +404,7 @@
       <td><code>2.01.91</code></td>
       <td>FGTS-  Custo (estoque)</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">2</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -430,49 +439,49 @@
       <td><code>2.01.96</code></td>
       <td>Adiantamento de Salário (custo)</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">3</td>
+      <td class="num">4</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.01.97</code></td>
       <td>Salários - Custo (estoque)</td>
       <td><code>2.11.01</code> Despesas com Pessoal</td>
-      <td class="num">8</td>
+      <td class="num">10</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.01.99</code></td>
       <td>Gás para empilhadeira - Custos</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">7</td>
+      <td class="num">0</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.04.88</code></td>
       <td>Armazém e Manuseio</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">1</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.01</code></td>
       <td>Compras de Mercadorias para Revenda</td>
       <td><code>2.01.01</code> Despesas Variáveis</td>
-      <td class="num">53</td>
+      <td class="num">70</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.02</code></td>
       <td>Fretes s/ compras</td>
       <td><code>2.01.01</code> Despesas Variáveis</td>
-      <td class="num">227</td>
+      <td class="num">246</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.03</code></td>
       <td>Compras de Materia Prima</td>
       <td><code>2.01.01</code> Despesas Variáveis</td>
-      <td class="num">126</td>
+      <td class="num">176</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -486,42 +495,42 @@
       <td><code>2.01.90</code></td>
       <td>Vigilância e Monitoramento -Custos</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">2</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.91</code></td>
       <td>Locação de Máquinas e Equipamentos-Custos</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">21</td>
+      <td class="num">22</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.93</code></td>
       <td>Seguros de carga -Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">6</td>
+      <td class="num">8</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.94</code></td>
       <td>IPTU- Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">3</td>
+      <td class="num">9</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.95</code></td>
       <td>Telefone e Internet -Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">1</td>
+      <td class="num">7</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.01.97</code></td>
       <td>Água e Esgoto-Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">1</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -542,10 +551,10 @@
       <td><code>2.08.99</code></td>
       <td>Reembolso - Custo</td>
       <td><code>2.01.01</code> Despesas Variáveis</td>
-      <td class="num">3</td>
+      <td class="num">12</td>
     </tr>
     </tbody>
-  </table><h3>Ficaram de fora da decisão: 2 com movimento no período</h3>
+  </table><h3>Ficaram de fora da decisão: 6 com movimento no período</h3>
   <p class="nota">A decisão do dono não incluiu estas. Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   <table>
@@ -553,22 +562,54 @@
     <tbody>
 <tr>
       <td class="emp">1</td>
-      <td><code>2.08.99</code></td>
-      <td>OUTRAS DESPESAS</td>
+      <td><code>2.08.98</code></td>
+      <td>Reembolso</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">15</td>
+      <td class="num">45</td>
       <td class="pista">só conta do DRE</td>
     </tr>
 <tr>
       <td class="emp">1</td>
-      <td><code>2.08.98</code></td>
-      <td>Reembolso</td>
+      <td><code>2.08.99</code></td>
+      <td>OUTRAS DESPESAS</td>
       <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">11</td>
+      <td class="num">33</td>
+      <td class="pista">só conta do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.96</code></td>
+      <td>Energia Elétrica-Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">6</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.89</code></td>
+      <td>Gas para empilhadeira -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">5</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.92</code></td>
+      <td>Armanezagem e manuseio de Carga -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">3</td>
+      <td class="pista">só nome</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
       <td class="pista">só conta do DRE</td>
     </tr>
     </tbody>
-  </table><details><summary>Mais 6 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  </table><details><summary>Mais 2 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
     <tbody>
@@ -584,38 +625,6 @@
       <td class="emp">1</td>
       <td><code>2.02.94</code></td>
       <td>Seguro - mercadoria</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.11.95</code></td>
-      <td>Financiamento Veiculo</td>
-      <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">0</td>
-      <td class="pista">só conta do DRE</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.89</code></td>
-      <td>Gas para empilhadeira -Custos</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.92</code></td>
-      <td>Armanezagem e manuseio de Carga -Custos</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.96</code></td>
-      <td>Energia Elétrica-Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
       <td class="num">0</td>
       <td class="pista">só nome</td>
@@ -688,7 +697,7 @@
       <td><code>1.02.02</code></td>
       <td>Rendimentos de Aplicações</td>
       <td><code>1.11.01</code> Outras Receitas</td>
-      <td class="num">7</td>
+      <td class="num">54</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -709,21 +718,21 @@
       <td><code>2.05.02</code></td>
       <td>Juros e Multas pagos</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">1</td>
+      <td class="num">2</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.05.04</code></td>
       <td>Tarifas Bancárias</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">6</td>
+      <td class="num">91</td>
     </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>2.06.95</code></td>
       <td>IOF</td>
       <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">6</td>
+      <td class="num">5</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -737,14 +746,14 @@
       <td><code>1.04.94</code></td>
       <td>Rendimento Financeiro</td>
       <td><code>1.11.02</code> Receitas Financeiras</td>
-      <td class="num">0</td>
+      <td class="num">11</td>
     </tr>
 <tr>
       <td class="emp">2</td>
       <td><code>2.04.91</code></td>
       <td>Emprestimo</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">0</td>
+      <td class="num">2</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -765,7 +774,7 @@
       <td><code>2.05.04</code></td>
       <td>Tarifas Bancárias</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">3</td>
+      <td class="num">31</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -792,7 +801,7 @@
       <td><code>2.11.98</code></td>
       <td>Cartão de Credito</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">69</td>
+      <td class="num">67</td>
       <td>despesas gerais do DRE</td>
     </tr>
 <tr>
@@ -816,7 +825,7 @@
       <td><code>2.05.99</code></td>
       <td>Transferência Intercompany</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">2</td>
+      <td class="num">6</td>
       <td>fora do DRE (intercompany)</td>
     </tr>
 <tr>
@@ -824,7 +833,7 @@
       <td><code>2.08.02</code></td>
       <td>Pagamento empréstimo Intercompany [terceiro]</td>
       <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">3</td>
+      <td class="num">6</td>
       <td>fora do DRE (intercompany)</td>
     </tr>
 <tr>
@@ -844,7 +853,22 @@
       <td>fora do DRE (intercompany)</td>
     </tr>
     </tbody>
-  </table><details><summary>Ficaram de fora da decisão: 5 sem nenhum lançamento de 01/01/2026 a 30/09/2026 (empréstimos bancários e financiamento de veículo) — decidir depois</summary>
+  </table><h3>Ficaram de fora da decisão: 1 com movimento no período</h3>
+  <p class="nota">A decisão do dono deixou estas como "decidir depois". Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
+  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+      <td class="pista">só nome</td>
+    </tr>
+    </tbody>
+  </table><details><summary>Ficaram de fora da decisão: 4 sem nenhum lançamento de 01/01/2026 a 30/09/2026 — decidir depois</summary>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
     <tbody>
@@ -861,14 +885,6 @@
       <td><code>2.05.03</code></td>
       <td>Pagamento de Empréstimos Bancários</td>
       <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.11.95</code></td>
-      <td>Financiamento Veiculo</td>
-      <td><code>1.21.03</code> Outros Custos</td>
       <td class="num">0</td>
       <td class="pista">só nome</td>
     </tr>
@@ -916,9 +932,18 @@
   24/09/2026 (<code>geral/categorias</code> → <code>ListarCategorias</code>, 183 categorias na
   empresa 1 e 167 na 2), com a conta do DRE de cada uma vindo do próprio retorno
   (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem de
-  <code>financas/mf</code> → <code>ListarMovimentos</code>, de <strong>todas</strong> as respostas que estão no cache local
-  (leituras de 24/09/2026 e 25/09/2026), na faixa de 01/01/2026 a 30/09/2026 por data de pagamento,
-  fora os <code>CANCELADO</code>, contando cada título uma vez pelo <code>nCodTitulo</code>.</p>
+  <code>financas/mf</code> → <code>ListarMovimentos</code>, <strong>sem</strong> <code>cTpLancamento</code>, por data de
+  pagamento de 01/01/2026 a 30/09/2026, a leitura de 24/09/2026, 14h46 às 14h49 e <strong>só ela</strong>: o cache tem outras duas leituras da
+  mesma faixa (uma com <code>cTpLancamento: "CPCR"</code> e uma só de títulos a receber, de 25/09/2026), e juntá-las
+  trazia título que esta não tem — 1 na empresa 1 e 184 na 2. A regra de contagem é a das Telas 1 e 2, escrita em
+  <code>docs/fontes.md</code>: só as contas correntes com <code>negocio = "MeuBESS"</code>, pagamento em 2026, fora os
+  <code>CANCELADO</code>, fora as categorias de transferência e fora o par do adiantamento ao fornecedor
+  (<code>cOrigem</code> <code>ADCR</code> e os títulos <code>ADCP</code>), contando cada título uma vez pelo
+  <code>nCodTitulo</code> e, do conta corrente, os dois que não têm título irmão nesta leitura — o <strong>avulso</strong>
+  e a <strong>baixa do título quitado só em parte</strong> —, cada um uma vez pelo <code>nCodMovCC</code>. Dá
+  168 entradas e 1084 saídas
+  na empresa 1 e 1154 e 1092
+  na 2, exatamente o que o <code>docs/fontes.md</code> diz — o script <strong>para</strong> se divergir.</p>
   <p>Ficaram de fora da conta: 34 categorias totalizadoras (são somas, não recebem lançamento),
   42 vagas <code>&lt;Disponível&gt;</code> do plano padrão do Omie e 4 de transferência
   entre contas. Nome de terceiro aparece como <code>[terceiro]</code>, como em <code>docs/fontes.md</code>.</p>

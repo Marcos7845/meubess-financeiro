@@ -59,19 +59,22 @@
 <header>
   <h1>Categorias de receita do Omie: o que é venda de produto</h1>
   <p>Na Tela 2, a linha <strong>(+) Receitas</strong> separa <strong>vendas de produtos</strong> de <strong>outras receitas</strong>
-  pela <strong>categoria</strong> do Omie (decisão do dono, 25/09/2026). Falta dizer <strong>quais categorias são venda de produto</strong>.
-  Esta página lista as 67 categorias de receita das empresas 1 e 2 (sem as de transferência), lado a lado quando o
+  pela <strong>categoria</strong> do Omie (decisão do dono, 25/09/2026). Quais categorias são venda de produto é a sugestão
+  desta página, que o dono <strong>aceitou inteira em 25/09/2026</strong>.
+  Esta página lista as 68 categorias de receita das empresas 1 e 2 (sem as de transferência), lado a lado quando o
   código é o mesmo, com a contagem de recebimentos de 2026 e uma <strong>sugestão</strong> pelo nome e pela origem.
   Você aceita o grupo inteiro ou muda o destino de uma categoria, e a página monta a resposta no fim.</p>
 
   <div class="chamada">
-    <p style="margin:0"><strong>Só a sugestão está pronta; a decisão é sua.</strong> Nada foi escrito no Omie nem em
-    <code>docs/fontes.md</code>. <strong>Não há valores em reais nesta página</strong>: só contagens de recebimentos.</p>
+    <p style="margin:0"><strong>Decidido em 25/09/2026: o dono aceitou todas as sugestões desta página.</strong> A divisão
+    abaixo é a que vale, e está escrita na linha <strong>(+) Receitas</strong> da Tela 2, em <code>docs/fontes.md</code>.
+    Nada foi escrito no Omie. <strong>Não há valores em reais nesta página</strong>: só contagens de recebimentos.
+    Os seletores continuam aqui para rever a decisão, se um dia o dono mudar de ideia.</p>
   </div>
 
   <div class="placar">
     <div><b>6</b><span>categorias sugeridas como venda de produto (3 códigos), com 1234 recebimentos</span></div>
-    <div><b>53</b><span>categorias sugeridas como outra receita (27 códigos), com 82 recebimentos</span></div>
+    <div><b>54</b><span>categorias sugeridas como outra receita (28 códigos), com 82 recebimentos</span></div>
     <div><b>1316</b><span>recebimentos em 2026, 01/01/2026 a 30/09/2026</span></div>
     <div><b>8</b><span>totalizadoras (somas, não recebem lançamento), fora da sugestão</span></div>
   </div>
@@ -81,11 +84,13 @@
   <h2 style="font-size:1.1rem">Como ler, em meio minuto</h2>
   <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>) mais lançamento
   avulso de conta corrente (<strong>avulsos</strong>), de 01/01/2026 a 30/09/2026 por data de pagamento, só nas contas da MeuBESS, sem
-  cancelados e sem transferências, e sem contar duas vezes. <strong>Cinco categorias de transferência ficaram fora da página
+  cancelados e sem transferências, e sem contar duas vezes. <strong>As categorias de transferência ficaram fora da página
   e da soma, por decisão do dono de 25/09/2026 (opção B):</strong> as duas que o Omie marca como transferência,
-  <code>0.01.01</code> Entrada de Transferência e <code>0.01.02</code> Saída de Transferência, e mais três chamadas
-  "Transferência" <strong>sem</strong> a marca, <code>1.04.96</code>, <code>1.04.97</code> e <code>2.05.98</code>, nas duas
-  empresas — transferência entre contas não é receita. <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
+  <code>0.01.01</code> Entrada de Transferência e <code>0.01.02</code> Saída de Transferência, e mais as chamadas
+  "Transferência" <strong>sem</strong> a marca, <code>1.04.96</code> e <code>2.05.98</code> nas duas empresas e
+  <code>1.04.97</code> <strong>só na empresa 1</strong> — cinco fora na empresa 1 e quatro na 2. Na empresa 2 o código
+  <code>1.04.97</code> se chama "Prêmios de Seguros / Sinistros", não é transferência e por isso <strong>está na página</strong>,
+  como outra receita (decisão do dono, 25/09/2026; sem nenhum recebimento em 2026). <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
   (<code>nCodOS</code> preenchido); o avulso nunca tem.</p>
   <p><strong>A sugestão</strong> olha duas coisas. O <strong>nome</strong>: "venda de produtos" e "revenda de mercadorias" dizem venda de produto;
   serviço, rendimento, reembolso, capital, transferência, empréstimo, devolução e "não identificadas" não dizem. A <strong>origem</strong>:
@@ -147,10 +152,10 @@
 </section>
 
 <section id="grupo-outra" data-grupo="outra">
-  <h2>Sugeridas como <span style="color:var(--outra)">outra receita</span>: 53 categorias</h2>
+  <h2>Sugeridas como <span style="color:var(--outra)">outra receita</span>: 54 categorias</h2>
   <p class="paraque">Entram em "outras receitas" na linha (+) Receitas: rendimento, reembolso, transferência, capital, empréstimo, devolução, dividendo e o que não é venda de produto.</p>
   <div class="placar">
-    <div><b>53</b><span>categorias (27 códigos)</span></div>
+    <div><b>54</b><span>categorias (28 códigos)</span></div>
     <div><b>82</b><span>recebimentos em 2026 (0 de pedido)</span></div>
     <div><b>7</b><span>códigos com recebimento</span></div>
   </div>
@@ -230,7 +235,7 @@
     </tr>
     </tbody>
   </table></div>
-  <details><summary>Sem nenhum recebimento em 2026: 20 códigos (cadastro parado, vagas e categorias inativas)</summary>
+  <details><summary>Sem nenhum recebimento em 2026: 21 códigos (cadastro parado, vagas e categorias inativas)</summary>
   <div class="tabela"><table>
     <thead>
       <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="3" class="g">empresa 1</th><th colspan="3" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
@@ -408,6 +413,15 @@
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.95"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
     </tr>
+<tr data-cod="1.04.97" data-sug="outra" class="">
+      <td><code>1.04.97</code></td>
+      <td class="cat"><div><span class="e">emp. 1</span> <span class="vazia">não existe</span></div><div><span class="e">emp. 2</span> Prêmios de Seguros / Sinistros</div></td>
+      <td class="num vazia" colspan="3">—</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num tot">0</td>
+      <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
+      <td class="dec"><select aria-label="destino de 1.04.97"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
+    </tr>
 <tr data-cod="1.04.98" data-sug="outra" class="">
       <td><code>1.04.98</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Implantação de saldo (entradas)</div><div><span class="e">emp. 2</span> Implantação de saldos (entradas)</div></td>
@@ -446,10 +460,10 @@
   <code>ListarCategorias</code>) e dos movimentos já lidos (<code>financas/mf</code> → <code>ListarMovimentos</code>, sem
   <code>cTpLancamento</code>) no cache local, leituras de 24 e 25/09/2026. A contagem é a da linha do Top 10 receitas de
   <code>docs/fontes.md</code>: empresa 1, 9 títulos + 159 avulsos; empresa 2, 541 + 607.
-  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as cinco categorias de
-  transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>,
-  <code>1.04.97</code> e <code>2.05.98</code>; todas só aparecem no avulso — 1 lançamento na empresa 1 e 34 na 2 pelas três sem
-  marca) e o que está fora das contas da MeuBESS.
+  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as categorias de
+  transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>
+  e <code>2.05.98</code> nas duas empresas e <code>1.04.97</code> só na empresa 1; todas só aparecem no avulso — 1 lançamento na
+  empresa 1 e 34 na 2 pelas sem marca) e o que está fora das contas da MeuBESS.
   Nome de terceiro aparece como <code>[terceiro]</code>.</p>
   <p>Página gerada por <code>scripts/categorias-de-receita.mjs</code>, que <strong>não chama a API do Omie</strong> e não escreve
   no Omie nem em planilhas. As decisões só valem quando registradas em <code>docs/fontes.md</code>.</p>

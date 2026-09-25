@@ -12,9 +12,10 @@
 // `scripts/confronto-dfc-omie.mjs` gravou. Só contagens: nenhum valor em reais e nenhum nome de cliente entra na página.
 //
 // A REGRA DE CONTAGEM (a mesma de docs/fontes.md, Top 10 receitas): ListarMovimentos sem cTpLancamento, por data de
-// pagamento de 01/01 a 30/09/2026; `cNatureza = "R"`; fora os CANCELADO; fora as categorias de transferência; só as contas
-// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json); fora as cinco categorias de transferência
-// (decisão do dono, 25/09/2026, opção B: as marcadas 0.01.01 e 0.01.02, mais 1.04.96, 1.04.97 e 2.05.98). Sem contar duas vezes: o título recebido
+// pagamento de 01/01 a 30/09/2026; `cNatureza = "R"`; fora os CANCELADO; só as contas
+// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json); fora as categorias de transferência
+// (decisão do dono, 25/09/2026, opção B: as marcadas 0.01.01 e 0.01.02, mais 1.04.96 e 2.05.98 nas duas empresas e 1.04.97
+// só na empresa 1 — cinco fora na empresa 1 e quatro na 2). Sem contar duas vezes: o título recebido
 // (CONTA_A_RECEBER) conta uma vez por `nCodTitulo`; do conta corrente (CONTA_CORRENTE_REC) entra só o avulso, sem título
 // (`nCodTitulo` 0), uma vez por `nCodMovCC`.
 //
@@ -34,12 +35,15 @@ const FAIXA = '01/01/2026 a 30/09/2026';
 // tela vai contar. [títulos, avulsos] por empresa. Já com as cinco categorias de transferência fora (ver TRANSFERENCIAS).
 const CONTAGEM_DO_FONTES = { 1: [9, 159], 2: [541, 607] };
 
-// AS CINCO CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B): transferência entre contas
-// não é receita nem despesa. O cadastro do Omie marca duas (`transferencia = "S"`: 0.01.01 e 0.01.02); as três abaixo se
-// chamam "Transferência" sem a marca, e a decisão vale pelos códigos nas duas empresas. Saem da soma e da página.
-const TRANSFERENCIA_SEM_MARCA = new Set(['1.04.96', '1.04.97', '2.05.98']);
+// AS CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B): transferência entre contas não é
+// receita nem despesa. O cadastro do Omie marca duas (`transferencia = "S"`: 0.01.01 e 0.01.02); as de baixo se chamam
+// "Transferência" sem a marca. A 1.04.96 e a 2.05.98 se chamam assim nas duas empresas; a 1.04.97 só na empresa 1
+// ("TRANSFERENCIA"), porque na empresa 2 o mesmo código é "Prêmios de Seguros / Sinistros" e fica DENTRO da soma, como
+// outra receita (decisão do dono, 25/09/2026; em 2026 não teve nenhum lançamento no recorte). Cinco ficam fora na
+// empresa 1, quatro na 2. Saem da soma e da página.
+const TRANSFERENCIA_SEM_MARCA = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
 const eTransferencia = (emp, cod) =>
-  categorias[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA.has(String(cod));
+  categorias[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA[emp].includes(String(cod));
 
 const deesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const mascarar = s => s.replace(/Pacianotto/gi, '[terceiro]').replace(/\bB3N\b/g, '[terceiro]').replace(/Sanepar/gi, '[terceiro]');
@@ -284,14 +288,17 @@ const html = `<!doctype html>
 <header>
   <h1>Categorias de receita do Omie: o que é venda de produto</h1>
   <p>Na Tela 2, a linha <strong>(+) Receitas</strong> separa <strong>vendas de produtos</strong> de <strong>outras receitas</strong>
-  pela <strong>categoria</strong> do Omie (decisão do dono, 25/09/2026). Falta dizer <strong>quais categorias são venda de produto</strong>.
+  pela <strong>categoria</strong> do Omie (decisão do dono, 25/09/2026). Quais categorias são venda de produto é a sugestão
+  desta página, que o dono <strong>aceitou inteira em 25/09/2026</strong>.
   Esta página lista as ${catsListadas} categorias de receita das empresas 1 e 2 (sem as de transferência), lado a lado quando o
   código é o mesmo, com a contagem de recebimentos de 2026 e uma <strong>sugestão</strong> pelo nome e pela origem.
   Você aceita o grupo inteiro ou muda o destino de uma categoria, e a página monta a resposta no fim.</p>
 
   <div class="chamada">
-    <p style="margin:0"><strong>Só a sugestão está pronta; a decisão é sua.</strong> Nada foi escrito no Omie nem em
-    <code>docs/fontes.md</code>. <strong>Não há valores em reais nesta página</strong>: só contagens de recebimentos.</p>
+    <p style="margin:0"><strong>Decidido em 25/09/2026: o dono aceitou todas as sugestões desta página.</strong> A divisão
+    abaixo é a que vale, e está escrita na linha <strong>(+) Receitas</strong> da Tela 2, em <code>docs/fontes.md</code>.
+    Nada foi escrito no Omie. <strong>Não há valores em reais nesta página</strong>: só contagens de recebimentos.
+    Os seletores continuam aqui para rever a decisão, se um dia o dono mudar de ideia.</p>
   </div>
 
   <div class="placar">
@@ -306,11 +313,13 @@ const html = `<!doctype html>
   <h2 style="font-size:1.1rem">Como ler, em meio minuto</h2>
   <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>) mais lançamento
   avulso de conta corrente (<strong>avulsos</strong>), de ${FAIXA} por data de pagamento, só nas contas da MeuBESS, sem
-  cancelados e sem transferências, e sem contar duas vezes. <strong>Cinco categorias de transferência ficaram fora da página
+  cancelados e sem transferências, e sem contar duas vezes. <strong>As categorias de transferência ficaram fora da página
   e da soma, por decisão do dono de 25/09/2026 (opção B):</strong> as duas que o Omie marca como transferência,
-  <code>0.01.01</code> Entrada de Transferência e <code>0.01.02</code> Saída de Transferência, e mais três chamadas
-  "Transferência" <strong>sem</strong> a marca, <code>1.04.96</code>, <code>1.04.97</code> e <code>2.05.98</code>, nas duas
-  empresas — transferência entre contas não é receita. <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
+  <code>0.01.01</code> Entrada de Transferência e <code>0.01.02</code> Saída de Transferência, e mais as chamadas
+  "Transferência" <strong>sem</strong> a marca, <code>1.04.96</code> e <code>2.05.98</code> nas duas empresas e
+  <code>1.04.97</code> <strong>só na empresa 1</strong> — cinco fora na empresa 1 e quatro na 2. Na empresa 2 o código
+  <code>1.04.97</code> se chama "Prêmios de Seguros / Sinistros", não é transferência e por isso <strong>está na página</strong>,
+  como outra receita (decisão do dono, 25/09/2026; sem nenhum recebimento em 2026). <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
   (<code>nCodOS</code> preenchido); o avulso nunca tem.</p>
   <p><strong>A sugestão</strong> olha duas coisas. O <strong>nome</strong>: "venda de produtos" e "revenda de mercadorias" dizem venda de produto;
   serviço, rendimento, reembolso, capital, transferência, empréstimo, devolução e "não identificadas" não dizem. A <strong>origem</strong>:
@@ -348,10 +357,10 @@ ${totalizadoras.map(l => `    <tr><td><code>${esc(l.cod)}</code></td><td>${celNo
   <code>ListarCategorias</code>) e dos movimentos já lidos (<code>financas/mf</code> → <code>ListarMovimentos</code>, sem
   <code>cTpLancamento</code>) no cache local, leituras de ${LEITURA}. A contagem é a da linha do Top 10 receitas de
   <code>docs/fontes.md</code>: empresa 1, ${totais[1].titulos} títulos + ${totais[1].avulsos} avulsos; empresa 2, ${totais[2].titulos} + ${totais[2].avulsos}.
-  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as cinco categorias de
-  transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>,
-  <code>1.04.97</code> e <code>2.05.98</code>; todas só aparecem no avulso — 1 lançamento na empresa 1 e 34 na 2 pelas três sem
-  marca) e o que está fora das contas da MeuBESS.
+  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as categorias de
+  transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>
+  e <code>2.05.98</code> nas duas empresas e <code>1.04.97</code> só na empresa 1; todas só aparecem no avulso — 1 lançamento na
+  empresa 1 e 34 na 2 pelas sem marca) e o que está fora das contas da MeuBESS.
   Nome de terceiro aparece como <code>[terceiro]</code>.</p>
   <p>Página gerada por <code>scripts/categorias-de-receita.mjs</code>, que <strong>não chama a API do Omie</strong> e não escreve
   no Omie nem em planilhas. As decisões só valem quando registradas em <code>docs/fontes.md</code>.</p>

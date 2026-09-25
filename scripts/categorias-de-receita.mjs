@@ -13,7 +13,8 @@
 //
 // A REGRA DE CONTAGEM (a mesma de docs/fontes.md, Top 10 receitas): ListarMovimentos sem cTpLancamento, por data de
 // pagamento de 01/01 a 30/09/2026; `cNatureza = "R"`; fora os CANCELADO; fora as categorias de transferência; só as contas
-// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json). Sem contar duas vezes: o título recebido
+// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json); fora as cinco categorias de transferência
+// (decisão do dono, 25/09/2026, opção B: as marcadas 0.01.01 e 0.01.02, mais 1.04.96, 1.04.97 e 2.05.98). Sem contar duas vezes: o título recebido
 // (CONTA_A_RECEBER) conta uma vez por `nCodTitulo`; do conta corrente (CONTA_CORRENTE_REC) entra só o avulso, sem título
 // (`nCodTitulo` 0), uma vez por `nCodMovCC`.
 //
@@ -30,8 +31,15 @@ const LEITURA = '24 e 25/09/2026';
 const FAIXA = '01/01/2026 a 30/09/2026';
 
 // Contagem de 2026 já escrita em docs/fontes.md (Top 10 receitas): serve de trava, para a página não divergir do que a
-// tela vai contar. [títulos, avulsos] por empresa.
-const CONTAGEM_DO_FONTES = { 1: [9, 160], 2: [541, 619] };
+// tela vai contar. [títulos, avulsos] por empresa. Já com as cinco categorias de transferência fora (ver TRANSFERENCIAS).
+const CONTAGEM_DO_FONTES = { 1: [9, 159], 2: [541, 607] };
+
+// AS CINCO CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B): transferência entre contas
+// não é receita nem despesa. O cadastro do Omie marca duas (`transferencia = "S"`: 0.01.01 e 0.01.02); as três abaixo se
+// chamam "Transferência" sem a marca, e a decisão vale pelos códigos nas duas empresas. Saem da soma e da página.
+const TRANSFERENCIA_SEM_MARCA = new Set(['1.04.96', '1.04.97', '2.05.98']);
+const eTransferencia = (emp, cod) =>
+  categorias[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA.has(String(cod));
 
 const deesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const mascarar = s => s.replace(/Pacianotto/gi, '[terceiro]').replace(/\bB3N\b/g, '[terceiro]').replace(/Sanepar/gi, '[terceiro]');
@@ -65,7 +73,7 @@ for (const emp of ['1', '2']) {
       if (d.cNatureza !== 'R' || d.cStatus === 'CANCELADO') continue;
       if (!contasMeuBess.has(`${emp}|${d.nCodCC}`)) continue;
       if (!/\/2026$/.test(d.dDtPagamento ?? '')) continue;
-      if (categorias[emp].get(String(d.cCodCateg))?.transferencia === 'S') continue;
+      if (eTransferencia(emp, d.cCodCateg)) continue;
       if (d.cGrupo === 'CONTA_A_RECEBER') titulos.set(d.nCodTitulo, d);
       else if (d.cGrupo === 'CONTA_CORRENTE_REC' && !d.nCodTitulo) avulsos.set(d.nCodMovCC, d);
     }
@@ -93,7 +101,7 @@ for (const emp of ['1', '2']) {
 
 const eTotalizadora = c => c.totalizadora === 'S';
 const eVaga = c => /^<Dispon/i.test(nome(c));
-const daReceita = emp => [...categorias[emp].values()].filter(c => c.conta_receita === 'S' && c.transferencia !== 'S');
+const daReceita = emp => [...categorias[emp].values()].filter(c => c.conta_receita === 'S' && !eTransferencia(emp, c.codigo));
 
 const codigos = [...new Set([1, 2].flatMap(e => daReceita(String(e)).map(c => String(c.codigo))))]
   .sort((a, b) => a.localeCompare(b, 'pt', { numeric: true }));
@@ -298,7 +306,11 @@ const html = `<!doctype html>
   <h2 style="font-size:1.1rem">Como ler, em meio minuto</h2>
   <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>) mais lançamento
   avulso de conta corrente (<strong>avulsos</strong>), de ${FAIXA} por data de pagamento, só nas contas da MeuBESS, sem
-  cancelados e sem transferências, e sem contar duas vezes. <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
+  cancelados e sem transferências, e sem contar duas vezes. <strong>Cinco categorias de transferência ficaram fora da página
+  e da soma, por decisão do dono de 25/09/2026 (opção B):</strong> as duas que o Omie marca como transferência,
+  <code>0.01.01</code> Entrada de Transferência e <code>0.01.02</code> Saída de Transferência, e mais três chamadas
+  "Transferência" <strong>sem</strong> a marca, <code>1.04.96</code>, <code>1.04.97</code> e <code>2.05.98</code>, nas duas
+  empresas — transferência entre contas não é receita. <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
   (<code>nCodOS</code> preenchido); o avulso nunca tem.</p>
   <p><strong>A sugestão</strong> olha duas coisas. O <strong>nome</strong>: "venda de produtos" e "revenda de mercadorias" dizem venda de produto;
   serviço, rendimento, reembolso, capital, transferência, empréstimo, devolução e "não identificadas" não dizem. A <strong>origem</strong>:
@@ -336,8 +348,10 @@ ${totalizadoras.map(l => `    <tr><td><code>${esc(l.cod)}</code></td><td>${celNo
   <code>ListarCategorias</code>) e dos movimentos já lidos (<code>financas/mf</code> → <code>ListarMovimentos</code>, sem
   <code>cTpLancamento</code>) no cache local, leituras de ${LEITURA}. A contagem é a da linha do Top 10 receitas de
   <code>docs/fontes.md</code>: empresa 1, ${totais[1].titulos} títulos + ${totais[1].avulsos} avulsos; empresa 2, ${totais[2].titulos} + ${totais[2].avulsos}.
-  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as categorias de transferência
-  (<code>0.01.01</code> Entrada de Transferência, que só aparece no avulso da empresa 1) e o que está fora das contas da MeuBESS.
+  Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as cinco categorias de
+  transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>,
+  <code>1.04.97</code> e <code>2.05.98</code>; todas só aparecem no avulso — 1 lançamento na empresa 1 e 34 na 2 pelas três sem
+  marca) e o que está fora das contas da MeuBESS.
   Nome de terceiro aparece como <code>[terceiro]</code>.</p>
   <p>Página gerada por <code>scripts/categorias-de-receita.mjs</code>, que <strong>não chama a API do Omie</strong> e não escreve
   no Omie nem em planilhas. As decisões só valem quando registradas em <code>docs/fontes.md</code>.</p>

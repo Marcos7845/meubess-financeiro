@@ -9,8 +9,8 @@
 // `scripts/confronto-dfc-omie.mjs` já gravou no cache. Nada é escrito no Omie nem nas planilhas.
 //
 // O QUE ELE NÃO FAZ: ele não decide nada. Quem decide é o dono; esta página é material para a decisão. O grupo (a) foi
-// decidido em 24/09/2026 e os grupos (b) e (d) em 25/09/2026 (ver DECIDIDO_A, DECIDIDO_B e DECIDIDO_D abaixo, que só
-// REGISTRAM a resposta do dono); (c) segue aberto.
+// decidido em 24/09/2026 e os grupos (b), (c) e (d) em 25/09/2026 (ver DECIDIDO_A, DECIDIDO_B, DECISAO_C e DECIDIDO_D
+// abaixo, que só REGISTRAM a resposta do dono); os quatro estão decididos.
 //
 //   node scripts/categorias-do-dre.mjs
 
@@ -114,6 +114,12 @@ const FORA_D = new Map([
   ['2:1.04.99', 'fora do DRE'], ['2:2.10.98', 'fora do DRE'],
 ]);
 const DECISAO_D = '25/09/2026';
+
+// DECISÃO DO DONO, 25/09/2026 (resposta "a" à pergunta do grupo c): o Omie não tem categoria de depreciação nem de
+// amortização, então o grupo (c) fica SEM categorias; a Tela 2 mostra EBITDA e lucro líquido sem elas, com o aviso abaixo
+// ao lado dos números, e não entra planilha do contador. Não há lista a registrar; isto só marca o grupo como decidido.
+const DECISAO_C = '25/09/2026';
+const AVISO_C = 'Sem depreciação e sem amortização: o Omie não tem categoria para elas, então este número não as desconta.';
 
 const GRUPOS = {
   a: {
@@ -293,7 +299,16 @@ function bloco(g) {
   <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
   ${tabela(sug, false)}`;
   } else {
-    corpo += `<h3>Sugeridas: nenhuma</h3>
+    corpo += `<div class="decidido">
+    <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_C}.</strong> Como o Omie não tem nenhuma categoria de
+    depreciação nem de amortização, este grupo fica <strong>sem categorias</strong>: a Tela 2 mostra o EBITDA e o lucro
+    líquido <strong>sem depreciação e sem amortização</strong>, com um aviso ao lado dos números, e <strong>não entra
+    planilha do contador</strong>.</p>
+  </div>
+  <div class="chamada">
+    <p style="margin:0"><strong>O aviso que a tela mostra:</strong> "${AVISO_C}"</p>
+  </div>
+  <h3>Decididas: nenhuma categoria</h3>
   <div class="vazio">
     <p><strong>Não existe categoria de depreciação nem de amortização no plano das duas empresas.</strong> A busca por
     "deprecia", "amortiza" e "exaust" no nome, na descrição padrão e na explicação de cada uma das
@@ -304,8 +319,8 @@ function bloco(g) {
     <code>3.01.01</code> "Ativos", com ${ativos.length} categorias, como ${ativos.slice(0, 3).map(r => `"${esc(r.desc)}"`).join(', ')}.
     Essa compra é a matéria-prima do cálculo da depreciação, não o cálculo.</p>
     <p><strong>O que isso significa para a tela:</strong> a depreciação teria de vir de fora do módulo financeiro do
-    Omie — da ficha de bens do contador. Enquanto ela não vier, o EBITDA da tela é EBITDA sem depreciação e sem
-    amortização, e a tela precisa dizer isso ao lado do número. Quem decide é o dono.</p>
+    Omie — da ficha de bens do contador. O dono decidiu não trazê-la: o EBITDA e o lucro líquido da tela saem sem
+    depreciação e sem amortização, e a tela diz isso ao lado do número.</p>
   </div>`;
   }
 
@@ -407,16 +422,17 @@ const html = `<!doctype html>
   o <strong>nome</strong> da categoria e a <strong>conta do DRE</strong> em que ela já está pendurada hoje.</p>
 
   <div class="chamada">
-    <p style="margin:0"><strong>Isto é sugestão, não decisão — exceto os grupos a, b e d.</strong> Nenhuma categoria foi mexida
-    no Omie. O <strong>grupo a</strong> (dedução da receita) foi <strong>decidido pelo dono em ${DECISAO_A}</strong>,
-    o <strong>grupo b</strong> (custo de vendas) em <strong>${DECISAO_B}</strong> e o <strong>grupo d</strong>
-    (resultado financeiro) em <strong>${DECISAO_D}</strong>; os três aparecem marcados assim
-    e o grupo c segue como sugestão. Onde as duas pistas concordam, a sugestão é
-    firme; onde elas discordam, a categoria vai para "em dúvida" com o motivo ao lado. A palavra final é do dono.</p>
+    <p style="margin:0"><strong>Os quatro grupos estão decididos pelo dono.</strong> Nenhuma categoria foi mexida
+    no Omie. O <strong>grupo a</strong> (dedução da receita) foi decidido em <strong>${DECISAO_A}</strong>;
+    o <strong>grupo b</strong> (custo de vendas), o <strong>grupo c</strong> (depreciação e amortização: sem categorias, o
+    número sai sem elas) e o <strong>grupo d</strong> (resultado financeiro) em <strong>${DECISAO_B}</strong>.
+    As listas abaixo mostram o que entrou, o que ficou de fora e o que ficou anotado como "decidir depois".
+    A sugestão original — onde as duas pistas concordam é firme; onde discordam, a categoria vai para "em dúvida" com o
+    motivo ao lado — continua visível nas tabelas.</p>
   </div>
 
   <div class="placar">
-    <div><b>${totalSug}</b><span>categorias sugeridas, somando os quatro grupos (os grupos a, b e d já decididos)</span></div>
+    <div><b>${totalSug}</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
     <div><b>${totalDuv}</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>${consideradas}</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>${vistos[1].size + vistos[2].size}</b><span>lançamentos contados, ${FAIXA}</span></div>
@@ -425,7 +441,7 @@ const html = `<!doctype html>
   <ul class="indice">
     <li><a href="#grupo-a">a · Dedução da receita — decidido (${decididasA.length})</a></li>
     <li><a href="#grupo-b">b · Custo de vendas — decidido (${decididasB.length})</a></li>
-    <li><a href="#grupo-c">c · Depreciação e amortização (${sugeridas.c.length})</a></li>
+    <li><a href="#grupo-c">c · Depreciação e amortização — decidido (sem categorias)</a></li>
     <li><a href="#grupo-d">d · Resultado financeiro — decidido (${decididasD.length})</a></li>
   </ul>
 </header>
@@ -449,20 +465,20 @@ ${['a', 'b', 'c', 'd'].map(bloco).join('\n\n')}
 <section class="aviso" style="border-radius:10px">
   <h2 style="font-size:1.1rem">O que esta página responde — e o que ela não fecha</h2>
   <p>Ela dá material para lacunas de <code>docs/fontes.md</code>. A do grupo <strong>a</strong> o dono fechou em
-  ${DECISAO_A} e as dos grupos <strong>b</strong> e <strong>d</strong> em ${DECISAO_D}; a outra <strong>segue aberta</strong>:</p>
+  ${DECISAO_A} e as dos grupos <strong>b</strong>, <strong>c</strong> e <strong>d</strong> em ${DECISAO_D}; <strong>nenhuma segue aberta</strong>:</p>
   <ul>
     <li>a linha <strong>(−) Deduções</strong> da Tela 2 — quais categorias do Omie são dedução: grupo <strong>a</strong>
         (<strong>decidido</strong> em ${DECISAO_A});</li>
     <li>a linha <strong>(−) Custos de vendas</strong> — quais categorias são custo de vendas: grupo <strong>b</strong>
         (<strong>decidido</strong> em ${DECISAO_B});</li>
     <li>o cartão de <strong>EBITDA</strong> — quais categorias são resultado financeiro: grupo <strong>d</strong>
-        (<strong>decidido</strong> em ${DECISAO_D}); e quais são depreciação e amortização: grupo <strong>c</strong>,
-        que segue aberto;</li>
+        (<strong>decidido</strong> em ${DECISAO_D}); e o que fazer com depreciação e amortização: grupo <strong>c</strong>
+        (<strong>decidido</strong> em ${DECISAO_C}: sem categorias, o EBITDA e o lucro líquido saem sem elas, com aviso ao lado);</li>
     <li>o cartão <strong>% desp. funcionários / receita líquida</strong> da Tela 1, que depende da receita líquida e,
         por ela, do grupo <strong>a</strong> (<strong>decidido</strong>, no confronto do Omie).</li>
   </ul>
-  <p style="margin-bottom:0">Enquanto o dono não escolher, o grupo c segue escrito como lacuna em
-  <code>docs/fontes.md</code>, e o EBITDA da tela continua sem tirar depreciação e amortização.</p>
+  <p style="margin-bottom:0">As decisões estão registradas em <code>docs/fontes.md</code>, nas linhas do EBITDA, do lucro líquido e das
+  demais linhas da Tela 2 a que cada grupo pertence.</p>
 </section>
 
 <footer>

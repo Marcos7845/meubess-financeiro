@@ -36,4 +36,8 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
   [`docs/confronto-dfc-omie.html`](docs/confronto-dfc-omie.html).
 - **Todo número confere com a fonte.** Cada indicador diz de onde vem (ERP: módulo, tabela e filtro; planilha: arquivo,
   aba e coluna) e é conferido com um caso real antes de ser dado como pronto.
+  A conferência de um mês fechado, indicador por indicador, está em [`docs/conferencia.md`](docs/conferencia.md)
+  (a mesma coisa como página: [`docs/conferencia.html`](docs/conferencia.html)), gerada por
+  `scripts/numeros-das-telas.mjs`: quantos lançamentos entram, a fonte e o filtro, e um caso real achado de volta na
+  fonte pelo código. Ela não traz valor em dinheiro — só contagem, código, data e campo de cadastro.
 - **Número financeiro não sai da máquina para ser medido ou classificado** por serviço de terceiros.

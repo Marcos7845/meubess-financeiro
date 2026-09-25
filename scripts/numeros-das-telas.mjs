@@ -1064,10 +1064,19 @@ linhaT3({
 // ================================================================ a saída
 
 const ROTULO = { conferido: '', divergente: 'divergente: ', 'a-conferir': 'a conferir: ' };
-const quantos = (e) => indicadores.filter((i) => i.estado === e).length;
-
 const linhaMd = (i) =>
   `- ${ROTULO[i.estado]}**${i.tela} — ${i.nome}.** **Entram:** ${i.contagem}. **Fonte:** ${i.fonte}. **Filtro:** ${i.filtro}. **Caso conferido:** ${i.caso}.${i.motivo ? ` **Motivo:** ${i.motivo}.` : ''}`;
+
+// O resumo é contado nas próprias linhas que vão para o .md, pelo começo de cada uma, e não pelo `estado` dos objetos:
+// assim ele não tem como divergir do que a página mostra. Linha marcada sem "**Motivo:**" para o script, e a soma tem de
+// fechar com o número de indicadores.
+const LINHAS_MD = indicadores.map(linhaMd);
+const COMECO = { conferido: '- **', divergente: '- divergente: ', 'a-conferir': '- a conferir: ' };
+const quantos = (e) => LINHAS_MD.filter((l) => l.startsWith(COMECO[e])).length;
+for (const l of LINHAS_MD) {
+  if (!l.startsWith(COMECO.conferido) && !l.includes('**Motivo:**')) throw new Error(`linha marcada sem motivo: ${l.slice(0, 80)}`);
+}
+if (quantos('conferido') + quantos('divergente') + quantos('a-conferir') !== indicadores.length) throw new Error('o resumo contado nas linhas não fecha com o número de indicadores');
 
 const linhaTravaMd = (c) => `| ${c.rotulo} | ${c.meu.join(', ')} | ${c.dito.join(', ')} | ${c.bate ? 'sim' : '**não**'} |`;
 const travaPrincipal = EMPRESAS.map((e) => `empresa ${e}: receita ${trinca(totalJanSet[e].R).join(' + ')}, despesa ${trinca(totalJanSet[e].P).join(' + ')}`).join('; ');

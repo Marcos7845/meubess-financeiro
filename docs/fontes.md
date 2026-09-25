@@ -261,7 +261,7 @@ do pedido de venda que gerou o título — foi o que a leitura mostrou.
 - **Cobertura, na mesma amostra de 100 títulos a receber** (de 814): 93 com `nCodOS` preenchido e 7 sem. A divisão é
   limpa por `cabecTitulo.cOrigem` — `VENR` (venda, 55) e `ADVR` (adiantamento de venda, 38) têm todos `nCodOS`; `MANR`
   (lançamento manual, 7) não tem nenhum. Bate com a regra de negócio: receita da plataforma nasce em pedido, despesa e
-  lançamento avulso entram à mão. Título com `cOrigem = "MANR"` fica sem descrição de pedido.
+  lançamento avulso entram à mão. Título com `cOrigem = "MANR"` fica sem descrição de pedido, e a descrição dele é a da categoria (decisão do dono de 25/09/2026, nas linhas do Top 10 receitas e da Lista de títulos).
 
 O que o pedido **não** é: não traz data de pagamento nem quanto já foi recebido, então não substitui o
 `ListarMovimentos` nos números (o regime de caixa continua no título). Ele entra só onde o título não responde —
@@ -532,12 +532,13 @@ escolher fonte linha a linha, e nenhuma delas foi decidida aqui:
   "Receitas" da Tela 1, que é o que as duas telas precisam mostrar igual.
 
 **O que esta decisão não fecha.** Ela escolhe **de onde vem** cada número, não **o que** cada número mede. Seguem em
-aberto, e cada uma está escrita na linha do indicador a que pertence: o que aparece como "descrição" no Top 10 receitas; a quebra entre "outras receitas"
+aberto, e cada uma está escrita na linha do indicador a que pertence: a quebra entre "outras receitas"
 e "vendas de produtos" e como repartir o valor de um título entre os produtos. Várias delas encolheram — passaram a valer só para a coluna de confronto, porque no lado
 principal a classificação já vem escrita na linha do DFC —, mas nenhuma foi respondida por esta decisão.
 
 **Já respondidas pelo dono depois desta decisão,** cada uma escrita na linha do indicador: quais categorias do Omie são
-dedução da receita (24/09/2026), custo de vendas e resultado financeiro (25/09/2026), e o que fazer com depreciação e
+dedução da receita (24/09/2026), custo de vendas e resultado financeiro (25/09/2026), o que aparece como "descrição" no Top 10 receitas
+e na Lista de títulos (25/09/2026: os produtos do pedido de venda, ou a categoria quando não há pedido), e o que fazer com depreciação e
 amortização (25/09/2026: o Omie não tem categoria delas, então o EBITDA e o lucro líquido saem sem elas, com aviso na
 tela), e o que a linha de impostos mede (25/09/2026: só "Impostos pagos (guias)", sem linha de impostos retidos na
 nota e sem o ISS retido nas deduções, opção A). As listas por empresa estão em [`docs/categorias-do-dre.html`](categorias-do-dre.html).

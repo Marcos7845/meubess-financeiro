@@ -16,7 +16,8 @@ aparecem nelas são de exemplo — nenhum é da MeuBESS.
 
 ### A soma das empresas 1 e 2 (vale para as três telas)
 
-Toda consulta roda nas duas chaves e os resultados se somam. Medido no Omie em 24/09/2026 por
+Toda consulta roda nas duas chaves e os resultados se somam, **inclusive os 3 lançamentos entre as duas empresas, que
+entram como estão** (decisão do dono, 25/09/2026; item 2 abaixo). Medido no Omie em 24/09/2026 por
 `scripts/plano-de-contas-omie.mjs` (só leitura), sobre os lançamentos do `financas/mf` **emitidos em 2026**, fora os
 `cStatus = "CANCELADO"` — 2.572 lançamentos na empresa 1 e 2.846 na empresa 2. O cadastro inteiro, lado a lado, está em
 [`docs/plano-de-categorias-omie.html`](plano-de-categorias-omie.html).
@@ -147,12 +148,16 @@ Para consulta, os 77 códigos com cadastro diferente entre as duas empresas (lei
 | `2.12.98` | Energia Elétrica | [terceiro] | descrição |
 | `2.12.99` | Aluguel | Aluguel do Barracão | descrição |
 
-**2. Lançamentos entre as duas empresas, que contariam duas vezes na soma: 3 em 2026.** Os três foram lidos na empresa 2
+**2. Lançamentos entre as duas empresas: 3 em 2026, e entram na soma como estão.** Os três foram lidos na empresa 2
 e têm a `/0001-42` como contraparte (`detalhes.cCPFCNPJCliente` com a mesma raiz de CNPJ, filial diferente): 2 a receber,
 na categoria `1.01.01` "RECEITA DE VENDA DE PRODUTOS", e 1 a pagar, na `2.01.03` "Compras de Materia Prima". Lidos na
 empresa 1, **zero** — nenhum lançamento de 2026 dela tem outra filial como contraparte, então esses três não aparecem
 espelhados do outro lado. Nenhum dos dois lados usa categoria marcada como transferência (`transferencia = "S"`) em
-2026. **lacuna:** se esses lançamentos saem da soma, entram inteiros ou entram de um lado só é decisão da MeuBESS.
+2026. **Decisão do dono (25/09/2026): esses lançamentos entram na soma das empresas 1 e 2 como estão** — inteiros, sem
+tirar nenhum e sem descontar o espelho do outro lado (que, na leitura de 2026, nem existe: a empresa 1 tem zero). Vale
+para as três telas e para todo número que soma as duas chaves. Não é a mesma coisa que os empréstimos e transferências
+Intercompany, que têm categoria própria e ficam fora do DRE por decisão de 25/09/2026 (ver a linha "EBITDA" da Tela 2):
+estes três estão em categorias comuns, `1.01.01` e `2.01.03`, e contam na receita e na compra como qualquer outro.
 
 **3. Departamentos: os mesmos 16 nomes nas duas empresas, e nenhum código em comum.** A empresa 1 tem 16 departamentos,
 todos ativos, e a empresa 2 também; os 16 nomes são os mesmos dos dois lados, mas **zero** códigos coincidem — o

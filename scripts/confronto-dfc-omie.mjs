@@ -9,6 +9,10 @@
 // cada pasta pelo que a própria planilha mostra, soma as quatro contra o Omie e procura no Omie o campo que separa a
 // MeuBESS das outras.
 //
+// O QUE MUDOU EM 25/09/2026: a conta `Adiantamento ao Fornecedor` entrou no recorte da MeuBESS (decisão do dono,
+// opção A) e trouxe junto o filtro contra contar o mesmo dinheiro duas vezes — o par `ADCP`/`ADCR`. Ver
+// `eParDoAdiantamento`, logo abaixo do recorte, e docs/fontes.md.
+//
 // SÓ LEITURA, dos dois lados:
 //   - DFC: abre os .xlsx das pastas sincronizadas em modo leitura (fs.readFileSync). Nunca grava, move nem abre para
 //     edição nenhum arquivo de lá, e nunca copia planilha para o repositório.
@@ -67,7 +71,31 @@ const NEGOCIO_DA_CONTA = new Map(LISTA_CONTAS.contas.map((c) => [c.chave, c.nego
 const CADASTRO_DA_CONTA = new Map(LISTA_CONTAS.contas.map((c) => [c.chave, c]));
 const RECORTE = new Set(LISTA_CONTAS.contas.filter((c) => c.negocio === NEGOCIO_ALVO).map((c) => c.chave));
 const negocioDa = (chave) => NEGOCIO_DA_CONTA.get(chave) ?? null;       // null = sem dono dito
-const noRecorteDaMeuBess = (l) => RECORTE.has(l.conta);
+
+// ============================================================ o par do Adiantamento ao Fornecedor: fora das somas
+//
+// Decisão do dono, 25/09/2026 (opção A): as duas contas `Adiantamento ao Fornecedor` (`tipo_conta_corrente = "AD"`,
+// `nCodCC` 5969631123 na empresa 1 e 5191263988 na 2) passaram a ser da MeuBESS e entraram na lista acima. O dinheiro
+// chega nelas sempre pelo mesmo PAR, dentro da própria MeuBESS: a IDA é um título a pagar com
+// `detalhes.cOrigem = "ADCP"`, pago de conta de banco da MeuBESS, com a baixa dele na mesma conta; a CHEGADA é uma
+// entrada avulsa na conta do adiantamento, com `detalhes.cOrigem = "ADCR"` e categoria `1.04.01` "Adiantamento de
+// Clientes" — o nome engana, o dinheiro é da própria MeuBESS. Nenhum dos dois lados cai numa categoria de
+// transferência, então o filtro de categoria não os pega: o filtro é este.
+//
+// A REGRA (docs/fontes.md, "A conta Adiantamento ao Fornecedor entra no recorte"): a despesa conta UMA VEZ SÓ, quando
+// o fornecedor é pago — pelo título da nota (`COMP`), que a leitura já traz pela conta do banco. A ida do banco para o
+// adiantamento não é despesa e a chegada não é receita. Ficam fora das somas **(a)** todo lançamento com
+// `cOrigem = "ADCR"` e **(b)** todo lançamento de um título cujo `nCodTitulo` tenha, na mesma leitura, alguma linha
+// com `cOrigem = "ADCP"` — o título da ida E a baixa dele, os dois. É o mesmo filtro de
+// `scripts/categorias-de-receita.mjs`, que só precisa do lado `ADCR` porque lê só receita.
+//
+// ONDE ELE ENTRA AQUI: no recorte da MeuBESS, que é o lado do Omie de todo confronto desta página. O "Omie inteiro"
+// (o CNPJ com as outras unidades, usado só como o ANTES do recorte) fica como está — lá o filtro não teria sentido,
+// porque a decisão é sobre as somas da MeuBESS.
+const titulosDoAdiantamento = new Set();   // "empresa|nCodTitulo" com alguma linha `ADCP`; preenchido ao ler o Omie
+const eParDoAdiantamento = (l) =>
+  l.origem === "ADCR" || (Boolean(l.nCodTitulo) && titulosDoAdiantamento.has(`${l.empresa}|${l.nCodTitulo}`));
+const noRecorteDaMeuBess = (l) => RECORTE.has(l.conta) && !eParDoAdiantamento(l);
 
 // ============================================================ lado DFC: ler o .xlsx (zip + xml, sem dependência)
 
@@ -461,6 +489,8 @@ async function lerOmie() {
         if (cent(valor) === 0) { semValorPago++; continue; }
         const origem = String(det.cOrigem ?? "(vazio)");
         empilhar(origemCPCR, origem);
+        // a ida do Adiantamento ao Fornecedor: guarda o título para tirar depois o título E a baixa dele (regra (b))
+        if (origem === "ADCP" && det.nCodTitulo) titulosDoAdiantamento.add(`${emp.n}|${det.nCodTitulo}`);
         const catCod = String(det.cCodCateg ?? (mov.categorias ?? [])[0]?.cCodCateg ?? "");
         const cat = cats.get(catCod);
         const deps = Array.isArray(mov.departamentos) ? mov.departamentos : [];
@@ -469,6 +499,8 @@ async function lerOmie() {
           empresa: emp.n, mes: dt.m, dia: dt.d,
           natureza: det.cNatureza === "R" ? "R" : "P",
           valor,
+          origem,                                   // detalhes.cOrigem: é por ele que o par do adiantamento sai
+          nCodTitulo: det.nCodTitulo ?? 0,           // 0 no lançamento avulso de conta corrente
           conta: `${emp.n}|${det.nCodCC ?? "(vazio)"}`,
           departamento: deps.length ? `${emp.n}|${deps[0].cCodDepartamento}` : `${emp.n}|(sem)`,
           categoria: `${emp.n}|${catCod || "(sem)"}`,
@@ -835,9 +867,17 @@ const dfcMeuBess = dfcTodos.filter((l) => l.unidade === U0);
 const dfcOutras = dfcTodos.filter((l) => l.unidade !== U0);
 const dfcSemTransf = dfcTodos.filter((l) => !l.transferencia);
 const omieTodos = omie.lancamentos;
-// O RECORTE, agora que o dono disse a lista: só os lançamentos do Omie cuja conta corrente é da MeuBESS.
+// O RECORTE, agora que o dono disse a lista: só os lançamentos do Omie cuja conta corrente é da MeuBESS — e, desde a
+// decisão de 25/09/2026, sem o par do Adiantamento ao Fornecedor (ver `eParDoAdiantamento`, no alto do arquivo).
 const omieRecorte = omieTodos.filter(noRecorteDaMeuBess);
 const omieForaDoRecorte = omieTodos.filter((l) => !noRecorteDaMeuBess(l));
+// só para medir e mostrar: o que o filtro do adiantamento tira de DENTRO das contas da MeuBESS (os de fora já saíam
+// pelo recorte). `adcr` é a chegada na conta do adiantamento; `adcp` é o título da ida e a baixa dele, no banco.
+const adiantamentoNoRecorte = omieTodos.filter((l) => RECORTE.has(l.conta) && eParDoAdiantamento(l));
+const adiantamentoADCR = adiantamentoNoRecorte.filter((l) => l.origem === "ADCR");
+const adiantamentoADCP = adiantamentoNoRecorte.filter((l) => l.origem !== "ADCR");
+// o recorte SEM o filtro do adiantamento: serve só para dizer, na página, o que cada um dos dois cortes tirou
+const omieSoRecorte = omieTodos.filter((l) => RECORTE.has(l.conta));
 const omieSemDonoDito = omieTodos.filter((l) => negocioDa(l.conta) === null);
 
 const mDfc = porMes(dfcTodos);
@@ -895,6 +935,10 @@ console.log("\n== taxa de casamento ANTES e DEPOIS do recorte (DFC da pasta da M
 console.log(`  ANTES  (Omie inteiro, ${omieTodos.length} lanç.): ${recAntes.casados} casados = ${semSinal(pct(recAntes.casados, dfcMeuBess.length))} das ${dfcMeuBess.length} linhas do DFC da MeuBESS e ${semSinal(pct(recAntes.casados, omieTodos.length))} do Omie`);
 console.log(`  DEPOIS (só contas da MeuBESS, ${omieRecorte.length} lanç.): ${recDepois.casados} casados = ${semSinal(pct(recDepois.casados, dfcMeuBess.length))} das linhas do DFC da MeuBESS e ${semSinal(pct(recDepois.casados, omieRecorte.length))} do Omie no recorte`);
 console.log(`  (frouxo, depois do recorte: ${recFrouxoDepois.casados} = ${semSinal(pct(recFrouxoDepois.casados, dfcMeuBess.length))} do DFC da MeuBESS, ${semSinal(pct(recFrouxoDepois.casados, omieRecorte.length))} do Omie no recorte)`);
+
+console.log("\n== o par do Adiantamento ao Fornecedor, tirado do recorte (decisão do dono, 25/09/2026) ==");
+console.log(`  ${adiantamentoNoRecorte.length} lançamento(s) de contas da MeuBESS ficaram de fora: ${adiantamentoADCP.length} pela regra (b), o título da ida (${titulosDoAdiantamento.size} título com linha ADCP), e ${adiantamentoADCR.length} pela regra (a), a chegada ADCR`);
+console.log("  (a regra (a) não tem o que tirar aqui: o CPCR desta leitura já deixa de fora o avulso de conta corrente, que é o que a chegada ADCR é)");
 
 console.log("\n== por mês, COM o recorte: DFC da pasta da MeuBESS contra o Omie só nas contas da MeuBESS ==");
 console.log("  mês        | linhas DFC MB | lanç. Omie rec. | entradas % | saídas % | entr. % s/ transf. | saíd. % s/ transf.");
@@ -983,6 +1027,7 @@ const linhasConta = [...new Set([...contaTodas.keys(), ...(contaRecorte?.valores
 // o que o recorte explica, em valor — a página é o único lugar em que valor em reais pode aparecer
 const valorTotalOmie = omieTodos.reduce((s, l) => s + l.valor, 0);
 const valorNoRecorte = omieRecorte.reduce((s, l) => s + l.valor, 0);
+const valorNoSoRecorte = omieSoRecorte.reduce((s, l) => s + l.valor, 0);   // sem o filtro do adiantamento
 const valorSemDono = omieSemDonoDito.reduce((s, l) => s + l.valor, 0);
 // De quantos meses o DFC da MeuBESS fica ACIMA do Omie recortado, e em que faixa — o texto da página sai daqui, para
 // não afirmar "todos os meses" quando não são todos. Janeiro e fevereiro ficam de fora: ali o Omie é quase zero e o
@@ -1182,10 +1227,25 @@ capaz de separar as unidades de negócio é a <strong>conta corrente</strong> (<
 decisão do dono, não do script. <strong>O dono disse</strong>, em 24/09/2026, de que negócio é cada conta da tabela desta seção. A lista está gravada
 em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Todos os números
 das seções 4, 6 e 7 já saem com o recorte aplicado.</p>
+<div class="nota"><strong>A conta <em>Adiantamento ao Fornecedor</em> entrou no recorte em 25/09/2026 (decisão do dono, opção A) — e veio com um
+filtro junto.</strong> O dinheiro chega nessa conta sempre pelo mesmo par, dentro da própria MeuBESS: a <strong>ida</strong> é um título a pagar com
+<code>detalhes.cOrigem = "ADCP"</code>, pago de conta de banco da MeuBESS, com a baixa dele na mesma conta; a <strong>chegada</strong> é uma entrada
+avulsa na conta do adiantamento, com <code>detalhes.cOrigem = "ADCR"</code> e categoria <code>1.04.01</code> "Adiantamento de Clientes" — o nome
+engana, o dinheiro é da própria MeuBESS. Nenhum dos dois cai em categoria de transferência, então o filtro de categoria não os pega. A regra, escrita
+em <code>docs/fontes.md</code>: a despesa conta <strong>uma vez só</strong>, quando o fornecedor é pago (o título <code>COMP</code>, que já vem pela
+conta do banco); ficam fora das somas <strong>(a)</strong> todo lançamento com <code>cOrigem = "ADCR"</code> e <strong>(b)</strong> todo lançamento de
+um título cujo <code>nCodTitulo</code> tenha, na mesma leitura, alguma linha com <code>cOrigem = "ADCP"</code> — o título da ida <em>e</em> a baixa
+dele. <strong>Nesta leitura o filtro tirou ${adiantamentoNoRecorte.length} lançamento(s)</strong> de contas da MeuBESS: ${adiantamentoADCP.length}
+pela regra (b), o título da ida (${titulosDoAdiantamento.size} título(s) com linha <code>ADCP</code> no período), e ${adiantamentoADCR.length} pela
+regra (a). A regra (a) não tem o que tirar <em>aqui</em> porque esta página lê com <code>cTpLancamento: "CPCR"</code> (seção 5), que já deixa de fora
+o lançamento avulso de conta corrente — e a chegada <code>ADCR</code> é exatamente isso; nas telas, que leem sem esse filtro, ela tira. Pelo mesmo
+motivo a baixa do título da ida (<code>BAXP</code>) não aparece nesta leitura: o que sai aqui é a linha de título. O filtro vale para o lado do Omie
+de todo confronto desta página; o "Omie inteiro" da seção 3, que é só o <em>antes</em> do recorte, segue sem ele.</div>
 <table>
 <tr><th>negócio</th><th>o que o dono disse</th><th class="n">contas na lista</th></tr>
 <tr><td><strong>${esc(NEGOCIO_ALVO)}</strong> — o recorte das telas</td>
-  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2) e Caixinha</td>
+  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2), Caixinha
+  e — desde 25/09/2026 — <strong>Adiantamento ao Fornecedor</strong> (as duas, empresas 1 e 2)</td>
   <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === "MeuBESS").length}</td></tr>
 <tr><td><strong>MX3</strong></td><td>todas as contas Sicoob, inclusive a <code>Sicoob - B3N</code>, e o cartão Itaú 6826</td>
   <td class="n">${LISTA_CONTAS.contas.filter((c) => c.negocio === "MX3").length}</td></tr>
@@ -1271,13 +1331,19 @@ CNPJ inteiro, depois só as contas correntes da MeuBESS.</p>
 <td class="n">${semSinal(pct(recDepois.casados, dfcMeuBess.length))}</td>
 <td class="n ok">${semSinal(pct(recDepois.casados, omieRecorte.length))}</td><td class="n">${recDepois.soOmie.length}</td></tr>
 </table>
-<p>O recorte tirou ${omieTodos.length - omieRecorte.length} lançamentos do lado do Omie e perdeu ${recAntes.casados - recDepois.casados} casamento(s)
-no caminho — os que a pasta da MeuBESS tinha achado em conta de outro negócio. O saldo é uma taxa de casamento do lado do Omie de
+<p>O lado direito da tabela saiu de ${omieTodos.length} para ${omieRecorte.length} lançamentos, por <strong>dois cortes diferentes</strong>:
+${omieTodos.length - omieSoRecorte.length} saíram porque a conta corrente é de outro negócio (é o recorte) e
+${adiantamentoNoRecorte.length} são de conta da MeuBESS mas saem pelo filtro do Adiantamento ao Fornecedor (a nota da seção 4).
+No caminho ${recAntes.casados - recDepois.casados} casamento(s) se perderam — os que a pasta da MeuBESS tinha achado do outro lado do corte.
+O saldo é uma taxa de casamento do lado do Omie de
 <strong>${semSinal(pct(recAntes.casados, omieTodos.length))} para ${semSinal(pct(recDepois.casados, omieRecorte.length))}</strong>. Pelo critério frouxo
 (mesmo mês em vez do mesmo dia) o número depois do recorte é ${semSinal(pct(recFrouxoDepois.casados, omieRecorte.length))}.</p>
-<p>Em valor: o recorte da MeuBESS pega <strong>${brl(valorNoRecorte)}</strong> dos <strong>${brl(valorTotalOmie)}</strong> movimentados no Omie no
-período — ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro, contra ${semSinal(pct(omieRecorte.length, Math.max(omieTodos.length, 1)))}
-dos lançamentos.</p>
+<p>Em valor: o que sobra depois dos dois cortes é <strong>${brl(valorNoRecorte)}</strong> dos <strong>${brl(valorTotalOmie)}</strong> movimentados no
+Omie no período — ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro, contra ${semSinal(pct(omieRecorte.length, Math.max(omieTodos.length, 1)))}
+dos lançamentos. <strong>O corte de conta corrente sozinho pegava ${semSinal(pct(valorNoSoRecorte, valorTotalOmie))} do dinheiro</strong>
+(${brl(valorNoSoRecorte)}); a diferença é o filtro do adiantamento, e é grande porque o adiantamento a fornecedor é dinheiro graúdo em poucos
+lançamentos — ${adiantamentoNoRecorte.length} de ${omieSoRecorte.length}. Esse dinheiro não sumiu da conta da MeuBESS: ele volta a contar quando
+o fornecedor é pago, pelo título da nota.</p>
 
 <div class="resolvido">
   <strong>O que o recorte resolveu, e o que ele deixou à mostra.</strong>
@@ -1316,7 +1382,10 @@ ${[...origemTodas.entries()].sort((a, b) => b[1] - a[1]).map(([o, q]) => {
 <p>As origens <code>BAXP</code> e <code>BAXR</code> — as maiores de todas — são registros de <em>baixa</em>; somá-las junto com o título
 contaria o mesmo dinheiro duas vezes, e o <code>CPCR</code> faz bem em tirá-las. Já <code>ADVP</code>, <code>ADCR</code>,
 <code>EXTP</code> e <code>EXTR</code> ficam de fora sem que isso esteja escrito em lugar nenhum: são adiantamentos e lançamentos de extrato
-que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.</p>
+que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.
+<strong>Uma delas deixou de ser dúvida:</strong> a <code>ADCR</code> é a chegada do Adiantamento ao Fornecedor (seção 4) e, por decisão do dono de
+25/09/2026, fica fora das somas de propósito — não é receita, é dinheiro da própria MeuBESS mudando de conta. Isso está escrito em
+<code>docs/fontes.md</code>. As outras três seguem como estavam.</p>
 
 <h2>6. Por grupo das Telas 1 e 2: quem tem o dado mais completo</h2>
 <p>Agora com os <strong>dois lados só da MeuBESS</strong>: à esquerda a pasta do DFC dela, à direita o Omie cortado pelas contas correntes da
@@ -1337,7 +1406,8 @@ ${grupos.map((g) => {
 <div class="nota"><strong>As duas colunas não medem a mesma coisa — e é esse o ponto.</strong> No DFC o número é
 <em>quantas linhas caem neste grupo</em>: a linha já diz a que grupo pertence. No Omie é <em>quantos lançamentos trazem o campo
 que poderia colocá-los em algum grupo</em>. O que mudou nesta rodada é o denominador do lado do Omie: antes ele contava o CNPJ inteiro, as quatro
-unidades; agora conta ${omieRecorte.length} lançamentos, só os das contas da MeuBESS. "COGS" e "Despesas gerais" seguem mostrando exatamente o
+unidades; agora conta ${omieRecorte.length} lançamentos — os das contas da MeuBESS, sem o par do Adiantamento ao Fornecedor (seção 4).
+"COGS" e "Despesas gerais" seguem mostrando exatamente o
 mesmo número do lado do Omie, porque o campo é o mesmo
 (<code>codigo_dre</code>) e <strong>ele não separa os dois</strong> enquanto o dono não disser quais contas do DRE são custo e quais são despesa
 geral. <strong>Essa lacuna segue aberta</strong> em <code>docs/fontes.md</code> — o recorte por conta corrente não tem nada a ver com ela.</div>
@@ -1352,8 +1422,10 @@ própria linha); <em>onde o cadastro decide, o Omie leva</em> (ele tem cliente, 
 <div class="resolvido"><strong>O que mudou, e por quê.</strong> Na rodada anterior a última coluna desta tabela dizia "precisa do recorte" para um
 recorte que não existia, e todo número vindo do Omie carregava a ressalva de estar somando as outras unidades de negócio do mesmo CNPJ.
 <strong>Essa ressalva caiu:</strong> o dono deu a lista de contas (seção 4), ela está em <code>dados/contas-correntes-por-negocio.json</code>, e toda
-consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — ${omieRecorte.length} dos ${omieTodos.length} lançamentos do
-período, ${semSinal(pct(valorNoRecorte, valorTotalOmie))} do dinheiro. Com o recorte aplicado, porém, apareceu o que a contaminação escondia:
+consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — ${omieSoRecorte.length} dos ${omieTodos.length} lançamentos do
+período, ${semSinal(pct(valorNoSoRecorte, valorTotalOmie))} do dinheiro; e, desde 25/09/2026, sem o par do Adiantamento ao Fornecedor
+(mais ${adiantamentoNoRecorte.length} fora, seção 4), o que deixa ${omieRecorte.length}. Com o recorte aplicado, porém, apareceu o que a contaminação
+escondia:
 <strong>o DFC da MeuBESS fica acima do Omie recortado do lado das saídas em ${acimaP.length} dos ${MESES_COMPARAVEIS.length} meses comparáveis,
 ${faixaSaidas} sem contar transferências</strong> (seção 4), e a causa não é unidade
 de negócio — é o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.

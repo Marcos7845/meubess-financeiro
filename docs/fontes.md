@@ -281,6 +281,14 @@ mesmos; o único título a pagar que a conta nova traz para o recorte é de `2.0
 títulos do recorte citadas naquela linha sobem em 1); as Despesas pendentes (a conta nova não tem título em aberto — o
 único título dela em 2026 está `PAGO`); o resultado financeiro; e a Tela 3, que é carteira de títulos e não soma avulso.
 
+**Onde o filtro está escrito no código.** Em `scripts/categorias-de-receita.mjs` (só o lado `ADCR`, porque ele lê só
+receita, e `ADCP` é `cNatureza = "P"`) e, desde 25/09/2026, em `scripts/confronto-dfc-omie.mjs`, que lê a mesma lista de
+contas e por isso passou a incluir a conta nova. No confronto o filtro tira **53 lançamentos** do lado do Omie — os 11
+títulos `ADCP` da empresa 1 e os 42 da 2, exatamente os mesmos da seção acima. A regra (a) não tira nada **naquela
+página** porque ela lê com `cTpLancamento: "CPCR"`, que já deixa de fora o lançamento avulso de conta corrente — e a
+chegada `ADCR` é avulso; pelo mesmo motivo a baixa `BAXP` do título da ida também não aparece lá, e o que sai é a linha
+de título. Nas Telas 1 e 2, que leem **sem** `cTpLancamento`, as duas regras tiram.
+
 **Os três pagamentos em parte da empresa 2 entram agora.** Os títulos `nCodTitulo` 5228016911, 5232855897 e 5237326453 —
 os três que a leitura de 25/09/2026 apontou como em parte pagos e que ficavam de fora — tinham a baixa exatamente nesta
 conta, que era a "conta corrente sem dono dito". Com a conta no recorte, os três passam a entrar como **baixa de
@@ -511,27 +519,37 @@ negócio as telas mostram: `MeuBESS`.
 
 | negócio | o que o dono disse | contas |
 |---|---|---|
-| **MeuBESS** — o recorte das telas | Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2) e Caixinha | 14 |
+| **MeuBESS** — o recorte das telas | Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2), Caixinha e — desde 25/09/2026 — `Adiantamento ao Fornecedor` (as duas) | 16 |
 | MX3 | todas as contas Sicoob, inclusive a `Sicoob - B3N`, e o cartão Itaú 6826 | 5 |
 | 3N Capital | Safra e o cartão Itaú 9120 | 3 |
-| **sem dono dito** | o que o dono não citou | 21 |
+| **sem dono dito** | o que o dono não citou | 19 |
 
 **Como as telas aplicam.** Toda leitura de `financas/mf` das Telas 1 e 2 guarda só os lançamentos cujo `detalhes.nCodCC` está na
 lista com `negocio = "MeuBESS"`. Conta **sem dono dito** fica **fora** do recorte, e o código **não adivinha pelo nome do banco**:
 conta corrente nova aparece no cadastro do Omie sem dono e fica fora do número da tela até o dono dizer de quem é. Das contas com
-movimento em 2026, seguem sem dono dito `Adiantamento ao Fornecedor` (empresas 1 e 2 — a maior delas, e quase toda fora do filtro
-`cTpLancamento: "CPCR"`), `Santander` (empresa 1), `Aplicação financeira Banco do Brasil` (empresa 1), `CARTÃO B3W CORA (4309)`
-(empresa 1) e `Bradesco` (empresa 1).
+movimento em 2026, seguem sem dono dito `Santander` (empresa 1), `Aplicação financeira Banco do Brasil` (empresa 1),
+`CARTÃO B3W CORA (4309)` (empresa 1) e `Bradesco` (empresa 1) — quatro, e não mais cinco: as duas
+`Adiantamento ao Fornecedor` saíram desta lista em 25/09/2026, quando o dono disse que são da MeuBESS (ver a seção sobre ela,
+acima, e o filtro que veio junto).
 
-**O que o recorte mede** (leitura de 24/09/2026, janeiro a setembro): ele pega 1.938 dos 2.148 lançamentos do Omie no período
-(90,2%) e 99,3% do dinheiro movimentado. Do lado do casamento com o DFC, a taxa do lado do Omie vai de 59,4% (sem recorte, contra
-o CNPJ inteiro) para 65,3% (com recorte). A leitura empírica da página — que marca cada conta pela unidade do DFC com que os
+**O que o recorte mede** (números refeitos em 25/09/2026, pelo cache da leitura do Omie de 24 e 25/09/2026, janeiro a setembro;
+página regerada). O corte por conta corrente **sozinho** pega 1.939 dos 2.148 lançamentos do Omie no período (90,3%) e 99,4% do
+dinheiro movimentado — eram 1.938 e 99,3% antes de as duas contas `Adiantamento ao Fornecedor` entrarem na lista, em 25/09/2026.
+**Somando o filtro do adiantamento** (o par `ADCP`/`ADCR`, decidido no mesmo dia), saem mais 53 lançamentos, todos de conta da
+MeuBESS, e sobram **1.886 (87,8%) e 89,5% do dinheiro**. A queda no dinheiro é esperada e não é perda de informação: adiantamento
+a fornecedor é valor graúdo em poucos lançamentos, e esse dinheiro volta a contar quando o fornecedor é pago, pelo título da nota.
+Do lado do casamento com o DFC, a taxa do lado do Omie vai de 59,4% (sem recorte, contra o CNPJ inteiro) para **65,7%** com os dois
+cortes (era 65,3% com o recorte sozinho). A leitura empírica da página — que marca cada conta pela unidade do DFC com que os
 lançamentos dela casaram — **concorda com a lista do dono em todas as contas que ela consegue julgar, e não a contradiz em
 nenhuma**; nas contas pequenas ela não tem casados suficientes para opinar, e quem responde é o dono.
 
 **O que o recorte não resolve, e não é lacuna deste documento.** Ele acaba com a contaminação (o número do Omie deixa de ser o do
-CNPJ inteiro) e **não** aproxima as duas fontes: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 6
-dos 7 meses comparáveis. A causa é o filtro `cTpLancamento: "CPCR"` e a cobertura do ano, medidos nas seções 4, 5 e 7 da página —
+CNPJ inteiro) e **não** aproxima as duas fontes: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em
+**7 dos 7 meses comparáveis** — eram 6 dos 7 antes do filtro do adiantamento, e o mês que virou foi **março**, o único em que o
+Omie estava acima (a diferença das saídas em março saiu de −30,1% para +43,1%, sem contar transferências de −37,4% para +28,2%).
+Os 53 lançamentos que o filtro tira são todos de fevereiro a agosto (1 em fevereiro, 24 em março, 14 em abril, 4 em maio, 2 em
+junho, 7 em julho e 1 em agosto), então janeiro e setembro não mudaram nada.
+A causa é o filtro `cTpLancamento: "CPCR"` e a cobertura do ano, medidos nas seções 4, 5 e 7 da página —
 e a escolha entre as duas fontes **foi feita pelo dono em 24/09/2026**, sobre esses mesmos números — ver "A escolha
 entre Omie e DFC", logo abaixo. Ela não apaga a diferença: escolhe de qual lado vem o número da tela e manda o outro
 lado para o selo de confronto. A Tela 3 lê

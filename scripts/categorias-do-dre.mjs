@@ -47,7 +47,17 @@ for (const emp of ['1', '2'])
 // outra sem), então cada título é contado uma vez só, pelo `nCodTitulo`. Fora os `CANCELADO`.
 const lancamentos = { 1: new Map(), 2: new Map() };
 const vistos = { 1: new Set(), 2: new Set() };
-for (const f of arquivos.filter(x => /-financas-mf-/.test(x))) {
+const arquivosDeMovimento = arquivos.filter(x => /-financas-mf-/.test(x));
+// De que dia é cada resposta do cache. O cache cresce: um script novo, com outra pergunta, grava mais respostas nele, e
+// a contagem desta página sobe junto. Por isso a data sai do próprio arquivo (data de gravação) e não de uma constante
+// escrita à mão, que envelhece sem avisar.
+const diasDoCache = [...new Set(arquivosDeMovimento.map(f =>
+  fs.statSync(path.join(CACHE, f)).mtime.toLocaleDateString('pt-BR')))].sort((a, b) =>
+  a.split('/').reverse().join('').localeCompare(b.split('/').reverse().join('')));
+const LEITURA_MOVIMENTOS = diasDoCache.length === 1
+  ? `leitura de ${diasDoCache[0]}`
+  : `leituras de ${diasDoCache.slice(0, -1).join(', ')} e ${diasDoCache.at(-1)}`;
+for (const f of arquivosDeMovimento) {
   const emp = f[0];
   if (!vistos[emp]) continue;
   for (const mov of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).movimentos ?? []) {
@@ -490,8 +500,9 @@ ${['a', 'b', 'c', 'd'].map(bloco).join('\n\n')}
   <p><strong>De onde saem estes números.</strong> Do cadastro de categorias das empresas 1 e 2 lido do Omie em
   ${LEITURA} (<code>geral/categorias</code> → <code>ListarCategorias</code>, ${categorias[1].length} categorias na
   empresa 1 e ${categorias[2].length} na 2), com a conta do DRE de cada uma vindo do próprio retorno
-  (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem da leitura de
-  <code>financas/mf</code> → <code>ListarMovimentos</code> da mesma data, na faixa de ${FAIXA} por data de pagamento,
+  (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem de
+  <code>financas/mf</code> → <code>ListarMovimentos</code>, de <strong>todas</strong> as respostas que estão no cache local
+  (${LEITURA_MOVIMENTOS}), na faixa de ${FAIXA} por data de pagamento,
   fora os <code>CANCELADO</code>, contando cada título uma vez pelo <code>nCodTitulo</code>.</p>
   <p>Ficaram de fora da conta: ${totalizadoras} categorias totalizadoras (são somas, não recebem lançamento),
   ${slotsVazios} vagas <code>&lt;Disponível&gt;</code> do plano padrão do Omie e ${transferencias} de transferência

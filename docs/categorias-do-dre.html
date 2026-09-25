@@ -86,7 +86,7 @@
     <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
     <div><b>20</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
-    <div><b>2171</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
+    <div><b>2356</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
   </div>
 
   <ul class="indice">
@@ -915,8 +915,9 @@
   <p><strong>De onde saem estes números.</strong> Do cadastro de categorias das empresas 1 e 2 lido do Omie em
   24/09/2026 (<code>geral/categorias</code> → <code>ListarCategorias</code>, 183 categorias na
   empresa 1 e 167 na 2), com a conta do DRE de cada uma vindo do próprio retorno
-  (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem da leitura de
-  <code>financas/mf</code> → <code>ListarMovimentos</code> da mesma data, na faixa de 01/01/2026 a 30/09/2026 por data de pagamento,
+  (<code>dadosDRE.codigoDRE</code> e <code>descricaoDRE</code>). A contagem de lançamentos vem de
+  <code>financas/mf</code> → <code>ListarMovimentos</code>, de <strong>todas</strong> as respostas que estão no cache local
+  (leituras de 24/09/2026 e 25/09/2026), na faixa de 01/01/2026 a 30/09/2026 por data de pagamento,
   fora os <code>CANCELADO</code>, contando cada título uma vez pelo <code>nCodTitulo</code>.</p>
   <p>Ficaram de fora da conta: 34 categorias totalizadoras (são somas, não recebem lançamento),
   42 vagas <code>&lt;Disponível&gt;</code> do plano padrão do Omie e 4 de transferência

@@ -33,7 +33,7 @@
 </style>
 <main>
 <h1>Confronto DFC × Omie — o recorte da MeuBESS pelas contas correntes</h1>
-<p class="sub">Janeiro a setembro de 2026. Leitura de 24/09/2026 por <code>scripts/confronto-dfc-omie.mjs</code>, só leitura das duas fontes.
+<p class="sub">Janeiro a setembro de 2026. Leitura de 25/09/2026 por <code>scripts/confronto-dfc-omie.mjs</code>, só leitura das duas fontes.
 Esta página é a única saída com valores em reais; ela fica no repositório e não sai da máquina. Sem nome de cliente, fornecedor ou pessoa.</p>
 
 <div class="cartao">
@@ -46,8 +46,8 @@ Esta página é a única saída com valores em reais; ela fica no repositório e
 </div>
 <div class="cartao">
   <strong>O que o recorte respondeu, em uma linha.</strong> A contaminação acabou — o número do Omie deixa de ser o do CNPJ inteiro. A diferença
-  entre as duas fontes, não: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 6 dos
-  7 meses comparáveis (março a setembro), e abaixo em março.
+  entre as duas fontes, não: com os dois lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 7 dos
+  7 meses comparáveis (março a setembro).
   <strong>A diferença não era outra unidade de negócio dentro do número</strong>; é o filtro <code>cTpLancamento: "CPCR"</code> que as Telas 1 e 2
   usam (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
 </div>
@@ -61,10 +61,10 @@ Esta página é a única saída com valores em reais; ela fica no repositório e
 <td><strong>sem sufixo</strong> <span class="tag">MeuBESS</span></td>
 <td class="n">12</td>
 <td>janeiro, fevereiro, março, abril, maio, junho, julho, agosto, setembro, outubro, novembro, dezembro</td>
-<td><code>B3W</code> 5197×<br><code>N3</code> 23×</td>
-<td>ITAU 4730×<br>BB 65×<br>SICOOB 38×</td>
+<td><code>B3W</code> 5203×<br><code>N3</code> 23×</td>
+<td>ITAU 4736×<br>BB 65×<br>SICOOB 38×</td>
 <td>—</td>
-<td>FORNECEDORES COGS 666×<br>FORNECEDORES G&amp;A 664×<br>FRETES 570×</td>
+<td>FORNECEDORES COGS 675×<br>FORNECEDORES G&amp;A 668×<br>FRETES 570×</td>
 </tr>
 <tr>
 <td><strong>(1)</strong></td>
@@ -79,10 +79,10 @@ Esta página é a única saída com valores em reais; ela fica no repositório e
 <td><strong>(2)</strong></td>
 <td class="n">7</td>
 <td>abril, maio, junho, julho, agosto, setembro, outubro</td>
-<td><code>B3N</code> 318×<br><code>B3W</code> 271×</td>
-<td>ITAU 303×<br>SICOOB 262×</td>
+<td><code>B3N</code> 318×<br><code>B3W</code> 272×</td>
+<td>ITAU 301×<br>SICOOB 265×</td>
 <td>DFC - AGOSTO/2026 <span class="tag">3×</span><br>DFC - ABRIL /2026 <span class="tag">1×</span><br>DFC - JULHO /2026 <span class="tag">1×</span></td>
-<td>RECEBIMENTO DE CLIENTES 197×<br>DESPESAS FINANCEIRAS 54×<br>RECEBIMENTOS DE CLIENTES 48×</td>
+<td>RECEBIMENTO DE CLIENTES 199×<br>DESPESAS FINANCEIRAS 55×<br>RECEBIMENTOS DE CLIENTES 48×</td>
 </tr>
 <tr>
 <td><strong>(3)</strong></td>
@@ -108,7 +108,7 @@ uso —, com as comuns às 4 pastas em negrito:</p>
 <p>Abas presentes nas 4 pastas: <code>2026</code> · <code>FLUXO DE CAIXA</code> · <code>Planilha1 [oculta]</code> · <code>BASE</code> · <code>PJ VENDAS [oculta]</code> · <code>RATEIO B3NXB3W [oculta]</code> · <code>COMISSÃO PJ [oculta]</code></p>
 <table>
 <tr><th>pasta</th><th>arquivo de referência</th><th>abas</th></tr>
-<tr><td><strong>sem sufixo</strong></td><td>09 - DFC SETEMBRO 2026.xlsx</td><td><strong><code>2026</code></strong> · <code>CONTA BANCO</code> · <strong><code>FLUXO DE CAIXA</code></strong> · <code>Planilha4</code> · <code>Planilha3</code> · <code>FRETE</code> · <strong><code>Planilha1 [oculta]</code></strong> · <code>CARTÃO DE CRÉDITO</code> · <code>PROVISÃO</code> · <strong><code>BASE</code></strong> · <strong><code>PJ VENDAS [oculta]</code></strong> · <strong><code>RATEIO B3NXB3W [oculta]</code></strong> · <strong><code>COMISSÃO PJ [oculta]</code></strong></td></tr>
+<tr><td><strong>sem sufixo</strong></td><td>09 - DFC SETEMBRO 2026.xlsx</td><td><strong><code>2026</code></strong> · <code>CONTA BANCO</code> · <strong><code>FLUXO DE CAIXA</code></strong> · <code>Planilha2</code> · <code>Planilha4</code> · <code>Planilha3</code> · <code>FRETE</code> · <strong><code>Planilha1 [oculta]</code></strong> · <code>CARTÃO DE CRÉDITO</code> · <code>PROVISÃO</code> · <strong><code>BASE</code></strong> · <strong><code>PJ VENDAS [oculta]</code></strong> · <strong><code>RATEIO B3NXB3W [oculta]</code></strong> · <strong><code>COMISSÃO PJ [oculta]</code></strong></td></tr>
 <tr><td><strong>(1)</strong></td><td>DFC SETEMBRO 2026.xlsx</td><td><strong><code>2026</code></strong> · <code>CONTA BANCO</code> · <code>Planilha10 [oculta]</code> · <code>Planilha9 [oculta]</code> · <strong><code>FLUXO DE CAIXA</code></strong> · <code>Planilha3 [oculta]</code> · <code>CARTÃO DE CREDITO</code> · <code>Planilha2 [oculta]</code> · <strong><code>Planilha1 [oculta]</code></strong> · <strong><code>BASE</code></strong> · <strong><code>PJ VENDAS [oculta]</code></strong> · <strong><code>RATEIO B3NXB3W [oculta]</code></strong> · <strong><code>COMISSÃO PJ [oculta]</code></strong></td></tr>
 <tr><td><strong>(2)</strong></td><td>DFC - SETEMBRO2026.xlsx</td><td><strong><code>2026</code></strong> · <strong><code>FLUXO DE CAIXA</code></strong> · <code>CARTÃO DE CRÉDITO</code> · <strong><code>Planilha1 [oculta]</code></strong> · <code>PROVISÃO</code> · <strong><code>BASE</code></strong> · <strong><code>PJ VENDAS [oculta]</code></strong> · <strong><code>RATEIO B3NXB3W [oculta]</code></strong> · <strong><code>COMISSÃO PJ [oculta]</code></strong></td></tr>
 <tr><td><strong>(3)</strong></td><td>DFC AGOSTO2026.xlsx</td><td><strong><code>2026</code></strong> · <code>CONTA BANCO</code> · <code>Planilha10 [oculta]</code> · <code>Planilha9 [oculta]</code> · <strong><code>FLUXO DE CAIXA</code></strong> · <code>Planilha3 [oculta]</code> · <code>CARTÃO DE CREDITO</code> · <code>Planilha2 [oculta]</code> · <strong><code>Planilha1 [oculta]</code></strong> · <strong><code>BASE</code></strong> · <strong><code>PJ VENDAS [oculta]</code></strong> · <strong><code>RATEIO B3NXB3W [oculta]</code></strong> · <strong><code>COMISSÃO PJ [oculta]</code></strong></td></tr>
@@ -151,11 +151,11 @@ delas só nos últimos meses —, então a soma só melhora onde há o que somar
 <td class="n">R$ 7.197.111,55</td><td class="n">R$ 6.689.842,87</td><td class="n">R$ 507.268,68</td><td class="n ruim">+7.6%</td>
 <td class="n">R$ 5.939.746,38</td><td class="n">R$ 2.520.386,38</td><td class="n">R$ 3.419.360,00</td><td class="n ruim">+135.7%</td></tr>
 <tr><td>setembro</td><td class="n">3</td>
-<td class="n">R$ 4.834.581,23</td><td class="n">R$ 5.578.814,39</td><td class="n">-R$ 744.233,16</td><td class="n ruim">-13.3%</td>
-<td class="n">R$ 5.309.137,70</td><td class="n">R$ 1.014.741,59</td><td class="n">R$ 4.294.396,11</td><td class="n ruim">+423.2%</td></tr>
+<td class="n">R$ 5.379.639,35</td><td class="n">R$ 5.578.814,39</td><td class="n">-R$ 199.175,04</td><td class="n atencao">-3.6%</td>
+<td class="n">R$ 6.130.087,13</td><td class="n">R$ 1.014.741,59</td><td class="n">R$ 5.115.345,54</td><td class="n ruim">+504.1%</td></tr>
 <tr><th>total</th><th class="n"></th>
-<th class="n">R$ 43.692.109,48</th><th class="n">R$ 28.494.677,25</th><th class="n">R$ 15.197.432,23</th><th class="n ruim">+53.3%</th>
-<th class="n">R$ 43.604.229,16</th><th class="n">R$ 20.538.172,52</th><th class="n">R$ 23.066.056,64</th><th class="n ruim">+112.3%</th></tr>
+<th class="n">R$ 44.237.167,60</th><th class="n">R$ 28.494.677,25</th><th class="n">R$ 15.742.490,35</th><th class="n ruim">+55.2%</th>
+<th class="n">R$ 44.425.178,59</th><th class="n">R$ 20.538.172,52</th><th class="n">R$ 23.887.006,07</th><th class="n ruim">+116.3%</th></tr>
 </table>
 
 <h3>O que a soma das outras unidades mudou</h3>
@@ -195,13 +195,13 @@ delas só nos últimos meses —, então a soma só melhora onde há o que somar
 <td class="n ruim">+130.0%</td><td class="n ruim">+135.7%</td>
 <td class="n">388</td><td class="n">112</td><td class="n">319</td></tr>
 <tr><td>setembro</td>
-<td class="n ruim">-16.5%</td><td class="n ruim">-13.3%</td>
-<td class="n ruim">+403.6%</td><td class="n ruim">+423.2%</td>
-<td class="n">303</td><td class="n">102</td><td class="n">247</td></tr>
+<td class="n ruim">-6.8%</td><td class="n atencao">-3.6%</td>
+<td class="n ruim">+484.5%</td><td class="n ruim">+504.1%</td>
+<td class="n">328</td><td class="n">105</td><td class="n">247</td></tr>
 <tr><th>total</th>
-<th class="n ruim">+50.1%</th><th class="n ruim">+53.3%</th>
-<th class="n ruim">+108.5%</th><th class="n ruim">+112.3%</th>
-<th class="n">4654</th><th class="n">586</th><th class="n">2148</th></tr>
+<th class="n ruim">+52.0%</th><th class="n ruim">+55.2%</th>
+<th class="n ruim">+112.5%</th><th class="n ruim">+116.3%</th>
+<th class="n">4679</th><th class="n">589</th><th class="n">2148</th></tr>
 </table>
 
 <h3>O mesmo mês a mês, com o DFC sem as transferências internas</h3>
@@ -235,8 +235,8 @@ lados do fluxo de caixa. Com quatro unidades no mesmo grupo, a transferência de
 <td class="n">R$ 6.822.961,59</td><td class="n ok">+2.0%</td>
 <td class="n">R$ 5.716.288,55</td><td class="n ruim">+126.8%</td></tr>
 <tr><td>setembro</td>
-<td class="n">R$ 4.428.474,40</td><td class="n ruim">-20.6%</td>
-<td class="n">R$ 4.534.489,49</td><td class="n ruim">+346.9%</td></tr>
+<td class="n">R$ 4.948.532,52</td><td class="n ruim">-11.3%</td>
+<td class="n">R$ 5.355.438,92</td><td class="n ruim">+427.8%</td></tr>
 </table>
 
 <h2>3. Casamento dos lançamentos, agora dizendo de que unidade é cada um</h2>
@@ -246,23 +246,23 @@ tratado como multiconjunto: cada linha do DFC casa com no máximo um lançamento
 <strong>leva a marca da pasta de onde veio a linha que o achou</strong> — é essa marca que a seção 4 usa.</p>
 <table>
 <tr><th>critério</th><th class="n">casados</th><th class="n">% das linhas do DFC</th><th class="n">% dos lanç. do Omie</th><th class="n">só no DFC</th><th class="n">só no Omie</th></tr>
-<tr><td>exato — natureza + dia do pagamento + valor, <strong>as 4 pastas</strong></td><td class="n">1418</td><td class="n">27.1%</td><td class="n">66.0%</td><td class="n">3822</td><td class="n">730</td></tr>
-<tr><td>exato — <strong>só a pasta da MeuBESS</strong> (o confronto anterior)</td><td class="n">1275</td><td class="n">27.4%</td><td class="n">59.4%</td><td class="n">3379</td><td class="n">873</td></tr>
-<tr><td>frouxo — natureza + mês do pagamento + valor, as 4 pastas</td><td class="n">1465</td><td class="n">28.0%</td><td class="n">68.2%</td><td class="n">3775</td><td class="n">683</td></tr>
+<tr><td>exato — natureza + dia do pagamento + valor, <strong>as 4 pastas</strong></td><td class="n">1419</td><td class="n">26.9%</td><td class="n">66.1%</td><td class="n">3849</td><td class="n">729</td></tr>
+<tr><td>exato — <strong>só a pasta da MeuBESS</strong> (o confronto anterior)</td><td class="n">1276</td><td class="n">27.3%</td><td class="n">59.4%</td><td class="n">3403</td><td class="n">872</td></tr>
+<tr><td>frouxo — natureza + mês do pagamento + valor, as 4 pastas</td><td class="n">1467</td><td class="n">27.8%</td><td class="n">68.3%</td><td class="n">3801</td><td class="n">681</td></tr>
 </table>
 
 <h3>A que unidade pertence cada lançamento do Omie que casou</h3>
 <table>
 <tr><th>unidade (pasta do DFC)</th><th class="n">lanç. do Omie que casaram</th><th class="n">% do Omie</th><th class="n">linhas do DFC da pasta</th><th class="n">% das linhas da pasta que acharam par</th></tr>
 <tr><td><strong>pasta base · EMP. B3W</strong> <span class="tag">MeuBESS</span></td>
-<td class="n">1275</td><td class="n">59.4%</td><td class="n">4654</td><td class="n">27.4%</td></tr>
+<td class="n">1276</td><td class="n">59.4%</td><td class="n">4679</td><td class="n">27.3%</td></tr>
 <tr><td><strong>pasta (1) · EMP. 3N</strong></td>
 <td class="n">0</td><td class="n">0.0%</td><td class="n">49</td><td class="n">0.0%</td></tr>
 <tr><td><strong>pasta (2) · EMP. B3N</strong></td>
-<td class="n">143</td><td class="n">6.7%</td><td class="n">526</td><td class="n">27.2%</td></tr>
+<td class="n">143</td><td class="n">6.7%</td><td class="n">529</td><td class="n">27.0%</td></tr>
 <tr><td><strong>pasta (3) · EMP. N3</strong></td>
 <td class="n">0</td><td class="n">0.0%</td><td class="n">11</td><td class="n">0.0%</td></tr>
-<tr><td><em>sem par em pasta nenhuma</em></td><td class="n">730</td><td class="n">34.0%</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td><em>sem par em pasta nenhuma</em></td><td class="n">729</td><td class="n">33.9%</td><td class="n">—</td><td class="n">—</td></tr>
 </table>
 <div class="nota"><strong>O tamanho da dúvida.</strong> 28 lançamento(s) do Omie têm chave (natureza + dia + valor)
 reivindicada por linhas de <strong>mais de uma</strong> pasta. Neles a atribuição de unidade é arbitrária — o script entrega a quem pediu
@@ -272,12 +272,12 @@ seguintes não muda por causa disso, mas o número não é zero.</div>
 <h3>Os tipos mais comuns de cada lado (critério exato, as 4 pastas)</h3>
 <table>
 <tr><th>só no DFC — <code>CLASS. CONTABIL</code></th><th class="n">linhas</th><th>só no DFC — <code>SUB 2</code></th><th class="n">linhas</th></tr>
-<tr><td>FORNECEDORES COGS</td><td class="n">533</td><td>RECEITA COM VENDAS</td><td class="n">957</td></tr>
-<tr><td>(vazio)</td><td class="n">500</td><td>COMPRAS DE MERCADORIAS</td><td class="n">529</td></tr>
-<tr><td>FRETES</td><td class="n">463</td><td>FRETE E CARRETO</td><td class="n">489</td></tr>
+<tr><td>FORNECEDORES COGS</td><td class="n">542</td><td>RECEITA COM VENDAS</td><td class="n">959</td></tr>
+<tr><td>(vazio)</td><td class="n">503</td><td>COMPRAS DE MERCADORIAS</td><td class="n">535</td></tr>
+<tr><td>FRETES</td><td class="n">463</td><td>FRETE E CARRETO</td><td class="n">492</td></tr>
 <tr><td>RECEITA</td><td class="n">392</td><td>CUSTOS COM CARTAO DE CREDITO</td><td class="n">248</td></tr>
-<tr><td>FORNECEDORES G&amp;A</td><td class="n">326</td><td>TARIFAS BANCARIAS</td><td class="n">227</td></tr>
-<tr><td>RECEITA COM VENDAS</td><td class="n">294</td><td>RECEITA COM SERVICOS</td><td class="n">159</td></tr>
+<tr><td>FORNECEDORES G&amp;A</td><td class="n">330</td><td>TARIFAS BANCARIAS</td><td class="n">228</td></tr>
+<tr><td>RECEITA COM VENDAS</td><td class="n">294</td><td>RECEITA COM SERVICOS</td><td class="n">161</td></tr>
 </table>
 
 <h2>4. O recorte da MeuBESS: a lista de contas correntes que o dono confirmou</h2>
@@ -286,17 +286,32 @@ capaz de separar as unidades de negócio é a <strong>conta corrente</strong> (<
 decisão do dono, não do script. <strong>O dono disse</strong>, em 24/09/2026, de que negócio é cada conta da tabela desta seção. A lista está gravada
 em <code>dados/contas-correntes-por-negocio.json</code>, é de lá que o código dos dashboards vai ler, e é de lá que esta página lê. Todos os números
 das seções 4, 6 e 7 já saem com o recorte aplicado.</p>
+<div class="nota"><strong>A conta <em>Adiantamento ao Fornecedor</em> entrou no recorte em 25/09/2026 (decisão do dono, opção A) — e veio com um
+filtro junto.</strong> O dinheiro chega nessa conta sempre pelo mesmo par, dentro da própria MeuBESS: a <strong>ida</strong> é um título a pagar com
+<code>detalhes.cOrigem = "ADCP"</code>, pago de conta de banco da MeuBESS, com a baixa dele na mesma conta; a <strong>chegada</strong> é uma entrada
+avulsa na conta do adiantamento, com <code>detalhes.cOrigem = "ADCR"</code> e categoria <code>1.04.01</code> "Adiantamento de Clientes" — o nome
+engana, o dinheiro é da própria MeuBESS. Nenhum dos dois cai em categoria de transferência, então o filtro de categoria não os pega. A regra, escrita
+em <code>docs/fontes.md</code>: a despesa conta <strong>uma vez só</strong>, quando o fornecedor é pago (o título <code>COMP</code>, que já vem pela
+conta do banco); ficam fora das somas <strong>(a)</strong> todo lançamento com <code>cOrigem = "ADCR"</code> e <strong>(b)</strong> todo lançamento de
+um título cujo <code>nCodTitulo</code> tenha, na mesma leitura, alguma linha com <code>cOrigem = "ADCP"</code> — o título da ida <em>e</em> a baixa
+dele. <strong>Nesta leitura o filtro tirou 53 lançamento(s)</strong> de contas da MeuBESS: 53
+pela regra (b), o título da ida (53 título(s) com linha <code>ADCP</code> no período), e 0 pela
+regra (a). A regra (a) não tem o que tirar <em>aqui</em> porque esta página lê com <code>cTpLancamento: "CPCR"</code> (seção 5), que já deixa de fora
+o lançamento avulso de conta corrente — e a chegada <code>ADCR</code> é exatamente isso; nas telas, que leem sem esse filtro, ela tira. Pelo mesmo
+motivo a baixa do título da ida (<code>BAXP</code>) não aparece nesta leitura: o que sai aqui é a linha de título. O filtro vale para o lado do Omie
+de todo confronto desta página; o "Omie inteiro" da seção 3, que é só o <em>antes</em> do recorte, segue sem ele.</div>
 <table>
 <tr><th>negócio</th><th>o que o dono disse</th><th class="n">contas na lista</th></tr>
 <tr><td><strong>MeuBESS</strong> — o recorte das telas</td>
-  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2) e Caixinha</td>
-  <td class="n">14</td></tr>
+  <td>Itaú (empresas 1 e 2), Cora, cartão Itaú 1106, Banco Implementação, Adiantamento de Cliente, Stone, Banco do Brasil (empresas 1 e 2), Caixinha
+  e — desde 25/09/2026 — <strong>Adiantamento ao Fornecedor</strong> (as duas, empresas 1 e 2)</td>
+  <td class="n">16</td></tr>
 <tr><td><strong>MX3</strong></td><td>todas as contas Sicoob, inclusive a <code>Sicoob - B3N</code>, e o cartão Itaú 6826</td>
   <td class="n">5</td></tr>
 <tr><td><strong>3N Capital</strong></td><td>Safra e o cartão Itaú 9120</td>
   <td class="n">3</td></tr>
 <tr><td><strong class="ruim">sem dono dito</strong></td><td>o que o dono não citou — fica <strong>fora</strong> do recorte, e o código não adivinha pelo nome</td>
-  <td class="n">21</td></tr>
+  <td class="n">19</td></tr>
 <tr><th>total no cadastro do Omie</th><th></th><th class="n">43</th></tr>
 </table>
 <p>O cadastro do Omie tem 43 contas correntes somando as duas empresas (a mesma conta física aparece duas vezes quando
@@ -309,8 +324,8 @@ não fonte dela.</p>
 <td>Itaú Unibanco — banco 341 (CC) <span class="tag">emp. 2</span></td>
 <td><strong class="ok">MeuBESS</strong></td>
 <td class="n">2682</td>
-<td class="n">880</td><td class="n">554</td>
-<td>MeuBESS 554</td>
+<td class="n">880</td><td class="n">555</td>
+<td>MeuBESS 555</td>
 <td class="n">100.0%</td>
 <td><span class="ok">confere</span></td>
 <td><strong class="ok">sim</strong></td></tr>
@@ -352,13 +367,13 @@ não fonte dela.</p>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 2</span></td>
-<td><strong class="ruim">sem dono dito</strong></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">94</td>
 <td class="n">1</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
 <td><span class="fraca">sem casados: a leitura não opina</span></td>
-<td>não</td></tr>
+<td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Banco do Brasil — banco 001 (CC) <span class="tag">emp. 2</span></td>
 <td><strong class="ok">MeuBESS</strong></td>
@@ -415,13 +430,13 @@ não fonte dela.</p>
 <td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 1</span></td>
-<td><strong class="ruim">sem dono dito</strong></td>
+<td><strong class="ok">MeuBESS</strong></td>
 <td class="n">22</td>
 <td class="n">0</td><td class="n">0</td>
 <td>—</td>
 <td class="n">—</td>
 <td><span class="fraca">sem casados: a leitura não opina</span></td>
-<td>não</td></tr>
+<td><strong class="ok">sim</strong></td></tr>
 <tr>
 <td>CARTÃO B3W ITAU 6826 (7400) — banco 985 (CR) <span class="tag">emp. 1</span></td>
 <td>MX3</td>
@@ -543,14 +558,10 @@ pequena, quem responde é o dono, e é a resposta dele que vale.</strong></p>
 
 <h3>As contas com movimento que ficaram sem dono dito</h3>
 <p>O dono não citou estas. Elas ficam <strong>fora</strong> do recorte, e nada aqui tenta adivinhar o dono pelo nome do banco. Todas juntas movimentam
-2 lançamento(s) dentro do filtro <code>CPCR</code> — 0.1%
-dos lançamentos que as telas leem, R$ 41.554,40 de R$ 49.032.849,77.</p>
+1 lançamento(s) dentro do filtro <code>CPCR</code> — 0.0%
+dos lançamentos que as telas leem, R$ 106,40 de R$ 49.032.849,77.</p>
 <table>
 <tr><th>conta corrente no Omie</th><th class="n">lanç. na faixa, sem filtro de tipo</th><th class="n">lanç. com o filtro <code>CPCR</code></th></tr>
-<tr><td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 2</span></td>
-<td class="n">94</td><td class="n">1</td></tr>
-<tr><td>Adiantamento ao Fornecedor — banco ADF (AD) <span class="tag">emp. 1</span></td>
-<td class="n">22</td><td class="n">0</td></tr>
 <tr><td>Santander — banco 033 (CC) <span class="tag">emp. 1</span></td>
 <td class="n">5</td><td class="n">0</td></tr>
 <tr><td>Aplicação financeira Banco do Brasil — banco 001 (CA) <span class="tag">emp. 1</span></td>
@@ -577,73 +588,79 @@ número da tela e não entram em fonte nenhuma.</p>
 <td class="n">R$ 5.730.394,54</td><td class="n">R$ 5.425,00</td><td class="n ruim">+105529.4%</td>
 <td class="n ruim">+1019.7%</td><td class="n ruim">+83780.2%</td></tr>
 <tr><td><strong>fevereiro</strong></td>
-<td class="n">420</td><td class="n">14</td>
+<td class="n">420</td><td class="n">13</td>
 <td class="n">R$ 5.336.475,20</td><td class="n">R$ 348.297,70</td><td class="n ruim">+1432.2%</td>
-<td class="n">R$ 6.108.443,39</td><td class="n">R$ 47.726,00</td><td class="n ruim">+12699.0%</td>
-<td class="n ruim">+1351.8%</td><td class="n ruim">+12637.9%</td></tr>
+<td class="n">R$ 6.108.443,39</td><td class="n">R$ 45.480,00</td><td class="n ruim">+13331.1%</td>
+<td class="n ruim">+1351.8%</td><td class="n ruim">+13266.9%</td></tr>
 <tr><td><strong>março</strong></td>
-<td class="n">521</td><td class="n">406</td>
+<td class="n">521</td><td class="n">383</td>
 <td class="n">R$ 4.840.887,05</td><td class="n">R$ 4.762.505,85</td><td class="n ok">+1.6%</td>
-<td class="n">R$ 4.579.679,06</td><td class="n">R$ 6.513.425,91</td><td class="n ruim">-29.7%</td>
-<td class="n ruim">-6.8%</td><td class="n ruim">-37.0%</td></tr>
+<td class="n">R$ 4.579.679,06</td><td class="n">R$ 3.201.374,54</td><td class="n ruim">+43.1%</td>
+<td class="n ruim">-6.8%</td><td class="n ruim">+28.2%</td></tr>
 <tr><td><strong>abril</strong></td>
-<td class="n">570</td><td class="n">396</td>
+<td class="n">570</td><td class="n">382</td>
 <td class="n">R$ 6.849.364,46</td><td class="n">R$ 3.821.401,53</td><td class="n ruim">+79.2%</td>
-<td class="n">R$ 6.186.128,53</td><td class="n">R$ 4.836.615,10</td><td class="n ruim">+27.9%</td>
-<td class="n ruim">+65.2%</td><td class="n ruim">+14.8%</td></tr>
+<td class="n">R$ 6.186.128,53</td><td class="n">R$ 3.688.057,50</td><td class="n ruim">+67.7%</td>
+<td class="n ruim">+65.2%</td><td class="n ruim">+50.5%</td></tr>
 <tr><td><strong>maio</strong></td>
-<td class="n">877</td><td class="n">161</td>
+<td class="n">877</td><td class="n">157</td>
 <td class="n">R$ 3.117.297,88</td><td class="n">R$ 1.895.836,66</td><td class="n ruim">+64.4%</td>
-<td class="n">R$ 3.071.393,16</td><td class="n">R$ 871.073,09</td><td class="n ruim">+252.6%</td>
-<td class="n ruim">+58.2%</td><td class="n ruim">+188.3%</td></tr>
+<td class="n">R$ 3.071.393,16</td><td class="n">R$ 702.858,11</td><td class="n ruim">+337.0%</td>
+<td class="n ruim">+58.2%</td><td class="n ruim">+257.3%</td></tr>
 <tr><td><strong>junho</strong></td>
-<td class="n">461</td><td class="n">194</td>
+<td class="n">461</td><td class="n">192</td>
 <td class="n">R$ 3.221.174,84</td><td class="n">R$ 2.100.724,89</td><td class="n ruim">+53.3%</td>
-<td class="n">R$ 3.933.555,17</td><td class="n">R$ 2.808.622,73</td><td class="n ruim">+40.1%</td>
-<td class="n ruim">+30.3%</td><td class="n ruim">+16.9%</td></tr>
+<td class="n">R$ 3.933.555,17</td><td class="n">R$ 2.661.512,81</td><td class="n ruim">+47.8%</td>
+<td class="n ruim">+30.3%</td><td class="n ruim">+23.4%</td></tr>
 <tr><td><strong>julho</strong></td>
-<td class="n">701</td><td class="n">324</td>
+<td class="n">701</td><td class="n">317</td>
 <td class="n">R$ 2.896.930,45</td><td class="n">R$ 2.896.803,12</td><td class="n ok">+0.0%</td>
-<td class="n">R$ 2.296.351,90</td><td class="n">R$ 1.839.968,64</td><td class="n ruim">+24.8%</td>
-<td class="n ruim">-10.9%</td><td class="n ruim">+16.5%</td></tr>
+<td class="n">R$ 2.296.351,90</td><td class="n">R$ 1.830.155,41</td><td class="n ruim">+25.5%</td>
+<td class="n ruim">-10.9%</td><td class="n ruim">+17.2%</td></tr>
 <tr><td><strong>agosto</strong></td>
-<td class="n">388</td><td class="n">253</td>
+<td class="n">388</td><td class="n">252</td>
 <td class="n">R$ 6.954.071,53</td><td class="n">R$ 6.641.789,77</td><td class="n atencao">+4.7%</td>
-<td class="n">R$ 5.797.709,92</td><td class="n">R$ 2.480.547,68</td><td class="n ruim">+133.7%</td>
-<td class="n ok">-0.6%</td><td class="n ruim">+128.4%</td></tr>
+<td class="n">R$ 5.797.709,92</td><td class="n">R$ 2.479.713,68</td><td class="n ruim">+133.8%</td>
+<td class="n ok">-0.6%</td><td class="n ruim">+128.5%</td></tr>
 <tr><td><strong>setembro</strong></td>
-<td class="n">303</td><td class="n">187</td>
-<td class="n">R$ 4.659.208,83</td><td class="n">R$ 5.536.743,79</td><td class="n ruim">-15.8%</td>
-<td class="n">R$ 5.110.431,79</td><td class="n">R$ 932.741,85</td><td class="n ruim">+447.9%</td>
-<td class="n ruim">-21.7%</td><td class="n ruim">+373.3%</td></tr>
-<tr><th>total</th><th class="n">4654</th><th class="n">1938</th>
-<th class="n">R$ 42.769.622,26</th><th class="n">R$ 28.357.196,90</th><th class="n ruim">+50.8%</th>
-<th class="n">R$ 42.814.087,47</th><th class="n">R$ 20.336.146,00</th><th class="n ruim">+110.5%</th>
-<th class="n">+37.6%</th><th class="n">+88.4%</th></tr>
+<td class="n">328</td><td class="n">187</td>
+<td class="n">R$ 5.201.666,95</td><td class="n">R$ 5.536.743,79</td><td class="n ruim">-6.1%</td>
+<td class="n">R$ 5.931.380,02</td><td class="n">R$ 932.741,85</td><td class="n ruim">+535.9%</td>
+<td class="n ruim">-12.3%</td><td class="n ruim">+461.3%</td></tr>
+<tr><th>total</th><th class="n">4679</th><th class="n">1886</th>
+<th class="n">R$ 43.312.080,38</th><th class="n">R$ 28.357.196,90</th><th class="n ruim">+52.7%</th>
+<th class="n">R$ 43.635.035,70</th><th class="n">R$ 15.547.318,90</th><th class="n ruim">+180.7%</th>
+<th class="n">+39.4%</th><th class="n">+151.7%</th></tr>
 </table>
 <div class="nota"><strong>Janeiro e fevereiro não são comparação.</strong> O Omie tem 3 e
-14 lançamentos pagos nesses dois meses, contra centenas de linhas no DFC: o percentual explode porque o
+13 lançamentos pagos nesses dois meses, contra centenas de linhas no DFC: o percentual explode porque o
 denominador é quase zero, não porque as fontes discordem. A comparação começa em março.</div>
 
 <h3>A taxa de casamento, antes e depois do recorte</h3>
 <p>Mesmo lado do DFC (a pasta da MeuBESS) e mesmo critério (natureza + dia do pagamento + valor até o centavo). Só muda o lado do Omie: antes o
 CNPJ inteiro, depois só as contas correntes da MeuBESS.</p>
 <table>
-<tr><th></th><th class="n">lanç. do Omie no confronto</th><th class="n">casados</th><th class="n">% das 4654 linhas do DFC da MeuBESS</th><th class="n">% dos lanç. do Omie</th><th class="n">só no Omie</th></tr>
-<tr><td><strong>antes do recorte</strong> — Omie inteiro</td><td class="n">2148</td><td class="n">1275</td>
-<td class="n">27.4%</td>
-<td class="n ">59.4%</td><td class="n">873</td></tr>
-<tr><td><strong>depois do recorte</strong> — só as contas da MeuBESS</td><td class="n">1938</td><td class="n">1266</td>
-<td class="n">27.2%</td>
-<td class="n ok">65.3%</td><td class="n">672</td></tr>
+<tr><th></th><th class="n">lanç. do Omie no confronto</th><th class="n">casados</th><th class="n">% das 4679 linhas do DFC da MeuBESS</th><th class="n">% dos lanç. do Omie</th><th class="n">só no Omie</th></tr>
+<tr><td><strong>antes do recorte</strong> — Omie inteiro</td><td class="n">2148</td><td class="n">1276</td>
+<td class="n">27.3%</td>
+<td class="n ">59.4%</td><td class="n">872</td></tr>
+<tr><td><strong>depois do recorte</strong> — só as contas da MeuBESS</td><td class="n">1886</td><td class="n">1240</td>
+<td class="n">26.5%</td>
+<td class="n ok">65.7%</td><td class="n">646</td></tr>
 </table>
-<p>O recorte tirou 210 lançamentos do lado do Omie e perdeu 9 casamento(s)
-no caminho — os que a pasta da MeuBESS tinha achado em conta de outro negócio. O saldo é uma taxa de casamento do lado do Omie de
-<strong>59.4% para 65.3%</strong>. Pelo critério frouxo
-(mesmo mês em vez do mesmo dia) o número depois do recorte é 67.6%.</p>
-<p>Em valor: o recorte da MeuBESS pega <strong>R$ 48.693.342,90</strong> dos <strong>R$ 49.032.849,77</strong> movimentados no Omie no
-período — 99.3% do dinheiro, contra 90.2%
-dos lançamentos.</p>
+<p>O lado direito da tabela saiu de 2148 para 1886 lançamentos, por <strong>dois cortes diferentes</strong>:
+209 saíram porque a conta corrente é de outro negócio (é o recorte) e
+53 são de conta da MeuBESS mas saem pelo filtro do Adiantamento ao Fornecedor (a nota da seção 4).
+No caminho 36 casamento(s) se perderam — os que a pasta da MeuBESS tinha achado do outro lado do corte.
+O saldo é uma taxa de casamento do lado do Omie de
+<strong>59.4% para 65.7%</strong>. Pelo critério frouxo
+(mesmo mês em vez do mesmo dia) o número depois do recorte é 68.8%.</p>
+<p>Em valor: o que sobra depois dos dois cortes é <strong>R$ 43.904.515,80</strong> dos <strong>R$ 49.032.849,77</strong> movimentados no
+Omie no período — 89.5% do dinheiro, contra 87.8%
+dos lançamentos. <strong>O corte de conta corrente sozinho pegava 99.4% do dinheiro</strong>
+(R$ 48.734.790,90); a diferença é o filtro do adiantamento, e é grande porque o adiantamento a fornecedor é dinheiro graúdo em poucos
+lançamentos — 53 de 1939. Esse dinheiro não sumiu da conta da MeuBESS: ele volta a contar quando
+o fornecedor é pago, pelo título da nota.</p>
 
 <div class="resolvido">
   <strong>O que o recorte resolveu, e o que ele deixou à mostra.</strong>
@@ -652,8 +669,8 @@ dos lançamentos.</p>
       tem resposta do dono, gravada em arquivo, e não depende mais de o lançamento ter achado par no DFC — as contas pequenas, que o teste de pureza
       nunca conseguiu classificar por falta de casados, agora têm dono.</li>
     <li><strong>Não fechou a distância entre as duas fontes.</strong> Com os dois lados falando da mesma unidade, o DFC da MeuBESS continua acima do
-      Omie recortado do lado das saídas em <strong>6 dos 7 meses comparáveis</strong> (março a setembro;
-      a exceção é março), com a diferença indo de +14.8% a +373.3% já descontadas as
+      Omie recortado do lado das saídas em <strong>7 dos 7 meses comparáveis</strong> (março a setembro;
+      sem exceção), com a diferença indo de +17.2% a +461.3% já descontadas as
       transferências — e do lado das entradas em 6 desses 7 meses. Ou seja: a diferença
       que se via antes <em>não era</em> outra unidade de negócio dentro do número. É o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e a
       cobertura do ano. É esse achado que mexeu na proposta de alguns indicadores da seção 7.</li>
@@ -661,7 +678,7 @@ dos lançamentos.</p>
       contas que o dono deu à MeuBESS. Enquanto o Omie não tiver uma marca de unidade no próprio lançamento, o recorte é manutenção: conta nova no
       Omie entra sem dono e fica fora da tela até alguém dizer de quem é. Um departamento-raiz por unidade segue sendo o caminho mais barato para
       acabar com a manutenção, porque o campo já existe e já é rateável — <strong>e isso é decisão do dono, não deste confronto</strong>.</li>
-    <li><strong>6 conta(s) com movimento seguem sem dono dito</strong> e ficam fora de tudo. Ver a tabela acima.</li>
+    <li><strong>4 conta(s) com movimento seguem sem dono dito</strong> e ficam fora de tudo. Ver a tabela acima.</li>
   </ul>
   <strong>Nada foi alterado no Omie nem nas planilhas.</strong> Em <code>docs/fontes.md</code>, esta rodada fecha <em>uma</em> lacuna — a do recorte
   por conta corrente — e não toca em nenhuma outra.
@@ -696,7 +713,10 @@ dos lançamentos.</p>
 <p>As origens <code>BAXP</code> e <code>BAXR</code> — as maiores de todas — são registros de <em>baixa</em>; somá-las junto com o título
 contaria o mesmo dinheiro duas vezes, e o <code>CPCR</code> faz bem em tirá-las. Já <code>ADVP</code>, <code>ADCR</code>,
 <code>EXTP</code> e <code>EXTR</code> ficam de fora sem que isso esteja escrito em lugar nenhum: são adiantamentos e lançamentos de extrato
-que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.</p>
+que o DFC registra e a Tela 1 não veria. <strong>Vale o dono olhar</strong> — mas nada foi mudado em <code>docs/fontes.md</code>.
+<strong>Uma delas deixou de ser dúvida:</strong> a <code>ADCR</code> é a chegada do Adiantamento ao Fornecedor (seção 4) e, por decisão do dono de
+25/09/2026, fica fora das somas de propósito — não é receita, é dinheiro da própria MeuBESS mudando de conta. Isso está escrito em
+<code>docs/fontes.md</code>. As outras três seguem como estavam.</p>
 
 <h2>6. Por grupo das Telas 1 e 2: quem tem o dado mais completo</h2>
 <p>Agora com os <strong>dois lados só da MeuBESS</strong>: à esquerda a pasta do DFC dela, à direita o Omie cortado pelas contas correntes da
@@ -707,34 +727,35 @@ um campo que o lançamento pode ou não trazer.</p>
 <table>
 <tr><th>grupo</th><th class="n">DFC: linhas no grupo</th><th class="n">% das linhas</th><th class="n">Omie: lanç. com o campo</th><th class="n">% dos lanç.</th><th>o campo do Omie</th><th>mais completo</th></tr>
 <tr><td><strong>Despesas com funcionários</strong></td>
-<td class="n">623 de 3215</td><td class="n">19.4% <span class="barra" style="width:12px"></span></td>
-<td class="n">878 de 1406</td><td class="n">62.4% <span class="barra b" style="width:37px"></span></td>
+<td class="n">628 de 3235</td><td class="n">19.4% <span class="barra" style="width:12px"></span></td>
+<td class="n">879 de 1354</td><td class="n">64.9% <span class="barra b" style="width:39px"></span></td>
 <td>departamentos[] rateados no lançamento (o Omie não marca departamento como de pessoal)</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>COGS / custos de vendas</strong></td>
-<td class="n">1345 de 3215</td><td class="n">41.8% <span class="barra" style="width:25px"></span></td>
-<td class="n">1173 de 1406</td><td class="n">83.4% <span class="barra b" style="width:50px"></span></td>
+<td class="n">1355 de 3235</td><td class="n">41.9% <span class="barra" style="width:25px"></span></td>
+<td class="n">1125 de 1354</td><td class="n">83.1% <span class="barra b" style="width:50px"></span></td>
 <td>codigo_dre da categoria do lançamento (a conta de custo do DRE)</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>Despesas gerais</strong></td>
-<td class="n">704 de 3215</td><td class="n">21.9% <span class="barra" style="width:13px"></span></td>
-<td class="n">1173 de 1406</td><td class="n">83.4% <span class="barra b" style="width:50px"></span></td>
+<td class="n">709 de 3235</td><td class="n">21.9% <span class="barra" style="width:13px"></span></td>
+<td class="n">1125 de 1354</td><td class="n">83.1% <span class="barra b" style="width:50px"></span></td>
 <td>codigo_dre da categoria do lançamento</td><td><strong>Omie</strong></td></tr>
 <tr><td><strong>Impostos</strong></td>
-<td class="n">83 de 3215</td><td class="n">2.6% <span class="barra" style="width:2px"></span></td>
-<td class="n">3 de 1406</td><td class="n">0.2% <span class="barra b" style="width:0px"></span></td>
+<td class="n">83 de 3235</td><td class="n">2.6% <span class="barra" style="width:2px"></span></td>
+<td class="n">3 de 1354</td><td class="n">0.2% <span class="barra b" style="width:0px"></span></td>
 <td>detalhes.cTipo em DAS / DRF / GUIA (a leitura "guias pagas")</td><td><strong>empatado</strong></td></tr>
 <tr><td><strong>Deduções</strong></td>
-<td class="n">21 de 3215</td><td class="n">0.7% <span class="barra" style="width:0px"></span></td>
-<td class="n">0 de 1406</td><td class="n">0.0% <span class="barra b" style="width:0px"></span></td>
+<td class="n">22 de 3235</td><td class="n">0.7% <span class="barra" style="width:0px"></span></td>
+<td class="n">0 de 1354</td><td class="n">0.0% <span class="barra b" style="width:0px"></span></td>
 <td>detalhes.cOperacao = 13 (devolução de venda)</td><td><strong>empatado</strong></td></tr>
 <tr><td><strong>Receita</strong></td>
-<td class="n">1336 de 1439</td><td class="n">92.8% <span class="barra" style="width:56px"></span></td>
+<td class="n">1339 de 1444</td><td class="n">92.7% <span class="barra" style="width:56px"></span></td>
 <td class="n">532 de 532</td><td class="n">100.0% <span class="barra b" style="width:60px"></span></td>
 <td>categoria com conta_receita = S</td><td><strong>Omie</strong></td></tr>
 </table>
 <div class="nota"><strong>As duas colunas não medem a mesma coisa — e é esse o ponto.</strong> No DFC o número é
 <em>quantas linhas caem neste grupo</em>: a linha já diz a que grupo pertence. No Omie é <em>quantos lançamentos trazem o campo
 que poderia colocá-los em algum grupo</em>. O que mudou nesta rodada é o denominador do lado do Omie: antes ele contava o CNPJ inteiro, as quatro
-unidades; agora conta 1938 lançamentos, só os das contas da MeuBESS. "COGS" e "Despesas gerais" seguem mostrando exatamente o
+unidades; agora conta 1886 lançamentos — os das contas da MeuBESS, sem o par do Adiantamento ao Fornecedor (seção 4).
+"COGS" e "Despesas gerais" seguem mostrando exatamente o
 mesmo número do lado do Omie, porque o campo é o mesmo
 (<code>codigo_dre</code>) e <strong>ele não separa os dois</strong> enquanto o dono não disser quais contas do DRE são custo e quais são despesa
 geral. <strong>Essa lacuna segue aberta</strong> em <code>docs/fontes.md</code> — o recorte por conta corrente não tem nada a ver com ela.</div>
@@ -749,10 +770,12 @@ própria linha); <em>onde o cadastro decide, o Omie leva</em> (ele tem cliente, 
 <div class="resolvido"><strong>O que mudou, e por quê.</strong> Na rodada anterior a última coluna desta tabela dizia "precisa do recorte" para um
 recorte que não existia, e todo número vindo do Omie carregava a ressalva de estar somando as outras unidades de negócio do mesmo CNPJ.
 <strong>Essa ressalva caiu:</strong> o dono deu a lista de contas (seção 4), ela está em <code>dados/contas-correntes-por-negocio.json</code>, e toda
-consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — 1938 dos 2148 lançamentos do
-período, 99.3% do dinheiro. Com o recorte aplicado, porém, apareceu o que a contaminação escondia:
-<strong>o DFC da MeuBESS fica acima do Omie recortado do lado das saídas em 6 dos 7 meses comparáveis,
-de +14.8% a +373.3% sem contar transferências</strong> (seção 4), e a causa não é unidade
+consulta ao Omie nas Telas 1 e 2 passa a filtrar <code>detalhes.nCodCC</code> por ela — 1939 dos 2148 lançamentos do
+período, 99.4% do dinheiro; e, desde 25/09/2026, sem o par do Adiantamento ao Fornecedor
+(mais 53 fora, seção 4), o que deixa 1886. Com o recorte aplicado, porém, apareceu o que a contaminação
+escondia:
+<strong>o DFC da MeuBESS fica acima do Omie recortado do lado das saídas em 7 dos 7 meses comparáveis,
+de +17.2% a +461.3% sem contar transferências</strong> (seção 4), e a causa não é unidade
 de negócio — é o filtro <code>cTpLancamento: "CPCR"</code> (seção 5) e o fato de o Omie quase não ter lançamento pago em janeiro e fevereiro.
 Por isso <strong>7 dos 21 indicadores mudaram de fonte principal proposta</strong>, todos na
 mesma direção: do Omie para o DFC, e todos em número de caixa (saldo, receita, despesa paga, as séries por dia e por mês). Os que dependem de
@@ -760,7 +783,7 @@ cadastro — cliente, categoria, conta do DRE, carteira em aberto — <strong>fi
 do dono.</div>
 <div class="nota">E a ressalva antiga continua de pé, só que agora ela é o motivo das trocas e não uma nota de rodapé: onde a proposta diz "Omie",
 o número só existe <strong>de março de 2026 em diante</strong> — em janeiro e fevereiro o Omie tem
-3 e 14 lançamentos pagos no recorte, contra
+3 e 13 lançamentos pagos no recorte, contra
 413 e 420 linhas no DFC da MeuBESS. Para a série de 2026 inteiro, a única
 fonte que cobre o ano é o DFC.</div>
 <table>
@@ -873,7 +896,7 @@ enquanto a diferença do filtro <code>CPCR</code> não for explicada. Isso é o 
     não tiver uma marca de unidade no próprio lançamento, conta corrente nova entra sem dono e fica fora da tela até alguém dizer de quem é, e a
     lista quebra no dia em que um negócio lançar na conta do outro.</li>
   <li><strong>O recorte não explica a diferença entre as duas fontes</strong> — este é o achado que mais mexeu na proposta da seção 7. Com os dois
-    lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 6 dos 7 meses comparáveis. A causa está na seção 5, não na unidade de
+    lados só da MeuBESS, o DFC fica acima do Omie do lado das saídas em 7 dos 7 meses comparáveis. A causa está na seção 5, não na unidade de
     negócio.</li>
   <li><strong>Duas das unidades novas não aparecem no que as telas leem.</strong> As pastas <code>(1)</code> e <code>(3)</code> casaram zero
     lançamento: o movimento delas fica fora do filtro <code>cTpLancamento: "CPCR"</code>. Isso é bom para a tela — menos contaminação — e ruim
@@ -892,8 +915,8 @@ enquanto a diferença do filtro <code>CPCR</code> não for explicada. Isso é o 
 </ul>
 
 <footer>
-Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em 24/09/2026. O recorte da MeuBESS vem de
-<code>dados/contas-correntes-por-negocio.json</code> (lista dita pelo dono em 2026-09-24), que é o mesmo arquivo que o
+Gerado por <code>scripts/confronto-dfc-omie.mjs</code> em 25/09/2026. O recorte da MeuBESS vem de
+<code>dados/contas-correntes-por-negocio.json</code> (lista dita pelo dono em 2026-09-25), que é o mesmo arquivo que o
 código dos dashboards lê. Só leitura das duas fontes: nenhum arquivo das 4 pastas
 sincronizadas foi gravado, movido ou aberto para edição, nenhuma planilha foi copiada para o repositório e nenhuma escrita foi feita no Omie.
 Sem nome de cliente, fornecedor ou pessoa.

@@ -18,11 +18,20 @@
 // fora as categorias de transferência
 // (decisão do dono, 25/09/2026, opção B: as marcadas 0.01.01 e 0.01.02, mais 1.04.96 e 2.05.98 nas duas empresas e 1.04.97
 // só na empresa 1 — cinco fora na empresa 1 e quatro na 2). Sem contar duas vezes: o título recebido
-// (CONTA_A_RECEBER) conta uma vez por `nCodTitulo`; do conta corrente (CONTA_CORRENTE_REC) entra só o avulso, sem título
-// (`nCodTitulo` 0), uma vez por `nCodMovCC`.
+// (CONTA_A_RECEBER) conta uma vez por `nCodTitulo`, e do conta corrente (CONTA_CORRENTE_REC) entram os dois que não têm
+// título irmão nesta leitura, cada um uma vez por `nCodMovCC`: o AVULSO, que vem com `nCodTitulo` 0, e a BAIXA DO TÍTULO
+// QUITADO SÓ EM PARTE, que vem com `nCodTitulo` preenchido e cujo título a leitura por data de pagamento não devolve.
+//
+// UMA LEITURA SÓ, E É A DO FONTES.MD (corrigido em 25/09/2026): o cache tem mais de uma leitura de `financas/mf` da mesma
+// faixa (a sem `cTpLancamento`, a com `cTpLancamento: "CPCR"` e uma só de títulos a receber que chega a trazer título em
+// aberto e título baixado depois). Juntar todas, como este script fazia, contava título que a leitura do fontes.md não
+// tem — 18 na empresa 2 — e, pior, dava título irmão às 24 baixas de parcial dela, que assim desapareciam da conta.
+// Por isso aqui só entram as páginas da leitura que o fontes.md descreve, achadas no cache pela mesma chave que o
+// `scripts/confronto-dfc-omie.mjs` usa para gravá-las (sha1 dos parâmetros; ver LEITURA_DO_FONTES).
 //
 //   node scripts/categorias-de-receita.mjs
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,12 +39,21 @@ import { fileURLToPath } from 'node:url';
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = path.join(RAIZ, '.cache', 'omie');
 const SAIDA = path.join(RAIZ, 'docs', 'categorias-de-receita.html');
-const LEITURA = '24 e 25/09/2026';
+const LEITURA = '24/09/2026, 14h46 às 14h49';
 const FAIXA = '01/01/2026 a 30/09/2026';
 
+// A LEITURA DE MOVIMENTOS QUE VALE: a única que o fontes.md conta, `financas/mf` → `ListarMovimentos` SEM
+// `cTpLancamento`, por data de pagamento na faixa. O `scripts/confronto-dfc-omie.mjs` grava cada página no cache com o
+// nome `<empresa>-financas-mf-ListarMovimentos-<sha1 dos parâmetros, 12 dígitos>.json`; aqui os parâmetros são
+// remontados iguais (a mesma ordem de campos, que o `JSON.stringify` respeita) para achar essas páginas e só elas.
+const LEITURA_DO_FONTES = n => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: '01/01/2026', dDtPagtoAte: '30/09/2026' });
+const arquivoDaPagina = (emp, n) => path.join(CACHE,
+  `${emp}-financas-mf-ListarMovimentos-${crypto.createHash('sha1').update(JSON.stringify(LEITURA_DO_FONTES(n))).digest('hex').slice(0, 12)}.json`);
+
 // Contagem de 2026 já escrita em docs/fontes.md (Top 10 receitas): serve de trava, para a página não divergir do que a
-// tela vai contar. [títulos, avulsos] por empresa. Já com as cinco categorias de transferência fora (ver TRANSFERENCIAS).
-const CONTAGEM_DO_FONTES = { 1: [9, 159], 2: [541, 607] };
+// tela vai contar. [títulos, baixas de parcial, avulsos] por empresa. Já com as cinco categorias de transferência fora
+// (ver TRANSFERENCIAS).
+const CONTAGEM_DO_FONTES = { 1: [9, 0, 159], 2: [523, 24, 607] };
 
 // AS CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B): transferência entre contas não é
 // receita nem despesa. O cadastro do Omie marca duas (`transferencia = "S"`: 0.01.01 e 0.01.02); as de baixo se chamam
@@ -59,6 +77,8 @@ const deesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').r
 const mascarar = s => s.replace(/Pacianotto/gi, '[terceiro]').replace(/\bB3N\b/g, '[terceiro]').replace(/Sanepar/gi, '[terceiro]');
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const nome = c => mascarar(deesc(c.descricao)).trim();
+// Os três baldes de recebimento juntos: título, baixa de parcial e avulso.
+const soma = x => x.titulos + x.baixas + x.avulsos;
 
 // ---------------------------------------------------------------- leitura do cache
 
@@ -76,38 +96,64 @@ for (const emp of ['1', '2'])
     for (const c of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).categoria_cadastro ?? [])
       categorias[emp].set(String(c.codigo), c);
 
-// Por categoria: títulos recebidos, avulsos de conta corrente e quantos títulos vieram de pedido de venda.
-const conta = { 1: new Map(), 2: new Map() };
-const totais = { 1: { titulos: 0, avulsos: 0, foraDeReceita: 0 }, 2: { titulos: 0, avulsos: 0, foraDeReceita: 0 } };
-for (const emp of ['1', '2']) {
-  const titulos = new Map(), avulsos = new Map();
-  for (const f of arquivos.filter(x => x.startsWith(`${emp}-financas-mf-`))) {
-    for (const mov of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).movimentos ?? []) {
-      const d = mov.detalhes ?? {};
-      if (d.cNatureza !== 'R' || d.cStatus === 'CANCELADO') continue;
-      if (!contasMeuBess.has(`${emp}|${d.nCodCC}`)) continue;
-      if (!/\/2026$/.test(d.dDtPagamento ?? '')) continue;
-      if (eTransferencia(emp, d.cCodCateg)) continue;
-      if (eChegadaDoAdiantamento(d)) continue;
-      if (d.cGrupo === 'CONTA_A_RECEBER') titulos.set(d.nCodTitulo, d);
-      else if (d.cGrupo === 'CONTA_CORRENTE_REC' && !d.nCodTitulo) avulsos.set(d.nCodMovCC, d);
-    }
+// As páginas da leitura do fontes.md, e nenhuma outra. Se faltar página, o cache está incompleto: melhor parar do que
+// contar meia leitura.
+function movimentosDaLeitura(emp) {
+  if (!fs.existsSync(arquivoDaPagina(emp, 1))) {
+    console.error(`empresa ${emp}: a leitura por data de pagamento (sem cTpLancamento, ${FAIXA}) não está no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
+    process.exit(1);
   }
+  const movimentos = [];
+  let paginas = 1;
+  for (let n = 1; n <= paginas; n++) {
+    const f = arquivoDaPagina(emp, n);
+    if (!fs.existsSync(f)) {
+      console.error(`empresa ${emp}: falta a página ${n} de ${paginas} da leitura por data de pagamento no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
+      process.exit(1);
+    }
+    const p = JSON.parse(fs.readFileSync(f, 'utf8'));
+    paginas = Number(p.nTotPaginas) || 1;
+    movimentos.push(...(p.movimentos ?? []));
+  }
+  return movimentos;
+}
+
+// Por categoria: títulos recebidos, baixas de título quitado só em parte, avulsos de conta corrente e quantos vieram de
+// pedido de venda (só o título tem `nCodOS`; avulso e baixa nunca têm).
+const conta = { 1: new Map(), 2: new Map() };
+const vazio = { titulos: 0, baixas: 0, avulsos: 0, foraDeReceita: 0 };
+const totais = { 1: { ...vazio }, 2: { ...vazio } };
+for (const emp of ['1', '2']) {
+  const titulos = new Map(), avulsos = new Map(), baixas = new Map();
+  for (const mov of movimentosDaLeitura(emp)) {
+    const d = mov.detalhes ?? {};
+    if (d.cNatureza !== 'R' || d.cStatus === 'CANCELADO') continue;
+    if (!contasMeuBess.has(`${emp}|${d.nCodCC}`)) continue;
+    if (!/\/2026$/.test(d.dDtPagamento ?? '')) continue;
+    if (eTransferencia(emp, d.cCodCateg)) continue;
+    if (eChegadaDoAdiantamento(d)) continue;
+    if (d.cGrupo === 'CONTA_A_RECEBER') titulos.set(d.nCodTitulo, d);
+    else if (d.cGrupo === 'CONTA_CORRENTE_REC') (d.nCodTitulo ? baixas : avulsos).set(d.nCodMovCC, d);
+  }
+  // Do conta corrente com título, fica só a baixa cujo título esta leitura não traz: a do pagamento parcial. A do
+  // título quitado é a segunda cara do mesmo dinheiro e sai.
+  for (const [mov, d] of baixas) if (titulos.has(d.nCodTitulo)) baixas.delete(mov);
   const linha = cod => {
-    if (!conta[emp].has(cod)) conta[emp].set(cod, { titulos: 0, avulsos: 0, comPedido: 0 });
+    if (!conta[emp].has(cod)) conta[emp].set(cod, { titulos: 0, baixas: 0, avulsos: 0, comPedido: 0 });
     return conta[emp].get(cod);
   };
-  for (const d of titulos.values()) { const l = linha(String(d.cCodCateg)); l.titulos++; if (d.nCodOS) l.comPedido++; }
-  for (const d of avulsos.values()) { const l = linha(String(d.cCodCateg)); l.avulsos++; if (d.nCodOS) l.comPedido++; }
+  for (const [balde, lista] of [['titulos', titulos], ['baixas', baixas], ['avulsos', avulsos]])
+    for (const d of lista.values()) { const l = linha(String(d.cCodCateg)); l[balde]++; if (d.nCodOS) l.comPedido++; }
   totais[emp].titulos = titulos.size;
+  totais[emp].baixas = baixas.size;
   totais[emp].avulsos = avulsos.size;
   totais[emp].foraDeReceita = [...conta[emp].keys()].filter(c => categorias[emp].get(c)?.conta_receita !== 'S')
-    .reduce((s, c) => s + conta[emp].get(c).titulos + conta[emp].get(c).avulsos, 0);
+    .reduce((s, c) => s + soma(conta[emp].get(c)), 0);
 }
 for (const emp of ['1', '2']) {
-  const [t, a] = CONTAGEM_DO_FONTES[emp];
-  if (totais[emp].titulos !== t || totais[emp].avulsos !== a) {
-    console.error(`empresa ${emp}: o cache dá ${totais[emp].titulos} títulos + ${totais[emp].avulsos} avulsos, e docs/fontes.md diz ${t} + ${a}.`);
+  const [t, b, a] = CONTAGEM_DO_FONTES[emp];
+  if (totais[emp].titulos !== t || totais[emp].baixas !== b || totais[emp].avulsos !== a) {
+    console.error(`empresa ${emp}: o cache dá ${totais[emp].titulos} títulos + ${totais[emp].baixas} baixas de parcial + ${totais[emp].avulsos} avulsos, e docs/fontes.md diz ${t} + ${b} + ${a}.`);
     process.exit(1);
   }
 }
@@ -121,7 +167,7 @@ const daReceita = emp => [...categorias[emp].values()].filter(c => c.conta_recei
 const codigos = [...new Set([1, 2].flatMap(e => daReceita(String(e)).map(c => String(c.codigo))))]
   .sort((a, b) => a.localeCompare(b, 'pt', { numeric: true }));
 
-const zero = { titulos: 0, avulsos: 0, comPedido: 0 };
+const zero = { titulos: 0, baixas: 0, avulsos: 0, comPedido: 0 };
 const linhas = codigos.map(cod => {
   const cel = {};
   for (const emp of ['1', '2']) {
@@ -141,11 +187,11 @@ function sugerir(l) {
   const cels = [l.cel[1], l.cel[2]].filter(Boolean);
   const nomeadas = cels.filter(x => !x.vaga);
   const noNome = nomeadas.some(x => VENDA_NO_NOME.test(x.nome));
-  const lanc = cels.reduce((s, x) => s + x.titulos + x.avulsos, 0);
+  const lanc = cels.reduce((s, x) => s + soma(x), 0);
   const comPedido = cels.reduce((s, x) => s + x.comPedido, 0);
   if (noNome) {
     if (comPedido > 0) return { g: 'venda', pista: 'o nome diz venda de produto e há título vindo de pedido de venda', forca: 'firme' };
-    if (lanc > 0) return { g: 'venda', pista: 'o nome diz venda de produto, mas nenhum recebimento veio de pedido (só avulso de conta corrente)', forca: 'conferir' };
+    if (lanc > 0) return { g: 'venda', pista: 'o nome diz venda de produto, mas nenhum recebimento veio de pedido (só avulso de conta corrente ou baixa de parcial, que não trazem pedido)', forca: 'conferir' };
     return { g: 'venda', pista: 'só o nome diz venda de produto; sem recebimento em 2026', forca: 'so-nome' };
   }
   if (comPedido > 0) return { g: 'venda', pista: 'o nome não diz venda de produto, mas há título vindo de pedido de venda (adiantamento de cliente)', forca: 'conferir' };
@@ -154,7 +200,7 @@ function sugerir(l) {
 }
 for (const l of linhas) l.sug = sugerir(l);
 
-const tot = l => [l.cel[1], l.cel[2]].filter(Boolean).reduce((s, x) => s + x.titulos + x.avulsos, 0);
+const tot = l => [l.cel[1], l.cel[2]].filter(Boolean).reduce((s, x) => s + soma(x), 0);
 const ped = l => [l.cel[1], l.cel[2]].filter(Boolean).reduce((s, x) => s + x.comPedido, 0);
 const nCats = l => [l.cel[1], l.cel[2]].filter(Boolean).length;
 
@@ -172,7 +218,7 @@ const resumo = g => ({
 });
 const R = { venda: resumo('venda'), outra: resumo('outra') };
 const totalLanc = R.venda.lancamentos + R.outra.lancamentos;
-const esperado = [1, 2].reduce((s, e) => s + CONTAGEM_DO_FONTES[e][0] + CONTAGEM_DO_FONTES[e][1], 0);
+const esperado = [1, 2].reduce((s, e) => s + CONTAGEM_DO_FONTES[e].reduce((x, y) => x + y, 0), 0);
 if (totalLanc !== esperado || [1, 2].some(e => totais[e].foraDeReceita)) {
   console.error(`a soma dos grupos (${totalLanc}) não bate com a contagem do fontes.md (${esperado}), ou há recebimento fora de categoria de receita.`);
   process.exit(1);
@@ -188,8 +234,8 @@ const celNome = l => {
   return uma(1, a) + uma(2, b);
 };
 const celNum = x => x
-  ? `<td class="num">${x.titulos}</td><td class="num">${x.avulsos}</td><td class="num">${x.comPedido}</td>`
-  : `<td class="num vazia" colspan="3">—</td>`;
+  ? `<td class="num">${x.titulos}</td><td class="num">${x.baixas}</td><td class="num">${x.avulsos}</td><td class="num">${x.comPedido}</td>`
+  : `<td class="num vazia" colspan="4">—</td>`;
 const rotuloForca = { firme: 'nome e origem concordam', conferir: 'nome e origem discordam — conferir', 'so-nome': 'só pelo nome (sem recebimento em 2026)' };
 
 const linhaTabela = l => `<tr data-cod="${esc(l.cod)}" data-sug="${l.sug.g}" class="${l.sug.forca === 'conferir' ? 'conferir' : ''}">
@@ -204,8 +250,8 @@ const linhaTabela = l => `<tr data-cod="${esc(l.cod)}" data-sug="${l.sug.g}" cla
 
 const tabela = ls => `<div class="tabela"><table>
     <thead>
-      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="3" class="g">empresa 1</th><th colspan="3" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
-      <tr><th>títulos</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>avulsos</th><th>de pedido</th></tr>
+      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="4" class="g">empresa 1</th><th colspan="4" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
+      <tr><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th></tr>
     </thead>
     <tbody>
 ${ls.map(linhaTabela).join('\n')}
@@ -322,7 +368,9 @@ const html = `<!doctype html>
 
 <section style="background:#f4f7fa">
   <h2 style="font-size:1.1rem">Como ler, em meio minuto</h2>
-  <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>) mais lançamento
+  <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>), baixa de
+  título recebido só em parte (<strong>baixas de parcial</strong>: o título ainda tem saldo em aberto, e por isso a leitura por
+  data de pagamento traz só a baixa, não o título) e lançamento
   avulso de conta corrente (<strong>avulsos</strong>), de ${FAIXA} por data de pagamento, só nas contas da MeuBESS, sem
   cancelados e sem transferências, e sem contar duas vezes. <strong>As categorias de transferência ficaram fora da página
   e da soma, por decisão do dono de 25/09/2026 (opção B):</strong> as duas que o Omie marca como transferência,
@@ -331,7 +379,7 @@ const html = `<!doctype html>
   <code>1.04.97</code> <strong>só na empresa 1</strong> — cinco fora na empresa 1 e quatro na 2. Na empresa 2 o código
   <code>1.04.97</code> se chama "Prêmios de Seguros / Sinistros", não é transferência e por isso <strong>está na página</strong>,
   como outra receita (decisão do dono, 25/09/2026; sem nenhum recebimento em 2026). <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
-  (<code>nCodOS</code> preenchido); o avulso nunca tem.</p>
+  (<code>nCodOS</code> preenchido); o avulso e a baixa de parcial nunca têm.</p>
   <p><strong>A sugestão</strong> olha duas coisas. O <strong>nome</strong>: "venda de produtos" e "revenda de mercadorias" dizem venda de produto;
   serviço, rendimento, reembolso, capital, transferência, empréstimo, devolução e "não identificadas" não dizem. A <strong>origem</strong>:
   recebimento vindo de pedido de venda é venda. Onde nome e origem <strong>discordam</strong>, a linha vem em amarelo, marcada "conferir".
@@ -365,9 +413,12 @@ ${totalizadoras.map(l => `    <tr><td><code>${esc(l.cod)}</code></td><td>${celNo
 
 <footer>
   <p><strong>De onde saem os números.</strong> Do cadastro de categorias das empresas 1 e 2 (<code>geral/categorias</code> →
-  <code>ListarCategorias</code>) e dos movimentos já lidos (<code>financas/mf</code> → <code>ListarMovimentos</code>, sem
-  <code>cTpLancamento</code>) no cache local, leituras de ${LEITURA}. A contagem é a da linha do Top 10 receitas de
-  <code>docs/fontes.md</code>: empresa 1, ${totais[1].titulos} títulos + ${totais[1].avulsos} avulsos; empresa 2, ${totais[2].titulos} + ${totais[2].avulsos}.
+  <code>ListarCategorias</code>) e dos movimentos já lidos no cache local — <code>financas/mf</code> →
+  <code>ListarMovimentos</code>, <strong>sem</strong> <code>cTpLancamento</code>, por data de pagamento de ${FAIXA}, a leitura de
+  ${LEITURA} e <strong>só ela</strong>: o cache tem outras leituras da mesma faixa, e juntá-las traria título que esta não tem e
+  apagaria as baixas de parcial. A contagem é a da linha do Top 10 receitas de
+  <code>docs/fontes.md</code>: empresa 1, ${totais[1].titulos} títulos + ${totais[1].baixas} baixas de parcial + ${totais[1].avulsos} avulsos;
+  empresa 2, ${totais[2].titulos} + ${totais[2].baixas} + ${totais[2].avulsos}.
   Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as categorias de
   transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>
   e <code>2.05.98</code> nas duas empresas e <code>1.04.97</code> só na empresa 1; todas só aparecem no avulso — 1 lançamento na

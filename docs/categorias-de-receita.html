@@ -73,16 +73,18 @@
   </div>
 
   <div class="placar">
-    <div><b>6</b><span>categorias sugeridas como venda de produto (3 códigos), com 1234 recebimentos</span></div>
+    <div><b>6</b><span>categorias sugeridas como venda de produto (3 códigos), com 1240 recebimentos</span></div>
     <div><b>54</b><span>categorias sugeridas como outra receita (28 códigos), com 82 recebimentos</span></div>
-    <div><b>1316</b><span>recebimentos em 2026, 01/01/2026 a 30/09/2026</span></div>
+    <div><b>1322</b><span>recebimentos em 2026, 01/01/2026 a 30/09/2026</span></div>
     <div><b>8</b><span>totalizadoras (somas, não recebem lançamento), fora da sugestão</span></div>
   </div>
 </header>
 
 <section style="background:#f4f7fa">
   <h2 style="font-size:1.1rem">Como ler, em meio minuto</h2>
-  <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>) mais lançamento
+  <p><strong>Recebimentos</strong> são os que a tela vai contar: título a receber baixado (<strong>títulos</strong>), baixa de
+  título recebido só em parte (<strong>baixas de parcial</strong>: o título ainda tem saldo em aberto, e por isso a leitura por
+  data de pagamento traz só a baixa, não o título) e lançamento
   avulso de conta corrente (<strong>avulsos</strong>), de 01/01/2026 a 30/09/2026 por data de pagamento, só nas contas da MeuBESS, sem
   cancelados e sem transferências, e sem contar duas vezes. <strong>As categorias de transferência ficaram fora da página
   e da soma, por decisão do dono de 25/09/2026 (opção B):</strong> as duas que o Omie marca como transferência,
@@ -91,7 +93,7 @@
   <code>1.04.97</code> <strong>só na empresa 1</strong> — cinco fora na empresa 1 e quatro na 2. Na empresa 2 o código
   <code>1.04.97</code> se chama "Prêmios de Seguros / Sinistros", não é transferência e por isso <strong>está na página</strong>,
   como outra receita (decisão do dono, 25/09/2026; sem nenhum recebimento em 2026). <strong>De pedido</strong> é quantos deles têm pedido de venda ligado
-  (<code>nCodOS</code> preenchido); o avulso nunca tem.</p>
+  (<code>nCodOS</code> preenchido); o avulso e a baixa de parcial nunca têm.</p>
   <p><strong>A sugestão</strong> olha duas coisas. O <strong>nome</strong>: "venda de produtos" e "revenda de mercadorias" dizem venda de produto;
   serviço, rendimento, reembolso, capital, transferência, empréstimo, devolução e "não identificadas" não dizem. A <strong>origem</strong>:
   recebimento vindo de pedido de venda é venda. Onde nome e origem <strong>discordam</strong>, a linha vem em amarelo, marcada "conferir".
@@ -105,7 +107,7 @@
   <p class="paraque">Entram em "vendas de produtos" na linha (+) Receitas. Vale conferir as marcadas em amarelo: o nome ou a origem não bate com a sugestão.</p>
   <div class="placar">
     <div><b>6</b><span>categorias (3 códigos)</span></div>
-    <div><b>1234</b><span>recebimentos em 2026 (504 de pedido)</span></div>
+    <div><b>1240</b><span>recebimentos em 2026 (487 de pedido)</span></div>
     <div><b>3</b><span>códigos com recebimento</span></div>
   </div>
   <div class="acoes">
@@ -115,33 +117,33 @@
   <h3>Com recebimento em 2026: 3 códigos</h3>
   <div class="tabela"><table>
     <thead>
-      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="3" class="g">empresa 1</th><th colspan="3" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
-      <tr><th>títulos</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>avulsos</th><th>de pedido</th></tr>
+      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="4" class="g">empresa 1</th><th colspan="4" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
+      <tr><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th></tr>
     </thead>
     <tbody>
 <tr data-cod="1.01.01" data-sug="venda" class="">
       <td><code>1.01.01</code></td>
       <td class="cat"><span class="igual">RECEITA DE VENDA DE PRODUTOS</span></td>
-      <td class="num">0</td><td class="num">98</td><td class="num">0</td>
-      <td class="num">539</td><td class="num">500</td><td class="num">502</td>
-      <td class="num tot">1137</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">98</td><td class="num">0</td>
+      <td class="num">522</td><td class="num">22</td><td class="num">500</td><td class="num">486</td>
+      <td class="num tot">1142</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome diz venda de produto e há título vindo de pedido de venda</td>
       <td class="dec"><select aria-label="destino de 1.01.01"><option value="venda" selected>venda de produto</option><option value="outra">outra receita</option></select></td>
     </tr>
-<tr data-cod="1.01.03" data-sug="venda" class="">
+<tr data-cod="1.01.03" data-sug="venda" class="conferir">
       <td><code>1.01.03</code></td>
       <td class="cat"><span class="igual">RECEITA DE REVENDA DE MERCADORIAS</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">1</td><td class="num">95</td><td class="num">1</td>
-      <td class="num tot">96</td>
-      <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome diz venda de produto e há título vindo de pedido de venda</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">2</td><td class="num">95</td><td class="num">0</td>
+      <td class="num tot">97</td>
+      <td class="porque"><span class="forca conferir">nome e origem discordam — conferir</span><br>o nome diz venda de produto, mas nenhum recebimento veio de pedido (só avulso de conta corrente ou baixa de parcial, que não trazem pedido)</td>
       <td class="dec"><select aria-label="destino de 1.01.03"><option value="venda" selected>venda de produto</option><option value="outra">outra receita</option></select></td>
     </tr>
 <tr data-cod="1.04.01" data-sug="venda" class="conferir">
       <td><code>1.04.01</code></td>
       <td class="cat"><span class="igual">Adiantamento de Clientes</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">1</td><td class="num">0</td><td class="num">1</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">1</td>
       <td class="num tot">1</td>
       <td class="porque"><span class="forca conferir">nome e origem discordam — conferir</span><br>o nome não diz venda de produto, mas há título vindo de pedido de venda (adiantamento de cliente)</td>
       <td class="dec"><select aria-label="destino de 1.04.01"><option value="venda" selected>venda de produto</option><option value="outra">outra receita</option></select></td>
@@ -166,15 +168,15 @@
   <h3>Com recebimento em 2026: 7 códigos</h3>
   <div class="tabela"><table>
     <thead>
-      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="3" class="g">empresa 1</th><th colspan="3" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
-      <tr><th>títulos</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>avulsos</th><th>de pedido</th></tr>
+      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="4" class="g">empresa 1</th><th colspan="4" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
+      <tr><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th></tr>
     </thead>
     <tbody>
 <tr data-cod="1.02.02" data-sug="outra" class="">
       <td><code>1.02.02</code></td>
       <td class="cat"><span class="igual">Rendimentos de Aplicações</span></td>
-      <td class="num">7</td><td class="num">47</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">7</td><td class="num">0</td><td class="num">47</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">54</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.02.02"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -182,8 +184,8 @@
 <tr data-cod="1.02.99" data-sug="outra" class="">
       <td><code>1.02.99</code></td>
       <td class="cat"><span class="igual">outras Receitas - não identificadas</span></td>
-      <td class="num">1</td><td class="num">10</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">1</td><td class="num">0</td><td class="num">10</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">11</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.02.99"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -191,8 +193,8 @@
 <tr data-cod="1.04.94" data-sug="outra" class="">
       <td><code>1.04.94</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> <span class="vazia">não existe</span></div><div><span class="e">emp. 2</span> Rendimento Financeiro</div></td>
-      <td class="num vazia" colspan="3">—</td>
-      <td class="num">0</td><td class="num">11</td><td class="num">0</td>
+      <td class="num vazia" colspan="4">—</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">11</td><td class="num">0</td>
       <td class="num tot">11</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.04.94"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -200,8 +202,8 @@
 <tr data-cod="1.04.02" data-sug="outra" class="">
       <td><code>1.04.02</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Recebimento de Reembolso de Despesas</div><div><span class="e">emp. 2</span> Receb. de Reembolso de Despesas</div></td>
-      <td class="num">0</td><td class="num">2</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">2</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.04.02"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -209,8 +211,8 @@
 <tr data-cod="1.04.04" data-sug="outra" class="">
       <td><code>1.04.04</code></td>
       <td class="cat"><span class="igual">Aumento de Capital</span></td>
-      <td class="num">0</td><td class="num">1</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">1</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">0</td>
       <td class="num tot">2</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.04.04"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -218,8 +220,8 @@
 <tr data-cod="1.03.03" data-sug="outra" class="">
       <td><code>1.03.03</code></td>
       <td class="cat"><span class="igual">Devoluções de Compra de Matéria Prima</span></td>
-      <td class="num">0</td><td class="num">1</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">1</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.03.03"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -227,8 +229,8 @@
 <tr data-cod="1.04.99" data-sug="outra" class="">
       <td><code>1.04.99</code></td>
       <td class="cat"><span class="igual">Recebimento de Empréstimo Intercompany [terceiro]</span></td>
-      <td class="num">1</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">1</td>
       <td class="porque"><span class="forca firme">nome e origem concordam</span><br>o nome não diz venda de produto e nenhum recebimento veio de pedido</td>
       <td class="dec"><select aria-label="destino de 1.04.99"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -238,15 +240,15 @@
   <details><summary>Sem nenhum recebimento em 2026: 21 códigos (cadastro parado, vagas e categorias inativas)</summary>
   <div class="tabela"><table>
     <thead>
-      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="3" class="g">empresa 1</th><th colspan="3" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
-      <tr><th>títulos</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>avulsos</th><th>de pedido</th></tr>
+      <tr><th rowspan="2">código</th><th rowspan="2">categoria</th><th colspan="4" class="g">empresa 1</th><th colspan="4" class="g">empresa 2</th><th rowspan="2">total</th><th rowspan="2">por que a sugestão</th><th rowspan="2">destino</th></tr>
+      <tr><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th><th>títulos</th><th>baixas de parcial</th><th>avulsos</th><th>de pedido</th></tr>
     </thead>
     <tbody>
 <tr data-cod="1.01.02" data-sug="outra" class="">
       <td><code>1.01.02</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Rendimento Bancários</div><div><span class="e">emp. 2</span> Clientes - Serviços Prestados <span class="tag">inativa</span></div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.02"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -254,8 +256,8 @@
 <tr data-cod="1.01.95" data-sug="outra" class="">
       <td><code>1.01.95</code></td>
       <td class="cat"><span class="igual">&lt;Disponível&gt;</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>vaga sem nome no plano; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.95"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -263,8 +265,8 @@
 <tr data-cod="1.01.96" data-sug="outra" class="">
       <td><code>1.01.96</code></td>
       <td class="cat"><span class="igual">&lt;Disponível&gt;</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>vaga sem nome no plano; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.96"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -272,8 +274,8 @@
 <tr data-cod="1.01.97" data-sug="outra" class="">
       <td><code>1.01.97</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Marketing</div><div><span class="e">emp. 2</span> <span class="vazia">vaga &lt;Disponível&gt;</span> <span class="tag">inativa</span></div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.97"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -281,8 +283,8 @@
 <tr data-cod="1.01.98" data-sug="outra" class="">
       <td><code>1.01.98</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Comissão de Venda</div><div><span class="e">emp. 2</span> <span class="vazia">vaga &lt;Disponível&gt;</span> <span class="tag">inativa</span></div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.98"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -290,8 +292,8 @@
 <tr data-cod="1.01.99" data-sug="outra" class="">
       <td><code>1.01.99</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> RECEITA DE SERVIÇOS PRESTADOS</div><div><span class="e">emp. 2</span> <span class="vazia">vaga &lt;Disponível&gt;</span> <span class="tag">inativa</span></div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.01.99"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -299,8 +301,8 @@
 <tr data-cod="1.02.01" data-sug="outra" class="">
       <td><code>1.02.01</code></td>
       <td class="cat"><span class="igual">Dividendos Recebidos</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.02.01"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -308,8 +310,8 @@
 <tr data-cod="1.02.95" data-sug="outra" class="">
       <td><code>1.02.95</code></td>
       <td class="cat"><span class="igual">&lt;Disponível&gt;</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>vaga sem nome no plano; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.02.95"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -317,8 +319,8 @@
 <tr data-cod="1.02.96" data-sug="outra" class="">
       <td><code>1.02.96</code></td>
       <td class="cat"><span class="igual">&lt;Disponível&gt;</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>vaga sem nome no plano; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.02.96"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -326,8 +328,8 @@
 <tr data-cod="1.02.97" data-sug="outra" class="">
       <td><code>1.02.97</code></td>
       <td class="cat"><span class="igual">&lt;Disponível&gt;</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>vaga sem nome no plano; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.02.97"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -335,8 +337,8 @@
 <tr data-cod="1.02.98" data-sug="outra" class="">
       <td><code>1.02.98</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> <span class="vazia">vaga &lt;Disponível&gt;</span> <span class="tag">inativa</span></div><div><span class="e">emp. 2</span> Outras receitas - Aluguel (sublocação barracão)</div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.02.98"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -344,8 +346,8 @@
 <tr data-cod="1.03.01" data-sug="outra" class="">
       <td><code>1.03.01</code></td>
       <td class="cat"><span class="igual">Devoluções de Compra de Mercadoria de Revenda</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.03.01"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -353,8 +355,8 @@
 <tr data-cod="1.03.02" data-sug="outra" class="">
       <td><code>1.03.02</code></td>
       <td class="cat"><span class="igual">Devoluções de Compra de Material de Consumo</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.03.02"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -362,8 +364,8 @@
 <tr data-cod="1.03.04" data-sug="outra" class="">
       <td><code>1.03.04</code></td>
       <td class="cat"><span class="igual">Devoluções de Compra de Ativo</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.03.04"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -371,8 +373,8 @@
 <tr data-cod="1.03.26" data-sug="outra" class="">
       <td><code>1.03.26</code></td>
       <td class="cat"><span class="igual">Devoluções de Compra de Serviços</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.03.26"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -380,8 +382,8 @@
 <tr data-cod="1.04.03" data-sug="outra" class="">
       <td><code>1.04.03</code></td>
       <td class="cat"><span class="igual">Recebimento de Empréstimos Bancários</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.03"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -389,8 +391,8 @@
 <tr data-cod="1.04.05" data-sug="outra" class="">
       <td><code>1.04.05</code></td>
       <td class="cat"><span class="igual">Venda de Participações</span> <span class="tag">inativa nas duas</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.05"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -398,8 +400,8 @@
 <tr data-cod="1.04.06" data-sug="outra" class="">
       <td><code>1.04.06</code></td>
       <td class="cat"><span class="igual">Venda de Ativos</span></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.06"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -407,8 +409,8 @@
 <tr data-cod="1.04.95" data-sug="outra" class="">
       <td><code>1.04.95</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Rendimento Bancário <span class="tag">inativa</span></div><div><span class="e">emp. 2</span> Prêmios de Seguros / Sinistros <span class="tag">inativa</span></div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.95"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -416,8 +418,8 @@
 <tr data-cod="1.04.97" data-sug="outra" class="">
       <td><code>1.04.97</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> <span class="vazia">não existe</span></div><div><span class="e">emp. 2</span> Prêmios de Seguros / Sinistros</div></td>
-      <td class="num vazia" colspan="3">—</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num vazia" colspan="4">—</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.97"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -425,8 +427,8 @@
 <tr data-cod="1.04.98" data-sug="outra" class="">
       <td><code>1.04.98</code></td>
       <td class="cat"><div><span class="e">emp. 1</span> Implantação de saldo (entradas)</div><div><span class="e">emp. 2</span> Implantação de saldos (entradas)</div></td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
-      <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td>
       <td class="num tot">0</td>
       <td class="porque"><span class="forca so-nome">só pelo nome (sem recebimento em 2026)</span><br>o nome não diz venda de produto; sem recebimento em 2026</td>
       <td class="dec"><select aria-label="destino de 1.04.98"><option value="venda">venda de produto</option><option value="outra" selected>outra receita</option></select></td>
@@ -457,9 +459,12 @@
 
 <footer>
   <p><strong>De onde saem os números.</strong> Do cadastro de categorias das empresas 1 e 2 (<code>geral/categorias</code> →
-  <code>ListarCategorias</code>) e dos movimentos já lidos (<code>financas/mf</code> → <code>ListarMovimentos</code>, sem
-  <code>cTpLancamento</code>) no cache local, leituras de 24 e 25/09/2026. A contagem é a da linha do Top 10 receitas de
-  <code>docs/fontes.md</code>: empresa 1, 9 títulos + 159 avulsos; empresa 2, 541 + 607.
+  <code>ListarCategorias</code>) e dos movimentos já lidos no cache local — <code>financas/mf</code> →
+  <code>ListarMovimentos</code>, <strong>sem</strong> <code>cTpLancamento</code>, por data de pagamento de 01/01/2026 a 30/09/2026, a leitura de
+  24/09/2026, 14h46 às 14h49 e <strong>só ela</strong>: o cache tem outras leituras da mesma faixa, e juntá-las traria título que esta não tem e
+  apagaria as baixas de parcial. A contagem é a da linha do Top 10 receitas de
+  <code>docs/fontes.md</code>: empresa 1, 9 títulos + 0 baixas de parcial + 159 avulsos;
+  empresa 2, 523 + 24 + 607.
   Nenhum recebimento caiu em categoria que não seja de receita. Fora da conta, como no fontes.md: as categorias de
   transferência da decisão de 25/09/2026 (as duas marcadas, <code>0.01.01</code> e <code>0.01.02</code>, mais <code>1.04.96</code>
   e <code>2.05.98</code> nas duas empresas e <code>1.04.97</code> só na empresa 1; todas só aparecem no avulso — 1 lançamento na

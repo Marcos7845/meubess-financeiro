@@ -73,16 +73,17 @@
   o <strong>nome</strong> da categoria e a <strong>conta do DRE</strong> em que ela já está pendurada hoje.</p>
 
   <div class="chamada">
-    <p style="margin:0"><strong>Isto é sugestão, não decisão — exceto os grupos a e b.</strong> Nenhuma categoria foi mexida
-    no Omie. O <strong>grupo a</strong> (dedução da receita) foi <strong>decidido pelo dono em 24/09/2026</strong> e
-    e o <strong>grupo b</strong> (custo de vendas) em <strong>25/09/2026</strong>; os dois aparecem marcados assim
-    e os grupos c e d seguem como sugestão. Onde as duas pistas concordam, a sugestão é
+    <p style="margin:0"><strong>Isto é sugestão, não decisão — exceto os grupos a, b e d.</strong> Nenhuma categoria foi mexida
+    no Omie. O <strong>grupo a</strong> (dedução da receita) foi <strong>decidido pelo dono em 24/09/2026</strong>,
+    o <strong>grupo b</strong> (custo de vendas) em <strong>25/09/2026</strong> e o <strong>grupo d</strong>
+    (resultado financeiro) em <strong>25/09/2026</strong>; os três aparecem marcados assim
+    e o grupo c segue como sugestão. Onde as duas pistas concordam, a sugestão é
     firme; onde elas discordam, a categoria vai para "em dúvida" com o motivo ao lado. A palavra final é do dono.</p>
   </div>
 
   <div class="placar">
-    <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (os grupos a e b já decididos)</span></div>
-    <div><b>29</b><span>em dúvida — as duas pistas discordam</span></div>
+    <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (os grupos a, b e d já decididos)</span></div>
+    <div><b>18</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>2171</b><span>lançamentos contados, 01/01/2026 a 30/09/2026</span></div>
   </div>
@@ -91,7 +92,7 @@
     <li><a href="#grupo-a">a · Dedução da receita — decidido (13)</a></li>
     <li><a href="#grupo-b">b · Custo de vendas — decidido (35)</a></li>
     <li><a href="#grupo-c">c · Depreciação e amortização (0)</a></li>
-    <li><a href="#grupo-d">d · Resultado financeiro (11)</a></li>
+    <li><a href="#grupo-d">d · Resultado financeiro — decidido (15)</a></li>
   </ul>
 </header>
 
@@ -635,38 +636,38 @@
   <h2><span class="letra">d</span> Resultado financeiro</h2>
   <p class="paraque">É o que o dinheiro custou ou rendeu, e não a operação: juros de empréstimo, tarifa do banco, IOF de um lado; rendimento de aplicação do outro. O EBITDA tira isso porque ele quer mostrar se a operação em si dá lucro, separado de como a empresa se financia.</p>
   <p class="onde">No cartão de <strong>EBITDA</strong> da Tela 2 — é a outra coisa que o EBITDA tira da conta.</p>
-  <h3>Sugeridas: 11</h3>
-  <p class="nota">As duas pistas concordam — o nome da categoria e a conta do DRE em que ela já está apontam para este grupo.</p>
+  <div class="decidido">
+    <p style="margin:0"><strong>Decidido pelo dono em 25/09/2026.</strong> Resultado financeiro são as 11
+    sugeridas (juros, tarifas, rendimentos, empréstimo) mais Rendimentos de Aplicações (<code>1.02.02</code>) e IOF
+    (<code>2.06.95</code>), nas duas empresas em que existem: 15 códigos.</p>
+  </div>
+  <div class="chamada">
+    <p style="margin:0"><strong>Fora do resultado financeiro, com destino:</strong> Cartão de Crédito
+    (<code>2.11.98</code>) e Aluguel de Veículo (<code>2.11.99</code>), da empresa 1, vão para as <strong>despesas gerais</strong>
+    do DRE; os empréstimos e transferências entre as empresas (Intercompany) ficam <strong>fora do DRE</strong>, como as
+    transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
+    Atenção ao código: <code>2.05.99</code> é Transferência Intercompany na empresa 1 e Tarifas Bancárias (resultado financeiro)
+    na empresa 2.</p>
+  </div>
+  <h3>Decididas: 15 códigos</h3>
+  <p class="nota">Empresa 1: 7 códigos. Empresa 2: 8 códigos.
+  11 eram sugeridas; 4 entraram por decisão do dono.</p>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
     <tbody>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.05.04</code></td>
-      <td>Tarifas Bancárias</td>
-      <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">6</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.05.04</code></td>
-      <td>Tarifas Bancárias</td>
-      <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">3</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.05.02</code></td>
-      <td>Juros e Multas pagos</td>
-      <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">1</td>
-    </tr>
 <tr>
       <td class="emp">1</td>
       <td><code>1.01.02</code></td>
       <td>Rendimento Bancários</td>
       <td><code>1.11.02</code> Receitas Financeiras</td>
       <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>1.02.02</code></td>
+      <td>Rendimentos de Aplicações</td>
+      <td><code>1.11.01</code> Outras Receitas</td>
+      <td class="num">7</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -680,6 +681,34 @@
       <td><code>2.05.01</code></td>
       <td>Juros sobre Empréstimos</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">0</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.02</code></td>
+      <td>Juros e Multas pagos</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">1</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.04</code></td>
+      <td>Tarifas Bancárias</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">6</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.06.95</code></td>
+      <td>IOF</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">6</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.02.02</code></td>
+      <td>Rendimentos de Aplicações</td>
+      <td><code>1.11.01</code> Outras Receitas</td>
       <td class="num">0</td>
     </tr>
 <tr>
@@ -712,17 +741,30 @@
     </tr>
 <tr>
       <td class="emp">2</td>
+      <td><code>2.05.04</code></td>
+      <td>Tarifas Bancárias</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">3</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
       <td><code>2.05.99</code></td>
       <td>Tarifas Bancarias</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
       <td class="num">0</td>
     </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.06.95</code></td>
+      <td>IOF</td>
+      <td><code>2.11.05</code> Outros Tributos</td>
+      <td class="num">0</td>
+    </tr>
     </tbody>
-  </table><h3>Em dúvida: 7 com movimento no período</h3>
-  <p class="nota">Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
-  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
+  </table>
+  <h3>Ficaram fora do resultado financeiro: 7 códigos, cada um com destino</h3>
   <table>
-    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>destino</th></tr></thead>
     <tbody>
 <tr>
       <td class="emp">1</td>
@@ -730,7 +772,7 @@
       <td>Cartão de Credito</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
       <td class="num">69</td>
-      <td class="pista">só conta do DRE</td>
+      <td>despesas gerais do DRE</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -738,39 +780,7 @@
       <td>Aluguel Veiculo</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
       <td class="num">17</td>
-      <td class="pista">só conta do DRE</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>1.02.02</code></td>
-      <td>Rendimentos de Aplicações</td>
-      <td><code>1.11.01</code> Outras Receitas</td>
-      <td class="num">7</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.06.95</code></td>
-      <td>IOF</td>
-      <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">6</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.08.02</code></td>
-      <td>Pagamento empréstimo Intercompany [terceiro]</td>
-      <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">3</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.05.99</code></td>
-      <td>Transferência Intercompany</td>
-      <td><code>2.11.03</code> Despesas Financeiras</td>
-      <td class="num">2</td>
-      <td class="pista">só conta do DRE</td>
+      <td>despesas gerais do DRE</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -778,10 +788,42 @@
       <td>Recebimento de Empréstimo Intercompany [terceiro]</td>
       <td><span class="vazia">sem conta do DRE</span></td>
       <td class="num">1</td>
-      <td class="pista">só nome</td>
+      <td>fora do DRE (intercompany)</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.05.99</code></td>
+      <td>Transferência Intercompany</td>
+      <td><code>2.11.03</code> Despesas Financeiras</td>
+      <td class="num">2</td>
+      <td>fora do DRE (intercompany)</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.08.02</code></td>
+      <td>Pagamento empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">3</td>
+      <td>fora do DRE (intercompany)</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>1.04.99</code></td>
+      <td>Recebimento de Empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td>fora do DRE (intercompany)</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.10.98</code></td>
+      <td>Pagamento empréstimo Intercompany [terceiro]</td>
+      <td><span class="vazia">sem conta do DRE</span></td>
+      <td class="num">0</td>
+      <td>fora do DRE (intercompany)</td>
     </tr>
     </tbody>
-  </table><details><summary>Mais 9 em dúvida, sem nenhum lançamento de 01/01/2026 a 30/09/2026 — cadastro parado, decidir depois</summary>
+  </table><details><summary>Ficaram de fora da decisão: 5 sem nenhum lançamento de 01/01/2026 a 30/09/2026 (empréstimos bancários e financiamento de veículo) — decidir depois</summary>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
     <tbody>
@@ -811,24 +853,8 @@
     </tr>
 <tr>
       <td class="emp">2</td>
-      <td><code>1.02.02</code></td>
-      <td>Rendimentos de Aplicações</td>
-      <td><code>1.11.01</code> Outras Receitas</td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
       <td><code>1.04.03</code></td>
       <td>Recebimento de Empréstimos Bancários</td>
-      <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>1.04.99</code></td>
-      <td>Recebimento de Empréstimo Intercompany [terceiro]</td>
       <td><span class="vazia">sem conta do DRE</span></td>
       <td class="num">0</td>
       <td class="pista">só nome</td>
@@ -841,22 +867,6 @@
       <td class="num">0</td>
       <td class="pista">só nome</td>
     </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.06.95</code></td>
-      <td>IOF</td>
-      <td><code>2.11.05</code> Outros Tributos</td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.10.98</code></td>
-      <td>Pagamento empréstimo Intercompany [terceiro]</td>
-      <td><span class="vazia">sem conta do DRE</span></td>
-      <td class="num">0</td>
-      <td class="pista">só nome</td>
-    </tr>
     </tbody>
   </table></details>
 </section>
@@ -864,19 +874,20 @@
 <section class="aviso" style="border-radius:10px">
   <h2 style="font-size:1.1rem">O que esta página responde — e o que ela não fecha</h2>
   <p>Ela dá material para lacunas de <code>docs/fontes.md</code>. A do grupo <strong>a</strong> o dono fechou em
-  24/09/2026 e a do grupo <strong>b</strong> em 25/09/2026; as outras <strong>seguem abertas</strong>:</p>
+  24/09/2026 e as dos grupos <strong>b</strong> e <strong>d</strong> em 25/09/2026; a outra <strong>segue aberta</strong>:</p>
   <ul>
     <li>a linha <strong>(−) Deduções</strong> da Tela 2 — quais categorias do Omie são dedução: grupo <strong>a</strong>
         (<strong>decidido</strong> em 24/09/2026);</li>
     <li>a linha <strong>(−) Custos de vendas</strong> — quais categorias são custo de vendas: grupo <strong>b</strong>
         (<strong>decidido</strong> em 25/09/2026);</li>
-    <li>o cartão de <strong>EBITDA</strong> — quais categorias são depreciação, amortização e resultado financeiro:
-        grupos <strong>c</strong> e <strong>d</strong>;</li>
+    <li>o cartão de <strong>EBITDA</strong> — quais categorias são resultado financeiro: grupo <strong>d</strong>
+        (<strong>decidido</strong> em 25/09/2026); e quais são depreciação e amortização: grupo <strong>c</strong>,
+        que segue aberto;</li>
     <li>o cartão <strong>% desp. funcionários / receita líquida</strong> da Tela 1, que depende da receita líquida e,
         por ela, do grupo <strong>a</strong> (<strong>decidido</strong>, no confronto do Omie).</li>
   </ul>
-  <p style="margin-bottom:0">Enquanto o dono não escolher, os grupos c e d seguem escritos como lacuna em
-  <code>docs/fontes.md</code>, e o EBITDA da tela continua sem se distinguir do lucro operacional.</p>
+  <p style="margin-bottom:0">Enquanto o dono não escolher, o grupo c segue escrito como lacuna em
+  <code>docs/fontes.md</code>, e o EBITDA da tela continua sem tirar depreciação e amortização.</p>
 </section>
 
 <footer>

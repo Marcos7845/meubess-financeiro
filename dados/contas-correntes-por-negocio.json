@@ -1,10 +1,10 @@
 {
   "_o_que_e": "De que negócio é cada conta corrente do Omie. As três telas do financeiro são da MeuBESS: toda leitura do Omie nas Telas 1 e 2 filtra detalhes.nCodCC por este arquivo, guardando só as contas com negocio = \"MeuBESS\".",
-  "_de_onde_veio": "Dito pelo dono em 24/09/2026. Não foi deduzido de movimento, de nome de banco nem de nenhuma leitura: é a resposta dele à pergunta de que negócio é cada conta da tabela da seção 4 de docs/confronto-dfc-omie.html. Só o cadastro (nCodCC, descrição, codigo_banco, tipo_conta_corrente, inativo) veio do Omie, por geral/contacorrente -> ListarContasCorrentes, só leitura, nas chaves OMIE_MEUBESS_1 e OMIE_MEUBESS_2.",
+  "_de_onde_veio": "Dito pelo dono em 24/09/2026, e completado em 25/09/2026 (opcao A): as duas contas Adiantamento ao Fornecedor (1|5969631123 e 2|5191263988) tambem sao da MeuBESS e entram nas Telas 1 e 2. A ida do banco para essa conta NAO e despesa — a despesa conta uma vez so, quando o fornecedor e pago; a regra contra a contagem dupla e o filtro (cOrigem ADCP e ADCR) estao em docs/fontes.md, na secao sobre a conta Adiantamento ao Fornecedor. Não foi deduzido de movimento, de nome de banco nem de nenhuma leitura: é a resposta dele à pergunta de que negócio é cada conta da tabela da seção 4 de docs/confronto-dfc-omie.html. Só o cadastro (nCodCC, descrição, codigo_banco, tipo_conta_corrente, inativo) veio do Omie, por geral/contacorrente -> ListarContasCorrentes, só leitura, nas chaves OMIE_MEUBESS_1 e OMIE_MEUBESS_2.",
   "_chave": "`chave` é `empresa|nCodCC`: `empresa` é 1 ou 2 (as chaves OMIE_MEUBESS_1 e OMIE_MEUBESS_2 do .env, que as telas somam) e `nCodCC` é o `detalhes.nCodCC` que financas/mf -> ListarMovimentos devolve em cada lançamento. A mesma conta física aparece duas vezes quando as duas empresas a cadastraram: são duas linhas, uma por empresa.",
   "_sem_dono_dito": "`negocio: null` com `dito_pelo_dono: false` quer dizer SEM DONO DITO — o dono não citou essa conta. Conta sem dono dito fica FORA do recorte da MeuBESS, e o código não deve adivinhar pelo nome. Quando uma dessas tiver movimento, vale perguntar ao dono antes de usar o número.",
   "_como_ler_no_codigo": "const lista = JSON.parse(fs.readFileSync('dados/contas-correntes-por-negocio.json', 'utf8')); const recorte = new Set(lista.contas.filter((c) => c.negocio === lista.recorte_das_telas).map((c) => c.chave)); e depois recorte.has(`${empresa}|${mov.detalhes.nCodCC}`).",
-  "atualizado_em": "2026-09-24",
+  "atualizado_em": "2026-09-25",
   "recorte_das_telas": "MeuBESS",
   "negocios": [
     "MeuBESS",
@@ -20,9 +20,9 @@
       "codigo_banco": "ADF",
       "tipo_conta_corrente": "AD",
       "inativa_no_omie": false,
-      "negocio": null,
-      "dito_pelo_dono": false,
-      "dito_como": null
+      "negocio": "MeuBESS",
+      "dito_pelo_dono": true,
+      "dito_como": "Adiantamento ao Fornecedor"
     },
     {
       "chave": "1|5969630954",
@@ -308,9 +308,9 @@
       "codigo_banco": "ADF",
       "tipo_conta_corrente": "AD",
       "inativa_no_omie": true,
-      "negocio": null,
-      "dito_pelo_dono": false,
-      "dito_como": null
+      "negocio": "MeuBESS",
+      "dito_pelo_dono": true,
+      "dito_como": "Adiantamento ao Fornecedor"
     },
     {
       "chave": "2|5191263966",

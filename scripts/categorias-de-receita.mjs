@@ -13,7 +13,9 @@
 //
 // A REGRA DE CONTAGEM (a mesma de docs/fontes.md, Top 10 receitas): ListarMovimentos sem cTpLancamento, por data de
 // pagamento de 01/01 a 30/09/2026; `cNatureza = "R"`; fora os CANCELADO; só as contas
-// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json); fora as categorias de transferência
+// correntes com `negocio = "MeuBESS"` (dados/contas-correntes-por-negocio.json — desde 25/09/2026 isso inclui as duas
+// contas `Adiantamento ao Fornecedor`, e por isso a chegada do adiantamento, `cOrigem = "ADCR"`, fica fora);
+// fora as categorias de transferência
 // (decisão do dono, 25/09/2026, opção B: as marcadas 0.01.01 e 0.01.02, mais 1.04.96 e 2.05.98 nas duas empresas e 1.04.97
 // só na empresa 1 — cinco fora na empresa 1 e quatro na 2). Sem contar duas vezes: o título recebido
 // (CONTA_A_RECEBER) conta uma vez por `nCodTitulo`; do conta corrente (CONTA_CORRENTE_REC) entra só o avulso, sem título
@@ -44,6 +46,14 @@ const CONTAGEM_DO_FONTES = { 1: [9, 159], 2: [541, 607] };
 const TRANSFERENCIA_SEM_MARCA = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
 const eTransferencia = (emp, cod) =>
   categorias[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA[emp].includes(String(cod));
+
+// O PAR DO ADIANTAMENTO AO FORNECEDOR (decisão do dono, 25/09/2026, opção A): a conta `Adiantamento ao Fornecedor` passou
+// a ser da MeuBESS e entrou no recorte. O dinheiro chega nela pelo par `ADCP` (o título a pagar da ida, no banco, e a
+// baixa dele) e `ADCR` (a entrada na própria conta, avulsa, categoria 1.04.01 "Adiantamento de Clientes" — o nome
+// engana). Os dois lados são dinheiro andando entre duas contas da MeuBESS: a despesa conta uma vez só, quando o
+// fornecedor é pago. Aqui, na leitura de RECEITA, só o lado `ADCR` aparece (o `ADCP` é `cNatureza = "P"`); sem este
+// filtro as 11 entradas da empresa 1 e as 44 da 2 entrariam como venda de produto pela 1.04.01. Ver docs/fontes.md.
+const eChegadaDoAdiantamento = d => d.cOrigem === 'ADCR';
 
 const deesc = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const mascarar = s => s.replace(/Pacianotto/gi, '[terceiro]').replace(/\bB3N\b/g, '[terceiro]').replace(/Sanepar/gi, '[terceiro]');
@@ -78,6 +88,7 @@ for (const emp of ['1', '2']) {
       if (!contasMeuBess.has(`${emp}|${d.nCodCC}`)) continue;
       if (!/\/2026$/.test(d.dDtPagamento ?? '')) continue;
       if (eTransferencia(emp, d.cCodCateg)) continue;
+      if (eChegadaDoAdiantamento(d)) continue;
       if (d.cGrupo === 'CONTA_A_RECEBER') titulos.set(d.nCodTitulo, d);
       else if (d.cGrupo === 'CONTA_CORRENTE_REC' && !d.nCodTitulo) avulsos.set(d.nCodMovCC, d);
     }

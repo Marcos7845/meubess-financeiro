@@ -396,8 +396,8 @@ saldo com lançamento.
   Toda regra deste documento que cita `FORNECEDORES COGS` **aceita as duas grafias** — o código não corrige a planilha
   nem adivinha grafia nova: as duas estão escritas na regra, como `TRANSFERENCIA` e `TRANSFERÊNCIA`. Aceitar a grafia
   **não** fez essas 2 linhas entrarem em "(−) Custos de vendas": o `SUB 2` delas é `MARKETING / PUBLICIDADE`, e a regra
-  dessa linha também pede um `SUB 2` de custo. Ver a linha "(−) Custos de vendas" da Tela 2 — é o que falta o dono
-  decidir ali.
+  dessa linha também pede um `SUB 2` de custo. **Decisão do dono, 25/09/2026: "marketing não é custo de vendas"** — a
+  regra fica como está e as 2 linhas de agosto continuam fora de "(−) Custos de vendas".
 - **`SUB 2` (J)** — a conta. Sai do cadastro da aba `BASE`, coluna A, que em setembro tem **69 contas**:
   `ÁGUA (SANEPAR)`, `ALUGUEL (BARRACÃO)`, `ALUGUEL (SEDE)`, `ALUGUEL (BOX)`, `ALUGUEL (BOX - PE)`,
   `ALUGUEL DE VEÍCULOS`, `APLICAÇÃO TRANS.`, `ARMAZENAGEM E MANUSEIO`, `BRINDES E MARKETING`, `COMISSÃO DE VENDAS`,

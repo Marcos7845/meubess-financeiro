@@ -12,3 +12,6 @@ mapa-omie*.log
 
 # cache local das leituras do Omie (scripts/confronto-dfc-omie.mjs) — nunca entra em commit
 .cache/
+
+# página do confronto DFC x Omie: traz valores em reais, é gerada localmente por scripts/confronto-dfc-omie.mjs e nunca entra em commit
+docs/confronto-dfc-omie.html

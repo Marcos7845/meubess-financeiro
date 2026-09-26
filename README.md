@@ -36,7 +36,8 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
   filtra a conta corrente pela lista de [`dados/contas-correntes-por-negocio.json`](dados/contas-correntes-por-negocio.json)
   — de que negócio é cada conta, dito pelo dono em 24/09/2026 —, guardando só as de `negocio: "MeuBESS"`. Conta que o dono
   não citou fica fora, e o código não adivinha pelo nome do banco. O confronto que mede o recorte está em
-  [`docs/confronto-dfc-omie.html`](docs/confronto-dfc-omie.html).
+  `docs/confronto-dfc-omie.html`, uma página **gerada localmente** por `scripts/confronto-dfc-omie.mjs` (`node scripts/confronto-dfc-omie.mjs`)
+  que traz valores em reais e por isso **não vai para o git** (`.gitignore`): quem precisa dela roda o script.
 - **Todo número confere com a fonte.** Cada indicador diz de onde vem (ERP: módulo, tabela e filtro; planilha: arquivo,
   aba e coluna) e é conferido com um caso real antes de ser dado como pronto.
   A conferência de um mês fechado, indicador por indicador, está em [`docs/conferencia.md`](docs/conferencia.md)

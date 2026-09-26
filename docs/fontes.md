@@ -464,7 +464,7 @@ recorrentes, não o mês.
 ### O que o DFC pode alimentar e o que fica no Omie
 
 O que o DFC pode alimentar está abaixo; **qual das duas fontes cada indicador usa de verdade já está decidido** — o
-dono aprovou a proposta da seção 7 de [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html) em 24/09/2026. Nenhuma
+dono aprovou a proposta da seção 7 de `docs/confronto-dfc-omie.html` (página local, fora do git) em 24/09/2026. Nenhuma
 linha deste resumo é candidatura em aberto: ele diz o que existe no DFC, e "A escolha entre Omie e DFC", mais abaixo,
 diz quem leva cada indicador. O resumo:
 
@@ -499,7 +499,7 @@ diz quem leva cada indicador. O resumo:
   local em `.cache/omie/`, fora do git): mês a mês, entradas e saídas com a diferença em %, a taxa de casamento dos
   lançamentos, o que a coluna `EMP.` do DFC é (ou não é) no Omie, qual fonte classifica mais lançamentos em cada grupo
   das telas e uma **proposta** de fonte principal e confronto para cada indicador com a antiga pendência "Omie ou DFC".
-  A página é [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html) — é onde ficam os valores em reais. **Essa
+  A página é `docs/confronto-dfc-omie.html` — é onde ficam os valores em reais. **Ela é gerada localmente por `scripts/confronto-dfc-omie.mjs` e não vai para o git** (está no `.gitignore`; para tê-la, rode o script, que a grava nesse mesmo lugar). **Essa
   proposta foi aprovada pelo dono em 24/09/2026** e virou a seção "A escolha entre Omie e DFC" deste documento: as 21
   lacunas "Omie ou DFC" estão fechadas, e a fonte de cada indicador das Telas 1 e 2 está escrita na linha dele. A
   página segue sendo só medição — quem decidiu foi o dono.
@@ -511,12 +511,12 @@ diz quem leva cada indicador. O resumo:
   `SUB 2` do DFC, que não usam código nenhum.
 - **O recorte de empresa não bate de saída**: as telas somam as filiais `/0001-42` e `/0002-23` do Omie; o DFC separa
   por `B3W` e `N3` e não diz qual é qual.
-- **O Omie tem outras unidades de negócio no mesmo CNPJ, e elas não são a MeuBESS** (explicação do dono, 24/09/2026; o DFC das três outras unidades foi lido em 24/09/2026 por `scripts/confronto-dfc-omie.mjs`, só leitura, e está em [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html)). **O único campo do Omie que separa é a conta corrente** (`detalhes.nCodCC`). Departamento **não** separa (a árvore inteira pende de uma raiz só, `MEU BESS`, e os filhos são setores), categoria, projeto e vendedor também não. **Esta lacuna está fechada:** o dono disse de que negócio é cada conta corrente, a lista está em `dados/contas-correntes-por-negocio.json` e é ela que as telas aplicam — ver "O recorte da MeuBESS: quais contas correntes são dela", logo abaixo. Nenhuma outra lacuna deste documento mudou, e nenhuma fonte foi trocada por causa disto.
+- **O Omie tem outras unidades de negócio no mesmo CNPJ, e elas não são a MeuBESS** (explicação do dono, 24/09/2026; o DFC das três outras unidades foi lido em 24/09/2026 por `scripts/confronto-dfc-omie.mjs`, só leitura, e está em `docs/confronto-dfc-omie.html` (página local, fora do git)). **O único campo do Omie que separa é a conta corrente** (`detalhes.nCodCC`). Departamento **não** separa (a árvore inteira pende de uma raiz só, `MEU BESS`, e os filhos são setores), categoria, projeto e vendedor também não. **Esta lacuna está fechada:** o dono disse de que negócio é cada conta corrente, a lista está em `dados/contas-correntes-por-negocio.json` e é ela que as telas aplicam — ver "O recorte da MeuBESS: quais contas correntes são dela", logo abaixo. Nenhuma outra lacuna deste documento mudou, e nenhuma fonte foi trocada por causa disto.
 
 ### O recorte da MeuBESS: quais contas correntes são dela
 
 **De onde vem a lista.** Do dono, em 24/09/2026, em resposta à pergunta de que negócio é cada conta corrente da tabela da
-seção 4 de [`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html). **Não** foi deduzida de movimento, de nome de banco nem de
+seção 4 de `docs/confronto-dfc-omie.html` (página local, fora do git). **Não** foi deduzida de movimento, de nome de banco nem de
 nenhuma leitura: o Omie só forneceu o cadastro das contas (`nCodCC`, `descricao`, `codigo_banco`, `tipo_conta_corrente`,
 `inativo`), por `geral/contacorrente` → `ListarContasCorrentes` nas duas chaves, só leitura.
 
@@ -566,7 +566,7 @@ títulos (`financas/contareceber`), não movimentos, e o recorte dela não fazia
 ### A escolha entre Omie e DFC (decisão do dono, 24/09/2026)
 
 **O que foi decidido.** Em 24/09/2026 o dono aprovou, em uma palavra ("sim"), a proposta da seção 7 de
-[`docs/confronto-dfc-omie.html`](confronto-dfc-omie.html) (commit `4c20aad`). Com isso **as 21 lacunas "Omie ou DFC"
+`docs/confronto-dfc-omie.html` (página local, fora do git) (commit `4c20aad`). Com isso **as 21 lacunas "Omie ou DFC"
 das Telas 1 e 2 estão fechadas**: cada indicador tem agora uma fonte principal — o número que aparece na tela — e uma
 fonte de confronto — o número que alimenta o selo. As duas estão escritas na linha de cada indicador, mais abaixo.
 Esta seção é o resumo; a linha do indicador é o contrato.

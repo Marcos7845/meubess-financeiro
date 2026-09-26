@@ -21,8 +21,8 @@
 //
 // O QUE SAI ONDE:
 //   - no CONSOLE: só contagens e percentuais. Nenhum valor em reais, nenhum nome de cliente, fornecedor ou pessoa.
-//   - na PÁGINA (docs/confronto-dfc-omie.html, gravada por este script): os valores em reais. A página fica no
-//     repositório e não sai da máquina. Também sem nome de cliente, fornecedor ou pessoa.
+//   - na PÁGINA (docs/confronto-dfc-omie.html, gravada por este script): os valores em reais. A página é gerada
+//     localmente nesse caminho, que o `.gitignore` cobre: fica no disco e nunca entra num commit. Também sem nome de cliente, fornecedor ou pessoa.
 //
 // CACHE DAS LEITURAS DO OMIE: cada resposta da API é gravada em `.cache/omie/` na raiz do repositório — pasta que o
 // `.gitignore` ignora, então ela nunca entra num commit. Rodar o script de novo não chama a API: lê do cache e a
@@ -1503,6 +1503,6 @@ não chama a API (use <code>--atualizar</code> para buscar de novo). Esta rodada
 `;
 
 fs.writeFileSync(new URL("../docs/confronto-dfc-omie.html", import.meta.url), html, "utf8");
-console.log(`\npágina gravada: docs/confronto-dfc-omie.html (${(html.length / 1024).toFixed(1)} kB) — é onde ficam os valores em reais`);
+console.log(`\npágina gravada: docs/confronto-dfc-omie.html (${(html.length / 1024).toFixed(1)} kB) — é onde ficam os valores em reais (local, fora do git)`);
 console.log(`tempo total: ${seg(Date.now() - T0)} (DFC ${seg(tDfc)}, Omie ${seg(tOmie)})`);
 console.log("FIM");

@@ -1,14 +1,15 @@
-// CAPTURA A TELA 1 COMO PÁGINA, SEM DINHEIRO — grava `docs/tela-1-captura.html`.
+// CAPTURA UMA TELA COMO PÁGINA, SEM DINHEIRO — grava `docs/tela-N-captura.html`.
 //
-// PARA QUE SERVE. O dono precisa ver como a Tela 1 ficou sem ter o app rodando na frente. Esta captura é a página
-// de verdade, servida pelo app, com TODO valor em dinheiro trocado por "—" e a contagem de lançamentos no lugar.
-// Assim ela pode entrar no repositório: arquivo versionado aqui não tem dinheiro (ver o README).
+// PARA QUE SERVE. O dono precisa ver como a tela ficou sem ter o app rodando na frente. Esta captura é a página de
+// verdade, servida pelo app, com TODO valor em dinheiro trocado por "—" e a contagem de lançamentos no lugar. Assim
+// ela pode entrar no repositório: arquivo versionado aqui não tem dinheiro (ver o README).
 //
 // COMO. Busca a página no app rodando, joga fora todo `<script>` (é lá que o Next manda os dados crus, que TÊM os
 // valores), tira os `title=` (que também têm), inlineia o CSS e troca o dinheiro. No fim, confere o que sobrou.
 //
-//   npm run dev                          # (o app precisa estar no ar, em http://localhost:4781)
-//   node scripts/capturar-tela-1.mjs --url http://localhost:4781 --mes 8 --ano 2026
+//   npm run dev                                   # (o app precisa estar no ar, em http://localhost:4781)
+//   node scripts/capturar-tela.mjs --tela 1
+//   node scripts/capturar-tela.mjs --tela 2 --mes 8 --ano 2026 --url http://localhost:4781
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,9 +20,30 @@ const arg = (n, p) => { const i = process.argv.indexOf(n); return i >= 0 && proc
 const URL_BASE = arg('--url', 'http://localhost:4781');
 const ANO = Number(arg('--ano', '2026'));
 const MES = Number(arg('--mes', '8'));
-const SAIDA = path.join(RAIZ, 'docs', 'tela-1-captura.html');
+const TELA = Number(arg('--tela', '1'));
 
-const bruto = await (await fetch(`${URL_BASE}/?ano=${ANO}&mes=${MES}`)).text();
+// Cada tela: a rota que a serve, o título da captura e a frase que explica o que sobrou de número.
+const TELAS = {
+  1: {
+    rota: '/',
+    titulo: 'Tela 1 — Gestão de Contas',
+    referencia: 'docs/referencias/tela-1-gestao-de-contas.jpg',
+  },
+  2: {
+    // Com a análise vertical ligada, para a captura mostrar as duas leituras da tabela.
+    rota: '/dre',
+    extra: { av: '1' },
+    titulo: 'Tela 2 — DRE, Demonstrativo de Resultados',
+    referencia: 'docs/referencias/tela-2-dre.jpg',
+  },
+};
+
+const tela = TELAS[TELA];
+if (!tela) { console.error(`--tela ${TELA} não existe; as que existem são ${Object.keys(TELAS).join(' e ')}`); process.exit(1); }
+const SAIDA = path.join(RAIZ, 'docs', `tela-${TELA}-captura.html`);
+
+const q = new URLSearchParams({ ano: String(ANO), mes: String(MES), ...(tela.extra ?? {}) });
+const bruto = await (await fetch(`${URL_BASE}${tela.rota}?${q}`)).text();
 
 // O miolo da página, sem nada de script.
 let corpo = (/<body[^>]*>([\s\S]*)<\/body>/.exec(bruto)?.[1] ?? bruto)
@@ -32,8 +54,14 @@ let corpo = (/<body[^>]*>([\s\S]*)<\/body>/.exec(bruto)?.[1] ?? bruto)
   .replace(/<!--[\s\S]*?-->/g, '');
 
 // O DINHEIRO SAI. O formato é o do `Intl` em pt-BR (a marca da moeda, espaço fino, milhar com ponto).
-const MOEDA = /-?R\$[\s  ]*[\d.]+(?:,\d{2})?/g;
+const MOEDA = /-?R\$[\s  ]*[\d.]+(?:,\d{2})?/g;
 corpo = corpo.replace(MOEDA, '—');
+
+// Os links da captura não levam a lugar nenhum fora do app: viram texto, para a página se bastar.
+corpo = corpo.replace(/<a\s[^>]*href="[^"]*"[^>]*>([\s\S]*?)<\/a>/g, (todo, dentro) => {
+  const classe = /class="([^"]*)"/.exec(todo)?.[1] ?? '';
+  return `<span class="${classe}">${dentro}</span>`;
+});
 
 // O botão "atualizar agora" não funciona fora do app; vira texto.
 corpo = corpo.replace(/<button[^>]*class="botao"[^>]*>([\s\S]*?)<\/button>/, '<span class="botao" style="opacity:.55">$1</span>');
@@ -45,7 +73,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MeuBESS · Tela 1 — Gestão de Contas (captura sem valores)</title>
+<title>MeuBESS · ${tela.titulo} (captura sem valores)</title>
 <style>
 ${css}
 .nota {
@@ -56,10 +84,11 @@ ${css}
 </head>
 <body>
 <p class="nota">
-  <strong>Captura da Tela 1</strong> — a página que o app serve, de ${String(MES).padStart(2, '0')}/${ANO}, com
+  <strong>Captura da ${tela.titulo}</strong> — a página que o app serve, de ${String(MES).padStart(2, '0')}/${ANO}, com
   <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
   <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
-  <code>docs/conferencia.md</code> confere. O layout é o de <code>docs/referencias/tela-1-gestao-de-contas.jpg</code>;
+  <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.
+  O layout é o de <code>${tela.referencia}</code>;
   as cores são as variáveis de <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
 </p>
 ${corpo}

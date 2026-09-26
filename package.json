@@ -8,7 +8,8 @@
     "start": "next start -p 4781",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
-    "capturar-tela-1": "node scripts/capturar-tela-1.mjs"
+    "capturar-tela-1": "node scripts/capturar-tela.mjs --tela 1",
+    "capturar-tela-2": "node scripts/capturar-tela.mjs --tela 2"
   },
   "dependencies": {
     "next": "16.3.6",

@@ -4,8 +4,8 @@ Dashboards do departamento financeiro da MeuBESS, usados pela equipe **fora da C
 acesso próprio). Não se mistura com o Painel Logístico (`meubess_dashboard`), com a plataforma da MeuBESS nem com o
 Lovable.
 
-**Estado:** a **Tela 1 (Gestão de Contas)** está construída e rodando localmente; as Telas 2 e 3, não. As fontes de
-cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md) e conferidas em
+**Estado:** a **Tela 1 (Gestão de Contas)** e a **Tela 2 (DRE)** estão construídas e rodando localmente; a Tela 3,
+não. As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md) e conferidas em
 [`docs/conferencia.md`](docs/conferencia.md).
 
 ## As três telas
@@ -63,15 +63,32 @@ npm run dev
 ```
 
 O app sobe em **http://localhost:4781** (a porta está no `npm run dev` do `package.json`; 4747 já é da Central de
-Comando neste computador). A tela abre no **mês corrente**; para ver agosto de 2026,
-<http://localhost:4781/?ano=2026&mes=8>. O seletor de mês e o botão **atualizar agora** estão na própria tela.
+Comando neste computador). Cada tela abre no **mês corrente**, e as duas têm seletor de mês e o botão **atualizar
+agora**. Para agosto de 2026:
+
+| tela | rota |
+|---|---|
+| **Tela 1 — Gestão de Contas** | <http://localhost:4781/?ano=2026&mes=8> |
+| **Tela 2 — DRE** | <http://localhost:4781/dre?ano=2026&mes=8> |
+
 As **empresas 1 e 2 entram sempre somadas** e o recorte é o da MeuBESS.
+
+A **Tela 2 tem uma coluna por mês**, como a tela de referência, e ao lado de cada uma cabem a **análise horizontal**
+(quanto a coluna variou contra o mês anterior) e a **análise vertical** (quanto a linha pesa na receita líquida do
+próprio mês). As duas ligam e desligam pelos botões do topo, que são links — o estado mora na URL (`?ah=1&av=1`), e
+não no navegador, então a captura e um link colado mostram exatamente a mesma coisa. **AH e AV não são regra de
+`docs/fontes.md`**: vêm do layout de referência e saem dos valores que as regras já calcularam.
+
+A última linha da tabela diz **de quanta leitura cada coluna saiu**, dos dois lados. Não é enfeite: em 2026, janeiro
+e fevereiro têm o DFC cheio e quase nenhum lançamento do Omie no recorte da MeuBESS, então os totalizadores desses
+dois meses misturam um lado cheio com outro vazio e a coluna não se lê como DRE. A leitura do Omie que está no cache
+vai de **01/01 a 30/09**; mês fora dessa janela não vira coluna.
 
 **As fontes são relidas de hora em hora** (decisão do dono, 25/09/2026), e "atualizar agora" força a releitura na
 hora. O que é relido são o cache local do Omie (`.cache/omie/`) e as planilhas do DFC; buscar página nova na API do
 Omie continua sendo trabalho de `scripts/confronto-dfc-omie.mjs` e `scripts/ler-omie-faltante.mjs`.
 
-### Conferir a tela contra a conferência
+### Conferir as telas contra a conferência
 
 ```
 npm run conferir-telas
@@ -80,12 +97,16 @@ npm run conferir-telas
 Grava [`docs/telas-conferidas.md`](docs/telas-conferidas.md): uma linha por indicador das 3 telas dizendo, para
 agosto de 2026, se o número que **a tela mostra** é o mesmo que **`docs/conferencia.md`** publica. O que se compara é
 a **contagem de lançamentos** de cada lado (DFC e Omie) — é ela que prende o filtro, e é a única coisa que pode entrar
-num arquivo versionado. Os números esperados são lidos do **texto** de `docs/conferencia.md`, não recalculados, para
-o teste não comparar o código com ele mesmo. O comando sai com erro se alguma linha ficar **divergente**.
+num arquivo versionado. Onde a conferência publica a linha **repartida** (quanto veio de venda de produtos e quanto
+de outras receitas, quantos títulos e quantos avulsos, quanto em cada empresa), cada pedaço também é comparado: um
+total pode bater por acaso com a repartição errada. Os números esperados são lidos do **texto** de
+`docs/conferencia.md`, não recalculados, para o teste não comparar o código com ele mesmo. O comando sai com erro se
+alguma linha ficar **divergente**.
 
-Uma **captura da tela sem dinheiro** (valores trocados por "—", contagens mantidas) fica em
-[`docs/tela-1-captura.html`](docs/tela-1-captura.html). Com o app no ar, `npm run capturar-tela-1` a regera — e ela
-não é gravada se sobrar qualquer valor em dinheiro no HTML.
+Uma **captura de cada tela sem dinheiro** (valores trocados por "—", contagens e percentuais mantidos) fica em
+[`docs/tela-1-captura.html`](docs/tela-1-captura.html) e
+[`docs/tela-2-captura.html`](docs/tela-2-captura.html). Com o app no ar, `npm run capturar-tela-1` e
+`npm run capturar-tela-2` as regeram — e nenhuma é gravada se sobrar qualquer valor em dinheiro no HTML.
 
 ### Onde mora o quê
 
@@ -104,5 +125,5 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 
 ### O que ainda não existe
 
-Telas 2 e 3; login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o
+Tela 3; login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o
 login não existe, **o app roda só local**.

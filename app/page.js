@@ -71,7 +71,7 @@ export default async function Pagina({ searchParams }) {
         <span className="titulo">Gestão de Contas</span>
         <nav className="abas">
           <span className="ativa">Dashboard</span>
-          <span>Contas a Pagar</span>
+          <a href={`/dre?ano=${ano}&mes=${mes}`}>DRE</a>
           <span>Contas a Receber</span>
           <span>Centro de Custo</span>
           <span>Fluxo de caixa</span>

@@ -1,9 +1,9 @@
 // CONFERE AS TELAS CONTRA `docs/conferencia.md` e grava `docs/telas-conferidas.md`.
 //
-// O QUE ESTE TESTE FAZ. Monta a Tela 1 pela camada de dados do app — a mesma que o navegador recebe, com os mesmos
-// filtros de `lib/regras/` — e compara, indicador por indicador, a CONTAGEM que ela usou com a contagem que
-// `docs/conferencia.md` publica. Se o filtro da tela sair do que `docs/fontes.md` manda, a contagem muda e a linha
-// sai "divergente:".
+// O QUE ESTE TESTE FAZ. Monta as telas já construídas pela camada de dados do app — a mesma que o navegador recebe,
+// com os mesmos filtros de `lib/regras/` — e compara, indicador por indicador, a CONTAGEM que elas usaram com a
+// contagem que `docs/conferencia.md` publica. Se o filtro de uma tela sair do que `docs/fontes.md` manda, a contagem
+// muda e a linha sai "divergente:".
 //
 // POR QUE A CONTAGEM, E NÃO O VALOR. `docs/conferencia.md` não traz valor em dinheiro, de propósito, e este arquivo
 // também não pode trazer. A contagem prende o filtro: dois filtros diferentes quase nunca pegam o mesmo número de
@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
+import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 
@@ -36,8 +37,12 @@ const MES = Number(arg('--mes', '8'));
 
 // ================================================================ o lado da conferência
 //
-// Um extrator por indicador da Tela 1, escrito à mão contra o texto que `numeros-das-telas.mjs` produz. `dfc` e
-// `omie` acham, cada um, o número daquele lado dentro do trecho "**Entram:** …" da linha.
+// Um extrator por indicador, escrito à mão contra o texto que `numeros-das-telas.mjs` produz. `dfc` e `omie` acham,
+// cada um, o número daquele lado dentro do trecho "**Entram:** …" da linha.
+//
+// `extras` é o resto da frase: quando a conferência publica a linha REPARTIDA — quanto veio de venda de produtos e
+// quanto de outras receitas, quantos títulos e quantos avulsos, quanto em cada empresa —, cada pedaço vira uma
+// comparação a mais. Um total pode bater por acaso com a repartição errada; os extras fecham essa porta.
 
 const num = (s) => Number(String(s).replace(/\./g, ''));
 
@@ -53,6 +58,75 @@ const EXTRATORES = {
   'top-10-receitas': { dfc: null, omie: /^([\d.]+) lançamentos de receita/ },
   'receita-despesa-por-dia': { dfc: /^([\d.]+) colunas de dia/, omie: /; ([\d.]+) lançamentos no mês/ },
   'receita-despesa-por-mes': { dfc: /^([\d.]+) dos \d+ meses/, omie: /; ([\d.]+) lançamentos na coluna do mês/ },
+
+  // ---------------------------------------------------------------- Tela 2
+  'receita-total': { dfc: /^([\d.]+) linhas de entrada no mês com/, omie: /; ([\d.]+) lançamentos no Omie recortado/ },
+  'custos-e-despesas': { dfc: /^([\d.]+) linhas de saída no mês, agrupáveis/, omie: /; ([\d.]+) lançamentos no Omie recortado/ },
+  // Os três cartões calculados trazem a mesma frase: o total do mês e, entre parênteses, quanto é receita e quanto
+  // é despesa. Os dois de dentro dos parênteses são os extras.
+  'cartao-ebitda': {
+    dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/,
+    extras: { receita: /\(([\d.]+) de receita e/, despesa: /de receita e ([\d.]+) de despesa\)/ },
+  },
+  'cartao-lucro-liquido': {
+    dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/,
+    extras: { receita: /\(([\d.]+) de receita e/, despesa: /de receita e ([\d.]+) de despesa\)/ },
+  },
+  'cartao-margem': {
+    dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/,
+    extras: { receita: /\(([\d.]+) de receita e/, despesa: /de receita e ([\d.]+) de despesa\)/ },
+  },
+  'dre-receitas': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: { venda: /— ([\d.]+) em vendas de produtos/, outras: /e ([\d.]+) em outras receitas/ },
+  },
+  'dre-receita-bruta': {
+    dfc: null, omie: /^([\d.]+) lançamentos — os mesmos/,
+    extras: { contasDoDre: /tem ([\d.]+) contas em cada empresa/, totalizadoras: /([\d.]+) delas com `totalizaDRE/ },
+  },
+  'dre-deducoes': {
+    dfc: /^([\d.]+) linhas de dedução no mês/, omie: /; ([\d.]+) lançamentos nas categorias de dedução/,
+    extras: { oper13: /mais ([\d.]+) com `cOperacao/ },
+  },
+  'dre-receita-liquida': { dfc: null, omie: /no minuendo, os ([\d.]+) lançamentos de receita/ },
+  'dre-custos-de-vendas': { dfc: /^([\d.]+) linhas de custo no mês/, omie: /; ([\d.]+) lançamentos —/ },
+  'dre-lucro-bruto': {
+    dfc: null, omie: /^([\d.]+) lançamentos de receita e/,
+    extras: { despesa: /lançamentos de receita e ([\d.]+) de despesa do Omie/ },
+  },
+  'dre-despesas-gerais': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      titulos1: /— ([\d.]+) títulos \+/, baixas1: /títulos \+ ([\d.]+) baixas de parcial/,
+      avulsos1: /baixas de parcial \+ ([\d.]+) avulsos na empresa 1/,
+      titulos2: /na empresa 1 e ([\d.]+) \+ [\d.]+ \+ [\d.]+ na 2/,
+      baixas2: /na empresa 1 e [\d.]+ \+ ([\d.]+) \+ [\d.]+ na 2/,
+      avulsos2: /na empresa 1 e [\d.]+ \+ [\d.]+ \+ ([\d.]+) na 2/,
+    },
+  },
+  'dre-ebitda': { dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/ },
+  'dre-resultado-financeiro': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      receita1: /na receita financeira, ([\d.]+) na empresa 1/,
+      receita2: /na receita financeira, [\d.]+ na empresa 1 e ([\d.]+) na 2/,
+      despesa1: /na despesa financeira, ([\d.]+) e/,
+      despesa2: /na despesa financeira, [\d.]+ e ([\d.]+)/,
+    },
+  },
+  'dre-impostos': {
+    dfc: /^([\d.]+) linhas de guia no mês/, omie: /; ([\d.]+) lançamentos —/,
+    // A conferência escreve "1 título" e "3 avulsos" — singular e plural —, então o `s` é opcional aqui.
+    extras: {
+      titulos: /— ([\d.]+) títulos?,/, baixas: /([\d.]+) baixas? de parcial/,
+      avulsos: /e ([\d.]+) avulsos?, somando as duas empresas/,
+    },
+  },
+  'dre-lucro-liquido': { dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/ },
+  'dre-sem-conta': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: { empresa1: /— ([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2/ },
+  },
 };
 
 // Lê `docs/conferencia.md`: a ordem dos 36 indicadores e, de cada um, o trecho "**Entram:** …".
@@ -73,7 +147,9 @@ function lerConferencia() {
 // ================================================================ a conferência das telas
 
 const tela1 = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
-const daTela = new Map([...tela1.cartoes, ...tela1.blocos].map((i) => [i.id, i]));
+const tela2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
+const TELAS = { 'Tela 1': tela1, 'Tela 2': tela2 };
+const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela].map((i) => [i.id, i]));
 const doConferencia = lerConferencia();
 
 if (doConferencia.length === 0) {
@@ -81,45 +157,67 @@ if (doConferencia.length === 0) {
   process.exit(1);
 }
 
-// Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa.
+// Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa. Uma tabela por tela: o mesmo
+// nome pode voltar noutra tela querendo dizer outra coisa.
 const NOME_NA_CONFERENCIA = {
-  saldo: 'Saldo',
-  receitas: 'Receitas',
-  despesas: 'Despesas',
-  'despesas-pagas': 'Despesas pagas',
-  'despesas-pendentes': 'Despesas pendentes',
-  'despesas-funcionarios': 'Despesas com funcionários',
-  'percentual-funcionarios': '% desp. funcionários / receita líquida',
-  'top-10-despesas': 'Top 10 despesas',
-  'top-10-receitas': 'Top 10 receitas',
-  'receita-despesa-por-dia': 'Receita × despesa por dia',
-  'receita-despesa-por-mes': 'Receita × despesa por mês',
+  'Tela 1': {
+    saldo: 'Saldo',
+    receitas: 'Receitas',
+    despesas: 'Despesas',
+    'despesas-pagas': 'Despesas pagas',
+    'despesas-pendentes': 'Despesas pendentes',
+    'despesas-funcionarios': 'Despesas com funcionários',
+    'percentual-funcionarios': '% desp. funcionários / receita líquida',
+    'top-10-despesas': 'Top 10 despesas',
+    'top-10-receitas': 'Top 10 receitas',
+    'receita-despesa-por-dia': 'Receita × despesa por dia',
+    'receita-despesa-por-mes': 'Receita × despesa por mês',
+  },
+  'Tela 2': {
+    'receita-total': 'Receita total',
+    'custos-e-despesas': 'Custos e despesas',
+    'cartao-ebitda': 'EBITDA',
+    'cartao-lucro-liquido': 'Lucro líquido',
+    'cartao-margem': 'Margem de lucro',
+    'dre-receitas': '(+) Receitas: outras receitas, vendas de produtos',
+    'dre-receita-bruta': '(=) Receita bruta',
+    'dre-deducoes': '(−) Deduções: devoluções, taxas de serviço',
+    'dre-receita-liquida': '(=) Receita líquida',
+    'dre-custos-de-vendas': '(−) Custos de vendas: custo do produto, outros custos',
+    'dre-lucro-bruto': '(=) Lucro bruto',
+    'dre-despesas-gerais': '(−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI',
+    'dre-ebitda': '(=) EBITDA',
+    'dre-resultado-financeiro': '(+/−) Resultado financeiro: receitas e despesas financeiras',
+    'dre-impostos': '(−) Impostos pagos (guias)',
+    'dre-lucro-liquido': '(=) Lucro líquido',
+    'dre-sem-conta': '(=) sem conta',
+  },
 };
-const idPorNome = new Map(Object.entries(NOME_NA_CONFERENCIA).map(([id, nome]) => [nome, id]));
+const idPorNome = new Map(Object.entries(NOME_NA_CONFERENCIA).flatMap(([tela, mapa]) =>
+  Object.entries(mapa).map(([id, nome]) => [`${tela}|${nome}`, id])));
 
 const linhas = [];
 for (const ind of doConferencia) {
-  // Telas 2 e 3: ainda não há tela para comparar.
-  if (ind.tela !== 'Tela 1') {
+  // Tela 3: ainda não há tela para comparar.
+  if (!TELAS[ind.tela]) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** tela ainda não construída.`);
     continue;
   }
-  const id = idPorNome.get(ind.nome);
+  const tela = TELAS[ind.tela];
+  const id = idPorNome.get(`${ind.tela}|${ind.nome}`);
   const naTela = id ? daTela.get(id) : null;
   if (!naTela) {
-    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a Tela 1 não mostra este indicador, e o teste não soube com o que comparar.`);
+    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a ${ind.tela} não mostra este indicador, e o teste não soube com o que comparar.`);
     continue;
   }
   const ex = EXTRATORES[id];
-  const esperado = {
-    dfc: ex.dfc ? (ex.dfc.exec(ind.entram) ? num(ex.dfc.exec(ind.entram)[1]) : null) : null,
-    omie: ex.omie.exec(ind.entram) ? num(ex.omie.exec(ind.entram)[1]) : null,
-  };
+  const achar = (re) => (re && re.exec(ind.entram) ? num(re.exec(ind.entram)[1]) : null);
+  const esperado = { dfc: achar(ex.dfc), omie: achar(ex.omie) };
   const obtido = naTela.contagem;
 
   // Se o DFC não foi lido nesta rodada, o lado do DFC da tela é vazio: é "a conferir:", não divergência.
-  if (!tela1.dfc.ok && esperado.dfc !== null) {
-    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a fonte principal deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${tela1.dfc.motivo}.`);
+  if (!tela.dfc.ok && esperado.dfc !== null) {
+    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a fonte principal deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${tela.dfc.motivo}.`);
     continue;
   }
 
@@ -135,11 +233,29 @@ for (const ind of doConferencia) {
       difs.push(`do lado do ${lado === 'dfc' ? 'DFC' : 'Omie'} a tela conta ${obtido[lado]} e a conferência diz ${esperado[lado]}`);
     }
   }
+  // OS EXTRAS: a repartição que a conferência publica dentro da mesma frase. Cada um vira mais uma comparação; um
+  // extra que a conferência tem e a tela não produz é divergência, não silêncio.
+  const extras = [];
+  for (const [nome, re] of Object.entries(ex.extras ?? {})) {
+    const esp = achar(re);
+    if (esp === null) continue;
+    const obt = obtido.extras?.[nome];
+    if (obt === null || obt === undefined) {
+      difs.push(`a tela não produziu "${nome}", e a conferência diz ${esp}`);
+      continue;
+    }
+    extras.push(`${nome} ${obt}`);
+    if (obt !== esp) difs.push(`em "${nome}" a tela conta ${obt} e a conferência diz ${esp}`);
+  }
+
   if (!partes.length && !difs.length) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** não achei na linha da conferência um número para comparar.`);
     continue;
   }
-  const comum = `**${ind.tela} — ${ind.nome}.** **Na tela:** ${partes.join(' e ')}. **Na conferência:** ${['dfc', 'omie'].filter((l) => esperado[l] !== null).map((l) => `${l === 'dfc' ? 'DFC' : 'Omie'} ${esperado[l]}`).join(' e ')}. **Fonte:** ${naTela.fonte}.`;
+  const naConferencia = ['dfc', 'omie'].filter((l) => esperado[l] !== null)
+    .map((l) => `${l === 'dfc' ? 'DFC' : 'Omie'} ${esperado[l]}`).join(' e ');
+  const comum = `**${ind.tela} — ${ind.nome}.** **Na tela:** ${partes.join(' e ')}. **Na conferência:** ${naConferencia}.`
+    + `${extras.length ? ` **Também conferido:** ${extras.join(', ')}.` : ''} **Fonte:** ${naTela.fonte}.`;
   linhas.push(difs.length ? `- divergente: ${comum} **Motivo:** ${difs.join('; ')}.` : `- ${comum}`);
 }
 
@@ -167,19 +283,24 @@ reais aparece só na tela, lido na hora, e não entra nesta página nem em nenhu
 
 Os números esperados são **lidos do texto** de [\`docs/conferencia.md\`](conferencia.md), gerado antes por
 [\`scripts/numeros-das-telas.mjs\`](../scripts/numeros-das-telas.mjs). Os obtidos saem da **mesma camada de dados que o
-navegador recebe** ([\`lib/indicadores/tela-1.mjs\`](../lib/indicadores/tela-1.mjs)), que filtra pelas regras de
+navegador recebe** ([\`lib/indicadores/\`](../lib/indicadores/)), que filtra pelas regras de
 [\`lib/regras/\`](../lib/regras/) — as mesmas que a conferência usa.
+
+Onde a conferência publica a linha **repartida** — quanto veio de venda de produtos e quanto de outras receitas,
+quantos títulos e quantos avulsos, quanto em cada empresa —, cada pedaço também é comparado, e aparece na linha em
+**Também conferido**. Um total pode bater por acaso com a repartição errada; é o que esses pedaços fecham.
 
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
 **${doConferencia.length} indicadores**: ${nConferidos} conferidos, ${nDivergentes} divergentes e ${nAConferir} a conferir.
 
-As Telas 2 e 3 ainda não foram construídas — esta tarefa fez a Tela 1. Os indicadores delas aparecem abaixo, marcados
-"a conferir:", para a lista continuar sendo a das 3 telas inteiras.
+${nAConferir === 0
+    ? 'As três telas estão construídas e nenhum indicador ficou de fora.'
+    : `A Tela 3 ainda não foi construída. Os ${nAConferir} indicadores dela aparecem abaixo, marcados "a conferir:", para a lista continuar sendo a das 3 telas inteiras.`}
 
 ${tela1.dfc.ok
-    ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, arquivo \`${tela1.dfc.arquivo}\`, só para leitura.`
+    ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`
     : `O DFC **não foi lido** nesta rodada: ${tela1.dfc.motivo}.`}
 
 ## Os indicadores

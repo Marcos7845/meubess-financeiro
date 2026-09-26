@@ -84,7 +84,7 @@
 
   <div class="placar">
     <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
-    <div><b>16</b><span>em dúvida — as duas pistas discordam</span></div>
+    <div><b>15</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>3498</b><span>lançamentos contados, 01/01/2026 a 30/09/2026, no recorte da MeuBESS</span></div>
   </div>
@@ -293,6 +293,10 @@
     nome</strong>, o mesmo critério das outras — <strong>também são custo de vendas</strong>, na empresa 2:
     <code>2.01.96</code>, <code>2.01.89</code>, <code>2.01.92</code>. O aviso saiu; elas estão na tabela
     das decididas, abaixo.</p>
+    <p style="margin:6px 0 0"><strong>Terceira resposta do dono, no mesmo 25/09/2026:</strong> Financiamento Veiculo
+    (<code>2.11.95</code>, empresa 1) <strong>não é custo de vendas</strong> — é <strong>despesa geral</strong>. Era a
+    única em dúvida deste grupo apontada pela conta do DRE (<code>1.21.03</code> Outros Custos) que ainda não tinha
+    destino escrito; agora tem, e por isso saiu da lista em dúvida.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>A tela reclassifica pela lista, não pela conta do DRE.</strong> Várias das decididas hoje estão
@@ -572,7 +576,22 @@
       <td class="num">12</td>
     </tr>
     </tbody>
-  </table><h3>Ficaram de fora da decisão: 3 com movimento no período</h3>
+  </table>
+  <h3>Ficaram fora do custo de vendas: 1 código com destino escrito</h3>
+  <p class="nota">A conta do DRE apontava para este grupo, o nome não, e o dono decidiu contra a conta do DRE em 25/09/2026.</p>
+  <table>
+    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>destino</th></tr></thead>
+    <tbody>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+      <td>despesas gerais do DRE</td>
+    </tr>
+    </tbody>
+  </table><h3>Ficaram de fora da decisão: 2 com movimento no período</h3>
   <p class="nota">A decisão do dono não incluiu estas. Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   <table>
@@ -592,14 +611,6 @@
       <td>OUTRAS DESPESAS</td>
       <td><code>1.21.03</code> Outros Custos</td>
       <td class="num">33</td>
-      <td class="pista">só conta do DRE</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.11.95</code></td>
-      <td>Financiamento Veiculo</td>
-      <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">1</td>
       <td class="pista">só conta do DRE</td>
     </tr>
     </tbody>
@@ -666,14 +677,18 @@
     (<code>2.06.95</code>), nas duas empresas em que existem: 15 códigos.</p>
     <p style="margin:6px 0 0"><strong>Segunda resposta do dono, em 25/09/2026:</strong> Financiamento Veiculo
     (<code>2.11.95</code>, empresa 1), que estava anotado como "decidir depois", está decidido: <strong>fica fora do
-    resultado financeiro</strong>, porque <strong>a parcela paga a dívida</strong>. Como o pagamento do empréstimo
-    Intercompany, ele fica fora do DRE, e aparece abaixo com esse destino.</p>
+    resultado financeiro</strong>, porque <strong>a parcela paga a dívida</strong>.</p>
+    <p style="margin:6px 0 0"><strong>Terceira resposta do dono, no mesmo 25/09/2026:</strong> o destino dele é
+    <strong>despesas gerais</strong> — a linha (−) Despesas gerais do DRE —, e não "fora do DRE", como esta página
+    chegou a publicar por um dia. Ele segue fora do resultado financeiro, ao lado do Cartão de Crédito e do Aluguel de
+    Veículo, e aparece abaixo com esse destino.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>Fora do resultado financeiro, com destino:</strong> Cartão de Crédito
-    (<code>2.11.98</code>) e Aluguel de Veículo (<code>2.11.99</code>), da empresa 1, vão para as <strong>despesas gerais</strong>
-    do DRE; os empréstimos e transferências entre as empresas (Intercompany) e o Financiamento Veiculo
-    (<code>2.11.95</code>, empresa 1) ficam <strong>fora do DRE</strong>, como as transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
+    (<code>2.11.98</code>), Aluguel de Veículo (<code>2.11.99</code>) e Financiamento Veiculo (<code>2.11.95</code>), da
+    empresa 1, vão para as <strong>despesas gerais</strong> do DRE; os empréstimos e transferências entre as empresas
+    (Intercompany) ficam <strong>fora do DRE</strong>, como as transferências. A tela reclassifica pela lista, não pela
+    conta do DRE (os dois primeiros estão hoje em Despesas Financeiras, e o terceiro em Outros Custos).
     Atenção ao código: <code>2.05.99</code> é Transferência Intercompany na empresa 1 e Tarifas Bancárias (resultado financeiro)
     na empresa 2.</p>
   </div>
@@ -796,6 +811,14 @@
     <tbody>
 <tr>
       <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+      <td>despesas gerais do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
       <td><code>2.11.98</code></td>
       <td>Cartão de Credito</td>
       <td><code>2.11.03</code> Despesas Financeiras</td>
@@ -809,14 +832,6 @@
       <td><code>2.11.03</code> Despesas Financeiras</td>
       <td class="num">17</td>
       <td>despesas gerais do DRE</td>
-    </tr>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.11.95</code></td>
-      <td>Financiamento Veiculo</td>
-      <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">1</td>
-      <td>fora do DRE (a parcela paga a dívida)</td>
     </tr>
 <tr>
       <td class="emp">1</td>

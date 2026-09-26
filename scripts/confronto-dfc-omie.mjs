@@ -658,8 +658,10 @@ const GRUPOS = [
     subs: ["DESPESAS CLT", "DESPESAS PJ", "PRO-LABORE ( RETIRADA DE SOCIO )", "COMISSAO DE VENDAS", "REEMBOLSO"],
     omieCampo: "temDepartamento",
     omieComo: "departamentos[] rateados no lançamento (o Omie não marca departamento como de pessoal)" },
+  // `FORNECEODORES COGS` é `FORNECEDORES COGS` escrito com erro de digitação na planilha (2 linhas em agosto de 2026);
+  // as duas grafias contam igual, por decisão do dono de 25/09/2026 ("sim fornecedor COGS é custo de vendas").
   { id: "cogs", nome: "COGS / custos de vendas", natureza: "P",
-    classes: ["FORNECEDORES COGS", "COMPRA DE MERCADORIA"],
+    classes: ["FORNECEDORES COGS", "FORNECEODORES COGS", "COMPRA DE MERCADORIA"],
     subs: ["COMPRAS DE MERCADORIAS", "FRETE E CARRETO", "ARMAZENAGEM E MANUSEIO", "COMPRA PROVISAO", "COMPRAS - PROVISAO", "FRETE - PROVISAO"],
     omieCampo: "temDre",
     omieComo: "codigo_dre da categoria do lançamento (a conta de custo do DRE)" },

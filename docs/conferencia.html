@@ -45,11 +45,19 @@
 <p>Uma linha por indicador de <a href="fontes.md">docs/fontes.md</a>: quantos lançamentos entram, a fonte e o filtro, e
 um caso real — um lançamento ou título que o cálculo pegou e que foi achado de novo na fonte, pelo código, com os
 mesmos campos. <strong>Não há valor em dinheiro nesta página, de propósito.</strong></p>
+<p><strong>Um indicador não é de agosto, e a própria regra dele explica por quê.</strong> A faixa
+<strong>em aberto</strong> do cartão "Valor pendente" da Tela 3 é vazia em qualquer mês fechado: os quatro
+<code>cStatus</code> que a regra de <a href="fontes.md">docs/fontes.md</a> lista (<code>EMABERTO</code>,
+<code>AVENCER</code>, <code>VENCEHOJE</code>, <code>PAGTO_PARCIAL</code>) são os de um título que <strong>ainda não
+venceu</strong>, e num mês fechado todo título já venceu — está pago ou atrasado. Em agosto ela deu
+0 títulos. Então essa linha, e só ela, foi conferida com títulos de vencimento a partir de
+25/09/2026: a regra não muda, muda a janela de vencimento, e a própria linha diz qual mês foi usado e por quê. Os outros
+35 indicadores são de agosto de 2026.</p>
 <div class="resumo">
  <div><b>36</b><span>indicadores</span></div>
- <div><b style="color:var(--ok)">35</b><span>conferidos</span></div>
+ <div><b style="color:var(--ok)">36</b><span>conferidos</span></div>
  <div><b style="color:var(--div)">0</b><span>divergentes</span></div>
- <div><b style="color:var(--pend)">1</b><span>a conferir</span></div>
+ <div><b style="color:var(--pend)">0</b><span>a conferir</span></div>
 </div>
 <p>O <strong>Omie</strong> sai do cache local <code>.cache/omie/</code>, fora do git; agosto é recortado das
 leituras do ano pela data de cada lançamento. O <strong>DFC</strong> saiu das planilhas da pasta da MeuBESS, abertas só para leitura: o arquivo <code>08 - DFC AGOSTO 2026.xlsx</code>, com 388 linhas de lançamento no mês na aba <code>FLUXO DE CAIXA</code> e o bloco <code>Entradas</code>/<code>Gastos</code> na aba <code> 2026</code>, e os arquivos dos outros meses do ano, de onde sai a série mensal (12 dos 12 com o bloco).</p>
@@ -220,12 +228,11 @@ implementada é a mesma. A primeira é trava: se não bater, o script para e nã
 <span class="campo"><b>fonte</b>Omie</span>
 <span class="campo"><b>filtro</b><code>financas/pesquisartitulos</code> → <code>PesquisarLancamentos</code> com <code>cNatureza: "R"</code> e <code>dDtVencDe</code>/<code>dDtVencAte</code> em 01/08/2026 a 31/08/2026, recorte da MeuBESS por <code>cabecTitulo.nCodCC</code>, fora os <code>cStatus = "CANCELADO"</code> (que ficam fora da tela, decisão do dono de 25/09/2026), faixa <strong>pago</strong> (<code>cStatus</code> <code>RECEBIDO</code> ou <code>LIQUIDADO</code>, de-para do dono de 25/09/2026); soma <code>resumo.nValPago</code>. O <code>PAGTO_PARCIAL</code> está na faixa em aberto, então a parte já paga dele não entra</span>
 <span class="campo"><b>caso conferido</b>nCodTitulo 5268010983 (empresa 2, <code>cNatureza</code> R, <code>cStatus</code> RECEBIDO, <code>nCodCC</code> 5191263677, <code>cCodCateg</code> 1.01.01, vence em 02/08/2026, <code>resumo.cLiquidado</code> S) — achado de volta na página 5 da leitura crua do cache com os mesmos campos</span></li>
-<li class="pend"><span class="selo">a conferir</span><span class="nome">Valor pendente</span>
-<span class="campo"><b>entram</b>0 títulos na faixa em aberto (0 na empresa 1 e 0 na 2)</span>
+<li class="ok"><span class="selo">conferido</span><span class="nome">Valor pendente</span>
+<span class="campo"><b>entram</b>10 títulos na faixa em aberto (0 na empresa 1 e 10 na 2) — o mês usado nesta linha é <strong>outubro de 2026</strong>, e não agosto de 2026 como nos outros 35 indicadores: em agosto esta faixa deu 0 títulos, e num mês fechado ela é sempre vazia — todo título que já venceu está pago ou atrasado, e os quatro <code>cStatus</code> da faixa são os de um título que ainda não venceu. Das duas janelas que começam hoje (25/09/2026), outubro de 2026 é o primeiro mês inteiramente à frente: a janela é o mês todo, como nos outros indicadores, e nenhum título dele venceu. Do mês corrente sobram 6 dias (25/09/2026 a 30/09/2026), que são um trecho de setembro de 2026 e não um mês; essa janela foi lida também e traz 2 títulos na faixa (0 na empresa 1 e 2 na 2). Os <code>cStatus</code> que vieram nessa faixa: <code>"A VENCER"</code> em outubro de 2026 e <code>"A VENCER"</code>, <code>"VENCE HOJE"</code> no trecho de setembro de 2026 — o Omie escreve <code>"A VENCER"</code> e <code>"VENCE HOJE"</code> com espaço no meio, e o de-para do dono cita <code>AVENCER</code> e <code>VENCEHOJE</code> sem espaço; pelos campos (nada pago, valor em aberto, <code>cLiquidado</code> N) é o mesmo status, e este script tira o espaço antes de comparar, como <code>docs/fontes.md</code> já manda fazer com <code>"A VENCER"</code></span>
 <span class="campo"><b>fonte</b>Omie</span>
-<span class="campo"><b>filtro</b><code>financas/pesquisartitulos</code> → <code>PesquisarLancamentos</code> com <code>cNatureza: "R"</code> e <code>dDtVencDe</code>/<code>dDtVencAte</code> em 01/08/2026 a 31/08/2026, recorte da MeuBESS por <code>cabecTitulo.nCodCC</code>, fora os <code>cStatus = "CANCELADO"</code> (que ficam fora da tela, decisão do dono de 25/09/2026), faixa <strong>em aberto</strong> (<code>cStatus</code> <code>EMABERTO</code>, <code>AVENCER</code>, <code>VENCEHOJE</code> ou <code>PAGTO_PARCIAL</code>); soma <code>resumo.nValAberto</code></span>
-<span class="campo"><b>caso conferido</b>nenhum título do recorte vence neste mês nessa faixa</span>
-<span class="campo"><b>motivo</b>nenhum título do recorte vence neste mês nessa faixa, então não há caso real para conferir</span></li>
+<span class="campo"><b>filtro</b><code>financas/pesquisartitulos</code> → <code>PesquisarLancamentos</code> com <code>cNatureza: "R"</code> e <code>dDtVencDe</code>/<code>dDtVencAte</code> em 01/10/2026 a 31/10/2026 (leitura feita no Omie em 25/09/2026, só leitura), recorte da MeuBESS por <code>cabecTitulo.nCodCC</code>, fora os <code>cStatus = "CANCELADO"</code> (que ficam fora da tela, decisão do dono de 25/09/2026), faixa <strong>em aberto</strong> (<code>cStatus</code> <code>EMABERTO</code>, <code>AVENCER</code>, <code>VENCEHOJE</code> ou <code>PAGTO_PARCIAL</code>, decisão do dono de 25/09/2026, a regra como está escrita em <code>docs/fontes.md</code>); soma <code>resumo.nValAberto</code></span>
+<span class="campo"><b>caso conferido</b>nCodTitulo 5281768809 (empresa 2, <code>cNatureza</code> R, <code>cStatus</code> A VENCER, <code>nCodCC</code> 5191263677, <code>cCodCateg</code> 1.01.01, vence em 07/10/2026, <code>resumo.cLiquidado</code> N) — achado de volta na página 1 da leitura crua de 01/10/2026 a 31/10/2026 no cache com os mesmos campos</span></li>
 <li class="ok"><span class="selo">conferido</span><span class="nome">Valor vencido</span>
 <span class="campo"><b>entram</b>37 títulos na faixa atrasado (0 na empresa 1 e 37 na 2)</span>
 <span class="campo"><b>fonte</b>Omie</span>

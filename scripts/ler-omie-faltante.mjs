@@ -1,24 +1,29 @@
 #!/usr/bin/env node
-// AS QUATRO LEITURAS DO OMIE QUE FALTAVAM NO CACHE, PARA A CONFERÊNCIA DOS NÚMEROS DAS TELAS
+// AS LEITURAS DO OMIE QUE FALTAVAM NO CACHE, PARA A CONFERÊNCIA DOS NÚMEROS DAS TELAS
 //
-// `scripts/numeros-das-telas.mjs` lê só do cache local `.cache/omie/` (fora do git). Quatro indicadores de
+// `scripts/numeros-das-telas.mjs` lê só do cache local `.cache/omie/` (fora do git). Alguns indicadores de
 // `docs/fontes.md` pedem leituras que `scripts/confronto-dfc-omie.mjs` nunca fez, e por isso saíam "a conferir:".
-// Este script faz essas quatro leituras e grava no mesmo cache, com a mesma chave (empresa + serviço + método +
+// Este script faz essas leituras e grava no mesmo cache, com a mesma chave (empresa + serviço + método +
 // sha1 dos parâmetros), para que o outro script as ache sozinho.
 //
-// SÓ LEITURA. Quatro métodos de consulta, nenhum que inclua, altere ou exclua:
+// SÓ LEITURA. Cinco leituras, todas por método de consulta, nenhum que inclua, altere ou exclua:
 //   1. `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` por VENCIMENTO (01/01 a 31/12 do ano)
 //      — "Despesas pendentes" da Tela 1.
 //   2. `financas/mf` → `ListarMovimentos` SEM `cTpLancamento` por data de pagamento (01/01 a 30/09), a mesma
 //      leitura que `docs/fontes.md` conta, mas COM `cExibirDepartamentos: "S"` — "Top 10 despesas" da Tela 1.
 //   3. `geral/clientes` → `ListarClientesResumido` — o eixo do "Valor previsto por cliente" da Tela 3.
 //   4. `geral/dre` → `ListarCadastroDRE` — o `totalizaDRE` da "Receita bruta" da Tela 2.
+//   5. `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"` por VENCIMENTO, em duas janelas que
+//      começam HOJE — o que resta do mês corrente e o mês seguinte inteiro — para a faixa **em aberto** do cartão
+//      "Valor pendente" da Tela 3. Num mês fechado essa faixa é sempre vazia (título vencido já está pago ou
+//      atrasado), então o único caso real dela está em título que ainda não venceu.
 //
 // NADA DO QUE VEM DO OMIE É IMPRESSO AQUI além de contagens: nem valor em reais, nem nome, nem documento, nem a
 // chave — nem em erro. As respostas cruas ficam só no cache local, que o `.gitignore` mantém fora de todo commit.
 //
 //   node scripts/ler-omie-faltante.mjs            # usa o que já está no cache e busca só o que falta
 //   node scripts/ler-omie-faltante.mjs --ano 2026
+//   node scripts/ler-omie-faltante.mjs --hoje 25/09/2026   # a data de onde partem as duas janelas da leitura 5
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -36,6 +41,18 @@ const arg = (nome, padrao) => {
 };
 const ANO = Number(arg('--ano', '2026'));
 const EMPRESAS = [1, 2];
+
+// A DATA DE HOJE, de onde partem as duas janelas da leitura 5. `--hoje dd/mm/aaaa` a fixa; sem isso, é o dia de hoje.
+const dois = (x) => String(x).padStart(2, '0');
+const ultimoDia = (a, m) => new Date(a, m, 0).getDate();
+const HOJE = arg('--hoje', (() => { const d = new Date(); return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}`; })());
+const hj = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(HOJE);
+if (!hj) { console.error('--hoje precisa ser dd/mm/aaaa'); process.exit(1); }
+const [HD, HM, HA] = [Number(hj[1]), Number(hj[2]), Number(hj[3])];
+const [SM, SA] = HM === 12 ? [1, HA + 1] : [HM + 1, HA];
+// O que resta do mês corrente (de hoje ao último dia) e o mês seguinte inteiro.
+const JANELA_CORRENTE = [`${dois(HD)}/${dois(HM)}/${HA}`, `${ultimoDia(HA, HM)}/${dois(HM)}/${HA}`];
+const JANELA_SEGUINTE = [`01/${dois(SM)}/${SA}`, `${ultimoDia(SA, SM)}/${dois(SM)}/${SA}`];
 
 const falhar = (m) => { console.error(m); process.exit(1); };
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -128,6 +145,10 @@ const LEITURA_MF_DEP = (n) => ({
 const LEITURA_CLIENTES = (n) => ({ pagina: n, registros_por_pagina: 100, apenas_importado_api: 'N' });
 // 4. O cadastro das contas do DRE — a mesma chamada de `scripts/contas-dre-omie.mjs`.
 const LEITURA_DRE = { apenasContasAtivas: 'N' };
+// 5. Títulos a receber por VENCIMENTO, nas duas janelas que começam hoje. Mesma forma de parâmetro que as outras
+//    leituras de `financas/pesquisartitulos` já no cache, para a chave do cache ser a mesma que
+//    `scripts/numeros-das-telas.mjs` monta.
+const LEITURA_TIT_R = (n, de, ate) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'R', dDtVencDe: de, dDtVencAte: ate });
 
 async function principal() {
   try { process.loadEnvFile(path.join(RAIZ, '.env')); }
@@ -143,6 +164,9 @@ async function principal() {
     const { json, veioDoCache } = await chamar(emp, 'geral/dre', 'ListarCadastroDRE', LEITURA_DRE);
     console.log(`    empresa ${emp} — cadastro do DRE: ${(json.dreLista ?? []).length} conta(s)`);
     if (!veioDoCache) await espera(PAUSA_MS);
+    for (const [rotulo, [de, ate]] of [['resto do mês corrente', JANELA_CORRENTE], ['mês seguinte inteiro', JANELA_SEGUINTE]])
+      await todasAsPaginas(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos', (n) => LEITURA_TIT_R(n, de, ate),
+        'titulosEncontrados', `títulos a receber por vencimento, ${rotulo} (${de} a ${ate})`);
   }
   console.log(`\n${doCache} resposta(s) já estavam no cache, ${doOmie} vieram do Omie agora.`);
   console.log(`Cache: ${path.relative(RAIZ, CACHE)} (fora do git).`);

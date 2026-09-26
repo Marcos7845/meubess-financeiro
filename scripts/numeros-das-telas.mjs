@@ -29,9 +29,16 @@
 // documento antes de aplicá-lo ao mês. A trava principal — o total de receita e despesa por empresa — para o script;
 // as outras entram como divergência na linha do indicador a que pertencem.
 //
+// A ÚNICA EXCEÇÃO AO MÊS FECHADO: a faixa "em aberto" do cartão "Valor pendente" da Tela 3. Num mês fechado ela é
+// sempre vazia — todo título que já venceu está pago ou atrasado —, então o caso real dela só existe em título que
+// ainda não venceu. Essa faixa, e só ela, é conferida numa janela que começa HOJE: o mês seguinte inteiro, com o que
+// resta do mês corrente lido ao lado para dizer por que o mês seguinte foi o escolhido. As duas leituras são gravadas
+// no cache por `scripts/ler-omie-faltante.mjs`; os outros 35 indicadores seguem no mês fechado.
+//
 //   node scripts/numeros-das-telas.mjs                 # agosto de 2026, tentando ler o DFC
 //   node scripts/numeros-das-telas.mjs --sem-dfc       # só o cache do Omie; as linhas do DFC saem "a conferir:"
 //   node scripts/numeros-das-telas.mjs --mes 7         # outro mês fechado de 2026
+//   node scripts/numeros-das-telas.mjs --hoje 25/09/2026   # a data de onde parte a janela da faixa "em aberto"
 //   DFC_DIR=<caminho> node scripts/numeros-das-telas.mjs
 
 import crypto from 'node:crypto';
@@ -53,10 +60,28 @@ const arg = (nome, padrao) => {
 const ANO = Number(arg('--ano', '2026'));
 const MES = Number(arg('--mes', '8'));
 const SEM_DFC = process.argv.includes('--sem-dfc');
-const NOME_DO_MES = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
-  'outubro', 'novembro', 'dezembro'][MES];
+
 const MES2 = String(MES).padStart(2, '0');
 const PERIODO = `01/${MES2}/${ANO} a ${new Date(ANO, MES, 0).getDate()}/${MES2}/${ANO}`;
+const NOMES_DOS_MESES = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
+  'outubro', 'novembro', 'dezembro'];
+
+// A DATA DE HOJE, de onde partem as duas janelas da faixa "em aberto" do "Valor pendente" (a exceção ao mês fechado,
+// explicada no topo). `--hoje dd/mm/aaaa` a fixa; sem isso, é o dia de hoje. As duas janelas são as mesmas que
+// `scripts/ler-omie-faltante.mjs` grava no cache: o que RESTA do mês corrente e o mês SEGUINTE inteiro.
+const dois = (x) => String(x).padStart(2, '0');
+const ultimoDia = (a, m) => new Date(a, m, 0).getDate();
+const HOJE = arg('--hoje', (() => { const d = new Date(); return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}`; })());
+const hj = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(HOJE);
+if (!hj) { console.error('--hoje precisa ser dd/mm/aaaa'); process.exit(1); }
+const [HD, HM, HA] = [Number(hj[1]), Number(hj[2]), Number(hj[3])];
+const [SM, SA] = HM === 12 ? [1, HA + 1] : [HM + 1, HA];
+const JANELA_CORRENTE = [`${dois(HD)}/${dois(HM)}/${HA}`, `${ultimoDia(HA, HM)}/${dois(HM)}/${HA}`];
+const JANELA_SEGUINTE = [`01/${dois(SM)}/${SA}`, `${ultimoDia(SA, SM)}/${dois(SM)}/${SA}`];
+const DIAS_QUE_RESTAM = ultimoDia(HA, HM) - HD + 1;
+const MES_DA_FAIXA_ABERTO = `${NOMES_DOS_MESES[SM]} de ${SA}`;
+const MES_CORRENTE_NOME = `${NOMES_DOS_MESES[HM]} de ${HA}`;
+const NOME_DO_MES = NOMES_DOS_MESES[MES];
 
 const falhar = (m) => { console.error(m); process.exit(1); };
 
@@ -81,6 +106,9 @@ const LEITURA_MF = (n) => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: `01/01/
 // passadas (até hoje e a vencer) — é a leitura que `docs/fontes.md` descreve no bloco "Lançamentos por mês e status".
 const LEITURA_TIT_R = (n, de, ate) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'R', dDtVencDe: de, dDtVencAte: ate });
 const FAIXAS_TIT_R = [[`01/01/${ANO}`, `25/09/${ANO}`], [`26/09/${ANO}`, `31/12/${ANO}`]];
+// AS DUAS LEITURAS DA FAIXA "EM ABERTO" do "Valor pendente" (a exceção ao mês fechado, explicada no topo): a mesma
+// chamada, por vencimento, nas duas janelas que começam hoje. `scripts/ler-omie-faltante.mjs` as grava no cache.
+const JANELAS_ABERTO = { corrente: JANELA_CORRENTE, seguinte: JANELA_SEGUINTE };
 // A LEITURA DOS TÍTULOS A PAGAR de `financas/pesquisartitulos`, por vencimento. Fica como segunda opinião do cartão
 // "Despesas pendentes": traz os mesmos campos da leitura abaixo, por outro serviço.
 const LEITURA_TIT_P = (n) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'P', dDtVencDe: `01/01/${ANO}`, dDtVencAte: `31/12/${ANO}` });
@@ -115,6 +143,8 @@ const movimentos = {}, titulosR = {}, titulosP = {}, categorias = {}, departamen
 // As quatro leituras que `scripts/ler-omie-faltante.mjs` acrescentou ao cache. Se alguma faltar, o indicador que
 // depende dela sai "a conferir:" dizendo isso, e o resto da página segue.
 const cpVenc = {}, comDep = {}, clientes = {}, contasDre = {};
+// As duas janelas da faixa "em aberto" (`corrente` e `seguinte`), por empresa. `null` = a leitura não está no cache.
+const titulosAberto = { corrente: {}, seguinte: {} };
 for (const emp of EMPRESAS) {
   movimentos[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_MF, 'movimentos');
   if (!movimentos[emp]) falhar(`empresa ${emp}: a leitura de financas/mf por data de pagamento (sem cTpLancamento, 01/01 a 30/09/${ANO}) não está inteira no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
@@ -151,6 +181,9 @@ for (const emp of EMPRESAS) {
   };
   const arqDre = arqCache(emp, 'geral/dre', 'ListarCadastroDRE', LEITURA_DRE);
   contasDre[emp] = fs.existsSync(arqDre) ? (JSON.parse(fs.readFileSync(arqDre, 'utf8')).dreLista ?? []) : null;
+  for (const [qual, [de, ate]] of Object.entries(JANELAS_ABERTO))
+    titulosAberto[qual][emp] = paginas(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos',
+      (n) => LEITURA_TIT_R(n, de, ate), 'titulosEncontrados');
 }
 
 // ================================================================ o recorte e os filtros de docs/fontes.md
@@ -282,8 +315,8 @@ function acharMovimentoCru(emp, chave, valor) {
   return achados;
 }
 
-function acharTituloCru(emp, nCodTitulo) {
-  for (const f of FAIXAS_TIT_R) {
+function acharTituloCru(emp, nCodTitulo, faixas = FAIXAS_TIT_R) {
+  for (const f of faixas) {
     let total = 1;
     for (let n = 1; n <= total; n++) {
       const arq = arqCache(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos', LEITURA_TIT_R(n, f[0], f[1]));
@@ -339,8 +372,8 @@ function conferirLancamento(emp, d) {
   return { ok: dif.length === 0, dif, pagina: alvo[0]._pagina };
 }
 
-function conferirTituloR(emp, cab) {
-  const cru = acharTituloCru(emp, cab.nCodTitulo);
+function conferirTituloR(emp, cab, faixas = FAIXAS_TIT_R) {
+  const cru = acharTituloCru(emp, cab.nCodTitulo, faixas);
   if (!cru) return { ok: false, motivo: `o título ${cab.nCodTitulo} não foi achado de volta na leitura crua do cache` };
   const dif = comparar(cru.cabecTitulo, { cNatureza: cab.cNatureza, cStatus: cab.cStatus, nCodCC: cab.nCodCC, cCodCateg: cab.cCodCateg, dDtVenc: cab.dDtVenc });
   return { ok: dif.length === 0, dif, pagina: cru._pagina };
@@ -1286,17 +1319,19 @@ const SOBRA_DE_STATUS = t3Total(T3_OUTRO)
   ? `; ${t3Total(T3_OUTRO)} título(s) vieram com \`cStatus\` fora das três faixas do de-para — o Omie escreve \`"A VENCER"\` com espaço, e este script o trata como \`AVENCER\`, na faixa em aberto`
   : '';
 
-function linhaT3({ nome, filtro, contagem, lista, motivoExtra = null, estadoForcado = null, casoExtra = null }) {
+function linhaT3({ nome, filtro, contagem, lista, motivoExtra = null, estadoForcado = null, casoExtra = null,
+  faixas = FAIXAS_TIT_R, ondeCaso = 'da leitura crua do cache', semCaso = 'nenhum título do recorte vence neste mês nessa faixa',
+  motivoSemCaso = 'nenhum título do recorte vence neste mês nessa faixa, então não há caso real para conferir' }) {
   const candidatos = EMPRESAS.flatMap((emp) => (lista[emp] ?? []).map((t) => ({ emp, cab: t.cabecTitulo ?? {}, resumo: t.resumo ?? {} })));
-  let caso = 'nenhum título do recorte vence neste mês nessa faixa', estado = motivoExtra ? 'a-conferir' : 'conferido', motivo = motivoExtra;
+  let caso = semCaso, estado = motivoExtra ? 'a-conferir' : 'conferido', motivo = motivoExtra;
   if (candidatos.length) {
     const e = candidatos.slice().sort((a, b) => Number(a.cab.nCodTitulo) - Number(b.cab.nCodTitulo))[0];
-    const r = conferirTituloR(e.emp, e.cab);
-    caso = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'}) — ${r.ok ? `achado de volta na página ${r.pagina} da leitura crua do cache com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}${casoExtra ? `, ${casoExtra}` : ''}`;
+    const r = conferirTituloR(e.emp, e.cab, faixas);
+    caso = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'}) — ${r.ok ? `achado de volta na página ${r.pagina} ${ondeCaso} com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}${casoExtra ? `, ${casoExtra}` : ''}`;
     if (!r.ok) { estado = 'divergente'; motivo = [motivo, r.motivo ?? r.dif.join('; ')].filter(Boolean).join('; '); }
   } else if (!estadoForcado) {
     estado = 'a-conferir';
-    motivo = [motivo, 'nenhum título do recorte vence neste mês nessa faixa, então não há caso real para conferir'].filter(Boolean).join('; ');
+    motivo = [motivo, motivoSemCaso].filter(Boolean).join('; ');
   }
   add({ tela: 'Tela 3', nome, fonte: 'Omie', filtro, contagem, estado: estadoForcado ?? estado, motivo: motivo || null, caso });
 }
@@ -1311,11 +1346,42 @@ linhaT3({
   contagem: `${t3Total(T3_PAGO)} títulos na faixa pago (${T3_PAGO[1].length} na empresa 1 e ${T3_PAGO[2].length} na 2)`,
   lista: T3_PAGO,
 });
-linhaT3({
-  nome: 'Valor pendente', filtro: `${FILTRO_T3}, faixa **em aberto** (\`cStatus\` \`EMABERTO\`, \`AVENCER\`, \`VENCEHOJE\` ou \`PAGTO_PARCIAL\`); soma \`resumo.nValAberto\``,
-  contagem: `${t3Total(T3_ABERTO)} títulos na faixa em aberto (${T3_ABERTO[1].length} na empresa 1 e ${T3_ABERTO[2].length} na 2)${SOBRA_DE_STATUS}`,
-  lista: T3_ABERTO,
-});
+// O "Valor pendente" é o ÚNICO indicador que não é do mês fechado, e o motivo está na própria regra da faixa: no
+// mês fechado a faixa "em aberto" deu 0 títulos, porque num mês fechado todo título que já venceu está pago ou
+// atrasado. A regra de `docs/fontes.md` não muda — os quatro `cStatus` dela são exatamente os de um título que ainda
+// não venceu —, muda só a janela de vencimento: de hoje para frente. Duas janelas são lidas, e a linha diz qual das
+// duas virou o mês da faixa e por quê.
+{
+  const abertosDe = (qual) => {
+    const r = {};
+    for (const emp of EMPRESAS) r[emp] = (titulosAberto[qual][emp] ?? []).filter((t) => {
+      const c = t.cabecTitulo ?? {};
+      return RECORTE.has(`${emp}|${c.nCodCC}`) && FAIXA_DO_STATUS(c.cStatus) === 'aberto';
+    });
+    return r;
+  };
+  const faltam = EMPRESAS.filter((emp) => !titulosAberto.corrente[emp] || !titulosAberto.seguinte[emp]);
+  const ABERTO_CORRENTE = abertosDe('corrente'), ABERTO_SEGUINTE = abertosDe('seguinte');
+  // As grafias de `cStatus` que o Omie devolveu nos títulos da faixa. Vale registrar: o Omie escreve dois dos quatro
+  // status com espaço no meio (`"A VENCER"` e `"VENCE HOJE"`), e o de-para de `docs/fontes.md` cita as duas grafias
+  // sem espaço; pelos campos é o mesmo status, e `FAIXA_DO_STATUS` tira o espaço antes de comparar.
+  const grafias = (m) => [...new Set(EMPRESAS.flatMap((emp) => m[emp].map((t) => String(t.cabecTitulo?.cStatus ?? ''))))].sort();
+  const comEspaco = [...new Set([...grafias(ABERTO_SEGUINTE), ...grafias(ABERTO_CORRENTE)])].filter((g) => /\s/.test(g));
+  const POR_QUE = `o mês usado nesta linha é **${MES_DA_FAIXA_ABERTO}**, e não ${NOME_DO_MES} de ${ANO} como nos outros 35 indicadores: em ${NOME_DO_MES} esta faixa deu 0 títulos, e num mês fechado ela é sempre vazia — todo título que já venceu está pago ou atrasado, e os quatro \`cStatus\` da faixa são os de um título que ainda não venceu. Das duas janelas que começam hoje (${HOJE}), ${MES_DA_FAIXA_ABERTO} é o primeiro mês inteiramente à frente: a janela é o mês todo, como nos outros indicadores, e nenhum título dele venceu. Do mês corrente sobram ${DIAS_QUE_RESTAM} dias (${JANELA_CORRENTE[0]} a ${JANELA_CORRENTE[1]}), que são um trecho de ${MES_CORRENTE_NOME} e não um mês; essa janela foi lida também e traz ${t3Total(ABERTO_CORRENTE)} títulos na faixa (${ABERTO_CORRENTE[1].length} na empresa 1 e ${ABERTO_CORRENTE[2].length} na 2)`;
+  linhaT3({
+    nome: 'Valor pendente',
+    filtro: `\`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "R"\` e \`dDtVencDe\`/\`dDtVencAte\` em ${JANELA_SEGUINTE[0]} a ${JANELA_SEGUINTE[1]} (leitura feita no Omie em ${HOJE}, só leitura), recorte da MeuBESS por \`cabecTitulo.nCodCC\`, fora os \`cStatus = "CANCELADO"\` (que ficam fora da tela, decisão do dono de 25/09/2026), faixa **em aberto** (\`cStatus\` \`EMABERTO\`, \`AVENCER\`, \`VENCEHOJE\` ou \`PAGTO_PARCIAL\`, decisão do dono de 25/09/2026, a regra como está escrita em \`docs/fontes.md\`); soma \`resumo.nValAberto\``,
+    contagem: `${t3Total(ABERTO_SEGUINTE)} títulos na faixa em aberto (${ABERTO_SEGUINTE[1].length} na empresa 1 e ${ABERTO_SEGUINTE[2].length} na 2) — ${POR_QUE}${comEspaco.length ? `. Os \`cStatus\` que vieram nessa faixa: ${grafias(ABERTO_SEGUINTE).map((g) => `\`"${g}"\``).join(', ')} em ${MES_DA_FAIXA_ABERTO}${ABERTO_CORRENTE[1].length + ABERTO_CORRENTE[2].length ? ` e ${grafias(ABERTO_CORRENTE).map((g) => `\`"${g}"\``).join(', ')} no trecho de ${MES_CORRENTE_NOME}` : ''} — o Omie escreve ${comEspaco.map((g) => `\`"${g}"\``).join(' e ')} com espaço no meio, e o de-para do dono cita ${comEspaco.map((g) => `\`${g.replace(/\s+/g, '')}\``).join(' e ')} sem espaço; pelos campos (nada pago, valor em aberto, \`cLiquidado\` N) é o mesmo status, e este script tira o espaço antes de comparar, como \`docs/fontes.md\` já manda fazer com \`"A VENCER"\`` : ''}`,
+    lista: ABERTO_SEGUINTE,
+    faixas: [JANELA_SEGUINTE],
+    ondeCaso: `da leitura crua de ${JANELA_SEGUINTE[0]} a ${JANELA_SEGUINTE[1]} no cache`,
+    semCaso: `nenhum título do recorte vence em ${MES_DA_FAIXA_ABERTO} nessa faixa`,
+    motivoSemCaso: `nenhum título do recorte vence em ${MES_DA_FAIXA_ABERTO} nessa faixa, nem no que resta de ${MES_CORRENTE_NOME}, então não há caso real para conferir`,
+    motivoExtra: faltam.length
+      ? `a leitura por vencimento das janelas que começam hoje (${JANELA_CORRENTE.join(' a ')} e ${JANELA_SEGUINTE.join(' a ')}) não está no cache da(s) empresa(s) ${faltam.join(' e ')}; rode antes \`node scripts/ler-omie-faltante.mjs --hoje ${HOJE}\``
+      : null,
+  });
+}
 linhaT3({
   nome: 'Valor vencido', filtro: `${FILTRO_T3}, faixa **atrasado** (\`cStatus = "ATRASADO"\`); soma \`resumo.nValAberto\``,
   contagem: `${t3Total(T3_ATRASADO)} títulos na faixa atrasado (${T3_ATRASADO[1].length} na empresa 1 e ${T3_ATRASADO[2].length} na 2)`,
@@ -1426,6 +1492,14 @@ os mesmos campos.
 Linha que começa com **divergente:** quer dizer que o caso não bateu; o motivo está no fim da linha. Linha que começa
 com **a conferir:** quer dizer que o indicador não pôde ser conferido; o motivo está no fim da linha.
 
+**Um indicador não é de ${NOME_DO_MES}, e a própria regra dele explica por quê.** A faixa **em aberto** do cartão
+"Valor pendente" da Tela 3 é vazia em qualquer mês fechado: os quatro \`cStatus\` que a regra de
+[\`docs/fontes.md\`](fontes.md) lista (\`EMABERTO\`, \`AVENCER\`, \`VENCEHOJE\`, \`PAGTO_PARCIAL\`) são os de um título
+que **ainda não venceu**, e num mês fechado todo título já venceu — está pago ou atrasado. Em ${NOME_DO_MES} ela deu
+${t3Total(T3_ABERTO)} títulos. Então essa linha, e só ela, é conferida com títulos de vencimento a partir de ${HOJE}: a regra não muda, muda
+a janela de vencimento. A própria linha diz qual mês foi usado e por quê. Os outros ${indicadores.length - 1}
+indicadores são de ${NOME_DO_MES} de ${ANO}.
+
 **Não há valor em dinheiro nesta página, de propósito** — só contagens, códigos, datas e campos de cadastro. Os valores
 em reais ficam em [\`docs/confronto-dfc-omie.html\`](confronto-dfc-omie.html), que não é gerado por este script. Nome de
 pessoa também não entra: nenhum campo de nome é lido.
@@ -1445,7 +1519,9 @@ menor código, ou de menor número de linha, entre os que entraram, para a confe
 \`ListarMovimentos\` **sem \`cTpLancamento\`** por data de pagamento de 01/01 a 30/09/${ANO} (e a leitura irmã dela, com
 \`cExibirDepartamentos: "S"\`, para o rateio por centro de custo); \`financas/mf\` → \`ListarMovimentos\` com
 \`cTpLancamento: "CP"\` por vencimento, para as despesas pendentes; \`financas/pesquisartitulos\` →
-\`PesquisarLancamentos\` com \`cNatureza: "R"\` e com \`cNatureza: "P"\` por vencimento; e os cadastros
+\`PesquisarLancamentos\` com \`cNatureza: "R"\` e com \`cNatureza: "P"\` por vencimento (a de \`"R"\` também nas duas
+janelas que começam em ${HOJE} — ${JANELA_CORRENTE[0]} a ${JANELA_CORRENTE[1]} e ${JANELA_SEGUINTE[0]} a
+${JANELA_SEGUINTE[1]} —, que é de onde sai a faixa em aberto do "Valor pendente"); e os cadastros
 \`geral/categorias\`, \`geral/departamentos\`, \`geral/clientes\` → \`ListarClientesResumido\`, \`geral/dre\` →
 \`ListarCadastroDRE\` e \`produtos/pedido\`. As leituras do ano são recortadas em ${NOME_DO_MES} pela data de cada
 lançamento, que é o que a consulta do mês devolveria. O **DFC** ${DFC.ok
@@ -1531,6 +1607,14 @@ const html = `<!doctype html>
 <p>Uma linha por indicador de <a href="fontes.md">docs/fontes.md</a>: quantos lançamentos entram, a fonte e o filtro, e
 um caso real — um lançamento ou título que o cálculo pegou e que foi achado de novo na fonte, pelo código, com os
 mesmos campos. <strong>Não há valor em dinheiro nesta página, de propósito.</strong></p>
+<p><strong>Um indicador não é de ${NOME_DO_MES}, e a própria regra dele explica por quê.</strong> A faixa
+<strong>em aberto</strong> do cartão "Valor pendente" da Tela 3 é vazia em qualquer mês fechado: os quatro
+<code>cStatus</code> que a regra de <a href="fontes.md">docs/fontes.md</a> lista (<code>EMABERTO</code>,
+<code>AVENCER</code>, <code>VENCEHOJE</code>, <code>PAGTO_PARCIAL</code>) são os de um título que <strong>ainda não
+venceu</strong>, e num mês fechado todo título já venceu — está pago ou atrasado. Em ${NOME_DO_MES} ela deu
+${t3Total(T3_ABERTO)} títulos. Então essa linha, e só ela, foi conferida com títulos de vencimento a partir de
+${HOJE}: a regra não muda, muda a janela de vencimento, e a própria linha diz qual mês foi usado e por quê. Os outros
+${indicadores.length - 1} indicadores são de ${NOME_DO_MES} de ${ANO}.</p>
 <div class="resumo">
  <div><b>${indicadores.length}</b><span>indicadores</span></div>
  <div><b style="color:var(--ok)">${quantos('conferido')}</b><span>conferidos</span></div>

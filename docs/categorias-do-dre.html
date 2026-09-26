@@ -84,14 +84,14 @@
 
   <div class="placar">
     <div><b>39</b><span>categorias sugeridas, somando os quatro grupos (todos já decididos)</span></div>
-    <div><b>20</b><span>em dúvida — as duas pistas discordam</span></div>
+    <div><b>16</b><span>em dúvida — as duas pistas discordam</span></div>
     <div><b>270</b><span>categorias olhadas (empresas 1 e 2)</span></div>
     <div><b>3498</b><span>lançamentos contados, 01/01/2026 a 30/09/2026, no recorte da MeuBESS</span></div>
   </div>
 
   <ul class="indice">
     <li><a href="#grupo-a">a · Dedução da receita — decidido (11)</a></li>
-    <li><a href="#grupo-b">b · Custo de vendas — decidido (35)</a></li>
+    <li><a href="#grupo-b">b · Custo de vendas — decidido (38)</a></li>
     <li><a href="#grupo-c">c · Depreciação e amortização — decidido (sem categorias)</a></li>
     <li><a href="#grupo-d">d · Resultado financeiro — decidido (15)</a></li>
   </ul>
@@ -284,27 +284,24 @@
   <div class="decidido">
     <p style="margin:0"><strong>Decidido pelo dono em 25/09/2026.</strong> Custo de vendas são as 18
     sugeridas mais 17 das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
-    matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome): 35 códigos.
+    matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome), mais as
+    3 da segunda resposta abaixo: 38 códigos.
     Ficaram de fora as apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
     <code>2.08.98</code> Reembolso) e as que, na contagem daquele dia, não tinham movimento.</p>
-  </div>
-  <div class="aviso" style="border-radius:0 6px 6px 0">
-    <p style="margin:0"><strong>A contagem mudou depois da decisão — 3 categorias merecem uma segunda olhada.</strong>
-    A decisão de 25/09/2026 usou a contagem antiga desta página, que juntava as três leituras do cache e contava todos os
-    lançamentos avulsos de conta corrente como um só. Corrigida (uma leitura só, a do <code>docs/fontes.md</code>), estas
-    3, que naquele dia apareciam com <strong>zero</strong> lançamento e por isso ficaram de fora,
-    aparecem agora <strong>com movimento e apontadas pelo nome</strong> — o mesmo critério que o dono usou para incluir as
-    17: <code>2.01.96</code> Energia Elétrica-Custo (empresa 2, 6 lanç.), <code>2.01.89</code> Gas para empilhadeira -Custos (empresa 2, 5 lanç.), <code>2.01.92</code> Armanezagem e manuseio de Carga -Custos (empresa 2, 3 lanç.).
-    <strong>A decisão não foi mexida:</strong> elas seguem fora do custo de vendas, na tabela abaixo. Vale o dono dizer se entram.</p>
+    <p style="margin:6px 0 0"><strong>Segunda resposta do dono, em 25/09/2026:</strong> as 3 que
+    esta página apontava num aviso — as que a contagem corrigida revelou <strong>com movimento e apontadas só pelo
+    nome</strong>, o mesmo critério das outras — <strong>também são custo de vendas</strong>, na empresa 2:
+    <code>2.01.96</code>, <code>2.01.89</code>, <code>2.01.92</code>. O aviso saiu; elas estão na tabela
+    das decididas, abaixo.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>A tela reclassifica pela lista, não pela conta do DRE.</strong> Várias das decididas hoje estão
     numa conta de despesa do DRE no Omie (Despesas Variáveis, Despesas Administrativas, Despesas com Pessoal) ou sem conta;
     a Tela 2 leva o lançamento para (−) Custos de vendas pelo código da categoria, e não pela conta em que ela está pendurada.</p>
   </div>
-  <h3>Decididas: 35 códigos</h3>
-  <p class="nota">Empresa 1: 22 códigos. Empresa 2: 13 códigos.
-  18 eram sugeridas; 17 entraram por decisão do dono.</p>
+  <h3>Decididas: 38 códigos</h3>
+  <p class="nota">Empresa 1: 22 códigos. Empresa 2: 16 códigos.
+  18 eram sugeridas; 20 entraram por decisão do dono (17 na primeira resposta e 3 na segunda).</p>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th></tr></thead>
     <tbody>
@@ -492,6 +489,13 @@
     </tr>
 <tr>
       <td class="emp">2</td>
+      <td><code>2.01.89</code></td>
+      <td>Gas para empilhadeira -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">5</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
       <td><code>2.01.90</code></td>
       <td>Vigilância e Monitoramento -Custos</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
@@ -503,6 +507,13 @@
       <td>Locação de Máquinas e Equipamentos-Custos</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
       <td class="num">22</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.92</code></td>
+      <td>Armanezagem e manuseio de Carga -Custos</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">3</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -524,6 +535,13 @@
       <td>Telefone e Internet -Custo</td>
       <td><code>2.11.02</code> Despesas Administrativas</td>
       <td class="num">7</td>
+    </tr>
+<tr>
+      <td class="emp">2</td>
+      <td><code>2.01.96</code></td>
+      <td>Energia Elétrica-Custo</td>
+      <td><code>2.11.02</code> Despesas Administrativas</td>
+      <td class="num">6</td>
     </tr>
 <tr>
       <td class="emp">2</td>
@@ -554,7 +572,7 @@
       <td class="num">12</td>
     </tr>
     </tbody>
-  </table><h3>Ficaram de fora da decisão: 6 com movimento no período</h3>
+  </table><h3>Ficaram de fora da decisão: 3 com movimento no período</h3>
   <p class="nota">A decisão do dono não incluiu estas. Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
   ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
   <table>
@@ -575,30 +593,6 @@
       <td><code>1.21.03</code> Outros Custos</td>
       <td class="num">33</td>
       <td class="pista">só conta do DRE</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.96</code></td>
-      <td>Energia Elétrica-Custo</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">6</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.89</code></td>
-      <td>Gas para empilhadeira -Custos</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">5</td>
-      <td class="pista">só nome</td>
-    </tr>
-<tr>
-      <td class="emp">2</td>
-      <td><code>2.01.92</code></td>
-      <td>Armanezagem e manuseio de Carga -Custos</td>
-      <td><code>2.11.02</code> Despesas Administrativas</td>
-      <td class="num">3</td>
-      <td class="pista">só nome</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -670,12 +664,16 @@
     <p style="margin:0"><strong>Decidido pelo dono em 25/09/2026.</strong> Resultado financeiro são as 11
     sugeridas (juros, tarifas, rendimentos, empréstimo) mais Rendimentos de Aplicações (<code>1.02.02</code>) e IOF
     (<code>2.06.95</code>), nas duas empresas em que existem: 15 códigos.</p>
+    <p style="margin:6px 0 0"><strong>Segunda resposta do dono, em 25/09/2026:</strong> Financiamento Veiculo
+    (<code>2.11.95</code>, empresa 1), que estava anotado como "decidir depois", está decidido: <strong>fica fora do
+    resultado financeiro</strong>, porque <strong>a parcela paga a dívida</strong>. Como o pagamento do empréstimo
+    Intercompany, ele fica fora do DRE, e aparece abaixo com esse destino.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>Fora do resultado financeiro, com destino:</strong> Cartão de Crédito
     (<code>2.11.98</code>) e Aluguel de Veículo (<code>2.11.99</code>), da empresa 1, vão para as <strong>despesas gerais</strong>
-    do DRE; os empréstimos e transferências entre as empresas (Intercompany) ficam <strong>fora do DRE</strong>, como as
-    transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
+    do DRE; os empréstimos e transferências entre as empresas (Intercompany) e o Financiamento Veiculo
+    (<code>2.11.95</code>, empresa 1) ficam <strong>fora do DRE</strong>, como as transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
     Atenção ao código: <code>2.05.99</code> é Transferência Intercompany na empresa 1 e Tarifas Bancárias (resultado financeiro)
     na empresa 2.</p>
   </div>
@@ -792,7 +790,7 @@
     </tr>
     </tbody>
   </table>
-  <h3>Ficaram fora do resultado financeiro: 7 códigos, cada um com destino</h3>
+  <h3>Ficaram fora do resultado financeiro: 8 códigos, cada um com destino</h3>
   <table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>destino</th></tr></thead>
     <tbody>
@@ -811,6 +809,14 @@
       <td><code>2.11.03</code> Despesas Financeiras</td>
       <td class="num">17</td>
       <td>despesas gerais do DRE</td>
+    </tr>
+<tr>
+      <td class="emp">1</td>
+      <td><code>2.11.95</code></td>
+      <td>Financiamento Veiculo</td>
+      <td><code>1.21.03</code> Outros Custos</td>
+      <td class="num">1</td>
+      <td>fora do DRE (a parcela paga a dívida)</td>
     </tr>
 <tr>
       <td class="emp">1</td>
@@ -851,21 +857,6 @@
       <td><span class="vazia">sem conta do DRE</span></td>
       <td class="num">0</td>
       <td>fora do DRE (intercompany)</td>
-    </tr>
-    </tbody>
-  </table><h3>Ficaram de fora da decisão: 1 com movimento no período</h3>
-  <p class="nota">A decisão do dono deixou estas como "decidir depois". Aqui as duas pistas <strong>discordam</strong>: ou o nome diz que é deste grupo e a conta do DRE diz outra coisa,
-  ou a conta do DRE diz que é e o nome não parece. São as que valem uma olhada — estão ordenadas pelo número de lançamentos.</p>
-  <table>
-    <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>o que apontou</th></tr></thead>
-    <tbody>
-<tr>
-      <td class="emp">1</td>
-      <td><code>2.11.95</code></td>
-      <td>Financiamento Veiculo</td>
-      <td><code>1.21.03</code> Outros Custos</td>
-      <td class="num">1</td>
-      <td class="pista">só nome</td>
     </tr>
     </tbody>
   </table><details><summary>Ficaram de fora da decisão: 4 sem nenhum lançamento de 01/01/2026 a 30/09/2026 — decidir depois</summary>

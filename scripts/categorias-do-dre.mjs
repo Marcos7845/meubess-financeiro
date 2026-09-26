@@ -195,29 +195,41 @@ const DECISAO_A_ISS = '25/09/2026';
 // "em dúvida" COM movimento que a página apontou só pelo NOME (compras de matéria-prima e de mercadorias, fretes sobre
 // compras e os gastos com "Custo" no nome). Ficam de fora as 2 apontadas só pela conta do DRE (1:2.08.99 OUTRAS DESPESAS e
 // 1:2.08.98 Reembolso) e as 6 em dúvida sem movimento. Chave: `empresa:código`. Isto REGISTRA a decisão; não é heurística.
-const DECIDIDO_B = new Set([
+//
+// SEGUNDA RESPOSTA DO DONO, 25/09/2026 ("1 ok"): as 3 que esta página apontava no aviso — as que a contagem corrigida
+// revelou com movimento e apontadas só pelo nome, o mesmo critério das 17 — TAMBÉM são custo de vendas, na empresa 2:
+// 2.01.96 Energia Elétrica-Custo, 2.01.89 Gas para empilhadeira-Custos e 2.01.92 Armanezagem e manuseio de Carga-Custos.
+// Com elas a lista vai a 22 códigos na empresa 1 e 16 na 2, e o aviso sai desta página.
+const DECIDIDO_B_PRIMEIRA = [
   '2:2.01.02', '2:2.01.03', '2:2.01.01', '1:2.01.03', '2:2.01.91', '1:2.01.01', '1:2.01.97', '2:2.01.93', '2:2.01.98',
   '2:2.01.94', '2:2.08.99', '1:2.01.82', '2:2.01.90', '1:2.01.83', '1:2.04.88', '2:2.01.95', '2:2.01.97',
-]);
+];
+const DECIDIDO_B_SEGUNDA = ['2:2.01.96', '2:2.01.89', '2:2.01.92'];
+const DECIDIDO_B = new Set([...DECIDIDO_B_PRIMEIRA, ...DECIDIDO_B_SEGUNDA]);
 const DECISAO_B = '25/09/2026';
+const DECISAO_B2 = '25/09/2026';
 
 // DECISÃO DO DONO, 25/09/2026 (resposta "b" à pergunta do grupo d): resultado financeiro = as 11 sugeridas do grupo (d) mais
 // Rendimentos de Aplicações (1.02.02) e IOF (2.06.95), nas duas empresas em que existem. Ficam FORA do resultado financeiro:
 // Cartão de Crédito e Aluguel de Veículo (empresa 1), que vão para as despesas gerais do DRE, e os empréstimos e
 // transferências entre as empresas (Intercompany), que ficam fora do DRE, como as transferências. As demais em dúvida (sem
-// movimento: empréstimos bancários e financiamento de veículo) ficam anotadas como "decidir depois". Cuidado com o código:
+// movimento: empréstimos bancários) ficam anotadas como "decidir depois". Cuidado com o código:
 // 2.05.99 é "Transferência Intercompany" na empresa 1 e "Tarifas Bancarias" (resultado financeiro) na 2; 2.10.98 é
 // intercompany só na empresa 2. Por isso a chave é sempre `empresa:código`. Isto REGISTRA a decisão; não é heurística.
-// A decisão falava das sobras como "sem movimento"; com a contagem corrigida em 25/09/2026 (uma leitura só), uma delas —
-// Financiamento Veiculo (1:2.11.95) — tem 1 lançamento. A DECISÃO NÃO MUDA: ela segue como "decidir depois"; o que muda é
-// que a página a mostra na tabela visível, e não escondida atrás do "mostrar mais" das sem movimento.
+//
+// SEGUNDA RESPOSTA DO DONO, 25/09/2026 ("2 ok"): o Financiamento Veiculo (1:2.11.95), que a contagem corrigida mostrou
+// com 1 lançamento e que estava anotado como "decidir depois", está DECIDIDO: fica FORA do resultado financeiro, porque
+// a parcela paga a dívida. Como o pagamento do empréstimo Intercompany, ele fica fora do DRE — não é resultado
+// financeiro nem despesa do período —, e por isso entra no FORA_D abaixo, com o motivo escrito no destino.
 const DECIDIDO_D = new Set(['1:1.02.02', '1:2.06.95', '2:1.02.02', '2:2.06.95']);
 const FORA_D = new Map([
-  ['1:2.11.98', 'despesas gerais'], ['1:2.11.99', 'despesas gerais'],
-  ['1:2.08.02', 'fora do DRE'], ['1:2.05.99', 'fora do DRE'], ['1:1.04.99', 'fora do DRE'],
-  ['2:1.04.99', 'fora do DRE'], ['2:2.10.98', 'fora do DRE'],
+  ['1:2.11.98', 'despesas gerais do DRE'], ['1:2.11.99', 'despesas gerais do DRE'],
+  ['1:2.08.02', 'fora do DRE (intercompany)'], ['1:2.05.99', 'fora do DRE (intercompany)'], ['1:1.04.99', 'fora do DRE (intercompany)'],
+  ['2:1.04.99', 'fora do DRE (intercompany)'], ['2:2.10.98', 'fora do DRE (intercompany)'],
+  ['1:2.11.95', 'fora do DRE (a parcela paga a dívida)'],
 ]);
 const DECISAO_D = '25/09/2026';
+const DECISAO_D2 = '25/09/2026';
 
 // DECISÃO DO DONO, 25/09/2026 (resposta "a" à pergunta do grupo c): o Omie não tem categoria de depreciação nem de
 // amortização, então o grupo (c) fica SEM categorias; a Tela 2 mostra EBITDA e lucro líquido sem elas, com o aviso abaixo
@@ -349,7 +361,7 @@ ${linhas.map(r => linha(r, comPista)).join('\n')}
 const tabelaDestino = linhas => `<table>
     <thead><tr><th>emp.</th><th>código</th><th>categoria</th><th>conta do DRE hoje</th><th>lanç.</th><th>destino</th></tr></thead>
     <tbody>
-${linhas.map(r => linha(r, false).replace('</tr>', `  <td>${FORA_D.get(chaveD(r)) === 'fora do DRE' ? 'fora do DRE (intercompany)' : 'despesas gerais do DRE'}</td>\n    </tr>`)).join('\n')}
+${linhas.map(r => linha(r, false).replace('</tr>', `  <td>${esc(FORA_D.get(chaveD(r)))}</td>\n    </tr>`)).join('\n')}
     </tbody>
   </table>`;
 
@@ -373,10 +385,16 @@ function bloco(g) {
   } else if (g === 'b') {
     corpo += `<div class="decidido">
     <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_B}.</strong> Custo de vendas são as ${sug.length}
-    sugeridas mais ${adicionadasB.length} das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
-    matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome): ${decididasB.length} códigos.
+    sugeridas mais ${DECIDIDO_B_PRIMEIRA.length} das que estavam em dúvida e tinham movimento, apontadas pelo nome (compras de
+    matéria-prima e de mercadorias para revenda, fretes sobre compras e os gastos com "Custo" no nome), mais as
+    ${DECIDIDO_B_SEGUNDA.length} da segunda resposta abaixo: ${decididasB.length} códigos.
     Ficaram de fora as apontadas só pela conta do DRE (empresa 1: <code>2.08.99</code> OUTRAS DESPESAS e
     <code>2.08.98</code> Reembolso) e as que, na contagem daquele dia, não tinham movimento.</p>
+    <p style="margin:6px 0 0"><strong>Segunda resposta do dono, em ${DECISAO_B2}:</strong> as ${DECIDIDO_B_SEGUNDA.length} que
+    esta página apontava num aviso — as que a contagem corrigida revelou <strong>com movimento e apontadas só pelo
+    nome</strong>, o mesmo critério das outras — <strong>também são custo de vendas</strong>, na empresa 2:
+    ${DECIDIDO_B_SEGUNDA.map(k => `<code>${esc(k.split(':')[1])}</code>`).join(', ')}. O aviso saiu; elas estão na tabela
+    das decididas, abaixo.</p>
   </div>${novasComMovimentoB.length ? `
   <div class="aviso" style="border-radius:0 6px 6px 0">
     <p style="margin:0"><strong>A contagem mudou depois da decisão — ${novasComMovimentoB.length} categorias merecem uma segunda olhada.</strong>
@@ -394,19 +412,23 @@ function bloco(g) {
   </div>
   <h3>Decididas: ${decididasB.length} códigos</h3>
   <p class="nota">Empresa 1: ${decididasB.filter(r => r.emp === '1').length} códigos. Empresa 2: ${decididasB.filter(r => r.emp === '2').length} códigos.
-  ${sug.length} eram sugeridas; ${adicionadasB.length} entraram por decisão do dono.</p>
+  ${sug.length} eram sugeridas; ${adicionadasB.length} entraram por decisão do dono (${DECIDIDO_B_PRIMEIRA.length} na primeira resposta e ${DECIDIDO_B_SEGUNDA.length} na segunda).</p>
   ${tabela(decididasB, false)}`;
   } else if (g === 'd') {
     corpo += `<div class="decidido">
     <p style="margin:0"><strong>Decidido pelo dono em ${DECISAO_D}.</strong> Resultado financeiro são as ${sug.length}
     sugeridas (juros, tarifas, rendimentos, empréstimo) mais Rendimentos de Aplicações (<code>1.02.02</code>) e IOF
     (<code>2.06.95</code>), nas duas empresas em que existem: ${decididasD.length} códigos.</p>
+    <p style="margin:6px 0 0"><strong>Segunda resposta do dono, em ${DECISAO_D2}:</strong> Financiamento Veiculo
+    (<code>2.11.95</code>, empresa 1), que estava anotado como "decidir depois", está decidido: <strong>fica fora do
+    resultado financeiro</strong>, porque <strong>a parcela paga a dívida</strong>. Como o pagamento do empréstimo
+    Intercompany, ele fica fora do DRE, e aparece abaixo com esse destino.</p>
   </div>
   <div class="chamada">
     <p style="margin:0"><strong>Fora do resultado financeiro, com destino:</strong> Cartão de Crédito
     (<code>2.11.98</code>) e Aluguel de Veículo (<code>2.11.99</code>), da empresa 1, vão para as <strong>despesas gerais</strong>
-    do DRE; os empréstimos e transferências entre as empresas (Intercompany) ficam <strong>fora do DRE</strong>, como as
-    transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
+    do DRE; os empréstimos e transferências entre as empresas (Intercompany) e o Financiamento Veiculo
+    (<code>2.11.95</code>, empresa 1) ficam <strong>fora do DRE</strong>, como as transferências. A tela reclassifica pela lista, não pela conta do DRE (as duas primeiras estão hoje em Despesas Financeiras).
     Atenção ao código: <code>2.05.99</code> é Transferência Intercompany na empresa 1 e Tarifas Bancárias (resultado financeiro)
     na empresa 2.</p>
   </div>

@@ -224,10 +224,14 @@ const PESSOAL = {
   2: [...faixa('2.03.', 1, 14), '2.03.97', '2.03.98', '2.03.99', '2.02.01', '2.02.02', '2.08.01'],
 };
 
-// Custo de vendas (decisão do dono, 25/09/2026, grupo b): 22 códigos na empresa 1 e 13 na 2.
+// Custo de vendas (decisão do dono, 25/09/2026, grupo b): 22 códigos na empresa 1 e 16 na 2.
+// Os três últimos da empresa 2 entraram na segunda resposta do dono, também em 25/09/2026 ("1 ok"): a contagem
+// corrigida mostrou que `2.01.96` Energia Elétrica-Custo, `2.01.89` Gas para empilhadeira-Custos e `2.01.92`
+// Armanezagem e manuseio de Carga-Custos têm movimento e são apontadas pelo nome, o mesmo critério das outras.
 const CUSTO_DE_VENDAS = {
   1: ['2.01.01', '2.01.02', '2.01.03', '2.01.04', ...faixa('2.01.', 82, 97), '2.01.99', '2.04.88'],
-  2: ['2.01.01', '2.01.02', '2.01.03', '2.01.04', '2.01.90', '2.01.91', '2.01.93', '2.01.94', '2.01.95', '2.01.97', '2.01.98', '2.01.99', '2.08.99'],
+  2: ['2.01.01', '2.01.02', '2.01.03', '2.01.04', '2.01.90', '2.01.91', '2.01.93', '2.01.94', '2.01.95', '2.01.97', '2.01.98', '2.01.99', '2.08.99',
+      '2.01.89', '2.01.92', '2.01.96'],
 };
 
 // Resultado financeiro (decisão do dono, 25/09/2026, grupo d): 7 códigos na empresa 1 e 8 na 2.
@@ -245,8 +249,11 @@ const DEDUCOES = {
 // Impostos pagos (guias) — o confronto do Omie, pela categoria e não pelo `cTipo` (decisão do dono, 25/09/2026).
 const IMPOSTOS_GUIAS = { 1: ['2.06.05', '2.06.06', '2.06.07', '2.03.06', '2.01.92'], 2: ['2.06.05', '2.06.06', '2.06.07', '2.03.06'] };
 
-// Empréstimos e transferências entre as empresas (Intercompany): ficam FORA do DRE (decisão do dono, 25/09/2026).
-const FORA_DO_DRE = { 1: ['2.08.02', '2.05.99', '1.04.99'], 2: ['1.04.99', '2.10.98'] };
+// Ficam FORA do DRE (decisão do dono, 25/09/2026): os empréstimos e transferências entre as empresas (Intercompany) e,
+// pela segunda resposta do dono do mesmo dia ("2 ok"), o Financiamento Veiculo (`2.11.95`, empresa 1) — a parcela paga a
+// dívida, então não é resultado financeiro nem despesa do período. Antes ela estava anotada como "decidir depois".
+const FORA_DO_DRE = { 1: ['2.08.02', '2.05.99', '1.04.99', '2.11.95'], 2: ['1.04.99', '2.10.98'] };
+const INTERCOMPANY = { 1: ['2.08.02', '2.05.99', '1.04.99'], 2: ['1.04.99', '2.10.98'] };
 
 // De-para dos `cStatus` do Omie para as três faixas da Tela 3 (decisão do dono, 25/09/2026). O Omie devolve
 // `"A VENCER"` com espaço nos títulos a vencer; pelos campos é o mesmo `AVENCER`, e o código o trata como tal.
@@ -398,7 +405,7 @@ const naLista = (lista) => (cod) => lista.includes(cod);
 const jsCustos = {};
 for (const emp of EMPRESAS) jsCustos[emp] = contar(emp, janSet, 'P', { categoria: naLista(CUSTO_DE_VENDAS[emp]) });
 registrar('custos', 'custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2)',
-  [...trinca(jsCustos[1]), ...trinca(jsCustos[2])], [65, 1, 19, 441, 3, 116]);
+  [...trinca(jsCustos[1]), ...trinca(jsCustos[2])], [65, 1, 19, 441, 3, 130]);
 
 const jsFin = {};
 for (const emp of EMPRESAS) jsFin[emp] = {
@@ -1128,14 +1135,14 @@ add({
   caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_R)), 'no minuendo, que é do Omie: ', 'nenhum lançamento de receita entrou neste mês')}; o subtraendo é a linha "(−) Deduções", conferida na linha dela nesta página, no arquivo do mês do DFC`,
 });
 
-// (−) Custos de vendas — DFC principal, confronto do Omie pela lista de 35 códigos.
+// (−) Custos de vendas — DFC principal, confronto do Omie pela lista de 38 códigos.
 {
   const cv = {};
   for (const emp of EMPRESAS) cv[emp] = contar(emp, noMes, 'P', { categoria: naLista(CUSTO_DE_VENDAS[emp]) });
   const c = conferencia('custos');
   linhaDoDfc({
     tela: 'Tela 2', nome: '(−) Custos de vendas: custo do produto, outros custos', fonte: 'DFC (principal) / Omie recortado (confronto)',
-    filtro: 'DFC: `SAIDA` (L) pelo mês de `DIA PG` (F), com `CLASS. CONTABIL` (I) = `FORNECEDORES COGS` ou `COMPRA DE MERCADORIA` e `SUB 2` (J) em `COMPRAS DE MERCADORIAS`, `FRETE E CARRETO` e `ARMAZENAGEM E MANUSEIO`. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "P"`, fora o par do adiantamento, pela lista de 35 códigos que o dono decidiu em 25/09/2026 (22 na empresa 1 e 13 na 2) — **pelo código da categoria, e não por `codigo_dre`**',
+    filtro: 'DFC: `SAIDA` (L) pelo mês de `DIA PG` (F), com `CLASS. CONTABIL` (I) = `FORNECEDORES COGS` ou `COMPRA DE MERCADORIA` e `SUB 2` (J) em `COMPRAS DE MERCADORIAS`, `FRETE E CARRETO` e `ARMAZENAGEM E MANUSEIO`. Omie: a mesma leitura de caixa com `detalhes.cNatureza = "P"`, fora o par do adiantamento, pela lista de 38 códigos que o dono decidiu em 25/09/2026 (22 na empresa 1 e 16 na 2) — **pelo código da categoria, e não por `codigo_dre`**',
     contagem: `${cv[1].total + cv[2].total} lançamentos — ${cv[1].titulos.size} títulos + ${cv[1].baixas.size} baixas de parcial + ${cv[1].avulsos.size} avulsos na empresa 1 e ${cv[2].titulos.size} + ${cv[2].baixas.size} + ${cv[2].avulsos.size} na 2`,
     porEmpresa: { 1: cv[1].todos, 2: cv[2].todos },
     dfc: (l) => DFC_CUSTO_CLASSE.includes(l.classe) && DFC_CUSTO_SUB2.includes(l.sub2), dfcRotulo: 'linhas de custo no mês (`CLASS. CONTABIL` de COGS com `SUB 2` de compra, frete ou armazenagem)',
@@ -1165,7 +1172,7 @@ add({
   const cat = caso ? categorias[caso.emp].get(String(caso.d.cCodCateg)) : null;
   add({
     tela: 'Tela 2', nome: '(−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${FORA_DO_DRE[1].length} códigos na empresa 1 e ${FORA_DO_DRE[2].length} na 2); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e o Financiamento Veiculo (\`2.11.95\`, empresa 1), cuja parcela paga a dívida (decisão do dono, 25/09/2026); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
     contagem: `${dg[1].total + dg[2].total} lançamentos — ${dg[1].titulos.size} títulos + ${dg[1].baixas.size} baixas de parcial + ${dg[1].avulsos.size} avulsos na empresa 1 e ${dg[2].titulos.size} + ${dg[2].baixas.size} + ${dg[2].avulsos.size} na 2`,
     estado: caso && caso.r.ok ? 'conferido' : 'divergente',
     motivo: caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento de despesa geral entrou neste mês'),

@@ -117,7 +117,7 @@ export default async function Pagina({ searchParams }) {
         <nav className="abas">
           <a href={`/?ano=${ano}&mes=${mes}`}>Gestão de Contas</a>
           <span className="ativa">DRE</span>
-          <span>Contas a Receber</span>
+          <a href={`/receber?ano=${ano}&mes=${mes}`}>Contas a Receber</a>
         </nav>
       </header>
 

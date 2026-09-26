@@ -187,3 +187,76 @@ a { color: inherit; }
   text-align: center;
 }
 .dre-tabela tfoot .cobertura .grupo-col { text-align: left; font-weight: 600; }
+
+/* ---------------------------------------------------------------- Tela 3: as três faixas
+ *
+ * O de-para dos `cStatus` do Omie para pago / atrasado / em aberto é decisão do dono (25/09/2026) e mora em
+ * `lib/regras/listas.mjs`; aqui só ficam as cores de cada faixa, uma vez, para a coluna, a barra, a rosca, a
+ * legenda e o selo da lista lerem todas o mesmo. */
+.f-pago { background: var(--positivo); }
+.f-atrasado { background: var(--negativo); }
+.f-aberto { background: var(--destaque); }
+
+/* ---------------------------------------------------------------- Tela 3: cartões do topo
+ *
+ * São 4, e cada um leva o disco colorido da referência à esquerda do número. */
+.cartoes.receber { grid-template-columns: repeat(4, 1fr); }
+.cartao.receber { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.cartao.receber .disco { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; }
+.cartao.receber .disco.marca { background: var(--marca); }
+.cartao.receber .texto { display: flex; flex-direction: column; min-width: 0; }
+.cartao.receber .numero { font-size: 23px; }
+
+/* ---------------------------------------------------------------- Tela 3: a grade e a barra de filtros
+ *
+ * São três grupos na barra, e não dois como na Tela 2: o ano e os meses ficam juntos à esquerda, e só a janela de
+ * vencimento — que é leitura, não botão — vai para a direita. */
+.grade.receber { grid-template-columns: 1.55fr 1fr; }
+.barra-filtros.receber .grupo + .grupo { margin-left: 0; }
+.barra-filtros.receber .grupo:last-child { margin-left: auto; }
+.pilula.fixa { background: var(--cartao); color: var(--texto-fraco); cursor: default; }
+
+/* ---------------------------------------------------------------- Tela 3: colunas empilhadas por mês */
+.colunas { display: flex; align-items: flex-end; gap: 6px; }
+.coluna { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; gap: 2px; }
+.coluna .pilha { display: flex; flex-direction: column-reverse; }
+.coluna .pedaco { display: block; width: 100%; }
+.coluna .n { font-size: 9.5px; text-align: center; color: var(--texto-fraco); }
+.coluna .topo-n { font-weight: 600; }
+.coluna.foco .n { color: var(--marca); font-weight: 700; }
+.coluna.foco .pilha { outline: 2px solid var(--marca-clara); outline-offset: 1px; }
+
+/* ---------------------------------------------------------------- Tela 3: barras empilhadas por cliente */
+.grade.receber .barra { grid-template-columns: 130px 1fr auto; }
+.grade.receber .barra .trilho { display: flex; background: var(--fundo); }
+.grade.receber .barra .pedaco { height: 100%; }
+
+/* ---------------------------------------------------------------- Tela 3: a rosca por status */
+.rosca { display: flex; align-items: center; gap: 12px; }
+.rosca svg { width: 148px; height: 148px; flex: 0 0 auto; }
+.rosca .arco { transform: rotate(-90deg); transform-origin: 70px 70px; }
+.rosca .arco.f-pago { stroke: var(--positivo); }
+.rosca .arco.f-atrasado { stroke: var(--negativo); }
+.rosca .arco.f-aberto { stroke: var(--destaque); }
+.rosca .centro { font-size: 26px; font-weight: 700; fill: var(--texto); }
+.rosca .fatias { list-style: none; margin: 0; padding: 0; font-size: 11.5px; }
+.rosca .fatias li { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.rosca .fatias b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.rosca .fatias i { font-style: normal; color: var(--texto-fraco); min-width: 46px; text-align: right; }
+
+/* ---------------------------------------------------------------- Tela 3: a lista de títulos */
+.rolagem-lista { max-height: 300px; overflow: auto; }
+.lista-titulos { border-collapse: collapse; width: 100%; font-size: 11px; }
+.lista-titulos th, .lista-titulos td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
+.lista-titulos thead th { background: var(--marca); color: var(--texto-claro); position: sticky; top: 0; font-weight: 600; }
+.lista-titulos .num { text-align: right; font-variant-numeric: tabular-nums; }
+.lista-titulos .cod { color: var(--texto-fraco); font-variant-numeric: tabular-nums; }
+.lista-titulos .desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-titulos tfoot th, .lista-titulos tfoot td {
+  position: sticky; bottom: 0; background: var(--marca-escura); color: var(--texto-claro); font-weight: 700;
+}
+.lista-titulos .selo {
+  display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  color: var(--texto-claro); white-space: nowrap;
+}
+.lista-titulos .selo.f-aberto { color: var(--marca-escura); }

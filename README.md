@@ -4,9 +4,10 @@ Dashboards do departamento financeiro da MeuBESS, usados pela equipe **fora da C
 acesso próprio). Não se mistura com o Painel Logístico (`meubess_dashboard`), com a plataforma da MeuBESS nem com o
 Lovable.
 
-**Estado:** a **Tela 1 (Gestão de Contas)** e a **Tela 2 (DRE)** estão construídas e rodando localmente; a Tela 3,
-não. As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md) e conferidas em
-[`docs/conferencia.md`](docs/conferencia.md).
+**Estado:** as **três telas** — Gestão de Contas, DRE e Contas a Receber — estão construídas e rodando localmente.
+As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
+[`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
+[`docs/telas-conferidas.md`](docs/telas-conferidas.md).
 
 ## As três telas
 
@@ -63,13 +64,14 @@ npm run dev
 ```
 
 O app sobe em **http://localhost:4781** (a porta está no `npm run dev` do `package.json`; 4747 já é da Central de
-Comando neste computador). Cada tela abre no **mês corrente**, e as duas têm seletor de mês e o botão **atualizar
+Comando neste computador). Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão **atualizar
 agora**. Para agosto de 2026:
 
 | tela | rota |
 |---|---|
 | **Tela 1 — Gestão de Contas** | <http://localhost:4781/?ano=2026&mes=8> |
 | **Tela 2 — DRE** | <http://localhost:4781/dre?ano=2026&mes=8> |
+| **Tela 3 — Contas a Receber** | <http://localhost:4781/receber?ano=2026&mes=8> |
 
 As **empresas 1 e 2 entram sempre somadas** e o recorte é o da MeuBESS.
 
@@ -83,6 +85,14 @@ A última linha da tabela diz **de quanta leitura cada coluna saiu**, dos dois l
 e fevereiro têm o DFC cheio e quase nenhum lançamento do Omie no recorte da MeuBESS, então os totalizadores desses
 dois meses misturam um lado cheio com outro vazio e a coluna não se lê como DRE. A leitura do Omie que está no cache
 vai de **01/01 a 30/09**; mês fora dessa janela não vira coluna.
+
+A **Tela 3 é a carteira de títulos a receber** e fica **no Omie inteira**: o DFC é caixa e não registra carteira em
+aberto nem tem cadastro de cliente. O seletor de mês é a **janela de vencimento** da consulta, e as três faixas
+(pago, atrasado, em aberto) são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. Num mês já
+fechado o cartão **Valor Pendente** é sempre zero — todo título que venceu está pago ou atrasado —, e a própria tela
+diz isso; escolha um mês à frente (por exemplo <http://localhost:4781/receber?ano=2026&mes=10>) para ver a carteira a
+vencer. O **nome do cliente** aparece na tela, vindo de `geral/clientes`, e **nunca** em arquivo versionado: a
+captura troca cada nome pelo código antes de gravar.
 
 **As fontes são relidas de hora em hora** (decisão do dono, 25/09/2026), e "atualizar agora" força a releitura na
 hora. O que é relido são o cache local do Omie (`.cache/omie/`) e as planilhas do DFC; buscar página nova na API do
@@ -103,10 +113,17 @@ total pode bater por acaso com a repartição errada. Os números esperados são
 `docs/conferencia.md`, não recalculados, para o teste não comparar o código com ele mesmo. O comando sai com erro se
 alguma linha ficar **divergente**.
 
+**Um indicador dos 36 não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+"Valor pendente" da Tela 3 é vazia em qualquer mês fechado, porque os quatro `cStatus` dela são os de um título que
+ainda não venceu. `docs/conferencia.md` mede essa faixa noutra janela de vencimento e diz na própria linha qual foi;
+o teste **lê a janela do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
+
 Uma **captura de cada tela sem dinheiro** (valores trocados por "—", contagens e percentuais mantidos) fica em
-[`docs/tela-1-captura.html`](docs/tela-1-captura.html) e
-[`docs/tela-2-captura.html`](docs/tela-2-captura.html). Com o app no ar, `npm run capturar-tela-1` e
-`npm run capturar-tela-2` as regeram — e nenhuma é gravada se sobrar qualquer valor em dinheiro no HTML.
+[`docs/tela-1-captura.html`](docs/tela-1-captura.html),
+[`docs/tela-2-captura.html`](docs/tela-2-captura.html) e
+[`docs/tela-3-captura.html`](docs/tela-3-captura.html). Com o app no ar, `npm run capturar-tela-1`,
+`npm run capturar-tela-2` e `npm run capturar-tela-3` as regeram — e nenhuma é gravada se sobrar valor em dinheiro
+ou nome de cliente no HTML.
 
 ### Onde mora o quê
 
@@ -125,5 +142,6 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 
 ### O que ainda não existe
 
-Tela 3; login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o
-login não existe, **o app roda só local**.
+Login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o login não
+existe, **o app roda só local**. Os filtros de **status, cliente e categoria** da Tela 3 também ainda não existem: a
+tela lê a janela de vencimento inteira, que é o que `docs/conferencia.md` confere.

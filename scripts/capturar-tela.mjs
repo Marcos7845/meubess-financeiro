@@ -7,6 +7,11 @@
 // COMO. Busca a página no app rodando, joga fora todo `<script>` (é lá que o Next manda os dados crus, que TÊM os
 // valores), tira os `title=` (que também têm), inlineia o CSS e troca o dinheiro. No fim, confere o que sobrou.
 //
+// E O NOME DO CLIENTE SAI TAMBÉM. A Tela 3 mostra o nome do cliente no eixo do gráfico e na lista; arquivo
+// versionado aqui não tem nome de pessoa nem de empresa cliente, só o código. A tela marca cada nome com
+// `class="cliente"` e `data-codigo="…"`, e a troca abaixo põe o código no lugar do nome. A trava do fim recusa a
+// captura se sobrar um único `data-codigo`.
+//
 //   npm run dev                                   # (o app precisa estar no ar, em http://localhost:4781)
 //   node scripts/capturar-tela.mjs --tela 1
 //   node scripts/capturar-tela.mjs --tela 2 --mes 8 --ano 2026 --url http://localhost:4781
@@ -36,6 +41,11 @@ const TELAS = {
     titulo: 'Tela 2 — DRE, Demonstrativo de Resultados',
     referencia: 'docs/referencias/tela-2-dre.jpg',
   },
+  3: {
+    rota: '/receber',
+    titulo: 'Tela 3 — Contas a Receber',
+    referencia: 'docs/referencias/tela-3-contas-a-receber.jpg',
+  },
 };
 
 const tela = TELAS[TELA];
@@ -52,6 +62,13 @@ let corpo = (/<body[^>]*>([\s\S]*)<\/body>/.exec(bruto)?.[1] ?? bruto)
   .replace(/<next-route-announcer[\s\S]*?<\/next-route-announcer>/g, '')
   .replace(/\s(?:title)="[^"]*"/g, '')       // os `title` traziam o valor de cada dia
   .replace(/<!--[\s\S]*?-->/g, '');
+
+// O NOME DO CLIENTE SAI, e no lugar fica o código dele. É a mesma marca em toda a tela — o eixo do gráfico por
+// cliente e a coluna "Cliente" da lista —, então uma troca só dá conta das duas.
+corpo = corpo.replace(/<span[^>]*class="cliente"[^>]*>[\s\S]*?<\/span>/g, (todo) => {
+  const cod = /data-codigo="(\d+)"/.exec(todo)?.[1];
+  return `<span class="cliente">${cod ? `cliente ${cod}` : 'cliente'}</span>`;
+});
 
 // O DINHEIRO SAI. O formato é o do `Intl` em pt-BR (a marca da moeda, espaço fino, milhar com ponto).
 const MOEDA = /-?R\$[\s  ]*[\d.]+(?:,\d{2})?/g;
@@ -97,7 +114,13 @@ ${corpo}
 `;
 
 // A TRAVA: se sobrou dinheiro, a captura não é gravada.
-const PROIBIDO = [[/R\$/, 'a marca da moeda'], [/\b\d{1,3}(?:\.\d{3})+(?:,\d{2})?\b/, 'um número de milhar'], [/\b\d+,\d{2}\b/, 'um número com centavos']];
+const PROIBIDO = [
+  [/R\$/, 'a marca da moeda'],
+  [/\b\d{1,3}(?:\.\d{3})+(?:,\d{2})?\b/, 'um número de milhar'],
+  [/\b\d+,\d{2}\b/, 'um número com centavos'],
+  // Se sobrou um `data-codigo`, sobrou o nome do cliente junto: a troca acima não pegou aquele pedaço.
+  [/data-codigo=/, 'um nome de cliente que a troca não pegou'],
+];
 for (const [re, oque] of PROIBIDO) {
   const m = re.exec(html.replace(/<style>[\s\S]*?<\/style>/, ''));
   if (m) { console.error(`a captura ia sair com ${oque}: ${JSON.stringify(m[0])}`); process.exit(1); }

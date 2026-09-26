@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
+import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 
@@ -127,6 +128,49 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) lançamentos —/,
     extras: { empresa1: /— ([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2/ },
   },
+
+  // ---------------------------------------------------------------- Tela 3
+  // Nenhum indicador desta tela tem lado do DFC: ela fica no Omie inteira (`docs/fontes.md`).
+  'valor-previsto': {
+    dfc: null, omie: /^([\d.]+) títulos \(/,
+    extras: {
+      empresa1: /\(([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2\)/,
+      cancelados: /; ([\d.]+) `CANCELADO` fic/,
+    },
+  },
+  'valor-recebido': {
+    dfc: null, omie: /^([\d.]+) títulos na faixa pago/,
+    extras: { empresa1: /\(([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2\)/ },
+  },
+  'valor-pendente': {
+    dfc: null, omie: /^([\d.]+) títulos na faixa em aberto/,
+    extras: { empresa1: /\(([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2\)/ },
+  },
+  'valor-vencido': {
+    dfc: null, omie: /^([\d.]+) títulos na faixa atrasado/,
+    extras: { empresa1: /\(([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2\)/ },
+  },
+  'por-mes-e-status': {
+    dfc: null, omie: /^([\d.]+) títulos na coluna de/,
+    extras: { pago: /— pago ([\d.]+),/, atrasado: /, atrasado ([\d.]+),/, aberto: /, em aberto ([\d.]+)/ },
+  },
+  'por-cliente-e-status': {
+    dfc: null, omie: /^([\d.]+) títulos, em/,
+    // A conferência escreve "1 código de cliente distinto" e "87 códigos … distintos": singular e plural.
+    extras: {
+      clientes: /em ([\d.]+) códigos? de cliente distintos?/,
+      cadastro1: /no cadastro de clientes \(([\d.]+) na empresa 1/,
+      cadastro2: /no cadastro de clientes \([\d.]+ na empresa 1 e ([\d.]+) na 2\)/,
+    },
+  },
+  'lista-de-titulos': {
+    dfc: null, omie: /^([\d.]+) títulos —/,
+    extras: { comPedido: /— ([\d.]+) com pedido de venda/, semPedido: /e ([\d.]+) sem `nCodOS`/ },
+  },
+  'por-status': {
+    dfc: null, omie: /^([\d.]+) títulos na rosca/,
+    extras: { pago: /— pago ([\d.]+),/, atrasado: /, atrasado ([\d.]+),/, aberto: /, em aberto ([\d.]+)/ },
+  },
 };
 
 // Lê `docs/conferencia.md`: a ordem dos 36 indicadores e, de cada um, o trecho "**Entram:** …".
@@ -139,23 +183,52 @@ function lerConferencia() {
   const indicadores = [];
   for (const l of texto.split(/\r?\n/)) {
     const m = /^- (?:divergente: |a conferir: )?\*\*(Tela [123]) — (.+?)\.\*\* \*\*Entram:\*\* (.*?)(?: \*\*Fonte:\*\*|$)/.exec(l);
-    if (m) indicadores.push({ tela: m[1], nome: m[2], entram: m[3] });
+    // `linha` e a linha inteira, com o "**Filtro:**" - e de la que sai a janela de vencimento do "Valor pendente".
+    if (m) indicadores.push({ tela: m[1], nome: m[2], entram: m[3], linha: l });
   }
   return indicadores;
 }
 
 // ================================================================ a conferência das telas
 
-const tela1 = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
-const tela2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
-const TELAS = { 'Tela 1': tela1, 'Tela 2': tela2 };
-const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela].map((i) => [i.id, i]));
 const doConferencia = lerConferencia();
 
 if (doConferencia.length === 0) {
   console.error('não consegui ler nenhum indicador de docs/conferencia.md — o formato mudou?');
   process.exit(1);
 }
+
+const tela1 = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
+const tela2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
+const tela3 = await calcularTela3({ raiz: RAIZ, ano: ANO, mes: MES });
+const TELAS = { 'Tela 1': tela1, 'Tela 2': tela2, 'Tela 3': tela3 };
+
+// A ÚNICA JANELA QUE NÃO É A DO MÊS: a faixa "em aberto" do cartão "Valor pendente" da Tela 3.
+//
+// Num mês fechado essa faixa é sempre vazia — os quatro `cStatus` dela são os de um título que ainda não venceu, e
+// num mês fechado todo título já venceu. Por isso `docs/conferencia.md` a mede noutra janela de vencimento, a do mês
+// seguinte ao da leitura, e diz na própria linha qual foi. O teste lê essa janela DO ARQUIVO — não a calcula — e
+// pede à mesma camada de dados a Tela 3 nela: a regra é a mesma, muda só o `dDtVencDe` / `dDtVencAte`.
+const linhaPendente = doConferencia.find((i) => i.tela === 'Tela 3' && i.nome === 'Valor pendente');
+const naLinha = linhaPendente && /dDtVencAte` em (\d{2}\/\d{2}\/\d{4}) a (\d{2}\/\d{2}\/\d{4})/.exec(linhaPendente.linha);
+let pendente = null, motivoPendente = null, janelaPendente = null;
+if (!linhaPendente) {
+  motivoPendente = 'não achei a linha do "Valor pendente" em docs/conferencia.md';
+} else if (!naLinha) {
+  motivoPendente = 'não achei na linha da conferência a janela de vencimento (`dDtVencDe` / `dDtVencAte`) que ela usou nesta faixa';
+} else {
+  janelaPendente = [naLinha[1], naLinha[2]];
+  const tela3Pendente = await calcularTela3({ raiz: RAIZ, ano: ANO, mes: MES, janela: janelaPendente });
+  if (tela3Pendente.janela.leitura !== 'janela') {
+    motivoPendente = `a leitura por vencimento de ${janelaPendente[0]} a ${janelaPendente[1]} — a que a conferência usou nesta faixa — não está inteira no cache local, e recortar a leitura do ano daria outros títulos; rode antes \`node scripts/ler-omie-faltante.mjs\``;
+  } else {
+    pendente = tela3Pendente.cartoes.find((c) => c.id === 'valor-pendente');
+  }
+}
+
+const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela,
+  ...tela3.cartoes, ...tela3.blocos].map((i) => [i.id, i]));
+if (pendente) daTela.set('valor-pendente', pendente);
 
 // Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa. Uma tabela por tela: o mesmo
 // nome pode voltar noutra tela querendo dizer outra coisa.
@@ -192,19 +265,33 @@ const NOME_NA_CONFERENCIA = {
     'dre-lucro-liquido': '(=) Lucro líquido',
     'dre-sem-conta': '(=) sem conta',
   },
+  'Tela 3': {
+    'valor-previsto': 'Valor previsto',
+    'valor-recebido': 'Valor recebido',
+    'valor-pendente': 'Valor pendente',
+    'valor-vencido': 'Valor vencido',
+    'por-mes-e-status': 'Lançamentos por mês e status',
+    'por-cliente-e-status': 'Valor previsto por cliente e status',
+    'lista-de-titulos': 'Lista de títulos',
+    'por-status': 'Lançamentos por status',
+  },
 };
 const idPorNome = new Map(Object.entries(NOME_NA_CONFERENCIA).flatMap(([tela, mapa]) =>
   Object.entries(mapa).map(([id, nome]) => [`${tela}|${nome}`, id])));
 
 const linhas = [];
 for (const ind of doConferencia) {
-  // Tela 3: ainda não há tela para comparar.
   if (!TELAS[ind.tela]) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** tela ainda não construída.`);
     continue;
   }
   const tela = TELAS[ind.tela];
   const id = idPorNome.get(`${ind.tela}|${ind.nome}`);
+  // A faixa "em aberto" do "Valor pendente" só pode ser comparada se a janela que a conferência usou foi lida.
+  if (id === 'valor-pendente' && motivoPendente) {
+    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** ${motivoPendente}.`);
+    continue;
+  }
   const naTela = id ? daTela.get(id) : null;
   if (!naTela) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a ${ind.tela} não mostra este indicador, e o teste não soube com o que comparar.`);
@@ -216,7 +303,7 @@ for (const ind of doConferencia) {
   const obtido = naTela.contagem;
 
   // Se o DFC não foi lido nesta rodada, o lado do DFC da tela é vazio: é "a conferir:", não divergência.
-  if (!tela.dfc.ok && esperado.dfc !== null) {
+  if (tela.dfc && !tela.dfc.ok && esperado.dfc !== null) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** a fonte principal deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${tela.dfc.motivo}.`);
     continue;
   }
@@ -297,7 +384,17 @@ que começa com **a conferir:** quer dizer que não deu para comparar; o motivo 
 
 ${nAConferir === 0
     ? 'As três telas estão construídas e nenhum indicador ficou de fora.'
-    : `A Tela 3 ainda não foi construída. Os ${nAConferir} indicadores dela aparecem abaixo, marcados "a conferir:", para a lista continuar sendo a das 3 telas inteiras.`}
+    : `${nAConferir} indicador(es) não puderam ser comparados nesta rodada; o motivo está no fim de cada linha.`}
+
+A **Tela 3 fica no Omie inteira** (\`docs/fontes.md\`): ela é a carteira de títulos a receber, e o DFC, que é caixa,
+não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas dela trazem só o lado do Omie.
+
+**Um indicador não é de ${NOMES_DOS_MESES[MES]}, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+"Valor pendente" da Tela 3 é vazia em qualquer mês fechado — os quatro \`cStatus\` dela são os de um título que ainda
+não venceu, e num mês fechado todo título já venceu. \`docs/conferencia.md\` mede essa faixa noutra janela de
+vencimento${janelaPendente ? `, ${janelaPendente[0]} a ${janelaPendente[1]}` : ''}, e diz na própria linha qual foi;
+este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
+Os outros ${doConferencia.length - 1} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.
 
 ${tela1.dfc.ok
     ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`

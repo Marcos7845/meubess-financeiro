@@ -1,0 +1,133 @@
+/* AS CORES DA MARCA MEUBESS FICAM TODAS AQUI, e em nenhum outro lugar.
+ *
+ * ATENÇÃO: a identidade visual da MeuBESS não está no repositório — não há logo, manual de marca nem paleta em
+ * lugar nenhum dele. Os valores abaixo são um ESBOÇO para a tela existir; quando o dono mandar as cores certas,
+ * troque só estas linhas e a tela inteira acompanha. Nenhum arquivo `.js` tem cor escrita.
+ *
+ * O LAYOUT é o de `docs/referencias/tela-1-gestao-de-contas.jpg`; as cores daquela imagem NÃO valem (o próprio
+ * `docs/referencias/LEIAME.md` diz isso).
+ */
+
+:root {
+  /* marca */
+  --marca-escura: #0d2440;
+  --marca: #143a63;
+  --marca-clara: #1f5289;
+  --destaque: #f5a524;
+  --destaque-escuro: #d98c0c;
+
+  /* leitura de números */
+  --positivo: #1c8f5a;
+  --negativo: #c4453b;
+
+  /* superfícies */
+  --fundo: #eef1f5;
+  --cartao: #ffffff;
+  --borda: #d5dbe4;
+  --texto: #16202e;
+  --texto-fraco: #5d6b7e;
+  --texto-claro: #ffffff;
+
+  --raio: 8px;
+  --sombra: 0 1px 3px rgba(13, 36, 64, .12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+a { color: inherit; }
+
+/* ---------------------------------------------------------------- topo */
+.topo {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--marca-escura); color: var(--texto-claro);
+  padding: 0 16px; height: 46px;
+}
+.topo .marca { font-weight: 700; letter-spacing: .3px; }
+.topo .titulo {
+  font-size: 19px; font-weight: 600;
+  border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 18px;
+}
+.abas { display: flex; gap: 6px; margin-left: auto; }
+.abas span, .abas a {
+  padding: 5px 14px; border-radius: var(--raio); font-size: 12.5px; text-decoration: none;
+  background: var(--marca); color: var(--texto-claro); opacity: .75;
+}
+.abas .ativa { background: var(--destaque); color: var(--marca-escura); font-weight: 600; opacity: 1; }
+
+/* ---------------------------------------------------------------- cartões */
+.cartoes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 12px; }
+.cartao {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  padding: 9px 11px; box-shadow: var(--sombra); min-width: 0;
+}
+.cartao .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cartao .numero { font-size: 21px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
+.cartao .numero.neg { color: var(--negativo); }
+.cartao .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+
+/* ---------------------------------------------------------------- grade */
+.grade { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; padding: 0 12px 12px; align-items: start; }
+.painel {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  box-shadow: var(--sombra); overflow: hidden;
+}
+.painel > h2 {
+  margin: 0; padding: 7px 11px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px;
+  background: var(--marca); color: var(--texto-claro);
+}
+.painel > h2.alt { background: var(--destaque); color: var(--marca-escura); }
+.painel .corpo { padding: 10px 11px; }
+.larga { grid-column: 1 / -1; }
+
+/* ---------------------------------------------------------------- barras horizontais (Top 10) */
+.barras { display: flex; flex-direction: column; gap: 6px; }
+.barra { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; font-size: 11.5px; }
+.barra .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-fraco); }
+.barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
+.barra .preenche { background: var(--marca-clara); height: 100%; border-radius: 3px; }
+.barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ---------------------------------------------------------------- filtros */
+.filtros { display: flex; flex-wrap: wrap; gap: 5px; }
+.filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
+.pilula {
+  display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11.5px; text-decoration: none;
+  background: var(--fundo); border: 1px solid var(--borda); color: var(--texto-fraco);
+}
+.pilula.ativa { background: var(--marca); border-color: var(--marca); color: var(--texto-claro); font-weight: 600; }
+.legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
+.legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+.chave.rec { background: var(--marca-clara); }
+.chave.desp { background: var(--destaque); }
+
+/* ---------------------------------------------------------------- colunas por dia */
+.dias { display: flex; align-items: flex-end; gap: 2px; height: 130px; }
+.dia { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; min-width: 0; }
+.dia .rec { background: var(--marca-clara); border-radius: 1px 1px 0 0; }
+.dia .desp { background: var(--destaque); border-radius: 0 0 1px 1px; }
+.dia .n { font-size: 8px; text-align: center; color: var(--texto-fraco); }
+
+/* ---------------------------------------------------------------- rodapé */
+.rodape {
+  padding: 9px 12px 20px; font-size: 11px; color: var(--texto-fraco);
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+}
+.botao {
+  background: var(--destaque); color: var(--marca-escura); border: 0; border-radius: var(--raio);
+  padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.botao:disabled { opacity: .55; cursor: default; }
+.aviso {
+  background: #fff6e3; border: 1px solid var(--destaque); border-radius: var(--raio);
+  padding: 8px 11px; margin: 0 12px 10px; font-size: 12px;
+}

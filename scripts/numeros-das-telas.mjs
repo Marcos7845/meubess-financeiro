@@ -41,15 +41,21 @@
 //   node scripts/numeros-das-telas.mjs --hoje 25/09/2026   # a data de onde parte a janela da faixa "em aberto"
 //   DFC_DIR=<caminho> node scripts/numeros-das-telas.mjs
 
-import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
+// AS REGRAS MORAM EM `lib/regras/`, e não mais aqui. Este script e a camada de dados do app (`lib/dados.mjs`)
+// importam as MESMAS funções e as MESMAS listas do dono — é o que garante que a tela mostra o número que esta página
+// confere. Enquanto isto aqui era o único leitor, a regra vivia neste arquivo; desde que o app começou, mora lá.
+import { abrirCacheOmie } from '../lib/regras/cache-omie.mjs';
+import { lerRecorte, criarRegras } from '../lib/regras/movimentos.mjs';
+import { NOMES_DOS_MESES, dois, ultimoDia, dataBR, noMesDe, noAnoDe } from '../lib/regras/periodo.mjs';
+import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
+import { lerDfc, norm, ePessoalDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
+import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
+
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CACHE = path.join(RAIZ, '.cache', 'omie');
 const SAIDA_MD = path.join(RAIZ, 'docs', 'conferencia.md');
 const SAIDA_HTML = path.join(RAIZ, 'docs', 'conferencia.html');
 
@@ -63,14 +69,10 @@ const SEM_DFC = process.argv.includes('--sem-dfc');
 
 const MES2 = String(MES).padStart(2, '0');
 const PERIODO = `01/${MES2}/${ANO} a ${new Date(ANO, MES, 0).getDate()}/${MES2}/${ANO}`;
-const NOMES_DOS_MESES = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
-  'outubro', 'novembro', 'dezembro'];
 
 // A DATA DE HOJE, de onde partem as duas janelas da faixa "em aberto" do "Valor pendente" (a exceção ao mês fechado,
 // explicada no topo). `--hoje dd/mm/aaaa` a fixa; sem isso, é o dia de hoje. As duas janelas são as mesmas que
 // `scripts/ler-omie-faltante.mjs` grava no cache: o que RESTA do mês corrente e o mês SEGUINTE inteiro.
-const dois = (x) => String(x).padStart(2, '0');
-const ultimoDia = (a, m) => new Date(a, m, 0).getDate();
 const HOJE = arg('--hoje', (() => { const d = new Date(); return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}`; })());
 const hj = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(HOJE);
 if (!hj) { console.error('--hoje precisa ser dd/mm/aaaa'); process.exit(1); }
@@ -87,219 +89,32 @@ const falhar = (m) => { console.error(m); process.exit(1); };
 
 // ================================================================ o cache do Omie
 //
-// As chaves do cache são a própria pergunta: empresa + serviço + método + sha1 dos parâmetros. É a mesma conta que
-// `scripts/confronto-dfc-omie.mjs` faz para gravar, e a mesma que `scripts/categorias-do-dre.mjs` faz para achar.
+// As chaves do cache, as leituras e o carregamento moram em `lib/regras/cache-omie.mjs`, que a camada de dados do
+// app abre do mesmo jeito. As duas janelas da faixa "em aberto" do "Valor pendente" nascem aqui porque dependem
+// de `--hoje`.
 
-const sha = (p) => crypto.createHash('sha1').update(JSON.stringify(p)).digest('hex').slice(0, 12);
-const arqCache = (emp, servico, call, param) =>
-  path.join(CACHE, `${emp}-${servico.replace(/\W+/g, '-')}-${call}-${sha(param)}.json`);
-
-if (!fs.existsSync(CACHE)) falhar(`cache não encontrado em ${CACHE}.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
-const arquivosDoCache = fs.readdirSync(CACHE);
-
-// A LEITURA DAS TELAS 1 E 2, e a única que `docs/fontes.md` conta: `financas/mf` → `ListarMovimentos` SEM
-// `cTpLancamento` (o filtro por tipo deixa de fora o lançamento avulso de conta corrente), por data de pagamento.
-// O cache tem a faixa inteira de 2026 até setembro; o mês pedido é recortado dela pela `dDtPagamento` de cada
-// lançamento, que é exatamente o que `dDtPagtoDe` / `dDtPagtoAte` no mês devolveria.
-const LEITURA_MF = (n) => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: `01/01/${ANO}`, dDtPagtoAte: `30/09/${ANO}` });
-// A LEITURA DA TELA 3: `financas/pesquisartitulos` → `PesquisarLancamentos`, `cNatureza: "R"`, por vencimento, em duas
-// passadas (até hoje e a vencer) — é a leitura que `docs/fontes.md` descreve no bloco "Lançamentos por mês e status".
-const LEITURA_TIT_R = (n, de, ate) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'R', dDtVencDe: de, dDtVencAte: ate });
-const FAIXAS_TIT_R = [[`01/01/${ANO}`, `25/09/${ANO}`], [`26/09/${ANO}`, `31/12/${ANO}`]];
-// AS DUAS LEITURAS DA FAIXA "EM ABERTO" do "Valor pendente" (a exceção ao mês fechado, explicada no topo): a mesma
-// chamada, por vencimento, nas duas janelas que começam hoje. `scripts/ler-omie-faltante.mjs` as grava no cache.
 const JANELAS_ABERTO = { corrente: JANELA_CORRENTE, seguinte: JANELA_SEGUINTE };
-// A LEITURA DOS TÍTULOS A PAGAR de `financas/pesquisartitulos`, por vencimento. Fica como segunda opinião do cartão
-// "Despesas pendentes": traz os mesmos campos da leitura abaixo, por outro serviço.
-const LEITURA_TIT_P = (n) => ({ nPagina: n, nRegPorPagina: 100, cNatureza: 'P', dDtVencDe: `01/01/${ANO}`, dDtVencAte: `31/12/${ANO}` });
-// A LEITURA DO CARTÃO "Despesas pendentes", exatamente como `docs/fontes.md` a pede: `financas/mf` →
-// `ListarMovimentos` com `cTpLancamento: "CP"` por VENCIMENTO. `scripts/ler-omie-faltante.mjs` a grava no cache.
-const LEITURA_CP_VENC = (n) => ({ nPagina: n, nRegPorPagina: 100, cTpLancamento: 'CP', dDtVencDe: `01/01/${ANO}`, dDtVencAte: `31/12/${ANO}` });
-// A LEITURA DO CONFRONTO DO "Top 10 despesas": a mesma leitura de caixa de cima, COM `cExibirDepartamentos: "S"`,
-// que é o único jeito de o rateio por centro de custo vir no retorno (nenhum método do Omie filtra por departamento).
-const LEITURA_MF_DEP = (n) => ({ nPagina: n, nRegPorPagina: 100, dDtPagtoDe: `01/01/${ANO}`, dDtPagtoAte: `30/09/${ANO}`, cExibirDepartamentos: 'S' });
-// OS DOIS CADASTROS que faltavam: o de clientes (o eixo do gráfico da Tela 3) e o das contas do DRE (o `totalizaDRE`
-// da linha "(=) Receita bruta").
-const LEITURA_CLIENTES = (n) => ({ pagina: n, registros_por_pagina: 100, apenas_importado_api: 'N' });
-const LEITURA_DRE = { apenasContasAtivas: 'N' };
-
-function paginas(emp, servico, call, param, campo) {
-  const primeira = arqCache(emp, servico, call, param(1));
-  if (!fs.existsSync(primeira)) return null;
-  const itens = [];
-  let total = 1;
-  for (let n = 1; n <= total; n++) {
-    const f = arqCache(emp, servico, call, param(n));
-    if (!fs.existsSync(f)) return null;
-    const j = JSON.parse(fs.readFileSync(f, 'utf8'));
-    total = Number(j.nTotPaginas ?? j.total_de_paginas) || 1;
-    itens.push(...(j[campo] ?? []));
-  }
-  return itens;
-}
-
-const EMPRESAS = ['1', '2'];
-const movimentos = {}, titulosR = {}, titulosP = {}, categorias = {}, departamentos = {}, pedidos = {};
-// As quatro leituras que `scripts/ler-omie-faltante.mjs` acrescentou ao cache. Se alguma faltar, o indicador que
-// depende dela sai "a conferir:" dizendo isso, e o resto da página segue.
-const cpVenc = {}, comDep = {}, clientes = {}, contasDre = {};
-// As duas janelas da faixa "em aberto" (`corrente` e `seguinte`), por empresa. `null` = a leitura não está no cache.
-const titulosAberto = { corrente: {}, seguinte: {} };
-for (const emp of EMPRESAS) {
-  movimentos[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_MF, 'movimentos');
-  if (!movimentos[emp]) falhar(`empresa ${emp}: a leitura de financas/mf por data de pagamento (sem cTpLancamento, 01/01 a 30/09/${ANO}) não está inteira no cache.\nRode antes: node scripts/confronto-dfc-omie.mjs`);
-
-  titulosR[emp] = [];
-  for (const [de, ate] of FAIXAS_TIT_R) {
-    const t = paginas(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos', (n) => LEITURA_TIT_R(n, de, ate), 'titulosEncontrados');
-    if (t) titulosR[emp].push(...t);
-  }
-  titulosP[emp] = paginas(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos', LEITURA_TIT_P, 'titulosEncontrados') ?? [];
-
-  categorias[emp] = new Map();
-  for (const f of arquivosDoCache.filter((x) => x.startsWith(`${emp}-geral-categorias`)))
-    for (const c of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).categoria_cadastro ?? [])
-      categorias[emp].set(String(c.codigo), c);
-  departamentos[emp] = new Map();
-  for (const f of arquivosDoCache.filter((x) => x.startsWith(`${emp}-geral-departamentos`)))
-    for (const d of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).departamentos ?? [])
-      departamentos[emp].set(String(d.codigo), d);
-  pedidos[emp] = new Map();
-  for (const f of arquivosDoCache.filter((x) => x.startsWith(`${emp}-produtos-pedido`)))
-    for (const p of JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8')).pedido_venda_produto ?? [])
-      pedidos[emp].set(String(p.cabecalho?.codigo_pedido), p);
-
-  cpVenc[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_CP_VENC, 'movimentos');
-  comDep[emp] = paginas(emp, 'financas/mf', 'ListarMovimentos', LEITURA_MF_DEP, 'movimentos');
-  // DO CADASTRO DE CLIENTES SÓ SAI O CÓDIGO. `clientes[emp]` é o conjunto dos códigos cujo nome está preenchido no
-  // cadastro; o nome nunca é guardado nem impresso.
-  const cru = paginas(emp, 'geral/clientes', 'ListarClientesResumido', LEITURA_CLIENTES, 'clientes_cadastro_resumido');
-  clientes[emp] = cru && {
-    total: cru.length,
-    comNome: new Set(cru.filter((c) => String(c.razao_social ?? '').trim() || String(c.nome_fantasia ?? '').trim())
-      .map((c) => String(c.codigo_cliente))),
-  };
-  const arqDre = arqCache(emp, 'geral/dre', 'ListarCadastroDRE', LEITURA_DRE);
-  contasDre[emp] = fs.existsSync(arqDre) ? (JSON.parse(fs.readFileSync(arqDre, 'utf8')).dreLista ?? []) : null;
-  for (const [qual, [de, ate]] of Object.entries(JANELAS_ABERTO))
-    titulosAberto[qual][emp] = paginas(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos',
-      (n) => LEITURA_TIT_R(n, de, ate), 'titulosEncontrados');
-}
+const OMIE = abrirCacheOmie({ raiz: RAIZ, ano: ANO, janelasAberto: JANELAS_ABERTO, aoFaltar: falhar });
+const { EMPRESAS, arqCache, arquivosDoCache, paginas, movimentos, titulosR, titulosP, categorias,
+  departamentos, pedidos, cpVenc, comDep, clientes, contasDre, titulosAberto } = OMIE;
+const LEITURA_MF = OMIE.leituras.MF;
+const LEITURA_TIT_R = OMIE.leituras.TIT_R;
+const LEITURA_TIT_P = OMIE.leituras.TIT_P;
+const LEITURA_CP_VENC = OMIE.leituras.CP_VENC;
+const LEITURA_MF_DEP = OMIE.leituras.MF_DEP;
+const FAIXAS_TIT_R = OMIE.leituras.FAIXAS_TIT_R;
 
 // ================================================================ o recorte e os filtros de docs/fontes.md
-
-// O RECORTE DA MEUBESS (decisão do dono, 24 e 25/09/2026): só os lançamentos cuja conta corrente é da MeuBESS.
-const RECORTE = new Set(JSON.parse(fs.readFileSync(path.join(RAIZ, 'dados', 'contas-correntes-por-negocio.json'), 'utf8'))
-  .contas.filter((c) => c.negocio === 'MeuBESS').map((c) => c.chave));
-
-// AS CATEGORIAS DE TRANSFERÊNCIA QUE FICAM FORA (decisão do dono, 25/09/2026, opção B). Duas o cadastro marca
-// (`transferencia = "S"`); as de baixo se chamam "Transferência" sem a marca. A `1.04.97` só na empresa 1 — na 2 o
-// mesmo código é "Prêmios de Seguros / Sinistros" e conta como outra receita.
-const TRANSFERENCIA_SEM_MARCA = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
-const eTransferencia = (emp, cod) =>
-  categorias[emp].get(String(cod))?.transferencia === 'S' || TRANSFERENCIA_SEM_MARCA[emp].includes(String(cod));
-
-const dataBR = (s) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(s ?? '')); return m ? { d: +m[1], m: +m[2], a: +m[3] } : null; };
-const noMes = (s) => { const d = dataBR(s); return Boolean(d) && d.a === ANO && d.m === MES; };
-const em2026 = (s) => { const d = dataBR(s); return Boolean(d) && d.a === ANO; };
-
-// A BASE DE UM PERÍODO: os lançamentos da leitura que sobrevivem ao recorte, ao cancelado e à data. O par do
-// adiantamento ao fornecedor (decisão do dono, 25/09/2026, opção A) é medido DENTRO do período, porque é dentro dele
-// que a tela lê: ficam fora todo lançamento com `cOrigem = "ADCR"` e todo lançamento de um título que tenha, na mesma
-// leitura, alguma linha com `cOrigem = "ADCP"` — o título da ida E a baixa dele.
-function base(emp, dentro) {
-  const linhas = movimentos[emp].map((m) => ({ ...m.detalhes, _resumo: m.resumo ?? {} }))
-    .filter((d) => d.cStatus !== 'CANCELADO' && RECORTE.has(`${emp}|${d.nCodCC}`) && dentro(d.dDtPagamento));
-  const adcp = new Set(linhas.filter((d) => d.cOrigem === 'ADCP' && d.nCodTitulo).map((d) => d.nCodTitulo));
-  const elegivel = (d) => d.cOrigem !== 'ADCR' && !(d.nCodTitulo && adcp.has(d.nCodTitulo));
-  return { linhas, adcp, elegivel };
-}
-
-// OS TRÊS BALDES, SEM CONTAR DUAS VEZES. O título baixado volta na mesma leitura como CONTA_A_PAGAR / CONTA_A_RECEBER
-// e como CONTA_CORRENTE_PAG / CONTA_CORRENTE_REC com o mesmo `nCodTitulo`; fica o título, um por `nCodTitulo`, e do
-// conta corrente entram os dois que não têm título irmão nesta leitura, cada um uma vez por `nCodMovCC`: o AVULSO
-// (`nCodTitulo` 0) e a BAIXA DO TÍTULO QUITADO SÓ EM PARTE (`nCodTitulo` preenchido, título ausente da leitura).
-function baldes(b, nat, extra = () => true) {
-  const titulos = new Map(), baixas = new Map(), avulsos = new Map();
-  for (const d of b.linhas) {
-    if (d.cNatureza !== nat) continue;
-    if (!b.elegivel(d)) continue;
-    if (!extra(d)) continue;
-    if (d.cGrupo === 'CONTA_A_RECEBER' || d.cGrupo === 'CONTA_A_PAGAR') titulos.set(d.nCodTitulo, d);
-    else if (d.cGrupo === 'CONTA_CORRENTE_REC' || d.cGrupo === 'CONTA_CORRENTE_PAG') (d.nCodTitulo ? baixas : avulsos).set(d.nCodMovCC, d);
-  }
-  for (const [mov, d] of baixas) if (titulos.has(d.nCodTitulo)) baixas.delete(mov);
-  return {
-    titulos, baixas, avulsos, total: titulos.size + baixas.size + avulsos.size,
-    todos: [...titulos.values(), ...baixas.values(), ...avulsos.values()],
-  };
-}
-
-// `comTransferencia` diz se a linha tira as categorias de transferência; `categoria` é a lista de códigos da linha.
-function contar(emp, dentro, nat, { categoria = null, comTransferencia = true } = {}) {
-  const b = base(emp, dentro);
-  return baldes(b, nat, (d) => (!comTransferencia || !eTransferencia(emp, d.cCodCateg)) && (!categoria || categoria(String(d.cCodCateg ?? ''), d)));
-}
-
-// ================================================================ as listas que o dono decidiu
 //
-// Cada lista abaixo só REGISTRA uma decisão do dono já escrita em `docs/fontes.md`. Nenhuma é heurística, e a chave é
-// sempre o par empresa + código: o mesmo código é coisa diferente nas duas empresas.
+// O recorte da MeuBESS, o par do adiantamento ao fornecedor, os três baldes e o `contar` moram em
+// `lib/regras/movimentos.mjs`; as listas que o dono decidiu, em `lib/regras/listas.mjs`. A camada de dados do app
+// chama exatamente estes — nenhuma regra é copiada de um lado para o outro.
 
-// Venda de produtos × outras receitas na linha "(+) Receitas" (decisão do dono, 25/09/2026).
-const VENDA_DE_PRODUTOS = ['1.01.01', '1.01.03', '1.04.01'];
+const RECORTE = lerRecorte(RAIZ);
+const { eTransferencia, base, baldes, contar } = criarRegras({ movimentos, categorias, recorte: RECORTE });
 
-const faixa = (pre, de, ate) => Array.from({ length: ate - de + 1 }, (_, i) => `${pre}${String(de + i).padStart(2, '0')}`);
-
-// Categorias de pessoal, para o confronto do cartão "Despesas com funcionários" (decisão do dono, 25/09/2026).
-const PESSOAL = {
-  1: [...faixa('2.03.', 1, 14), '2.03.97', '2.03.98', '2.03.99', '2.11.96', '2.02.01', '2.02.02', ...faixa('2.01.', 81, 97)],
-  2: [...faixa('2.03.', 1, 14), '2.03.97', '2.03.98', '2.03.99', '2.02.01', '2.02.02', '2.08.01'],
-};
-
-// Custo de vendas (decisão do dono, 25/09/2026, grupo b): 22 códigos na empresa 1 e 16 na 2.
-// Os três últimos da empresa 2 entraram na segunda resposta do dono, também em 25/09/2026 ("1 ok"): a contagem
-// corrigida mostrou que `2.01.96` Energia Elétrica-Custo, `2.01.89` Gas para empilhadeira-Custos e `2.01.92`
-// Armanezagem e manuseio de Carga-Custos têm movimento e são apontadas pelo nome, o mesmo critério das outras.
-const CUSTO_DE_VENDAS = {
-  1: ['2.01.01', '2.01.02', '2.01.03', '2.01.04', ...faixa('2.01.', 82, 97), '2.01.99', '2.04.88'],
-  2: ['2.01.01', '2.01.02', '2.01.03', '2.01.04', '2.01.90', '2.01.91', '2.01.93', '2.01.94', '2.01.95', '2.01.97', '2.01.98', '2.01.99', '2.08.99',
-      '2.01.89', '2.01.92', '2.01.96'],
-};
-
-// Resultado financeiro (decisão do dono, 25/09/2026, grupo d): 7 códigos na empresa 1 e 8 na 2.
-const RESULTADO_FINANCEIRO = {
-  1: ['1.01.02', '1.02.02', '1.04.95', '2.05.01', '2.05.02', '2.05.04', '2.06.95'],
-  2: ['1.02.02', '1.04.94', '2.04.91', '2.05.01', '2.05.02', '2.05.04', '2.05.99', '2.06.95'],
-};
-
-// Dedução da receita (decisão do dono, 24/09/2026; o ISS retido `2.06.07` saiu em 25/09/2026): 5 na empresa 1 e 6 na 2.
-const DEDUCOES = {
-  1: ['2.06.01', '2.06.03', '2.06.04', '2.09.01', '2.09.02'],
-  2: ['2.06.01', '2.06.03', '2.06.04', '2.09.01', '2.09.02', '2.02.97'],
-};
-
-// Impostos pagos (guias) — o confronto do Omie, pela categoria e não pelo `cTipo` (decisão do dono, 25/09/2026).
-const IMPOSTOS_GUIAS = { 1: ['2.06.05', '2.06.06', '2.06.07', '2.03.06', '2.01.92'], 2: ['2.06.05', '2.06.06', '2.06.07', '2.03.06'] };
-
-// Os empréstimos e transferências entre as empresas (Intercompany), que ficam fora do DRE (decisão do dono, 25/09/2026).
-const INTERCOMPANY = { 1: ['2.08.02', '2.05.99', '1.04.99'], 2: ['1.04.99', '2.10.98'] };
-
-// Ficam FORA do DRE: hoje, só os Intercompany. O Financiamento Veiculo (`2.11.95`, empresa 1) esteve nesta lista por um
-// dia: a terceira resposta do dono, em 25/09/2026 ("financiamento de veiculo é despesas gerais sim"), o mandou para
-// "(−) Despesas gerais", e ele saiu daqui — continua fora do resultado financeiro, como já estava decidido.
-const FORA_DO_DRE = INTERCOMPANY;
-
-// De-para dos `cStatus` do Omie para as três faixas da Tela 3 (decisão do dono, 25/09/2026). O Omie devolve
-// `"A VENCER"` com espaço nos títulos a vencer; pelos campos é o mesmo `AVENCER`, e o código o trata como tal.
-const FAIXA_DO_STATUS = (s) => {
-  const x = String(s ?? '').replace(/\s+/g, '').toUpperCase();
-  if (x === 'CANCELADO') return 'fora';
-  if (x === 'RECEBIDO' || x === 'LIQUIDADO') return 'pago';
-  if (x === 'ATRASADO') return 'atrasado';
-  if (['EMABERTO', 'AVENCER', 'VENCEHOJE', 'PAGTOPARCIAL'].includes(x)) return 'aberto';
-  return 'outro';
-};
+const noMes = noMesDe(ANO, MES);
+const em2026 = noAnoDe(ANO);
 
 // ================================================================ a conferência: achar o caso de novo, na fonte crua
 //
@@ -485,235 +300,17 @@ registrar('adiantamento', `títulos \`ADCP\` do par do adiantamento em ${ANO} (n
 
 // ================================================================ o DFC
 //
-// Leitura só, e só se as planilhas estiverem alcançáveis. A pasta do DFC é uma biblioteca do SharePoint que o OneDrive
-// espelha; ler um arquivo de lá o baixa na máquina do dono. Por isso `--sem-dfc` existe: sem as planilhas, toda linha
-// cuja fonte principal é o DFC sai "a conferir:", dizendo isso.
+// Ler a planilha (zip, abas, células), achar a pasta e filtrar o `FLUXO DE CAIXA` moram em `lib/regras/xlsx.mjs`,
+// `lib/regras/dfc-fonte.mjs` e `lib/regras/dfc.mjs`. DE ONDE vêm os arquivos é a interface de `dfc-fonte.mjs`:
+// hoje a pasta que o OneDrive espelha neste computador, depois o Microsoft Graph, sem mexer em mais nada.
+// `--sem-dfc` pula a leitura inteira, sem tocar na pasta — e então toda linha cuja fonte principal é o DFC sai
+// "a conferir:", dizendo isso.
 
-const norm = (s) => String(s ?? '').toLocaleUpperCase('pt-BR').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
-const cent = (v) => Math.round(Number(v ?? 0) * 100);
-
-function lerZip(buf) {
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= 0 && i > buf.length - 66000; i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-  if (eocd < 0) throw new Error('não é um zip (EOCD não encontrado)');
-  const total = buf.readUInt16LE(eocd + 10);
-  let p = buf.readUInt32LE(eocd + 16);
-  const arquivos = new Map();
-  for (let n = 0; n < total; n++) {
-    if (buf.readUInt32LE(p) !== 0x02014b50) break;
-    const metodo = buf.readUInt16LE(p + 10), compSize = buf.readUInt32LE(p + 20);
-    const nomeLen = buf.readUInt16LE(p + 28), extraLen = buf.readUInt16LE(p + 30), comentLen = buf.readUInt16LE(p + 32);
-    arquivos.set(buf.toString('utf8', p + 46, p + 46 + nomeLen), { metodo, compSize, offset: buf.readUInt32LE(p + 42) });
-    p += 46 + nomeLen + extraLen + comentLen;
-  }
-  return {
-    ler(nome) {
-      const e = arquivos.get(nome);
-      if (!e) return null;
-      const lh = e.offset;
-      const ini = lh + 30 + buf.readUInt16LE(lh + 26) + buf.readUInt16LE(lh + 28);
-      const cru = buf.subarray(ini, ini + e.compSize);
-      return e.metodo === 0 ? cru : zlib.inflateRawSync(cru);
-    },
-  };
-}
-const desescapar = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d)).replace(/&amp;/g, '&');
-const textoDosT = (xml) => [...xml.matchAll(/<t[^>]*>([\s\S]*?)<\/t>|<t[^>]*\/>/g)].map((m) => (m[1] ? desescapar(m[1]) : '')).join('');
-function sharedStrings(zip) {
-  const b = zip.ler('xl/sharedStrings.xml');
-  if (!b) return [];
-  return [...b.toString('utf8').matchAll(/<si>([\s\S]*?)<\/si>|<si\/>/g)].map((m) => (m[1] ? textoDosT(m[1]) : ''));
-}
-function abasDo(zip) {
-  const wb = zip.ler('xl/workbook.xml').toString('utf8');
-  const rels = (zip.ler('xl/_rels/workbook.xml.rels') || Buffer.from('')).toString('utf8');
-  const alvo = new Map();
-  for (const m of rels.matchAll(/<Relationship\b[^>]*\/>/g)) {
-    const id = /Id="([^"]+)"/.exec(m[0])?.[1], t = /Target="([^"]+)"/.exec(m[0])?.[1];
-    if (id && t) alvo.set(id, t.replace(/^\/?xl\//, '').replace(/^\.\//, ''));
-  }
-  return [...wb.matchAll(/<sheet\b[^>]*\/>/g)].map((m) => ({
-    nome: desescapar(/name="([^"]*)"/.exec(m[0])?.[1] ?? ''),
-    parte: 'xl/' + (alvo.get(/r:id="([^"]+)"/.exec(m[0])?.[1]) ?? ''),
-  }));
-}
-function lerAba(zip, parte, ss) {
-  const b = zip.ler(parte);
-  if (!b) return null;
-  const linhas = [];
-  for (const mr of b.toString('utf8').matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>|<row\b([^>]*)\/>/g)) {
-    const n = +(/r="(\d+)"/.exec(mr[1] ?? mr[3] ?? '')?.[1] ?? 0);
-    const cel = new Map();
-    for (const mc of (mr[2] ?? '').matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>|<c\b([^>]*)\/>/g)) {
-      const ca = mc[1] ?? mc[3] ?? '', cc = mc[2] ?? '';
-      const col = /^([A-Z]+)/.exec(/r="([A-Z]+\d+)"/.exec(ca)?.[1] ?? '')?.[1];
-      if (!col) continue;
-      const tipo = /t="([^"]*)"/.exec(ca)?.[1] ?? 'n';
-      const v = /<v>([\s\S]*?)<\/v>/.exec(cc)?.[1];
-      if (tipo === 's') { const t = (ss[+v] ?? '').trim(); if (t) cel.set(col, { t }); }
-      else if (tipo === 'inlineStr') { const t = textoDosT(cc).trim(); if (t) cel.set(col, { t }); }
-      else if (tipo === 'str') { const t = desescapar(v ?? '').trim(); if (t) cel.set(col, { t }); }
-      else if (v !== undefined && v !== '' && Number.isFinite(Number(v))) cel.set(col, { v: Number(v) });
-    }
-    if (cel.size) linhas.push({ n, cel });
-  }
-  return linhas;
-}
-function dataDaCelula(c) {
-  if (!c) return null;
-  if (c.v !== undefined) {
-    if (!(c.v > 20000 && c.v < 80000)) return null;
-    const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(c.v) * 86400000);
-    return { a: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
-  }
-  const m = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/.exec(c.t ?? '');
-  if (!m) return null;
-  return { a: +m[3] < 100 ? 2000 + +m[3] : +m[3], m: +m[2], d: +m[1] };
-}
-// As colunas de dia do bloco pronto da aba do mês: de `D` a `AH`, como `docs/fontes.md` escreve.
-const COLUNAS_DE_DIA = new Set([
-  ...'DEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-  ...'ABCDEFGH'.split('').map((c) => `A${c}`),
-]);
-const SUB2_SALDO = new Set(['SALDO INICIAL', 'SALDO FINAL', 'SALDO INICIAL PROVISAO', 'SALDO FINAL PROVISAO']);
-const COLUNAS_DE_DATA = ['DIA PG', 'VENCIMENTO', 'TIPO'];
-const BAIXADO = (p) => p !== '' && p !== 'A PAGAR' && p !== 'A RECEBER';
-
-// A pasta da MeuBESS é a que numera os arquivos ("01 - DFC - JAN2026"); as das outras unidades, não.
-function pastaDaMeuBess() {
-  const candidatas = [];
-  if (process.env.DFC_DIR) candidatas.push(process.env.DFC_DIR);
-  else {
-    for (const raiz of [path.join(os.homedir(), 'Meu Bess'), path.join(os.homedir(), 'OneDrive')]) {
-      if (!fs.existsSync(raiz)) continue;
-      for (const nome of fs.readdirSync(raiz)) {
-        if (!/2026\s*(?:\(\d+\))?\s*$/.test(nome)) continue;
-        try { if (!fs.statSync(path.join(raiz, nome)).isDirectory()) continue; } catch { continue; }
-        candidatas.push(path.join(raiz, nome));
-      }
-      if (candidatas.length) break;
-    }
-  }
-  for (const c of candidatas) {
-    const arqs = fs.readdirSync(c).filter((f) => f.toLowerCase().endsWith('.xlsx') && !f.startsWith('~$'));
-    if (arqs.some((f) => /^\d{1,2}\s*-/.test(f))) return { caminho: c, arquivos: arqs };
-  }
-  return null;
-}
-
-// Lê o `FLUXO DE CAIXA` do arquivo do mês. Uma linha por lançamento, com a classificação que a própria planilha
-// escreve — `CLASS. CONTABIL` (I) e `SUB 2` (J) —, a data em `DIA PG` (F) e o sinal na coluna `ENTRADA` (K). O
-// cabeçalho se repete, um bloco por banco, e as colunas são achadas pelo nome, nunca pela letra.
-// NENHUM VALOR É GUARDADO: só o sinal (que diz se é entrada ou saída), a classificação e o número da linha.
-function lerDfc() {
-  if (SEM_DFC) return { ok: false, motivo: 'esta rodada foi feita com `--sem-dfc`: a pasta DFC/2026 é uma biblioteca do SharePoint espelhada pelo OneDrive neste computador, e abrir um arquivo de lá o baixa' };
-  let pasta = null;
-  try { pasta = pastaDaMeuBess(); } catch (e) { return { ok: false, motivo: `não deu para alcançar a pasta do DFC: ${e.message}` }; }
-  if (!pasta) return { ok: false, motivo: 'não achei a pasta DFC/2026 da MeuBESS sincronizada (use `DFC_DIR=<caminho>`)' };
-  const arq = pasta.arquivos.find((f) => new RegExp(`^0?${MES}\\s*-`).test(f));
-  if (!arq) return { ok: false, motivo: `a pasta da MeuBESS não tem o arquivo do mês ${MES2}` };
-  const zip = lerZip(fs.readFileSync(path.join(pasta.caminho, arq)));
-  const ss = sharedStrings(zip);
-  const aba = abasDo(zip).find((a) => norm(a.nome) === 'FLUXO DE CAIXA');
-  if (!aba) return { ok: false, motivo: `o arquivo ${arq} não tem a aba FLUXO DE CAIXA` };
-  const linhas = [];
-  let mapa = null;
-  for (const l of lerAba(zip, aba.parte, ss)) {
-    const textos = [...l.cel.entries()].filter(([, c]) => c.t);
-    const rotulos = textos.map(([, c]) => norm(c.t));
-    if (rotulos.includes('VENCIMENTO') && rotulos.includes('DIA PG')) { mapa = new Map(textos.map(([col, c]) => [norm(c.t), col])); continue; }
-    if (!mapa) continue;
-    const texto = (r) => { const c = l.cel.get(mapa.get(r)); return c?.t ? c.t.trim() : ''; };
-    const numero = (r) => { const c = l.cel.get(mapa.get(r)); return c?.v !== undefined ? c.v : 0; };
-    const sub2 = norm(texto('SUB 2'));
-    if (SUB2_SALDO.has(sub2)) continue;
-    const k = numero('ENTRADA'), lv = numero('SAIDA');
-    const bruto = cent(k) !== 0 ? k : lv;
-    if (cent(bruto) === 0) continue;
-    const pagamento = norm(texto('PAGAMENTO'));
-    if (!BAIXADO(pagamento)) continue;
-    let dt = null;
-    for (const rot of COLUNAS_DE_DATA) { dt = dataDaCelula(l.cel.get(mapa.get(rot))); if (dt) break; }
-    if (!dt || dt.a !== ANO || dt.m !== MES) continue;
-    linhas.push({ linha: l.n, classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: sub2 || '(vazio)', natureza: bruto > 0 ? 'R' : 'P', pagamento, dia: dt.d });
-  }
-  // A VOLTA, para conferir o caso: relê a MESMA aba do zero, sem filtro nenhum, e guarda uma entrada por número de
-  // linha. É o caminho contrário do de cima — como a releitura das páginas cruas do cache no lado do Omie.
-  const cruas = new Map();
-  {
-    let m2 = null;
-    for (const l of lerAba(zip, aba.parte, ss)) {
-      const textos = [...l.cel.entries()].filter(([, c]) => c.t);
-      const rotulos = textos.map(([, c]) => norm(c.t));
-      if (rotulos.includes('VENCIMENTO') && rotulos.includes('DIA PG')) { m2 = new Map(textos.map(([col, c]) => [norm(c.t), col])); continue; }
-      if (!m2) continue;
-      const texto = (r) => { const c = l.cel.get(m2.get(r)); return c?.t ? c.t.trim() : ''; };
-      const numero = (r) => { const c = l.cel.get(m2.get(r)); return c?.v !== undefined ? c.v : 0; };
-      let dt = null;
-      for (const rot of COLUNAS_DE_DATA) { dt = dataDaCelula(l.cel.get(m2.get(rot))); if (dt) break; }
-      const k = numero('ENTRADA'), lv = numero('SAIDA');
-      const bruto = cent(k) !== 0 ? k : lv;
-      cruas.set(l.n, {
-        classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: norm(texto('SUB 2')) || '(vazio)',
-        pagamento: norm(texto('PAGAMENTO')), natureza: cent(bruto) === 0 ? '(sem)' : (bruto > 0 ? 'R' : 'P'),
-        mes: dt ? `${dt.m}/${dt.a}` : '(sem data)', dia: dt?.d ?? null,
-      });
-    }
-  }
-  // A ABA DO MÊS: o bloco pronto que os dois gráficos de "Receita × despesa" usam — `Inicial` (42), `Entradas` (43),
-  // `Gastos` (44) e `Final` (45), uma coluna por dia. Só a forma do bloco é lida; nenhum valor é guardado.
-  const abaDoMes = blocoDoMes(zip, ss, abasDo(zip));
-  // A SÉRIE DO ANO: um arquivo por mês na mesma pasta. Só o bloco `Entradas`/`Gastos` de cada um.
-  const serie = [];
-  for (let m = 1; m <= 12; m++) {
-    const a = pasta.arquivos.find((f) => new RegExp(`^0?${m}\\s*-`).test(f));
-    if (!a) { serie.push({ mes: m, ok: false, motivo: 'sem arquivo na pasta' }); continue; }
-    try {
-      const z = lerZip(fs.readFileSync(path.join(pasta.caminho, a)));
-      const b = blocoDoMes(z, sharedStrings(z), abasDo(z));
-      serie.push({ mes: m, ok: Boolean(b?.temEntradas && b?.temGastos), colunas: b?.colunas ?? 0, motivo: b ? null : 'sem o bloco Entradas/Gastos' });
-    } catch (e) { serie.push({ mes: m, ok: false, motivo: `não deu para abrir: ${e.message}` }); }
-  }
-  return { ok: true, arquivo: arq, linhas, cruas, abaDoMes, serie };
-}
-
-// O bloco `Inicial` / `Entradas` / `Gastos` / `Final` da primeira aba do arquivo do mês, achado pelo RÓTULO da linha
-// (coluna B) e não pelo número dela. Devolve só a forma: qual linha tem cada rótulo e quantas colunas de dia existem.
-function blocoDoMes(zip, ss, abas) {
-  for (const a of abas) {
-    const linhas = lerAba(zip, a.parte, ss);
-    if (!linhas) continue;
-    const rotulo = new Map();
-    for (const l of linhas) for (const [col, c] of l.cel) if (col === 'B' && c.t) rotulo.set(norm(c.t), l.n);
-    const nEnt = rotulo.get('ENTRADAS'), nGas = rotulo.get('GASTOS');
-    if (!nEnt || !nGas || nEnt === nGas) continue;
-    const daLinha = (n) => linhas.find((l) => l.n === n);
-    const colunas = [...(daLinha(nEnt)?.cel ?? new Map()).keys()].filter((c) => COLUNAS_DE_DIA.has(c)).length;
-    return {
-      aba: a.nome, colunas,
-      temInicial: rotulo.has('INICIAL'), temEntradas: true, temGastos: true, temFinal: rotulo.has('FINAL'),
-      linhaInicial: rotulo.get('INICIAL') ?? null, linhaEntradas: nEnt, linhaGastos: nGas, linhaFinal: rotulo.get('FINAL') ?? null,
-      linhaReceitas: rotulo.get('RECEITAS') ?? null,
-    };
-  }
-  return null;
-}
-const DFC = lerDfc();
+const DFC = SEM_DFC
+  ? { ok: false, motivo: 'esta rodada foi feita com `--sem-dfc`: a pasta DFC/2026 é uma biblioteca do SharePoint espelhada pelo OneDrive neste computador, e abrir um arquivo de lá o baixa' }
+  : await lerDfc({ fonte: fonteDoDfc(), ano: ANO, mes: MES });
 const MOTIVO_DFC = DFC.ok ? null : DFC.motivo;
 
-// O VOCABULÁRIO DO DFC, como `docs/fontes.md` o escreve — já passado pelo `norm` (maiúscula, sem acento), que é como
-// as linhas da planilha são guardadas. Nenhuma lista aqui é heurística: cada uma copia a linha do documento.
-const DFC_RECEITA = ['RECEITA COM VENDAS', 'RECEITA COM SERVICOS', 'OUTRAS RECEITAS', 'REEMBOLSO RECEITA', 'RENDIMENTO FINANCEIRO'];
-const DFC_PESSOAL_CLASSE = ['FOLHA, IMPOSTOS E ADIANTAMENTOS', 'PESSOAL PJ', 'DESPESA CLT', 'DESPESA PJ', 'RESCISAO'];
-const DFC_PESSOAL_SUB2 = ['DESPESAS CLT', 'DESPESAS PJ', 'PRO-LABORE ( RETIRADA DE SOCIO )', 'COMISSAO DE VENDAS', 'REEMBOLSO'];
-// `FORNECEODORES COGS` é a MESMA conta escrita com erro de digitação na planilha (2 linhas em agosto de 2026, e só
-// nesse mês dos doze): conta em custo de vendas do mesmo jeito, e a regra aceita as duas grafias (decisão do dono,
-// 25/09/2026, "sim fornecedor COGS é custo de vendas").
-const DFC_CUSTO_CLASSE = ['FORNECEDORES COGS', 'FORNECEODORES COGS', 'COMPRA DE MERCADORIA'];
-const DFC_CUSTO_SUB2 = ['COMPRAS DE MERCADORIAS', 'FRETE E CARRETO', 'ARMAZENAGEM E MANUSEIO'];
-const DFC_IMPOSTO_SUB2 = ['ISS', 'INSS', 'IRPJ / CSLL'];
-const DFC_FINANCEIRO_SUB2 = ['JUROS', 'RENDIMENTO FINANCEIRO', 'EMPRESTIMO', 'TARIFAS BANCARIAS'];
-const ePessoalDfc = (l) => l.natureza === 'P' && (DFC_PESSOAL_CLASSE.includes(l.classe) || DFC_PESSOAL_SUB2.includes(l.sub2));
 
 // AS LINHAS DA GRAFIA ERRADA, no mês: quantas existem e quantas o filtro de custo de vendas leva. As duas grafias
 // valem igual na coluna `CLASS. CONTABIL` — o que pode deixar uma linha de fora é a OUTRA condição da regra, o `SUB 2`,

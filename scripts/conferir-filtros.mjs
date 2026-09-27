@@ -65,6 +65,27 @@ function rateioDaFonte(emp) {
   return mapa;
 }
 
+// DE QUAL EMPRESA É CADA LANÇAMENTO, da fonte: pelo ARQUIVO em que ele está. O nome de cada arquivo do cache começa
+// com a empresa (`1-` ou `2-`), porque a chave da leitura é a própria pergunta — empresa + serviço + método + sha dos
+// parâmetros (`lib/regras/cache-omie.mjs`). Então a empresa de um lançamento, vista pela fonte, é o prefixo do arquivo
+// onde ele aparece; nada aqui pergunta ao cálculo. A identidade é a mesma trinca do rateio (`nCodMovCC` + `nCodTitulo`
+// + `cGrupo`), e ela não se repete entre as duas empresas — o que este mapa também mede, em `ambas`.
+function empresaDaFonte() {
+  const mapa = new Map();
+  for (const emp of EMPRESAS) {
+    for (const f of doPrefixo(emp, 'financas-mf-ListarMovimentos')) {
+      for (const m of abrir(f).movimentos ?? []) {
+        const d = m.detalhes ?? {};
+        const k = `${d.nCodMovCC ?? 0}|${d.nCodTitulo ?? 0}|${d.cGrupo ?? ''}`;
+        if (!mapa.has(k)) mapa.set(k, new Set());
+        mapa.get(k).add(emp);
+      }
+    }
+  }
+  const ambas = [...mapa.values()].filter((x) => x.size > 1).length;
+  return { mapa, ambas, so: (k, emp) => { const x = mapa.get(k); return Boolean(x) && x.size === 1 && x.has(emp); } };
+}
+
 // O CADASTRO DE DEPARTAMENTOS, da fonte.
 function departamentosDaFonte(emp) {
   const m = new Map();
@@ -178,6 +199,34 @@ conferir({
   comoNaFonte: 'a base do mês menos os lançamentos cujo `departamentos[]` vem vazio no arquivo cru — contados aqui, um a um',
 });
 
+// ================================================================ Telas 1, 2 e 3 — o filtro de empresa
+//
+// O FILTRO QUE AS TRÊS TELAS DIVIDEM (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou as duas. A FONTE dele é o
+// ARQUIVO do cache em que cada lançamento está — o nome do arquivo começa com a empresa —, e é por aí que cada um dos
+// três casos reconta o recorte sem perguntar ao cálculo de que empresa é o lançamento.
+//
+// ONDE ELE NÃO VALE: em todo número que vem do DFC, porque o de-para da coluna `EMP.` (`B3W` / `N3`) com as filiais do
+// Omie NÃO FECHA — `scripts/de-para-empresa-dfc.mjs` casou 565 linhas `B3W` só com a empresa 1 e 481 só com a empresa 2
+// (`docs/fontes.md`). Por isso os casos conferem a contagem do OMIE: é a que o filtro alcança.
+
+const EMPRESA_DO_CASO = '2';
+const daFonte = empresaDaFonte();
+
+const t1Emp = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { empresa: [EMPRESA_DO_CASO] } });
+// A base do mês, recontada pela FONTE: cada lançamento vale pela empresa do arquivo em que ele está.
+const daEmpresaNaFonte = (emp) => baseDoMes.filter(({ d }) => daFonte.so(chaveDoMov(d), emp)).length;
+const t1PorEmpresa = EMPRESAS.map((emp) => daEmpresaNaFonte(emp));
+
+conferir({
+  tela: 'Tela 1',
+  filtro: `empresa = ${EMPRESA_DO_CASO}`,
+  onde: 'a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro (que é do Omie) e o cartão "Desp. Pendentes" inteiro, que sai dos títulos a pagar por vencimento',
+  caso: `a base do mês tem ${num(omieDoSaldo(t1Sem))} lançamentos, e nos arquivos crus do cache ${num(t1PorEmpresa[0])} deles só aparecem em arquivo da empresa 1 e ${num(t1PorEmpresa[1])} só em arquivo da empresa 2 — ${daFonte.ambas} das ${num(daFonte.mapa.size)} identidades lidas aparecem nos arquivos das duas, então o arquivo diz a empresa sem ambiguidade. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o de-para de \`EMP.\` não fecha`,
+  naTela: omieDoSaldo(t1Emp),
+  naFonte: daEmpresaNaFonte(EMPRESA_DO_CASO),
+  comoNaFonte: `os lançamentos da base do mês que só aparecem em arquivo \`${EMPRESA_DO_CASO}-financas-mf-ListarMovimentos…\` do cache, contados aqui um a um pela identidade \`nCodMovCC\` + \`nCodTitulo\` + \`cGrupo\``,
+});
+
 // ================================================================ Tela 2 — vários meses de uma vez
 //
 // DOIS CASOS, e o primeiro amarra o filtro em `docs/conferencia.md`. Escolher SÓ o mês conferido tem de dar, indicador
@@ -227,6 +276,34 @@ if (t2Dois) {
     comoNaFonte: `cada mês calculado sozinho, sem filtro, e somado aqui — ${NOMES_DOS_MESES[MES]} é o mês que \`docs/conferencia.md\` publica`,
   });
 }
+
+// ================================================================ Tela 2 — o filtro de empresa
+//
+// NA TELA 2 A PROVA É A SOMA: a tela é a soma das duas filiais, então escolher a empresa 1 e escolher a empresa 2 têm
+// de somar, indicador por indicador, o que a tela sem filtro mostra — e o lado do DFC tem de ficar PARADO nos três,
+// porque ele não se recorta por empresa. Se o filtro deixar um lançamento de fora ou contá-lo duas vezes, a soma quebra.
+
+const t2Emp1 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { empresa: ['1'] } });
+const t2Emp2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { empresa: ['2'] } });
+const idsT2 = indicadoresT2(t2Sem).map((i) => i.id);
+const contagemDe = (t, id) => indicadoresT2(t).find((x) => x.id === id).contagem;
+const somaPorEmpresa = idsT2.filter((id) => {
+  const sem = contagemDe(t2Sem, id), e1 = contagemDe(t2Emp1, id), e2 = contagemDe(t2Emp2, id);
+  const omieBate = (sem.omie ?? 0) === (e1.omie ?? 0) + (e2.omie ?? 0);
+  const dfcParado = sem.dfc === e1.dfc && sem.dfc === e2.dfc;
+  return omieBate && dfcParado;
+}).length;
+const omieDoMes = (t) => t.cobertura.find((c) => c.mes === MES).omie;
+
+conferir({
+  tela: 'Tela 2',
+  filtro: 'empresa = 1 e empresa = 2, somadas',
+  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela',
+  caso: `a coluna de ${NOMES_DOS_MESES[MES]} tem ${num(omieDoMes(t2Sem))} lançamentos do Omie sem filtro, ${num(omieDoMes(t2Emp1))} com a empresa 1 e ${num(omieDoMes(t2Emp2))} com a empresa 2; os ${idsT2.length} indicadores somam as duas empresas um a um, e a contagem do DFC de cada um fica igual nas três telas — é o filtro não alcançando o DFC, como \`docs/filtros.md\` diz`,
+  naTela: somaPorEmpresa,
+  naFonte: idsT2.length,
+  comoNaFonte: 'cada empresa calculada sozinha e somada aqui, indicador por indicador, contra a tela sem filtro — e a contagem do DFC conferida parada nas três',
+});
 
 // ================================================================ Tela 3 — vencimento, status, cliente, categoria
 //
@@ -323,6 +400,34 @@ conferir({
   naFonte: catQuantos,
   comoNaFonte: 'o mesmo conjunto cru da janela, recortado aqui pelo `cCodCateg` do `cabecTitulo`',
 });
+
+// ================================================================ Tela 3 — o filtro de empresa
+//
+// AQUI A FONTE É O ARQUIVO, como na Tela 1: os títulos crus de `PesquisarLancamentos` de cada empresa saem de arquivos
+// diferentes do cache (`titulosDaFonte` os lê por empresa), e o filtro tem de contar exatamente os de uma.
+//
+// A JANELA DO CASO É O ANO, e não o mês: no mês conferido a carteira a receber da MeuBESS é inteira da empresa 2, e um
+// filtro que não tira nada não prova nada. No ano a empresa 1 tem poucos títulos — e é justamente por ser o recorte
+// apertado que ele serve de caso: errar um título muda a contagem de cara.
+const EMPRESA_DA_TELA_3 = '1';
+const ANO_DE = `01/01/${ANO}`, ANO_ATE = `31/12/${ANO}`;
+const t3Emp = await calcularTela3({
+  raiz: RAIZ, ano: ANO, mes: MES, filtro: { de: ANO_DE, ate: ANO_ATE, empresa: [EMPRESA_DA_TELA_3] },
+});
+const naFonteAno = daFonteNaJanela(ANO_DE, ANO_ATE);
+const t3PorEmpresa = EMPRESAS.map((emp) => naFonteAno.filter((x) => x.emp === emp).length);
+const t3NoMes = EMPRESAS.map((emp) => naFonteMes.filter((x) => x.emp === emp).length);
+const umDaEmpresa = naFonteAno.find((x) => x.emp === EMPRESA_DA_TELA_3);
+conferir({
+  tela: 'Tela 3',
+  filtro: `empresa = ${EMPRESA_DA_TELA_3}, na janela de ${ANO_DE} a ${ANO_ATE}`,
+  onde: 'os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira',
+  caso: `dos ${num(naFonteAno.length)} títulos do ano nos arquivos crus, ${num(t3PorEmpresa[0])} estão em arquivo da empresa 1 e ${num(t3PorEmpresa[1])} em arquivo da empresa 2; o título \`${umDaEmpresa.cab.nCodTitulo}\` é um dos da empresa ${EMPRESA_DA_TELA_3}, com \`cStatus\` \`${umDaEmpresa.cab.cStatus}\` e vencimento ${umDaEmpresa.cab.dDtVenc}. Em ${NOMES_DOS_MESES[MES]} sozinho a carteira é inteira da empresa 2 (${num(t3NoMes[1])} de ${num(naFonteMes.length)} títulos), e escolher a empresa 2 ali não tira nenhum — é por isso que o caso é o do ano. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso`,
+  naTela: previsto(t3Emp),
+  naFonte: t3PorEmpresa[EMPRESAS.indexOf(EMPRESA_DA_TELA_3)],
+  comoNaFonte: `os \`titulosEncontrados\` lidos dos arquivos \`${EMPRESA_DA_TELA_3}-financas-pesquisartitulos-…\` do cache, recortados aqui pelo \`nCodCC\` da MeuBESS, pelo \`dDtVenc\` no ano e sem os \`CANCELADO\``,
+});
+
 
 // ================================================================ o bloco que vai para o documento
 

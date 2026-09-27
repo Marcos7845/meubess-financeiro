@@ -11,6 +11,11 @@
 //   ?cliente=2-1234567              empresa + `nCodCliente`, porque o código é próprio de cada empresa
 //   ?categoria=1.01.01              o `cCodCateg` do título
 //
+// E O QUINTO FILTRO, O DE EMPRESA (decisão do dono, 27/09/2026): `?empresa=2`, três escolhas exclusivas — empresa 1,
+// empresa 2 ou as duas —, desenhado por `app/empresa.js`, que as três telas usam. Nesta tela ele vale INTEIRO: os 4
+// cartões e os 4 blocos são do Omie, lido uma vez por empresa. As duas contagens do cadastro de clientes são a única
+// ressalva, e o bloco delas diz isso.
+//
 // O STATUS É PÍLULA, como o ano e o mês. Os outros três são campos, e vão juntos num formulário `GET`: apertar
 // "aplicar" escreve os três na URL de uma vez, que é o que um campo de data e uma lista longa pedem. Nenhum estado
 // mora no navegador — a captura da tela e um link colado no chat mostram exatamente a mesma coisa.
@@ -24,6 +29,7 @@ import { dadosDaTela3, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista, comoTexto, paraCampoDeData } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import FiltroDeEmpresa from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 
@@ -137,9 +143,11 @@ export default async function Pagina({ searchParams }) {
     filtro: {
       de: comoTexto(q?.de), ate: comoTexto(q?.ate),
       status: comoLista(q?.status), cliente: comoTexto(q?.cliente), categoria: comoTexto(q?.categoria),
+      empresa: comoLista(q?.empresa),
     },
   });
   const f = d.filtros;
+  const femp = f.empresa;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -161,6 +169,7 @@ export default async function Pagina({ searchParams }) {
     if (f.status.escolhidos.length) p.set('status', f.status.escolhidos.join(','));
     if (f.cliente.escolhido) p.set('cliente', f.cliente.escolhido);
     if (f.categoria.escolhido) p.set('categoria', f.categoria.escolhido);
+    if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
     for (const [k, v] of Object.entries(troca)) {
       if (v === null || v === '') p.delete(k); else p.set(k, String(v));
     }
@@ -170,6 +179,8 @@ export default async function Pagina({ searchParams }) {
     ? f.status.escolhidos.filter((x) => x !== chave)
     : [...f.status.escolhidos, chave]);
   const algumFiltro = f.vencimento.ativo || f.status.ativo || f.cliente.ativo || f.categoria.ativo;
+  // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
+  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
 
   return (
     <>
@@ -177,8 +188,8 @@ export default async function Pagina({ searchParams }) {
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Contas a Receber</span>
         <nav className="abas">
-          <a href={`/?ano=${ano}&mes=${mes}`}>Gestão de Contas</a>
-          <a href={`/dre?ano=${ano}&mes=${mes}`}>DRE</a>
+          <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
+          <a href={`/dre?ano=${ano}&mes=${mes}${paraOutraTela}`}>DRE</a>
           <span className="ativa">Contas a Receber</span>
           <span>Centro de Custo</span>
           <span>Fluxo de caixa</span>
@@ -212,10 +223,17 @@ export default async function Pagina({ searchParams }) {
         </span>
       </div>
 
+      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e, cliente: null })}>
+        Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a tela é do Omie inteira. As duas
+        contagens do cadastro de clientes continuam as duas, lado a lado, e o bloco delas diz isso. A lista de clientes
+        do filtro passa a ser só a desta empresa, porque o <code>nCodCliente</code> é próprio de cada uma.
+      </FiltroDeEmpresa>
+
       <div className="barra-filtros receber">
         <form className="filtros-form" method="get" action="/receber">
           <input type="hidden" name="ano" value={ano} />
           <input type="hidden" name="mes" value={mes} />
+          {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
           {f.status.escolhidos.length > 0 && <input type="hidden" name="status" value={f.status.escolhidos.join(',')} />}
           <label className="campo-filtro">
             <span>vencimento de</span>

@@ -364,7 +364,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `ece646d1a56e` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 16h33; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas).
+**De que leitura são as contagens desta tabela:** leitura `df3edc45cfea` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 19h20; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -374,7 +374,7 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`ece646d1a56e`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`df3edc45cfea`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |
@@ -458,7 +458,58 @@ escritas em caixa mista.
 `PARCIAL` e `SINAL` (quanto do projeto aquele recebimento cobriu); `TIPO` (D), com `PRIMEIRO DIA` / `ULTIMO DIA`;
 `EMP.` (A), com `B3W` em todos os meses e `N3` a partir de agosto. **Não está escrito em lugar nenhum da planilha qual
 `EMP.` é qual empresa do Omie** — o de-para entre `B3W` / `N3` e as filiais `/0001-42` e `/0002-23` não existe nos
-arquivos.
+arquivos. **Ele foi procurado no dado, em 27/09/2026, e NÃO EXISTE: nenhum dos dois rótulos é filial do Omie** — a prova,
+com as contagens do cruzamento, está em "A coluna `EMP.` não é a filial do Omie", logo abaixo.
+
+#### A coluna `EMP.` não é a filial do Omie (cruzamento de 27/09/2026)
+
+**Por que isto foi medido.** O filtro de empresa das três telas (decisão do dono, 27/09/2026: empresa 1, empresa 2 ou as
+duas) precisa saber se o lado do DFC pode ser recortado por empresa. A planilha tem a coluna `EMP.` e não diz o que ela
+significa; então o de-para foi procurado no ÚNICO caminho que existe sem perguntar: cruzar lançamento por lançamento
+pelos campos que os dois lados têm em comum — **data, valor e o nome do cliente/fornecedor**. Quem faz o cruzamento é
+[`scripts/de-para-empresa-dfc.mjs`](../scripts/de-para-empresa-dfc.mjs) (`node scripts/de-para-empresa-dfc.mjs`), só
+leitura, e ele imprime contagem, código e data — nunca valor em dinheiro, e o nome sai mascarado.
+
+**Como o cruzamento é feito.** Das 5.327 linhas do `FLUXO DE CAIXA` dos 12 arquivos, **4.670 são cruzáveis** (já
+baixadas e com `DIA PG` no mês do próprio arquivo — o mesmo recorte de linha que as telas usam). Do outro lado, os
+lançamentos do Omie no recorte da MeuBESS pelos mesmos três baldes das telas: **1.271 na empresa 1 e 2.298 na empresa 2**.
+Depois, dois níveis:
+
+| nível | como casa | por que não basta o de cima |
+|---|---|---|
+| 1 — data + valor | mesmo dia e mesmo valor em centavos, em cada empresa | duas contas do mesmo dia e do mesmo valor casam por acaso |
+| 2 — data + valor + **nome** | o mesmo do nível 1, e o nome de `FORNECEDOR / CLIENTE` igual ao nome do cadastro `geral/clientes` da empresa — sem acento, em maiúscula, sem as formas jurídicas (LTDA, ME, EIRELI…). Estrito: dois pedaços de nome em comum, um pedaço de 8 letras ou mais, ou um nome inteiro dentro do outro | é o nível que decide |
+
+**O resultado — o de-para NÃO FECHA, para nenhum dos dois rótulos:**
+
+| `EMP.` | linhas cruzáveis (no arquivo) | nível 1: só emp. 1 · só emp. 2 · nas duas · em nenhuma | nível 2 (com nome): só emp. 1 · só emp. 2 · nas duas · em nenhuma |
+|---|---|---|---|
+| `B3W` | 4.651 (5.202) | 897 · 1.324 · 133 · 2.297 | **565 · 481** · 66 · 3.539 |
+| `N3` | 18 (23) | 9 · 6 · 0 · 3 | **4 · 4** · 0 · 10 |
+| (vazio) | 1 (102) | 0 · 0 · 0 · 1 | 0 · 0 · 0 · 1 — não diz nada sobre empresa |
+
+**A prova, no mês conferido e no mesmo dia.** As duas linhas abaixo são `EMP.` = `B3W`, as duas do arquivo de agosto, as
+duas com `DIA PG` **03/08/2026**, e cada uma casa com uma empresa DIFERENTE — mesmo dia, mesmo valor, mesmo nome de
+fornecedor/cliente:
+
+| linha do `FLUXO DE CAIXA` de agosto | `EMP.` | `DIA PG` | casa com | no Omie |
+|---|---|---|---|---|
+| 4 | `B3W` | 03/08/2026 | **empresa 1** | `CONTA_A_PAGAR`, título `6026263192`, categoria `2.08.99` |
+| 9 | `B3W` | 03/08/2026 | **empresa 2** | `CONTA_A_RECEBER`, título `5279147389`, categoria `1.01.01` |
+
+E o mesmo vale para `N3`, também em agosto: a linha 169 (`DIA PG` 17/08/2026) casa com o título `6039461776` da
+**empresa 1**, e a linha 11 (`DIA PG` 03/08/2026) com o título `5290113869` da **empresa 2**.
+
+**O que `EMP.` é, então.** Não é a filial. As 23 linhas `N3` do ano têm a marca `N3` escrita também no nome do
+fornecedor/cliente ou na coluna `TITULO` da própria linha, e `B3W` é o rótulo de todo o resto — as duas filiais
+misturadas. O rótulo separa alguma outra coisa (uma frente de negócio, pelo que as próprias linhas mostram), e essa
+outra coisa não é o que as telas somam. `B3N` e `3N`, que aparecem na coluna `EMP.` das pastas de DFC das OUTRAS
+unidades, são rótulos daquelas pastas e não entram aqui.
+
+**Consequência para as telas, e é só esta:** o **filtro de empresa não vale em nenhum número que venha do DFC**. Cada
+cartão, bloco e linha de fonte DFC mostra o número das duas empresas somadas e escreve isso ao lado, junto do valor —
+`docs/filtros.md` lista todos, um a um. **Nenhuma regra de indicador muda por causa disto**, e nada aqui vira heurística:
+o código não adivinha empresa a partir de `EMP.`.
 
 **As outras abas** (não estão nos 12; aparecem e somem conforme o mês):
 
@@ -544,7 +595,11 @@ diz quem leva cada indicador. O resumo:
 - **Três planos de contas convivem**: os dois do Omie (187 códigos, ver "A soma das empresas 1 e 2") e as 69 contas de
   `SUB 2` do DFC, que não usam código nenhum.
 - **O recorte de empresa não bate de saída**: as telas somam as filiais `/0001-42` e `/0002-23` do Omie; o DFC separa
-  por `B3W` e `N3` e não diz qual é qual.
+  por `B3W` e `N3` e não diz qual é qual. **Esta lacuna está medida, e ela não fecha:** o cruzamento de 27/09/2026
+  (`scripts/de-para-empresa-dfc.mjs`) casou 565 linhas `B3W` só com a empresa 1 e 481 só com a empresa 2, por data,
+  valor e nome — duas delas no mesmo dia —, então `EMP.` **não é** a filial do Omie. Ver "A coluna `EMP.` não é a filial
+  do Omie (cruzamento de 27/09/2026)", acima. O filtro de empresa das três telas vale no lado do Omie e diz, em cada
+  número de fonte DFC, que ali não vale.
 - **O Omie tem outras unidades de negócio no mesmo CNPJ, e elas não são a MeuBESS** (explicação do dono, 24/09/2026; o DFC das três outras unidades foi lido em 24/09/2026 por `scripts/confronto-dfc-omie.mjs`, só leitura, e está em `docs/confronto-dfc-omie.html` (página local, fora do git)). **O único campo do Omie que separa é a conta corrente** (`detalhes.nCodCC`). Departamento **não** separa (a árvore inteira pende de uma raiz só, `MEU BESS`, e os filhos são setores), categoria, projeto e vendedor também não. **Esta lacuna está fechada:** o dono disse de que negócio é cada conta corrente, a lista está em `dados/contas-correntes-por-negocio.json` e é ela que as telas aplicam — ver "O recorte da MeuBESS: quais contas correntes são dela", logo abaixo. Nenhuma outra lacuna deste documento mudou, e nenhuma fonte foi trocada por causa disto.
 
 ### O recorte da MeuBESS: quais contas correntes são dela
@@ -713,7 +768,14 @@ conferência para e não grava nada.
 
 Referência: `referencias/tela-1-gestao-de-contas.jpg`
 
-**Filtros (valem para a tela inteira):** ano · mês (jan–dez) · centro de custo (seleção múltipla).
+**Filtros (valem para a tela inteira):** ano · mês (jan–dez) · centro de custo (seleção múltipla) · **empresa**.
+
+**E o filtro de EMPRESA (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou as duas** — o primeiro filtro que
+atravessa as três telas. Ele escolhe quais das filiais `/0001-42` e `/0002-23` entram na soma que estas telas sempre
+fizeram; as duas, ou nenhuma escolha, é a soma de sempre. No lado do Omie ele vale em toda contagem, no "Top 10
+receitas" (que é do Omie) e no cartão "Despesas pendentes" inteiro. **No lado do DFC não vale**, e o número diz isso
+ao lado: a coluna `EMP.` (`B3W` / `N3`) não é a filial do Omie — ver "A coluna `EMP.` não é a filial do Omie
+(cruzamento de 27/09/2026)", acima. Onde cada um vale, cartão por cartão, está em [`docs/filtros.md`](filtros.md).
 
 O filtro de centro de custo é aplicado no app sobre `movimentos[].departamentos[].nDistrValor`, porque a API não filtra
 por departamento; **as opções do filtro são os nomes dos departamentos, juntando as empresas 1 e 2 pelo nome, com o
@@ -785,8 +847,17 @@ de obra · telefonia · veículos · despesa bancária · despesa com sócios ·
 
 Referência: `referencias/tela-2-dre.jpg`
 
-**Filtros:** mês (seleção múltipla). **Botões:** análise horizontal (AH, variação contra o mês anterior) e análise
-vertical (AV, peso sobre a receita).
+**Filtros:** mês (seleção múltipla) · **empresa**. **Botões:** análise horizontal (AH, variação contra o mês
+anterior) e análise vertical (AV, peso sobre a receita).
+
+**E o filtro de EMPRESA (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou as duas** — o primeiro filtro que
+atravessa as três telas. Ele escolhe quais das filiais `/0001-42` e `/0002-23` entram na soma que estas telas sempre
+fizeram; as duas, ou nenhuma escolha, é a soma de sempre. Ele vale nas linhas e nos cartões cuja fonte principal é o
+Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e
+em toda contagem do Omie. **Não vale** nas linhas de fonte DFC (deduções, custos de vendas, impostos pagos) nem nos
+dois primeiros cartões do topo, e por consequência as linhas "(=)" que somam as duas fontes ficam com uma ponta
+filtrada e a outra não — cada uma diz isso na tela, porque a coluna `EMP.` do DFC não é a filial do Omie (ver o
+cruzamento de 27/09/2026, acima). Onde cada um vale está em [`docs/filtros.md`](filtros.md).
 
 A tela inteira sai de uma leitura só: `financas/mf` → `ListarMovimentos` **sem `cTpLancamento`** (o `CPCR` traz só os títulos e deixa de fora os lançamentos avulsos de conta corrente, `detalhes.cGrupo` em `CONTA_CORRENTE_PAG` e `CONTA_CORRENTE_REC`) e
 `dDtPagtoDe` / `dDtPagtoAte` cobrindo os meses do filtro, fora os `CANCELADO` e fora as **categorias de transferência**, que não são receita nem despesa (**decisão do dono, 25/09/2026, opção B:** as duas que o cadastro marca, `transferencia = "S"` — `0.01.01` Entrada de Transferência e `0.01.02` Saída de Transferência —, e mais as chamadas "Transferência" **sem** a marca: `1.04.96` e `2.05.98` nas duas empresas e `1.04.97` **só na empresa 1** — na empresa 2 esse código se chama "Prêmios de Seguros / Sinistros", não é transferência e conta como outra receita, decisão do dono de 25/09/2026, sem nenhum lançamento em 2026; cinco fora na empresa 1 e quatro na 2, e todas só aparecem no avulso: 37 entradas e 44 saídas de `0.01.01` / `0.01.02` na empresa 1, nenhuma na 2, mais 1 entrada na empresa 1 e 34 lançamentos na 2 pelas sem marca; ver "As categorias de transferência", acima) e fora o **par do adiantamento ao fornecedor**, que também é dinheiro andando entre duas contas da MeuBESS (**decisão do dono, 25/09/2026, opção A:** a conta `Adiantamento ao Fornecedor` passou a ser da MeuBESS e entrou no recorte; ficam fora das somas todo lançamento com `detalhes.cOrigem = "ADCR"` e todo lançamento de um título que tenha alguma linha com `detalhes.cOrigem = "ADCP"` — o título da ida e a baixa dele —, para a despesa contar uma vez só, quando o fornecedor é pago; ver "A conta Adiantamento ao Fornecedor", acima), somando `movimentos[].categorias[].nDistrValor` por `cCodCateg` no título e
@@ -849,7 +920,14 @@ contra o cadastro de contas do DRE (`ListarCadastroDRE`); a lista acima é a da 
 
 Referência: `referencias/tela-3-contas-a-receber.jpg`
 
-**Filtros:** data de vencimento (de–até) · status · cliente · categoria.
+**Filtros:** data de vencimento (de–até) · status · cliente · categoria · **empresa**.
+
+**E o filtro de EMPRESA (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou as duas** — o primeiro filtro que
+atravessa as três telas. Ele escolhe quais das filiais `/0001-42` e `/0002-23` entram na soma que estas telas sempre
+fizeram; as duas, ou nenhuma escolha, é a soma de sempre. Nesta tela ele vale **inteiro** — nos 4 cartões e nos 4
+blocos, no valor e na contagem —, porque a tela é do Omie inteira e a leitura é feita uma vez por empresa. A única
+ressalva são as duas contagens do cadastro de clientes, que continuam as duas, lado a lado. Ver
+[`docs/filtros.md`](filtros.md).
 
 A tela sai de uma chamada só: `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"`, e os quatro
 filtros indo direto para a API — vencimento em `dDtVencDe` / `dDtVencAte`, status em `cStatus`, cliente em

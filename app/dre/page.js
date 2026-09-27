@@ -9,6 +9,10 @@
 // As duas ligam e desligam pelos botões do topo, que são links — o estado mora na URL (`?ah=1&av=1`), não no
 // navegador, então a captura da tela e um link colado no chat mostram exatamente a mesma coisa.
 //
+// O FILTRO DE EMPRESA (decisão do dono, 27/09/2026) mora na mesma URL — `?empresa=2` —, e o desenho dele está em
+// `app/empresa.js`, que as três telas usam. Ele vale nas linhas e nos cartões de fonte Omie e em toda contagem do Omie;
+// nas linhas de fonte DFC e nas linhas "(=)" que misturam as duas fontes, a própria linha diz que não vale.
+//
 // O FILTRO DESTA TELA é o de `docs/fontes.md`: MÊS, seleção múltipla. Cada pílula de mês acende e apaga, e o que está
 // aceso vai para a URL (`?meses=5,6,7`), no mesmo lugar em que o `ah` e o `av` já moravam. Com meses escolhidos, a
 // tabela mostra só aquelas colunas, os cartões do topo somam os meses escolhidos e a coluna "Total" passa a ser o
@@ -23,6 +27,7 @@ import { dadosDaTela2, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import FiltroDeEmpresa from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 
@@ -110,12 +115,14 @@ export default async function Pagina({ searchParams }) {
   const comAh = q?.ah !== '0';
   const comAv = q?.av === '1';
   // O FILTRO DE MESES vem da URL como lista de números; quem o normaliza é `lib/regras/filtros.mjs`, no cálculo.
-  const d = await dadosDaTela2({ ano, mes, filtro: { meses: comoLista(q?.meses) } });
+  const d = await dadosDaTela2({ ano, mes, filtro: { meses: comoLista(q?.meses), empresa: comoLista(q?.empresa) } });
   const fMeses = d.filtros.meses;
+  const femp = d.filtros.empresa;
 
   const url = (troca) => {
     const p = new URLSearchParams({ ano: String(ano), mes: String(mes), ah: comAh ? '1' : '0', av: comAv ? '1' : '0' });
     if (fMeses.escolhidos.length) p.set('meses', fMeses.escolhidos.join(','));
+    if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
     for (const [k, v] of Object.entries(troca)) {
       if (v === null || v === '') p.delete(k); else p.set(k, String(v));
     }
@@ -134,6 +141,8 @@ export default async function Pagina({ searchParams }) {
 
   // "(+) Receitas" sobe é bom; "(−) alguma coisa" sobe é ruim. As linhas "(=)" seguem o resultado.
   const bomSubir = (linha) => linha.sinal !== '−';
+  // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
+  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
 
   return (
     <>
@@ -141,9 +150,9 @@ export default async function Pagina({ searchParams }) {
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">DRE — Demonstrativo de Resultados</span>
         <nav className="abas">
-          <a href={`/?ano=${ano}&mes=${mes}`}>Gestão de Contas</a>
+          <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
           <span className="ativa">DRE</span>
-          <a href={`/receber?ano=${ano}&mes=${mes}`}>Contas a Receber</a>
+          <a href={`/receber?ano=${ano}&mes=${mes}${paraOutraTela}`}>Contas a Receber</a>
         </nav>
       </header>
 
@@ -166,6 +175,14 @@ export default async function Pagina({ searchParams }) {
         <strong>Janeiro a março de 2026 ficam fora desta tela:</strong> o Omie tem poucos lançamentos da MeuBESS
         nesses três meses (decisão do dono, 27/09/2026).
       </p>
+
+      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e })}>
+        Ele vale em &quot;(+) Receitas&quot;, &quot;(=) Receita bruta&quot;, &quot;(−) Despesas gerais&quot;,
+        &quot;(+/−) Resultado financeiro&quot; e &quot;(=) sem conta&quot;, e em toda contagem do Omie da tabela. As
+        linhas de fonte DFC — deduções, custos de vendas e impostos pagos — e os dois primeiros cartões do topo dizem,
+        cada um, que o número é das duas empresas somadas; e as linhas &quot;(=)&quot; que misturam as duas fontes dizem
+        que uma das pontas não é filtrada. A última linha da tabela também: o lado do DFC dela é das duas empresas.
+      </FiltroDeEmpresa>
 
       <section className="cartoes dre">
         {d.cartoes.map((c) => <Cartao c={c} key={c.id} />)}

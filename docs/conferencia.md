@@ -48,7 +48,7 @@ lançamento, que é o que a consulta do mês devolveria. O **DFC** saiu das plan
 
 ## De que leitura são estes números
 
-Esta rodada leu o cache do Omie assim: **leitura `ece646d1a56e` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 16h33; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas)**. Tudo nesta página sai dessa leitura. As contagens de
+Esta rodada leu o cache do Omie assim: **leitura `df3edc45cfea` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 19h20; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas)**. Tudo nesta página sai dessa leitura. As contagens de
 janeiro a setembro, abaixo, também — e a MESMA rodada as escreveu no bloco gerado de
 [`docs/fontes.md`](fontes.md): o documento e esta página nunca podem ficar em leituras diferentes, porque quem grava
 os dois é a mesma passagem do script.
@@ -70,7 +70,7 @@ os dois lados saíam deste mesmo script. A coluna da direita mostra o que a **le
 (27/09/2026, 09h11–09h17), citada na prosa de `docs/fontes.md` indicador por indicador, dava: um número diferente ali
 não é erro, é o que a releitura mexeu.
 
-| o que | esta leitura (`ece646d1a56e`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`df3edc45cfea`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |

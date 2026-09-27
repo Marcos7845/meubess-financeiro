@@ -79,15 +79,21 @@ Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão 
 | **Tela 2 — DRE** | <http://127.0.0.1:4781/dre?ano=2026&mes=8> |
 | **Tela 3 — Contas a Receber** | <http://127.0.0.1:4781/receber?ano=2026&mes=8> |
 
-As **empresas 1 e 2 entram sempre somadas** e o recorte é o da MeuBESS.
+As **empresas 1 e 2 entram somadas** — e, desde 27/09/2026, o **filtro de empresa** (`?empresa=1`, `?empresa=2` ou as
+duas) escolhe quais das duas entram na soma, nas três telas. O recorte é o da MeuBESS.
 
 **Os filtros de cada tela moram na URL**, como as pílulas de ano e mês: a Tela 1 filtra por **centro de custo**
 (`?cc=FISCAL,TI`, seleção múltipla, juntando as duas empresas pelo nome do departamento), a Tela 2 por **vários meses de
-uma vez** (`?meses=7,8`) e a Tela 3 por **vencimento de–até, status, cliente e categoria**
-(`?de=2026-07-01&ate=2026-08-31&status=atrasado&cliente=2-…&categoria=1.01.03`). Onde o número vem de uma fonte que não
-aceita o filtro escolhido — um cartão do DFC diante do centro de custo, por exemplo —, o cartão **diz isso junto do
-número** em vez de mostrar valor sem filtro como se estivesse filtrado. Cada um desses lugares está listado em
-[`docs/filtros.md`](docs/filtros.md), com o caso real que o conferiu.
+uma vez** (`?meses=7,8`), a Tela 3 por **vencimento de–até, status, cliente e categoria**
+(`?de=2026-07-01&ate=2026-08-31&status=atrasado&cliente=2-…&categoria=1.01.03`), e as **três** por **empresa**
+(`?empresa=2`). Onde o número vem de uma fonte que não aceita o filtro escolhido — um cartão do DFC diante do centro de
+custo, por exemplo —, o cartão **diz isso junto do número** em vez de mostrar valor sem filtro como se estivesse
+filtrado. Cada um desses lugares está listado em [`docs/filtros.md`](docs/filtros.md), com o caso real que o conferiu.
+
+**O DFC não é filtrável por empresa, e isso foi medido.** A planilha tem a coluna `EMP.` (`B3W` / `N3`), mas nenhum dos
+dois rótulos é filial do Omie: o cruzamento de 27/09/2026 (`node scripts/de-para-empresa-dfc.mjs`, só leitura) casou 565
+linhas `B3W` só com a empresa 1 e 481 só com a empresa 2 — por data, valor e nome do cliente/fornecedor, duas delas no
+mesmo dia. A prova inteira está em [`docs/fontes.md`](docs/fontes.md), em "A coluna `EMP.` não é a filial do Omie".
 
 A **Tela 2 tem uma coluna por mês**, como a tela de referência, e ao lado de cada uma cabem a **análise horizontal**
 (quanto a coluna variou contra o mês anterior) e a **análise vertical** (quanto a linha pesa na receita líquida do
@@ -191,7 +197,10 @@ ou nome de cliente no HTML.
 Uma captura **com filtro aplicado** de cada tela fica ao lado delas:
 [`docs/tela-1-captura-filtro.html`](docs/tela-1-captura-filtro.html) (centro de custo = FISCAL),
 [`docs/tela-2-captura-filtro.html`](docs/tela-2-captura-filtro.html) (meses = julho e agosto) e
-[`docs/tela-3-captura-filtro.html`](docs/tela-3-captura-filtro.html) (status = atrasado). O `--q` do
+[`docs/tela-3-captura-filtro.html`](docs/tela-3-captura-filtro.html) (status = atrasado). E duas do **filtro de
+empresa**: [`docs/tela-1-captura-empresa.html`](docs/tela-1-captura-empresa.html) (empresa 2 — as contagens do DFC ficam
+como na captura sem filtro e as do Omie caem, com a frase do "não vale" ao lado de cada número do DFC) e
+[`docs/tela-3-captura-empresa.html`](docs/tela-3-captura-empresa.html) (empresa 1, no ano). O `--q` do
 `scripts/capturar-tela.mjs` acrescenta os filtros à URL e o `--nome` muda o fim do nome do arquivo:
 `node scripts/capturar-tela.mjs --tela 1 --q "cc=FISCAL" --nome filtro`.
 
@@ -204,8 +213,10 @@ Uma captura **com filtro aplicado** de cada tela fica ao lado delas:
 | `lib/dados.mjs` | a camada de dados do servidor: releitura de hora em hora e o "atualizar agora". |
 | `lib/regras/omie-releitura.mjs` | a releitura do Omie pelas telas: quais leituras, uma volta por vez, a hora da última. |
 | `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |
-| `lib/regras/filtros.mjs` | **os filtros das três telas, num lugar só:** como cada um é lido da URL e normalizado, e a junção dos dois cadastros de departamento pelo nome. Só os filtros que `docs/fontes.md` registra. |
+| `lib/regras/filtros.mjs` | **os filtros das três telas, num lugar só:** como cada um é lido da URL e normalizado, a junção dos dois cadastros de departamento pelo nome e o filtro de empresa, que as três telas dividem. Só os filtros que `docs/fontes.md` registra. |
 | `app/filtrado.js` | a frase que a tela escreve **junto do número** quando o filtro escolhido não alcança aquela fonte. |
+| `app/empresa.js` | a pílula de empresa, num lugar só para as três telas. |
+| `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis. |
 | `scripts/` | as leituras do Omie, a conferência e os testes. |
@@ -218,7 +229,8 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 ### O que ainda não existe
 
 Login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o login não
-existe, **o app roda só local**. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **empresa,
-fornecedor, conta corrente** e outros esperam decisão do dono. Também não existe o seletor **"ver por centro de custo
+existe, **o app roda só local**. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **fornecedor, conta
+corrente, categoria e situação nas Telas 1 e 2** e outros esperam decisão do dono (o de **empresa** existe desde
+27/09/2026, nas três telas). Também não existe o seletor **"ver por centro de custo
 (Omie)"** que `docs/fontes.md` descreve na linha do "Top 10 despesas" — ele trocaria as barras do DFC por barras do Omie
 agrupadas por departamento, e é uma forma de ver, não um filtro.

@@ -4,17 +4,19 @@
 // COMPONENTE DE SERVIDOR: o cálculo roda aqui, no Node, e para o navegador vai só o número já pronto. Nenhuma chave,
 // nenhum caminho de pasta e nenhum arquivo cruzam essa linha.
 //
-// OS FILTROS DESTA TELA são os de `docs/fontes.md`: ano · mês · CENTRO DE CUSTO (seleção múltipla). Os três moram na
-// URL, como as pílulas de ano e mês sempre moraram — `?ano=2026&mes=8&cc=TI,RH` —, e é por isso que um link colado no
-// chat e a captura da tela mostram exatamente a mesma coisa. O centro de custo é uma pílula por nome de departamento,
-// juntando as empresas 1 e 2 pelo nome (decisão do dono, 25/09/2026); clicar acende, clicar de novo apaga, e "todos"
-// limpa a escolha. Onde o filtro não alcança o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e
-// `docs/filtros.md`.
+// OS FILTROS DESTA TELA são os de `docs/fontes.md`: ano · mês · CENTRO DE CUSTO (seleção múltipla) · EMPRESA. Todos
+// moram na URL, como as pílulas de ano e mês sempre moraram — `?ano=2026&mes=8&cc=TI,RH&empresa=2` —, e é por isso que
+// um link colado no chat e a captura da tela mostram exatamente a mesma coisa. O centro de custo é uma pílula por nome
+// de departamento, juntando as empresas 1 e 2 pelo nome (decisão do dono, 25/09/2026); clicar acende, clicar de novo
+// apaga, e "todos" limpa a escolha. A EMPRESA (decisão do dono, 27/09/2026) são três escolhas exclusivas — empresa 1,
+// empresa 2 ou as duas — e o desenho dela mora em `app/empresa.js`, que as três telas usam. Onde um filtro não alcança
+// o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e `docs/filtros.md`.
 
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES, dois } from '../lib/regras/periodo.mjs';
 import { comoLista } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
+import FiltroDeEmpresa from './empresa.js';
 import Filtrado from './filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
@@ -74,8 +76,11 @@ export default async function Pagina({ searchParams }) {
   // O FILTRO DE CENTRO DE CUSTO vem da URL como lista de nomes; quem o resolve em código de departamento de cada
   // empresa é `lib/regras/filtros.mjs`, dentro do cálculo, contra o cadastro que o cache tem.
   const cc = comoLista(q?.cc);
-  const d = await dadosDaTela1({ ano, mes, filtro: { cc } });
+  // O FILTRO DE EMPRESA vai cru do mesmo jeito: `lib/regras/filtros.mjs` o normaliza dentro do cálculo.
+  const empresa = comoLista(q?.empresa);
+  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa } });
   const fcc = d.filtros.cc;
+  const femp = d.filtros.empresa;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -87,14 +92,17 @@ export default async function Pagina({ searchParams }) {
 
   // A URL da tela com uma troca: é assim que cada pílula sabe para onde levar, e é o único lugar onde o estado do
   // filtro é escrito. `cc` sai da URL quando a escolha fica vazia, para o link do sem-filtro ser o de sempre.
-  const url = ({ ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos }) => {
+  const url = ({ ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos, empresa: e = (femp.ativo ? femp.escolhidas : []) }) => {
     const p = new URLSearchParams({ ano: String(a), mes: String(m) });
     if (c.length) p.set('cc', c.join(','));
+    if (e.length) p.set('empresa', e.join(','));
     return `/?${p}`;
   };
   const alternar = (nome) => (fcc.escolhidos.includes(nome)
     ? fcc.escolhidos.filter((x) => x !== nome)
     : [...fcc.escolhidos, nome]);
+  // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
+  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
 
   return (
     <>
@@ -103,8 +111,8 @@ export default async function Pagina({ searchParams }) {
         <span className="titulo">Gestão de Contas</span>
         <nav className="abas">
           <span className="ativa">Dashboard</span>
-          <a href={`/dre?ano=${ano}&mes=${mes}`}>DRE</a>
-          <a href={`/receber?ano=${ano}&mes=${mes}`}>Contas a Receber</a>
+          <a href={`/dre?ano=${ano}&mes=${mes}${paraOutraTela}`}>DRE</a>
+          <a href={`/receber?ano=${ano}&mes=${mes}${paraOutraTela}`}>Contas a Receber</a>
           <span>Centro de Custo</span>
           <span>Fluxo de caixa</span>
         </nav>
@@ -161,6 +169,12 @@ export default async function Pagina({ searchParams }) {
           ))}
         </span>
       </div>
+
+      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e ? [e] : [] })}>
+        Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
+        cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC não:
+        cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
+      </FiltroDeEmpresa>
 
       <p className="aviso leve">
         {fcc.aplicado

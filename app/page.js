@@ -4,18 +4,28 @@
 // COMPONENTE DE SERVIDOR: o cálculo roda aqui, no Node, e para o navegador vai só o número já pronto. Nenhuma chave,
 // nenhum caminho de pasta e nenhum arquivo cruzam essa linha.
 //
-// OS FILTROS DESTA TELA são os de `docs/fontes.md`: ano · mês · CENTRO DE CUSTO (seleção múltipla) · EMPRESA. Todos
-// moram na URL, como as pílulas de ano e mês sempre moraram — `?ano=2026&mes=8&cc=TI,RH&empresa=2` —, e é por isso que
-// um link colado no chat e a captura da tela mostram exatamente a mesma coisa. O centro de custo é uma pílula por nome
-// de departamento, juntando as empresas 1 e 2 pelo nome (decisão do dono, 25/09/2026); clicar acende, clicar de novo
-// apaga, e "todos" limpa a escolha. A EMPRESA (decisão do dono, 27/09/2026) são três escolhas exclusivas — empresa 1,
-// empresa 2 ou as duas — e o desenho dela mora em `app/empresa.js`, que as três telas usam. Onde um filtro não alcança
-// o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e `docs/filtros.md`.
+// OS FILTROS DESTA TELA. Os de `docs/fontes.md` — ano · mês · CENTRO DE CUSTO (seleção múltipla) — mais a EMPRESA e os
+// quatro que o dono aprovou em 27/09/2026. Todos moram na URL, como as pílulas de ano e mês sempre moraram, e é por
+// isso que um link colado no chat e a captura da tela mostram exatamente a mesma coisa:
+//
+//   ?cc=TI,RH                        centro de custo, pílula por nome de departamento (decisão do dono, 25/09/2026)
+//   ?empresa=2                       empresa 1, empresa 2 ou as duas — `app/empresa.js`, as três telas
+//   ?conta=Caixinha,Stone            conta bancária — `app/conta.js`, as três telas
+//   ?situacao=pago,recebido          situação: os três rótulos da coluna `PAGAMENTO` do DFC
+//   ?classe=RECEITA DE CLIENTE       categoria, a ponta do DFC: a `CLASS. CONTABIL` que os cartões já usam
+//   ?categoria=1.01.01               categoria, a ponta do Omie: o `cCodCateg` do lançamento
+//   ?fornecedor=2-1234567            cliente/fornecedor: empresa + `nCodCliente`, como o cliente da Tela 3
+//
+// As pílulas são as escolhas curtas; as três listas longas (classificação, categoria e cliente/fornecedor) vão juntas
+// num formulário `GET`, como na Tela 3 — apertar "aplicar" escreve as três na URL de uma vez. Nenhum estado mora no
+// navegador. Onde um filtro não alcança o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e
+// `docs/filtros.md`.
 
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES, dois } from '../lib/regras/periodo.mjs';
-import { comoLista } from '../lib/regras/filtros.mjs';
+import { comoLista, comoTexto } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
+import FiltroDeConta from './conta.js';
 import FiltroDeEmpresa from './empresa.js';
 import Filtrado from './filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
@@ -76,11 +86,22 @@ export default async function Pagina({ searchParams }) {
   // O FILTRO DE CENTRO DE CUSTO vem da URL como lista de nomes; quem o resolve em código de departamento de cada
   // empresa é `lib/regras/filtros.mjs`, dentro do cálculo, contra o cadastro que o cache tem.
   const cc = comoLista(q?.cc);
-  // O FILTRO DE EMPRESA vai cru do mesmo jeito: `lib/regras/filtros.mjs` o normaliza dentro do cálculo.
+  // OS OUTROS FILTROS VÃO CRUS DO MESMO JEITO: `lib/regras/filtros.mjs` normaliza cada um dentro do cálculo, e é lá
+  // que mora a única definição de cada um.
   const empresa = comoLista(q?.empresa);
-  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa } });
+  const conta = comoLista(q?.conta);
+  const situacao = comoLista(q?.situacao);
+  const classe = comoLista(q?.classe);
+  const categoria = comoLista(q?.categoria);
+  const fornecedor = comoTexto(q?.fornecedor);
+  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa, conta, situacao, classe, categoria, fornecedor } });
   const fcc = d.filtros.cc;
   const femp = d.filtros.empresa;
+  const fconta = d.filtros.conta;
+  const fsit = d.filtros.situacao;
+  const fclasse = d.filtros.classe;
+  const fcat = d.filtros.categoria;
+  const ffor = d.filtros.fornecedor;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -92,17 +113,30 @@ export default async function Pagina({ searchParams }) {
 
   // A URL da tela com uma troca: é assim que cada pílula sabe para onde levar, e é o único lugar onde o estado do
   // filtro é escrito. `cc` sai da URL quando a escolha fica vazia, para o link do sem-filtro ser o de sempre.
-  const url = ({ ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos, empresa: e = (femp.ativo ? femp.escolhidas : []) }) => {
+  const url = ({
+    ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos, empresa: e = (femp.ativo ? femp.escolhidas : []),
+    conta: ct = fconta.escolhidas, situacao: st = fsit.escolhidos,
+    classe: cl = fclasse.escolhidos, categoria: ca = fcat.escolhidos, fornecedor: fo = ffor.escolhido,
+  }) => {
     const p = new URLSearchParams({ ano: String(a), mes: String(m) });
     if (c.length) p.set('cc', c.join(','));
     if (e.length) p.set('empresa', e.join(','));
+    if (ct.length) p.set('conta', ct.join(','));
+    if (st.length) p.set('situacao', st.join(','));
+    if (cl.length) p.set('classe', cl.join(','));
+    if (ca.length) p.set('categoria', ca.join(','));
+    if (fo) p.set('fornecedor', fo);
     return `/?${p}`;
   };
-  const alternar = (nome) => (fcc.escolhidos.includes(nome)
-    ? fcc.escolhidos.filter((x) => x !== nome)
-    : [...fcc.escolhidos, nome]);
-  // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
-  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
+  // Clicar acende, clicar de novo apaga — para os três filtros de seleção múltipla desta tela.
+  const alternarEm = (lista) => (nome) => (lista.includes(nome) ? lista.filter((x) => x !== nome) : [...lista, nome]);
+  const alternar = alternarEm(fcc.escolhidos);
+  const alternarConta = alternarEm(fconta.escolhidas);
+  const alternarSituacao = alternarEm(fsit.escolhidos);
+  // A EMPRESA E A CONTA ESCOLHIDAS ATRAVESSAM AS ABAS: são os dois filtros das três telas, e trocar de tela não pode
+  // desfazê-los.
+  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
 
   return (
     <>
@@ -175,6 +209,108 @@ export default async function Pagina({ searchParams }) {
         cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC não:
         cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
       </FiltroDeEmpresa>
+
+      <FiltroDeConta f={fconta} href={(l) => url({ conta: l })} alternar={alternarConta}>
+        Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
+        &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas os
+        rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
+        (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas cruzáveis
+        do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e as
+        contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
+      </FiltroDeConta>
+
+      {fsit.desconhecidos.length > 0 && (
+        <p className="aviso leve">
+          <strong>Situação que não existe:</strong> {fsit.desconhecidos.join(', ')}. Foi ignorada — as três são as da
+          coluna <code>PAGAMENTO</code> do <code>FLUXO DE CAIXA</code>: pago, recebido e a pagar.
+        </p>
+      )}
+
+      <div className="barra-filtros">
+        <span className="rotulo-filtro">situação</span>
+        <span className="grupo">
+          <a className={`pilula limpar${fsit.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ situacao: [] })}>todas</a>
+          {fsit.opcoes.map((o) => (
+            <a className={`pilula${fsit.escolhidos.includes(o.chave) ? ' ativa' : ''}`}
+              href={url({ situacao: alternarSituacao(o.chave) })} key={o.chave}
+              title={`${o.nome}: coluna PAGAMENTO = ${o.dfc.join(', ')}`}>{o.nome}</a>
+          ))}
+        </span>
+      </div>
+
+      <p className="aviso leve">
+        {fsit.ativo
+          ? <>
+            <strong>Filtrado por situação:</strong> {fsit.escolhidos.join(', ')}. Este é o único dos filtros novos que
+            alcança o VALOR do DFC: os três rótulos são, letra por letra, os da coluna <code>PAGAMENTO</code> (N) do
+            {' '}<code>FLUXO DE CAIXA</code>. Do lado do Omie o de-para é a natureza do lançamento — a leitura das
+            Telas 1 e 2 é de caixa e tudo nela já está baixado —, e &quot;a pagar&quot; é o cartão
+            {' '}&quot;Desp. Pendentes&quot;, que sai dos títulos a pagar por vencimento sem baixa.
+          </>
+          : <>
+            <strong>Sem filtro de situação:</strong> a tela mostra as três. No DFC do mês há
+            {' '}{fsit.noDfc.pago} linhas <code>PAGO</code>, {fsit.noDfc.recebido} <code>RECEBIDO</code> e
+            {' '}{fsit.noDfc['a-pagar']} <code>A PAGAR</code> — a linha <code>A PAGAR</code> nunca entra nesta tela,
+            que é de caixa, e por isso &quot;a pagar&quot; aqui é só o cartão &quot;Desp. Pendentes&quot;.
+            {fsit.foraDosTres > 0 && <> Outras {fsit.foraDosTres} linhas do mês têm um rótulo de
+              {' '}<code>PAGAMENTO</code> que não é nenhum dos três, e ficam fora de qualquer escolha.</>}
+          </>}
+      </p>
+
+      {(fclasse.desconhecidos.length > 0 || fcat.desconhecidos.length > 0) && (
+        <p className="aviso leve">
+          <strong>Categoria que não tem lançamento neste mês:</strong>{' '}
+          {[...fclasse.desconhecidos, ...fcat.desconhecidos].join(', ')}. Foi ignorada — as opções saem do próprio mês,
+          e não do cadastro inteiro: escolher uma categoria sem lançamento aqui só daria tela vazia.
+        </p>
+      )}
+
+      <div className="barra-filtros">
+        <form className="filtros-form" method="get" action="/">
+          <input type="hidden" name="ano" value={ano} />
+          <input type="hidden" name="mes" value={mes} />
+          {fcc.escolhidos.length > 0 && <input type="hidden" name="cc" value={fcc.escolhidos.join(',')} />}
+          {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
+          {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
+          {fsit.escolhidos.length > 0 && <input type="hidden" name="situacao" value={fsit.escolhidos.join(',')} />}
+          <label className="campo-filtro">
+            <span>categoria — classificação do DFC ({fclasse.opcoes.length} no mês)</span>
+            <select name="classe" defaultValue={fclasse.escolhidos[0] ?? ''}>
+              <option value="">todas</option>
+              {fclasse.opcoes.map((o) => <option value={o} key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="campo-filtro">
+            <span>categoria — a do Omie ({fcat.opcoes.length} no mês)</span>
+            <select name="categoria" defaultValue={fcat.escolhidos[0] ?? ''}>
+              <option value="">todas</option>
+              {fcat.opcoes.map((o) => <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>)}
+            </select>
+          </label>
+          <label className="campo-filtro">
+            <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
+            <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
+              <option value="">todos</option>
+              {ffor.opcoes.map((o) => (
+                <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
+                  {o.nome ?? `cliente ${o.codigo}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="botao filtro" type="submit">aplicar</button>
+          <a className="pilula limpar" href={url({ classe: [], categoria: [], fornecedor: null })}>limpar</a>
+        </form>
+      </div>
+
+      <p className="aviso leve">
+        <strong>A categoria tem duas pontas, e não é descuido:</strong> a classificação do DFC
+        (<code>CLASS. CONTABIL</code>, a mesma que o &quot;Top 10 despesas&quot; agrupa) recorta o lado do DFC, e a
+        categoria do Omie (<code>cCodCateg</code>) recorta o lado do Omie. As duas fontes não escrevem o de-para entre
+        os dois vocabulários, então escolher uma ponta só não recorta a outra — e cada número diz isso ali mesmo. O
+        cliente/fornecedor é só do lado do Omie: no DFC ele é um nome digitado à mão, sem código, e 76% das linhas
+        cruzáveis de 2026 não acham nome nenhum no cadastro.
+      </p>
 
       <p className="aviso leve">
         {fcc.aplicado

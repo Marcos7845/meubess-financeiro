@@ -12,9 +12,13 @@
 // `class="cliente"` e `data-codigo="…"`, e a troca abaixo põe o código no lugar do nome. A trava do fim recusa a
 // captura se sobrar um único `data-codigo`.
 //
+// E COM FILTRO. `--q` acrescenta à URL os filtros da tela (os de `docs/filtros.md`, que moram na query), e `--nome`
+// muda o fim do nome do arquivo para a captura filtrada não sobrescrever a de sempre.
+//
 //   npm run dev                                   # (o app precisa estar no ar, em http://localhost:4781)
 //   node scripts/capturar-tela.mjs --tela 1
 //   node scripts/capturar-tela.mjs --tela 2 --mes 8 --ano 2026 --url http://localhost:4781
+//   node scripts/capturar-tela.mjs --tela 1 --q "cc=TI" --nome filtro
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,6 +30,10 @@ const URL_BASE = arg('--url', 'http://localhost:4781');
 const ANO = Number(arg('--ano', '2026'));
 const MES = Number(arg('--mes', '8'));
 const TELA = Number(arg('--tela', '1'));
+// Os filtros da tela, como eles vão na URL: `--q "cc=TI"`, `--q "meses=7,8"`, `--q "status=atrasado&categoria=1.01.01"`.
+const EXTRA_Q = arg('--q', '');
+// O fim do nome do arquivo. Sem ele, a captura é a de sempre: `docs/tela-N-captura.html`.
+const NOME = arg('--nome', '');
 
 // Cada tela: a rota que a serve, o título da captura e a frase que explica o que sobrou de número.
 const TELAS = {
@@ -50,9 +58,11 @@ const TELAS = {
 
 const tela = TELAS[TELA];
 if (!tela) { console.error(`--tela ${TELA} não existe; as que existem são ${Object.keys(TELAS).join(' e ')}`); process.exit(1); }
-const SAIDA = path.join(RAIZ, 'docs', `tela-${TELA}-captura.html`);
+if (NOME && !/^[a-z0-9-]+$/.test(NOME)) { console.error(`--nome aceita só letras minúsculas, números e hífen; veio ${JSON.stringify(NOME)}`); process.exit(1); }
+const SAIDA = path.join(RAIZ, 'docs', `tela-${TELA}-captura${NOME ? `-${NOME}` : ''}.html`);
 
 const q = new URLSearchParams({ ano: String(ANO), mes: String(MES), ...(tela.extra ?? {}) });
+for (const [k, v] of new URLSearchParams(EXTRA_Q)) q.set(k, v);
 const bruto = await (await fetch(`${URL_BASE}${tela.rota}?${q}`)).text();
 
 // O miolo da página, sem nada de script.
@@ -69,6 +79,15 @@ corpo = corpo.replace(/<span[^>]*class="cliente"[^>]*>[\s\S]*?<\/span>/g, (todo)
   const cod = /data-codigo="(\d+)"/.exec(todo)?.[1];
   return `<span class="cliente">${cod ? `cliente ${cod}` : 'cliente'}</span>`;
 });
+
+// E A LISTA DO FILTRO DE CLIENTE TAMBÉM. O filtro da Tela 3 tem um `<select>` com um `<option>` por cliente da janela,
+// e cada um leva o mesmo `data-codigo` da tela: a troca é a mesma, num `<option>` em vez de num `<span>`.
+corpo = corpo.replace(/<option([^>]*)data-codigo="(\d+)"([^>]*)>[\s\S]*?<\/option>/g,
+  (todo, antes, cod, depois) => {
+    const valor = /value="([^"]*)"/.exec(`${antes} ${depois}`)?.[1] ?? '';
+    const escolhido = /selected/.test(`${antes} ${depois}`) ? ' selected' : '';
+    return `<option value="${valor}"${escolhido}>cliente ${cod}</option>`;
+  });
 
 // O DINHEIRO SAI. O formato é o do `Intl` em pt-BR (a marca da moeda, espaço fino, milhar com ponto).
 const MOEDA = /-?R\$[\s  ]*[\d.]+(?:,\d{2})?/g;
@@ -101,7 +120,7 @@ ${css}
 </head>
 <body>
 <p class="nota">
-  <strong>Captura da ${tela.titulo}</strong> — a página que o app serve, de ${String(MES).padStart(2, '0')}/${ANO}, com
+  <strong>Captura da ${tela.titulo}</strong> — a página que o app serve, de ${String(MES).padStart(2, '0')}/${ANO}${EXTRA_Q ? `, com o filtro <code>${EXTRA_Q.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</code> aplicado` : ''}, com
   <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
   <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
   <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.

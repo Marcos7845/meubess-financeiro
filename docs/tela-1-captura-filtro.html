@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeuBESS · Tela 1 — Gestão de Contas (captura sem valores)</title>
+<style>
+/* AS CORES DA MARCA MEUBESS FICAM TODAS AQUI, e em nenhum outro lugar.
+ *
+ * As cinco abaixo saem de pixel real das três imagens que o dono mandou em 27/09/2026 (`public/marca/` e
+ * `C:/Users/vrmfe/Central de Comando/workspace/data/anexos/meubess-as-3-telas-construidas/`), amostradas com
+ * Pillow — nenhuma é inventada:
+ *   --marca-escura   #102040  cor sólida de `LOGO MEU BESS AZUL.png` (ícone e "MeuBess"), a mesma do texto em `Ativo 7.png`
+ *   --marca          #004888  tom médio do degradê de `Ativo 4PNG.png` (o mesmo tom aparece em `Ativo 7.png`)
+ *   --marca-clara    #0060a8  tom claro-médio do mesmo degradê
+ *   --destaque       #0079cb  ponta mais clara do degradê (canto superior esquerdo do ícone)
+ *   --destaque-escuro #002242  ponta mais escura do degradê (canto inferior direito do ícone)
+ *
+ * O LAYOUT é o de `docs/referencias/tela-1-gestao-de-contas.jpg`; as cores daquela imagem NÃO valem (o próprio
+ * `docs/referencias/LEIAME.md` diz isso).
+ */
+
+:root {
+  /* marca */
+  --marca-escura: #102040;
+  --marca: #004888;
+  --marca-clara: #0060a8;
+  --destaque: #0079cb;
+  --destaque-escuro: #002242;
+
+  /* leitura de números */
+  --positivo: #1c8f5a;
+  --negativo: #c4453b;
+
+  /* superfícies */
+  --fundo: #eef1f5;
+  --cartao: #ffffff;
+  --borda: #d5dbe4;
+  --texto: #16202e;
+  --texto-fraco: #5d6b7e;
+  --texto-claro: #ffffff;
+
+  --raio: 8px;
+  --sombra: 0 1px 3px rgba(13, 36, 64, .12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+a { color: inherit; }
+
+/* ---------------------------------------------------------------- topo */
+.topo {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--marca-escura); color: var(--texto-claro);
+  padding: 0 16px; height: 46px;
+}
+.topo .logo { height: 24px; width: auto; display: block; filter: brightness(0) invert(1); }
+.topo .titulo {
+  font-size: 19px; font-weight: 600;
+  border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 18px;
+}
+.abas { display: flex; gap: 6px; margin-left: auto; }
+.abas span, .abas a {
+  padding: 5px 14px; border-radius: var(--raio); font-size: 12.5px; text-decoration: none;
+  background: var(--marca); color: var(--texto-claro); opacity: .75;
+}
+.abas .ativa { background: var(--destaque); color: var(--marca-escura); font-weight: 600; opacity: 1; }
+
+/* ---------------------------------------------------------------- cartões */
+.cartoes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 12px; }
+.cartao {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  padding: 9px 11px; box-shadow: var(--sombra); min-width: 0;
+}
+.cartao .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cartao .numero { font-size: 21px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
+.cartao .numero.neg { color: var(--negativo); }
+.cartao .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+
+/* ---------------------------------------------------------------- grade */
+.grade { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; padding: 0 12px 12px; align-items: start; }
+.painel {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  box-shadow: var(--sombra); overflow: hidden;
+}
+.painel > h2 {
+  margin: 0; padding: 7px 11px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px;
+  background: var(--marca); color: var(--texto-claro);
+}
+.painel > h2.alt { background: var(--destaque); color: var(--marca-escura); }
+.painel .corpo { padding: 10px 11px; }
+.larga { grid-column: 1 / -1; }
+
+/* ---------------------------------------------------------------- barras horizontais (Top 10) */
+.barras { display: flex; flex-direction: column; gap: 6px; }
+.barra { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; font-size: 11.5px; }
+.barra .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-fraco); }
+.barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
+.barra .preenche { background: var(--marca-clara); height: 100%; border-radius: 3px; }
+.barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ---------------------------------------------------------------- filtros */
+.filtros { display: flex; flex-wrap: wrap; gap: 5px; }
+.filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
+.pilula {
+  display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11.5px; text-decoration: none;
+  background: var(--fundo); border: 1px solid var(--borda); color: var(--texto-fraco);
+}
+.pilula.ativa { background: var(--marca); border-color: var(--marca); color: var(--texto-claro); font-weight: 600; }
+.legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
+.legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+.chave.rec { background: var(--marca-clara); }
+.chave.desp { background: var(--destaque); }
+
+/* ---------------------------------------------------------------- colunas por dia */
+.dias { display: flex; align-items: flex-end; gap: 2px; height: 130px; }
+.dia { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; min-width: 0; }
+.dia .rec { background: var(--marca-clara); border-radius: 1px 1px 0 0; }
+.dia .desp { background: var(--destaque); border-radius: 0 0 1px 1px; }
+.dia .n { font-size: 8px; text-align: center; color: var(--texto-fraco); }
+
+/* ---------------------------------------------------------------- rodapé */
+.rodape {
+  padding: 9px 12px 20px; font-size: 11px; color: var(--texto-fraco);
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+}
+.botao {
+  background: var(--destaque); color: var(--marca-escura); border: 0; border-radius: var(--raio);
+  padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.botao:disabled { opacity: .55; cursor: default; }
+.aviso {
+  background: #fff6e3; border: 1px solid var(--destaque); border-radius: var(--raio);
+  padding: 8px 11px; margin: 0 12px 10px; font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- Tela 2: cartões do DRE
+ *
+ * São 5, e não 7 como na Tela 1, e cada um leva a fita dos doze meses embaixo do número. */
+.cartoes.dre { grid-template-columns: repeat(5, 1fr); }
+.cartao.dre { position: relative; }
+.cartao.dre .fita { display: block; width: 100%; height: 24px; margin: 4px 0 2px; color: var(--marca-clara); }
+.cartao.dre .numero.neg + .fita { color: var(--negativo); }
+
+/* ---------------------------------------------------------------- Tela 2: a barra de filtros */
+.barra-filtros {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 0 12px 10px;
+}
+.barra-filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
+.barra-filtros .grupo + .grupo { margin-left: auto; }
+
+/* ---------------------------------------------------------------- Tela 2: a tabela do DRE */
+.tabela-dre { margin: 0 12px 12px; }
+.tabela-dre .rolagem { overflow-x: auto; }
+.dre-tabela { border-collapse: collapse; font-size: 11.5px; white-space: nowrap; min-width: 100%; }
+.dre-tabela th, .dre-tabela td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: right; }
+.dre-tabela thead th {
+  background: var(--fundo); color: var(--texto-fraco); font-weight: 600; text-align: center;
+  position: sticky; top: 0;
+}
+.dre-tabela thead th.escolhido { background: var(--destaque); color: var(--marca-escura); }
+.dre-tabela thead th.total { background: var(--marca); color: var(--texto-claro); }
+.dre-tabela th.sub { font-size: 10px; text-transform: uppercase; letter-spacing: .3px; }
+.dre-tabela .grupo-col {
+  text-align: left; font-weight: 500; position: sticky; left: 0; z-index: 1;
+  background: var(--cartao); min-width: 210px; max-width: 210px; overflow: hidden; text-overflow: ellipsis;
+}
+.dre-tabela thead .grupo-col { background: var(--fundo); }
+.dre-tabela .num { font-variant-numeric: tabular-nums; }
+.dre-tabela .num.total { font-weight: 600; background: rgba(20, 58, 99, .05); }
+.dre-tabela .ah-col, .dre-tabela .av-col { color: var(--texto-fraco); }
+.dre-tabela .ah.up { color: var(--positivo); }
+.dre-tabela .ah.down { color: var(--negativo); }
+.dre-tabela .ah.vazio { opacity: .45; }
+.dre-tabela .cabeca-grupo td {
+  text-align: left; background: var(--fundo); color: var(--texto-fraco);
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; padding: 5px 8px;
+}
+.dre-tabela .linha-total th, .dre-tabela .linha-total td { font-weight: 700; background: rgba(31, 82, 137, .09); }
+.dre-tabela .linha-total .grupo-col { background: #e3eaf3; }
+.dre-tabela .linha-detalhe th, .dre-tabela .linha-detalhe td { color: var(--texto-fraco); }
+.dre-tabela .linha-detalhe .grupo-col { padding-left: 20px; font-weight: 400; }
+.dre-tabela .linha-fora th, .dre-tabela .linha-fora td { font-style: italic; opacity: .8; }
+.rodape-tabela { padding: 8px 11px 10px; margin: 0; }
+.aviso.leve { background: var(--cartao); border-color: var(--borda); color: var(--texto-fraco); }
+.dre-tabela tfoot .cobertura th, .dre-tabela tfoot .cobertura td {
+  font-size: 10.5px; color: var(--texto-fraco); background: var(--fundo); border-top: 2px solid var(--borda);
+  text-align: center;
+}
+.dre-tabela tfoot .cobertura .grupo-col { text-align: left; font-weight: 600; }
+
+/* ---------------------------------------------------------------- Tela 3: as três faixas
+ *
+ * O de-para dos `cStatus` do Omie para pago / atrasado / em aberto é decisão do dono (25/09/2026) e mora em
+ * `lib/regras/listas.mjs`; aqui só ficam as cores de cada faixa, uma vez, para a coluna, a barra, a rosca, a
+ * legenda e o selo da lista lerem todas o mesmo. */
+.f-pago { background: var(--positivo); }
+.f-atrasado { background: var(--negativo); }
+.f-aberto { background: var(--destaque); }
+
+/* ---------------------------------------------------------------- Tela 3: cartões do topo
+ *
+ * São 4, e cada um leva o disco colorido da referência à esquerda do número. */
+.cartoes.receber { grid-template-columns: repeat(4, 1fr); }
+.cartao.receber { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.cartao.receber .disco { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; }
+.cartao.receber .disco.marca { background: var(--marca); }
+.cartao.receber .texto { display: flex; flex-direction: column; min-width: 0; }
+.cartao.receber .numero { font-size: 23px; }
+
+/* ---------------------------------------------------------------- Tela 3: a grade e a barra de filtros
+ *
+ * São três grupos na barra, e não dois como na Tela 2: o ano e os meses ficam juntos à esquerda, e só a janela de
+ * vencimento — que é leitura, não botão — vai para a direita. */
+.grade.receber { grid-template-columns: 1.55fr 1fr; }
+.barra-filtros.receber .grupo + .grupo { margin-left: 0; }
+.barra-filtros.receber .grupo:last-child { margin-left: auto; }
+.pilula.fixa { background: var(--cartao); color: var(--texto-fraco); cursor: default; }
+
+/* ---------------------------------------------------------------- Tela 3: colunas empilhadas por mês */
+.colunas { display: flex; align-items: flex-end; gap: 6px; }
+.coluna { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; gap: 2px; }
+.coluna .pilha { display: flex; flex-direction: column-reverse; }
+.coluna .pedaco { display: block; width: 100%; }
+.coluna .n { font-size: 9.5px; text-align: center; color: var(--texto-fraco); }
+.coluna .topo-n { font-weight: 600; }
+.coluna.foco .n { color: var(--marca); font-weight: 700; }
+.coluna.foco .pilha { outline: 2px solid var(--marca-clara); outline-offset: 1px; }
+
+/* ---------------------------------------------------------------- Tela 3: barras empilhadas por cliente */
+.grade.receber .barra { grid-template-columns: 130px 1fr auto; }
+.grade.receber .barra .trilho { display: flex; background: var(--fundo); }
+.grade.receber .barra .pedaco { height: 100%; }
+
+/* ---------------------------------------------------------------- Tela 3: a rosca por status */
+.rosca { display: flex; align-items: center; gap: 12px; }
+.rosca svg { width: 148px; height: 148px; flex: 0 0 auto; }
+.rosca .arco { transform: rotate(-90deg); transform-origin: 70px 70px; }
+.rosca .arco.f-pago { stroke: var(--positivo); }
+.rosca .arco.f-atrasado { stroke: var(--negativo); }
+.rosca .arco.f-aberto { stroke: var(--destaque); }
+.rosca .centro { font-size: 26px; font-weight: 700; fill: var(--texto); }
+.rosca .fatias { list-style: none; margin: 0; padding: 0; font-size: 11.5px; }
+.rosca .fatias li { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.rosca .fatias b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.rosca .fatias i { font-style: normal; color: var(--texto-fraco); min-width: 46px; text-align: right; }
+
+/* ---------------------------------------------------------------- Tela 3: a lista de títulos */
+.rolagem-lista { max-height: 300px; overflow: auto; }
+.lista-titulos { border-collapse: collapse; width: 100%; font-size: 11px; }
+.lista-titulos th, .lista-titulos td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
+.lista-titulos thead th { background: var(--marca); color: var(--texto-claro); position: sticky; top: 0; font-weight: 600; }
+.lista-titulos .num { text-align: right; font-variant-numeric: tabular-nums; }
+.lista-titulos .cod { color: var(--texto-fraco); font-variant-numeric: tabular-nums; }
+.lista-titulos .desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-titulos tfoot th, .lista-titulos tfoot td {
+  position: sticky; bottom: 0; background: var(--marca-escura); color: var(--texto-claro); font-weight: 700;
+}
+.lista-titulos .selo {
+  display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  color: var(--texto-claro); white-space: nowrap;
+}
+.lista-titulos .selo.f-aberto { color: var(--marca-escura); }
+
+/* ---------------------------------------------------------------- os filtros das três telas
+ *
+ * Quais filtros existem em cada tela é decisão do dono, registrada em `docs/fontes.md` e construída em
+ * `lib/regras/filtros.mjs`; aqui só ficam as formas. Três peças:
+ *
+ *   .pilula.limpar  o "todos", que apaga a escolha e volta a tela ao sem-filtro;
+ *   .campo-filtro   o par rótulo + campo (data, lista) dos filtros que não cabem em pílula;
+ *   .sem-filtro     a frase que a tela escreve JUNTO do número quando o filtro não alcança aquela fonte. Ela é parte
+ *                   do número, não nota de rodapé: fica dentro do cartão, do bloco ou da linha.
+ */
+.barra-filtros .rotulo-filtro {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  align-self: center; margin-right: 2px;
+}
+.pilula.limpar { border-style: dashed; }
+.filtros-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; width: 100%; }
+.campo-filtro { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.campo-filtro > span {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+}
+.campo-filtro input, .campo-filtro select {
+  font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--borda); border-radius: 4px;
+  background: var(--cartao); color: var(--texto); max-width: 230px;
+}
+.botao.filtro { padding: 4px 13px; }
+
+.sem-filtro {
+  display: flex; flex-direction: column; gap: 3px;
+  margin-top: 5px; padding: 4px 6px; border-left: 3px solid var(--destaque);
+  background: rgba(0, 121, 203, .07); font-size: 10.5px; color: var(--texto-fraco);
+}
+.sem-filtro strong { color: var(--texto); }
+.sem-filtro code { font-size: 10px; }
+.cartao .sem-filtro { white-space: normal; }
+.tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
+
+.nota {
+  margin: 0; padding: 11px 14px; background: var(--marca-escura); color: var(--texto-claro); font-size: 12.5px;
+}
+.nota strong { color: var(--destaque); }
+</style>
+</head>
+<body>
+<p class="nota">
+  <strong>Captura da Tela 1 — Gestão de Contas</strong> — a página que o app serve, de 08/2026, com o filtro <code>cc=FISCAL</code> aplicado, com
+  <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
+  <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
+  <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.
+  O layout é o de <code>docs/referencias/tela-1-gestao-de-contas.jpg</code>;
+  as cores são as variáveis de <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
+</p>
+<div hidden=""></div><header class="topo"><img class="logo" src="/marca/logo-meubess.png" alt="MeuBESS"/><span class="titulo">Gestão de Contas</span><nav class="abas"><span class="ativa">Dashboard</span><span class="">DRE</span><span class="">Contas a Receber</span><span>Centro de Custo</span><span>Fluxo de caixa</span></nav></header><div class="barra-filtros"><span class="rotulo-filtro">ano</span><span class="grupo"><span class="pilula ativa">2026</span></span><span class="rotulo-filtro">mês</span><span class="grupo"><span class="pilula">Jan</span><span class="pilula">Fev</span><span class="pilula">Mar</span><span class="pilula">Abr</span><span class="pilula">Mai</span><span class="pilula">Jun</span><span class="pilula">Jul</span><span class="pilula ativa">Ago</span><span class="pilula">Set</span><span class="pilula">Out</span><span class="pilula">Nov</span><span class="pilula">Dez</span></span></div><div class="barra-filtros"><span class="rotulo-filtro">centro de custo</span><span class="grupo"><span class="pilula limpar">todos</span><span class="pilula">ADMINISTRATIVO</span><span class="pilula">COMERCIAL</span><span class="pilula">COMPRAS</span><span class="pilula">CONTÁBIL</span><span class="pilula">DIRETORIA</span><span class="pilula">ESTOQUE</span><span class="pilula">FACILITIES</span><span class="pilula">FINANCEIRO</span><span class="pilula ativa">FISCAL</span><span class="pilula">INSIDE SALES</span><span class="pilula">LOGÍSTICA</span><span class="pilula">MARKETING</span><span class="pilula">MEU BESS</span><span class="pilula">OPERACIONAL</span><span class="pilula">RH</span><span class="pilula">TI</span></span></div><p class="aviso leve"><strong>Filtrado por centro de custo:</strong> FISCAL. O filtro vale sobre o rateio do Omie (<code>departamentos[].nDistrValor</code>), juntando as empresas 1 e 2 pelo nome do departamento (decisão do dono, 25/09/2026). Cartão ou bloco em que ele não alcança o número diz isso ali mesmo.</p><section class="cartoes"><div class="cartao"><div class="rotulo">Saldo</div><div class="numero">—</div><div class="pe">388 do DFC · 78 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale o valor e a contagem do DFC deste cartão</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div><div class="cartao"><div class="rotulo">Receitas</div><div class="numero">—</div><div class="pe">101 do DFC · 50 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale o valor e a contagem do DFC deste cartão</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div><div class="cartao"><div class="rotulo">Despesas</div><div class="numero neg">—</div><div class="pe">281 do DFC · 28 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale o valor e a contagem do DFC deste cartão</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div><div class="cartao"><div class="rotulo">Desp. Pagas</div><div class="numero">—</div><div class="pe">281 do DFC · 28 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale o valor e a contagem do DFC deste cartão</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div><div class="cartao"><div class="rotulo">Desp. Pendentes</div><div class="numero">—</div><div class="pe">161 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale este cartão inteiro — o valor E a contagem</strong> — ele é a exceção ao caixa e sai da leitura de títulos a pagar por VENCIMENTO (<code>cTpLancamento: &quot;CP&quot;</code>), que não pede <code>cExibirDepartamentos</code> e não traz <code>departamentos[]</code>; um título ainda não pago nem está na leitura de caixa de onde o rateio vem.</span></div></div><div class="cartao"><div class="rotulo">Desp. Funcionários</div><div class="numero">—</div><div class="pe">109 do DFC · 0 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale o valor e a contagem do DFC deste cartão</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div><div class="cartao"><div class="rotulo">% D. Func. / Rec. Líquida</div><div class="numero">4%</div><div class="pe">109 do DFC · 50 do Omie</div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale as duas pontas desta razão e a contagem do DFC, que são do DFC</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div></section><div class="grade"><section class="painel"><h2 class="alt">Top 10 despesas</h2><div class="corpo"><div class="barras"><div class="barra"><span class="nome">FORNECEDORES COGS</span><span class="trilho"><span class="preenche" style="width:100%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">(vazio)</span><span class="trilho"><span class="preenche" style="width:7.739168626748693%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">FORNECEDORES G&amp;A</span><span class="trilho"><span class="preenche" style="width:4.195999959833774%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">PESSOAL PJ</span><span class="trilho"><span class="preenche" style="width:3.256532487318321%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">RETIRADA</span><span class="trilho"><span class="preenche" style="width:1.0374703919258568%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">EMPRESTIMO</span><span class="trilho"><span class="preenche" style="width:0.789867397289086%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">RETIRADA DE SOCIO</span><span class="trilho"><span class="preenche" style="width:0.6166769615746427%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">PRO LABORE</span><span class="trilho"><span class="preenche" style="width:0.27544904283667376%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">DESPESA DIRETORIA</span><span class="trilho"><span class="preenche" style="width:0.21531378892872244%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome">IMPOSTOS E CONTRIBUICOES</span><span class="trilho"><span class="preenche" style="width:0.18232814937206918%"></span></span><span class="valor">—</span></div></div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale as barras, que são o DFC agrupado por <code>CLASS. CONTABIL</code></strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div></section><section class="painel"><h2>Top 10 receitas</h2><div class="corpo"><div class="barras"><div class="barra"><span class="nome"><span class="cliente">cliente 5199865257</span></span><span class="trilho"><span class="preenche" style="width:100%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5279883945</span></span><span class="trilho"><span class="preenche" style="width:13.053754278469556%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5198390934</span></span><span class="trilho"><span class="preenche" style="width:11.299681370744427%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5262483682</span></span><span class="trilho"><span class="preenche" style="width:10.746150163057727%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5287302034</span></span><span class="trilho"><span class="preenche" style="width:10.360497256481905%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5199812101</span></span><span class="trilho"><span class="preenche" style="width:8.329228737398044%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5199865257</span></span><span class="trilho"><span class="preenche" style="width:8.011620837358896%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5199865257</span></span><span class="trilho"><span class="preenche" style="width:8.011620837358896%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5199867259</span></span><span class="trilho"><span class="preenche" style="width:7.557287382959391%"></span></span><span class="valor">—</span></div><div class="barra"><span class="nome"><span class="cliente">cliente 5230723582</span></span><span class="trilho"><span class="preenche" style="width:5.934315559352654%"></span></span><span class="valor">—</span></div></div></div></section><section class="painel"><h2>Receita × despesa por dia</h2><div class="corpo"><p class="legenda"><span class="chave rec"></span>receita   <span class="chave desp"></span>despesa   — agosto de 2026</p><div class="dias"><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">1</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">2</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">3</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">4</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">5</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:1.8323391918569005px"></span><span class="n">6</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:55px"></span><span class="n">7</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">8</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">9</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">10</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">11</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">12</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">13</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">14</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">15</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">16</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">17</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">18</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">19</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">20</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">21</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">22</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">23</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">24</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">25</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">26</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">27</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">28</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">29</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">30</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">31</span></div></div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale as barras, que são o bloco <code>Entradas</code>/<code>Gastos</code> já pronto da aba do mês do DFC</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div></section><section class="painel larga"><h2>Receita × despesa por mês — 2026</h2><div class="corpo"><p class="legenda"><span class="chave rec"></span>receita   <span class="chave desp"></span>despesa</p><div class="dias" style="height:150px"><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">Jan</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">Fev</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0px"></span><span class="n">Mar</span></div><div class="dia"><span class="rec" style="height:44.49067275898023px"></span><span class="desp" style="height:65px"></span><span class="n">Abr</span></div><div class="dia"><span class="rec" style="height:0.1522384712126487px"></span><span class="desp" style="height:25.413983326509623px"></span><span class="n">Mai</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:3.5137328019885743px"></span><span class="n">Jun</span></div><div class="dia"><span class="rec" style="height:2.8377216891168193px"></span><span class="desp" style="height:7.275315174676768px"></span><span class="n">Jul</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0.32259811235649904px"></span><span class="n">Ago</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0.09167992742646128px"></span><span class="n">Set</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0.047420652117135136px"></span><span class="n">Out</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0.047420652117135136px"></span><span class="n">Nov</span></div><div class="dia"><span class="rec" style="height:0px"></span><span class="desp" style="height:0.047420652117135136px"></span><span class="n">Dez</span></div></div><div class="sem-filtro"><span><strong>o filtro de centro de custo não vale as barras, que são o bloco <code>Entradas</code>/<code>Gastos</code> de cada arquivo do ano do DFC</strong> — a aba <code>FLUXO DE CAIXA</code> do DFC classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>, e não por departamento: não há por onde filtrar. O número do DFC é do mês inteiro; a contagem do Omie, ao lado, está filtrada.</span></div></div></section></div><footer class="rodape"><span class="botao" style="opacity:.55">atualizar agora</span><span>Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta. DFC: pasta sincronizada, 08 - DFC AGOSTO 2026.xlsx.</span><span class="ultima-leitura"><strong>Última leitura</strong> — Omie: 27/09, 16:33 (287 páginas nas 22 leituras). DFC: 27/09, 17:22 (pasta sincronizada).</span><span>números lidos agora das fontes</span></footer>
+</body>
+</html>

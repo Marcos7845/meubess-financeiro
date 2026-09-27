@@ -7,7 +7,8 @@ Lovable.
 **Estado:** as **três telas** — Gestão de Contas, DRE e Contas a Receber — estão construídas e rodando localmente.
 As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
 [`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
-[`docs/telas-conferidas.md`](docs/telas-conferidas.md).
+[`docs/telas-conferidas.md`](docs/telas-conferidas.md). Os **filtros** de cada tela — onde valem e onde não valem, com um
+caso real conferido para cada um — estão em [`docs/filtros.md`](docs/filtros.md).
 
 ## As três telas
 
@@ -80,6 +81,14 @@ Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão 
 
 As **empresas 1 e 2 entram sempre somadas** e o recorte é o da MeuBESS.
 
+**Os filtros de cada tela moram na URL**, como as pílulas de ano e mês: a Tela 1 filtra por **centro de custo**
+(`?cc=FISCAL,TI`, seleção múltipla, juntando as duas empresas pelo nome do departamento), a Tela 2 por **vários meses de
+uma vez** (`?meses=7,8`) e a Tela 3 por **vencimento de–até, status, cliente e categoria**
+(`?de=2026-07-01&ate=2026-08-31&status=atrasado&cliente=2-…&categoria=1.01.03`). Onde o número vem de uma fonte que não
+aceita o filtro escolhido — um cartão do DFC diante do centro de custo, por exemplo —, o cartão **diz isso junto do
+número** em vez de mostrar valor sem filtro como se estivesse filtrado. Cada um desses lugares está listado em
+[`docs/filtros.md`](docs/filtros.md), com o caso real que o conferiu.
+
 A **Tela 2 tem uma coluna por mês**, como a tela de referência, e ao lado de cada uma cabem a **análise horizontal**
 (quanto a coluna variou contra o mês anterior) e a **análise vertical** (quanto a linha pesa na receita líquida do
 próprio mês). As duas ligam e desligam pelos botões do topo, que são links — o estado mora na URL (`?ah=1&av=1`), e
@@ -130,6 +139,19 @@ alguma linha ficar **divergente**.
 ainda não venceu. `docs/conferencia.md` mede essa faixa noutra janela de vencimento e diz na própria linha qual foi;
 o teste **lê a janela do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
 
+### Conferir os filtros contra a fonte
+
+```
+npm run conferir-filtros
+```
+
+Grava [`docs/filtros.md`](docs/filtros.md) (o bloco de casos) e [`docs/filtros.html`](docs/filtros.html). Enquanto
+`conferir-telas` confere os **números** das telas com o filtro vazio, este confere o que os **filtros** fazem: para cada
+um, aplica um caso real pela mesma camada de dados que o navegador recebe e reencontra o mesmo recorte na **fonte** — os
+arquivos crus do cache do Omie, abertos com `fs` e `JSON.parse`, sem passar pela montagem de `lib/regras/cache-omie.mjs`,
+para o lado da fonte não sair da mesma função que o lado do cálculo. **Só contagem e código**, nunca dinheiro e nunca
+nome de cliente. O comando sai com erro se algum filtro pegar um lançamento a mais ou a menos do que a fonte manda.
+
 ### O que trava, e o que só é publicado
 
 O app relê o Omie de hora em hora e grava no mesmo cache, e o Omie recebe lançamento com **data retroativa**: um mês já
@@ -166,6 +188,13 @@ Uma **captura de cada tela sem dinheiro** (valores trocados por "—", contagens
 `npm run capturar-tela-2` e `npm run capturar-tela-3` as regeram — e nenhuma é gravada se sobrar valor em dinheiro
 ou nome de cliente no HTML.
 
+Uma captura **com filtro aplicado** de cada tela fica ao lado delas:
+[`docs/tela-1-captura-filtro.html`](docs/tela-1-captura-filtro.html) (centro de custo = FISCAL),
+[`docs/tela-2-captura-filtro.html`](docs/tela-2-captura-filtro.html) (meses = julho e agosto) e
+[`docs/tela-3-captura-filtro.html`](docs/tela-3-captura-filtro.html) (status = atrasado). O `--q` do
+`scripts/capturar-tela.mjs` acrescenta os filtros à URL e o `--nome` muda o fim do nome do arquivo:
+`node scripts/capturar-tela.mjs --tela 1 --q "cc=FISCAL" --nome filtro`.
+
 ### Onde mora o quê
 
 | pasta | o que é |
@@ -175,6 +204,8 @@ ou nome de cliente no HTML.
 | `lib/dados.mjs` | a camada de dados do servidor: releitura de hora em hora e o "atualizar agora". |
 | `lib/regras/omie-releitura.mjs` | a releitura do Omie pelas telas: quais leituras, uma volta por vez, a hora da última. |
 | `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |
+| `lib/regras/filtros.mjs` | **os filtros das três telas, num lugar só:** como cada um é lido da URL e normalizado, e a junção dos dois cadastros de departamento pelo nome. Só os filtros que `docs/fontes.md` registra. |
+| `app/filtrado.js` | a frase que a tela escreve **junto do número** quando o filtro escolhido não alcança aquela fonte. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis. |
 | `scripts/` | as leituras do Omie, a conferência e os testes. |
@@ -187,5 +218,7 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 ### O que ainda não existe
 
 Login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o login não
-existe, **o app roda só local**. Os filtros de **status, cliente e categoria** da Tela 3 também ainda não existem: a
-tela lê a janela de vencimento inteira, que é o que `docs/conferencia.md` confere.
+existe, **o app roda só local**. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **empresa,
+fornecedor, conta corrente** e outros esperam decisão do dono. Também não existe o seletor **"ver por centro de custo
+(Omie)"** que `docs/fontes.md` descreve na linha do "Top 10 despesas" — ele trocaria as barras do DFC por barras do Omie
+agrupadas por departamento, e é uma forma de ver, não um filtro.

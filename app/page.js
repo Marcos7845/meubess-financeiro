@@ -3,10 +3,19 @@
 //
 // COMPONENTE DE SERVIDOR: o cálculo roda aqui, no Node, e para o navegador vai só o número já pronto. Nenhuma chave,
 // nenhum caminho de pasta e nenhum arquivo cruzam essa linha.
+//
+// OS FILTROS DESTA TELA são os de `docs/fontes.md`: ano · mês · CENTRO DE CUSTO (seleção múltipla). Os três moram na
+// URL, como as pílulas de ano e mês sempre moraram — `?ano=2026&mes=8&cc=TI,RH` —, e é por isso que um link colado no
+// chat e a captura da tela mostram exatamente a mesma coisa. O centro de custo é uma pílula por nome de departamento,
+// juntando as empresas 1 e 2 pelo nome (decisão do dono, 25/09/2026); clicar acende, clicar de novo apaga, e "todos"
+// limpa a escolha. Onde o filtro não alcança o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e
+// `docs/filtros.md`.
 
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES, dois } from '../lib/regras/periodo.mjs';
+import { comoLista } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
+import Filtrado from './filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
@@ -30,6 +39,7 @@ function Cartao({ c }) {
       <div className="pe">
         {c.contagem.dfc !== null ? `${c.contagem.dfc} do DFC · ` : ''}{c.contagem.omie} do Omie
       </div>
+      <Filtrado i={c} />
     </div>
   );
 }
@@ -61,7 +71,11 @@ export default async function Pagina({ searchParams }) {
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
   const mes = Number(q?.mes ?? corrente.mes);
-  const d = await dadosDaTela1({ ano, mes });
+  // O FILTRO DE CENTRO DE CUSTO vem da URL como lista de nomes; quem o resolve em código de departamento de cada
+  // empresa é `lib/regras/filtros.mjs`, dentro do cálculo, contra o cadastro que o cache tem.
+  const cc = comoLista(q?.cc);
+  const d = await dadosDaTela1({ ano, mes, filtro: { cc } });
+  const fcc = d.filtros.cc;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -70,6 +84,17 @@ export default async function Pagina({ searchParams }) {
   const maiorDia = Math.max(1, ...dias.flatMap((x) => [x.entradas, x.gastos]));
   const maiorMes = Math.max(1, ...meses.flatMap((x) => [x.entradas, x.gastos]));
   const anos = [2026];
+
+  // A URL da tela com uma troca: é assim que cada pílula sabe para onde levar, e é o único lugar onde o estado do
+  // filtro é escrito. `cc` sai da URL quando a escolha fica vazia, para o link do sem-filtro ser o de sempre.
+  const url = ({ ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos }) => {
+    const p = new URLSearchParams({ ano: String(a), mes: String(m) });
+    if (c.length) p.set('cc', c.join(','));
+    return `/?${p}`;
+  };
+  const alternar = (nome) => (fcc.escolhidos.includes(nome)
+    ? fcc.escolhidos.filter((x) => x !== nome)
+    : [...fcc.escolhidos, nome]);
 
   return (
     <>
@@ -94,6 +119,66 @@ export default async function Pagina({ searchParams }) {
         </p>
       )}
 
+      {fcc.faltaLeitura.length > 0 && fcc.escolhidos.length > 0 && (
+        <p className="aviso">
+          <strong>O filtro de centro de custo não pôde ser aplicado</strong> — a leitura do Omie com
+          <code> cExibirDepartamentos: &quot;S&quot;</code>, a única que traz o rateio por departamento, não está no
+          cache local da empresa {fcc.faltaLeitura.join(' e ')}. A tela está mostrando o mês inteiro, sem filtro, e
+          diz isso aqui em vez de fingir que filtrou. Rode <code>node scripts/ler-omie-faltante.mjs</code>.
+        </p>
+      )}
+
+      {fcc.desconhecidos.length > 0 && (
+        <p className="aviso leve">
+          <strong>Nome de centro de custo que não existe no cadastro:</strong> {fcc.desconhecidos.join(', ')}. Ele foi
+          ignorado — o filtro usa os {fcc.opcoes.length} nomes de <code>geral/departamentos</code>.
+        </p>
+      )}
+
+      <div className="barra-filtros">
+        <span className="rotulo-filtro">ano</span>
+        <span className="grupo">
+          {anos.map((a) => (
+            <a className={`pilula${a === ano ? ' ativa' : ''}`} href={url({ ano: a })} key={a}>{a}</a>
+          ))}
+        </span>
+        <span className="rotulo-filtro">mês</span>
+        <span className="grupo">
+          {MESES_CURTOS.slice(1).map((m, i) => (
+            <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={url({ mes: i + 1 })} key={m}>{m}</a>
+          ))}
+        </span>
+      </div>
+
+      <div className="barra-filtros">
+        <span className="rotulo-filtro">centro de custo</span>
+        <span className="grupo">
+          <a className={`pilula limpar${fcc.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ cc: [] })}>todos</a>
+          {fcc.opcoes.map((nome) => (
+            <a className={`pilula${fcc.escolhidos.includes(nome) ? ' ativa' : ''}`} href={url({ cc: alternar(nome) })} key={nome}>
+              {nome}
+            </a>
+          ))}
+        </span>
+      </div>
+
+      <p className="aviso leve">
+        {fcc.aplicado
+          ? <>
+            <strong>Filtrado por centro de custo:</strong> {fcc.escolhidos.join(', ')}. O filtro vale sobre o rateio do
+            Omie (<code>departamentos[].nDistrValor</code>), juntando as empresas 1 e 2 pelo nome do departamento
+            (decisão do dono, 25/09/2026). Cartão ou bloco em que ele não alcança o número diz isso ali mesmo.
+          </>
+          : <>
+            <strong>Sem filtro de centro de custo:</strong> a tela mostra {NOMES_DOS_MESES[mes]} de {ano} inteiro. Os
+            {' '}{fcc.opcoes.length} nomes são os de <code>geral/departamentos</code>, os mesmos nas duas empresas, e o
+            filtro junta os dois cadastros pelo nome porque nenhum código coincide (decisão do dono, 25/09/2026).
+            {' '}{fcc.semRateio.empresa1 + fcc.semRateio.empresa2} lançamentos do mês
+            ({fcc.semRateio.empresa1} na empresa 1 e {fcc.semRateio.empresa2} na 2) não têm rateio de departamento
+            nenhum: eles não têm nome para juntar e ficam fora de qualquer escolha de centro de custo.
+          </>}
+      </p>
+
       <section className="cartoes">
         {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
           .map((id) => <Cartao c={cartao(id)} key={id} />)}
@@ -102,7 +187,10 @@ export default async function Pagina({ searchParams }) {
       <div className="grade">
         <section className="painel">
           <h2 className="alt">Top 10 despesas</h2>
-          <div className="corpo"><Barras itens={bloco('top-10-despesas').dados} /></div>
+          <div className="corpo">
+            <Barras itens={bloco('top-10-despesas').dados} />
+            <Filtrado i={bloco('top-10-despesas')} />
+          </div>
         </section>
 
         <section className="painel">
@@ -111,24 +199,13 @@ export default async function Pagina({ searchParams }) {
             <Barras itens={bloco('top-10-receitas').dados}
               conteudo={(i) => <Cliente c={i.cliente} />}
               titulo={(i) => i.cliente.nome ?? `cliente ${i.cliente.codigo}`} />
+            <Filtrado i={bloco('top-10-receitas')} />
           </div>
         </section>
 
         <section className="painel">
           <h2>Receita × despesa por dia</h2>
           <div className="corpo">
-            <div className="filtros" style={{ marginBottom: '9px' }}>
-              <span className="grupo">
-                {anos.map((a) => (
-                  <a className={`pilula${a === ano ? ' ativa' : ''}`} href={`/?ano=${a}&mes=${mes}`} key={a}>{a}</a>
-                ))}
-              </span>
-              <span className="grupo">
-                {MESES_CURTOS.slice(1).map((m, i) => (
-                  <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={`/?ano=${ano}&mes=${i + 1}`} key={m}>{m}</a>
-                ))}
-              </span>
-            </div>
             <p className="legenda">
               <span className="chave rec" />receita &nbsp; <span className="chave desp" />despesa &nbsp;
               — {NOMES_DOS_MESES[mes]} de {ano}
@@ -143,6 +220,7 @@ export default async function Pagina({ searchParams }) {
               ))}
               {dias.length === 0 && <p className="legenda">o bloco por dia do arquivo do mês não foi lido.</p>}
             </div>
+            <Filtrado i={bloco('receita-despesa-por-dia')} />
           </div>
         </section>
 
@@ -160,6 +238,7 @@ export default async function Pagina({ searchParams }) {
               ))}
               {meses.length === 0 && <p className="legenda">a série do ano não foi lida.</p>}
             </div>
+            <Filtrado i={bloco('receita-despesa-por-mes')} />
           </div>
         </section>
       </div>

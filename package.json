@@ -9,6 +9,7 @@
     "local": "node scripts/subir-local.mjs",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
+    "conferir-filtros": "node scripts/conferir-filtros.mjs",
     "testar-trava": "node scripts/testar-trava-agosto.mjs",
     "capturar-tela-1": "node scripts/capturar-tela.mjs --tela 1",
     "capturar-tela-2": "node scripts/capturar-tela.mjs --tela 2",

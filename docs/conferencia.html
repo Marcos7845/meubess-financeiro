@@ -61,11 +61,26 @@ venceu</strong>, e num mês fechado todo título já venceu — está pago ou at
 </div>
 <p>O <strong>Omie</strong> sai do cache local <code>.cache/omie/</code>, fora do git; agosto é recortado das
 leituras do ano pela data de cada lançamento. O <strong>DFC</strong> saiu das planilhas da pasta da MeuBESS, abertas só para leitura: o arquivo <code>08 - DFC AGOSTO 2026.xlsx</code>, com 388 linhas de lançamento no mês na aba <code>FLUXO DE CAIXA</code> e o bloco <code>Entradas</code>/<code>Gastos</code> na aba <code> 2026</code>, e os arquivos dos outros meses do ano, de onde sai a série mensal (12 dos 12 com o bloco).</p>
-<h2>As contagens de jan–set de <code>docs/fontes.md</code>, refeitas</h2>
-<p>Antes de aplicar o filtro ao mês, o script refaz as contagens que o documento já publica. É o que prova que a regra
-implementada é a mesma. A primeira é trava: se não bater, o script para e não grava nada.</p>
-<div class="tabela"><table><thead><tr><th>o que</th><th>este script</th><th>docs/fontes.md</th><th>bate?</th></tr></thead><tbody>
-<tr><td><strong>trava</strong> — total de receita e despesa por empresa, em títulos + baixas de parcial + avulsos</td><td>empresa 1: receita 9 + 0 + 162, despesa 809 + 9 + 276; empresa 2: receita 536 + 25 + 611, despesa 556 + 3 + 547</td><td>o mesmo</td><td>sim</td></tr>
+<h2>De que leitura são estes números</h2>
+<p>Esta rodada leu o cache do Omie assim: <strong>leitura <code>d59ddbbd5851</code> — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 14h31; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 09h20 (ok, 287 páginas)</strong>. Tudo nesta página sai dessa
+leitura, e a mesma rodada escreveu as contagens de jan–set no bloco gerado de <a href="fontes.md">docs/fontes.md</a> —
+o documento e esta página não têm como ficar em leituras diferentes.</p>
+<p><strong>A trava do mês conferido.</strong> conferida: os três baldes das duas empresas, as faixas da Tela 3, os 8 casos reais de agosto e a impressão digital dos campos de cadastro dos 547 lançamentos do mês são os mesmos que <code>docs/trava-agosto-2026.json</code> fixou na leitura <code>d59ddbbd5851</code>. O que ela fixa está em
+<a href="trava-agosto-2026.json">docs/trava-agosto-2026.json</a>, que entra no git: os três baldes de agosto
+por empresa e natureza, as faixas de agosto da Tela 3, a identidade de cada caso real desta página e a impressão
+digital dos campos de cadastro de todos os lançamentos do mês. Se algum
+deles mudar, o script para e não grava nada. Ela existe porque a conferência caso a caso relê o MESMO cache que o
+cálculo leu: um lançamento que mudou no Omie e voltou mudado na releitura bate dos dois lados — quem pega isso é a
+trava.</p>
+<p><strong>As contagens de jan–set não travam nada.</strong> O app relê o Omie de hora em hora e o Omie recebe
+lançamento com data retroativa: um mês já passado muda de contagem sozinho. A coluna da direita mostra o que a leitura
+de referência (27/09/2026, 09h11–09h17), citada na prosa do documento, dava — um número diferente ali é o que a
+releitura mexeu, não um erro.</p>
+<div class="tabela"><table><thead><tr><th>o que</th><th>esta leitura (<code>d59ddbbd5851</code>)</th><th>a leitura de referência (27/09/2026, 09h11–09h17)</th><th>igual?</th></tr></thead><tbody>
+<tr><td>total da leitura de <strong>receita</strong> da empresa 1, jan–set (títulos, baixas de parcial, avulsos)</td><td>9, 0, 162</td><td>9, 0, 162</td><td>sim</td></tr>
+<tr><td>total da leitura de <strong>despesa</strong> da empresa 1, jan–set (títulos, baixas de parcial, avulsos)</td><td>809, 9, 276</td><td>809, 9, 276</td><td>sim</td></tr>
+<tr><td>total da leitura de <strong>receita</strong> da empresa 2, jan–set (títulos, baixas de parcial, avulsos)</td><td>536, 25, 611</td><td>536, 25, 611</td><td>sim</td></tr>
+<tr><td>total da leitura de <strong>despesa</strong> da empresa 2, jan–set (títulos, baixas de parcial, avulsos)</td><td>556, 3, 547</td><td>556, 3, 547</td><td>sim</td></tr>
 <tr><td>custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2)</td><td>66, 1, 20, 447, 3, 137</td><td>66, 1, 20, 447, 3, 137</td><td>sim</td></tr>
 <tr><td>resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2)</td><td>55, 11, 98, 33</td><td>55, 11, 98, 33</td><td>sim</td></tr>
 <tr><td>pessoal pago, jan–set (empresa 1, empresa 2)</td><td>253, 322</td><td>253, 322</td><td>sim</td></tr>

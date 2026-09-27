@@ -46,15 +46,36 @@ lançamento, que é o que a consulta do mês devolveria. O **DFC** saiu das plan
 
 **36 indicadores**: 36 conferidos, 0 divergentes e 0 a conferir.
 
-## As contagens de jan–set de `docs/fontes.md`, refeitas por este script
+## De que leitura são estes números
 
-Antes de aplicar o filtro ao mês, o script refaz as contagens que `docs/fontes.md` já publica para janeiro a setembro.
-É o que prova que a regra implementada aqui é a mesma do documento. A primeira é trava: se não bater, o script para e
-não grava nada.
+Esta rodada leu o cache do Omie assim: **leitura `d59ddbbd5851` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 14h31; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 09h20 (ok, 287 páginas)**. Tudo nesta página sai dessa leitura. As contagens de
+janeiro a setembro, abaixo, também — e a MESMA rodada as escreveu no bloco gerado de
+[`docs/fontes.md`](fontes.md): o documento e esta página nunca podem ficar em leituras diferentes, porque quem grava
+os dois é a mesma passagem do script.
 
-| o que | este script | `docs/fontes.md` | bate? |
+**A trava do mês conferido.** conferida: os três baldes das duas empresas, as faixas da Tela 3, os 8 casos reais de agosto e a impressão digital dos campos de cadastro dos 547 lançamentos do mês são os mesmos que `docs/trava-agosto-2026.json` fixou na leitura `d59ddbbd5851`. O que ela fixa está em
+[`docs/trava-agosto-2026.json`](trava-agosto-2026.json), que entra no git: os três baldes de agosto por
+empresa e natureza, as faixas de agosto da Tela 3, a identidade de cada caso real desta página (o código e os
+campos de cadastro que o filtro usou) e a impressão digital dos campos de cadastro de **todos** os lançamentos do mês —
+que pega um `cStatus` trocado mesmo quando nenhuma contagem muda, porque o filtro só deixa de fora o `CANCELADO`. Se
+algum deles mudar, o script para e não grava nada — refixar é na mão, com
+`--refazer-trava`. Ela existe porque a conferência caso a caso relê o MESMO cache que o cálculo leu: se um lançamento
+de agosto mudou no Omie e a releitura o trouxe mudado, os dois lados leem o valor novo e batem. Quem pega isso
+é a trava.
+
+**As contagens de jan–set não travam nada.** O app relê o Omie de hora em hora e o Omie recebe lançamento com data
+retroativa: um mês já passado muda de contagem sozinho. Comparar a contagem de agora com um número escrito à mão no
+documento só fazia o script parar e pedir que alguém recontasse o documento — e nunca provou nada sobre a regra, porque
+os dois lados saíam deste mesmo script. A coluna da direita mostra o que a **leitura de referência**
+(27/09/2026, 09h11–09h17), citada na prosa de `docs/fontes.md` indicador por indicador, dava: um número diferente ali
+não é erro, é o que a releitura mexeu.
+
+| o que | esta leitura (`d59ddbbd5851`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
-| **trava** — total de receita e despesa por empresa, em títulos + baixas de parcial + avulsos | empresa 1: receita 9 + 0 + 162, despesa 809 + 9 + 276; empresa 2: receita 536 + 25 + 611, despesa 556 + 3 + 547 | o mesmo | sim |
+| total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |
+| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 536, 25, 611 | 536, 25, 611 | sim |
+| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 556, 3, 547 | 556, 3, 547 | sim |
 | custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 66, 1, 20, 447, 3, 137 | 66, 1, 20, 447, 3, 137 | sim |
 | resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2) | 55, 11, 98, 33 | 55, 11, 98, 33 | sim |
 | pessoal pago, jan–set (empresa 1, empresa 2) | 253, 322 | 253, 322 | sim |

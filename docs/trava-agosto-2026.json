@@ -1,0 +1,76 @@
+{
+  "mes": "08/2026",
+  "o-que-e": "o que agosto de 2026 deu na leitura abaixo. scripts/numeros-das-telas.mjs compara com isto antes de gravar e para se algo mudou; refixar é --refazer-trava. Só contagem e campo de cadastro: nenhum valor em dinheiro, nenhum nome.",
+  "da-leitura": {
+    "id": "d59ddbbd5851",
+    "gravadoEm": "2026-09-27T17:31:01.328Z",
+    "okEm": "2026-09-27T12:20:28.569Z",
+    "paginas": 287,
+    "arquivos": 357
+  },
+  "baldes": {
+    "1": {
+      "R": [
+        0,
+        0,
+        10
+      ],
+      "P": [
+        102,
+        2,
+        63
+      ]
+    },
+    "2": {
+      "R": [
+        90,
+        9,
+        11
+      ],
+      "P": [
+        60,
+        0,
+        72
+      ]
+    }
+  },
+  "tela-3": {
+    "na-tela": 128,
+    "pago": 91,
+    "atrasado": 37,
+    "aberto": 0,
+    "fora-das-faixas": 0
+  },
+  "digitais": {
+    "empresa-1-entradas": {
+      "lancamentos": 10,
+      "digital": "1bae2dbd55df"
+    },
+    "empresa-1-saidas": {
+      "lancamentos": 167,
+      "digital": "5a2da1149b2d"
+    },
+    "empresa-2-entradas": {
+      "lancamentos": 110,
+      "digital": "b163958f25cd"
+    },
+    "empresa-2-saidas": {
+      "lancamentos": 132,
+      "digital": "deb0b4bf370d"
+    },
+    "tela-3": {
+      "lancamentos": 128,
+      "digital": "a24a5ba63742"
+    }
+  },
+  "casos": [
+    "nCodMovCC 6035856476 (empresa 1, `CONTA_CORRENTE_REC`, `cNatureza` R, `cStatus` RECEBIDO, `nCodCC` 5969611697, `cCodCateg` 1.02.02, `cOrigem` EXTR, pago em 03/08/2026)",
+    "nCodMovCC 6040025305 (empresa 1, `CONTA_CORRENTE_PAG`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.06.07, `cOrigem` EXTP, pago em 10/08/2026)",
+    "nCodTitulo 1589788375 (empresa 1, `CONTA_A_PAGAR`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.01.01, `cOrigem` APIP, pago em 06/08/2026)",
+    "nCodTitulo 5228925723 (empresa 2, `cNatureza` R, `cStatus` ATRASADO, `nCodCC` 5191263677, `cCodCateg` 1.01.01, vence em 09/08/2026, `resumo.cLiquidado` N)",
+    "nCodTitulo 5268010983 (empresa 2, `cNatureza` R, `cStatus` RECEBIDO, `nCodCC` 5191263677, `cCodCateg` 1.01.01, vence em 02/08/2026, `resumo.cLiquidado` S)",
+    "nCodTitulo 5981017232 (empresa 1, `CONTA_A_PAGAR`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.10.99, `cOrigem` MANP, pago em 17/08/2026)",
+    "nCodTitulo 6033056411 (empresa 1, `CONTA_A_PAGAR`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.03.14, `cOrigem` BARP, pago em 03/08/2026)",
+    "nCodTitulo 6041575746 (empresa 1, `CONTA_A_PAGAR`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.05.04, `cOrigem` BARP, pago em 20/08/2026)"
+  ]
+}

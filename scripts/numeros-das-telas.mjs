@@ -24,10 +24,24 @@
 // coluna `FORNECEDOR / CLIENTE` do DFC. Do cadastro de clientes o script só guarda o CÓDIGO e um sim/não dizendo se
 // o nome está preenchido; o nome em si nunca sai do cache local.
 //
-// TRAVAS. Além da conferência caso a caso, o script refaz as contagens de janeiro a setembro que `docs/fontes.md` já
-// publica e compara com elas (ver CONFERENCIAS_DO_FONTES). É o que prova que o filtro implementado aqui é o mesmo do
-// documento antes de aplicá-lo ao mês. A trava principal — o total de receita e despesa por empresa — para o script;
-// as outras entram como divergência na linha do indicador a que pertencem.
+// A TRAVA: AGOSTO DE 2026, FIXADO EM `docs/trava-agosto-2026.json`. O que não pode mudar sem alguém dizer que pode é
+// o mês conferido. Esse arquivo fixa, e diz de que leitura fixou: os três baldes de agosto por empresa e natureza, as
+// faixas de agosto da Tela 3 e a IDENTIDADE de cada caso real que esta página confere (o código, e mais `cGrupo`,
+// `cNatureza`, `cStatus`, `nCodCC`, `cCodCateg`, `cOrigem` e a data). Se qualquer um desses mudar, o script para e não
+// grava nada; refixar é explícito, com `--refazer-trava`.
+//
+// É AQUI QUE A TRAVA TEM DE ESTAR, E NÃO EM JAN–SET. A conferência caso a caso relê a fonte pelo caminho de trás, mas
+// relê O MESMO CACHE: se o lançamento mudou no Omie e a releitura o trouxe mudado, os dois lados leem o valor novo e
+// batem. Quem pega isso é a trava de agosto, comparando com o que ficou fixado.
+//
+// AS CONTAGENS DE JAN–SET NÃO SÃO TRAVA — SÃO PUBLICAÇÃO. O script as refaz e as ESCREVE em `docs/fontes.md`, num
+// bloco gerado, na mesma rodada em que grava esta página. Antes elas eram comparadas com números escritos à mão no
+// documento; como o app relê o Omie de hora em hora e o Omie recebe lançamento com data retroativa, um mês já passado
+// muda de contagem sozinho, e aquela comparação parava o script e pedia que alguém recontasse o documento à mão. Pior:
+// ela nunca provou nada sobre a regra — os dois lados saíam deste mesmo script. Agora o documento e a página saem da
+// MESMA rodada e da MESMA leitura, por construção, e cada contagem publicada diz de que leitura é (ver CARIMBO). A
+// comparação com a leitura de referência que a prosa de `docs/fontes.md` cita continua nas duas páginas, como
+// informação: mostra o que a releitura mexeu, sem barrar nada.
 //
 // A ÚNICA EXCEÇÃO AO MÊS FECHADO: a faixa "em aberto" do cartão "Valor pendente" da Tela 3. Num mês fechado ela é
 // sempre vazia — todo título que já venceu está pago ou atrasado —, então o caso real dela só existe em título que
@@ -39,8 +53,11 @@
 //   node scripts/numeros-das-telas.mjs --sem-dfc       # só o cache do Omie; as linhas do DFC saem "a conferir:"
 //   node scripts/numeros-das-telas.mjs --mes 7         # outro mês fechado de 2026
 //   node scripts/numeros-das-telas.mjs --hoje 25/09/2026   # a data de onde parte a janela da faixa "em aberto"
+//   node scripts/numeros-das-telas.mjs --refazer-trava     # refixa docs/trava-agosto-2026.json nesta leitura
+//   OMIE_CACHE_DIR=<pasta> node scripts/numeros-das-telas.mjs   # roda contra uma CÓPIA do cache (ver testar-trava-agosto.mjs)
 //   DFC_DIR=<caminho> node scripts/numeros-das-telas.mjs
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,6 +75,11 @@ import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDU
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SAIDA_MD = path.join(RAIZ, 'docs', 'conferencia.md');
 const SAIDA_HTML = path.join(RAIZ, 'docs', 'conferencia.html');
+// A TRAVA DE AGOSTO (fixada, versionada) e o DOCUMENTO onde as contagens de jan–set são publicadas.
+const TRAVA_MES = path.join(RAIZ, 'docs', 'trava-agosto-2026.json');
+const FONTES = path.join(RAIZ, 'docs', 'fontes.md');
+const MARCA_INICIO = '<!-- CONTAGENS-JAN-SET:INICIO -->';
+const MARCA_FIM = '<!-- CONTAGENS-JAN-SET:FIM -->';
 
 const arg = (nome, padrao) => {
   const i = process.argv.indexOf(nome);
@@ -66,6 +88,8 @@ const arg = (nome, padrao) => {
 const ANO = Number(arg('--ano', '2026'));
 const MES = Number(arg('--mes', '8'));
 const SEM_DFC = process.argv.includes('--sem-dfc');
+// Refixar a trava de agosto é sempre explícito: quem roda com esta flag está dizendo que o mês mudou de propósito.
+const REFAZER_TRAVA = process.argv.includes('--refazer-trava');
 
 const MES2 = String(MES).padStart(2, '0');
 const PERIODO = `01/${MES2}/${ANO} a ${new Date(ANO, MES, 0).getDate()}/${MES2}/${ANO}`;
@@ -97,6 +121,20 @@ const JANELAS_ABERTO = { corrente: JANELA_CORRENTE, seguinte: JANELA_SEGUINTE };
 const OMIE = abrirCacheOmie({ raiz: RAIZ, ano: ANO, janelasAberto: JANELAS_ABERTO, aoFaltar: falhar });
 const { EMPRESAS, arqCache, arquivosDoCache, paginas, movimentos, titulosR, titulosP, categorias,
   departamentos, pedidos, cpVenc, comDep, clientes, contasDre, titulosAberto } = OMIE;
+// O CARIMBO: de que leitura do Omie são os números desta rodada. Nasce em `lib/regras/cache-omie.mjs` e vai para as
+// duas páginas e para o bloco gerado de `docs/fontes.md` — é o que faz cada contagem publicada dizer de onde veio.
+const CARIMBO = OMIE.carimbo;
+const horaBR = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()} às ${dois(d.getHours())}h${dois(d.getMinutes())}`;
+};
+const CARIMBO_TEXTO = CARIMBO.id
+  ? `leitura \`${CARIMBO.id}\` — ${CARIMBO.arquivos} arquivos no cache local, o mais novo gravado em ${horaBR(CARIMBO.gravadoEm)}${CARIMBO.okEm
+    ? `; a última releitura do app que trouxe dado do Omie foi em ${horaBR(CARIMBO.okEm)} (${CARIMBO.estado}, ${CARIMBO.paginas} páginas)`
+    : '; a releitura do app ainda não deixou marca neste cache'}`
+  : 'cache vazio';
+
 const LEITURA_MF = OMIE.leituras.MF;
 const LEITURA_TIT_R = OMIE.leituras.TIT_R;
 const LEITURA_TIT_P = OMIE.leituras.TIT_P;
@@ -199,9 +237,18 @@ function conferirTituloR(emp, cab, faixas = FAIXAS_TIT_R) {
 // O caso escolhido é sempre o de MENOR código entre os que entraram, para a conferência ser repetível.
 const menorPor = (lista, campo) => lista.slice().sort((a, b) => Number(a[campo] ?? 0) - Number(b[campo] ?? 0))[0];
 
+// OS CASOS REAIS DO MÊS, guardados para a trava (ver o topo). Um caso é a IDENTIDADE do lançamento que a página
+// confere naquela linha: o código e os campos de cadastro que o filtro usou, e nada mais — nenhum valor, nenhum nome.
+// É o que a trava compara com `docs/trava-agosto-2026.json`. Se o lançamento mudou de status, de conta corrente, de
+// categoria, de origem ou de data, ou se outro lançamento passou a ser o de menor código, o texto muda e a trava para
+// o script. Entram só os do mês pedido: o caso da faixa "em aberto" do "Valor pendente" é de outro mês, de propósito.
+const CASOS_DO_MES = new Set();
+
 const casoDoLancamento = (emp, d) => {
   const eTitulo = d.cGrupo === 'CONTA_A_PAGAR' || d.cGrupo === 'CONTA_A_RECEBER';
-  return `${eTitulo ? `nCodTitulo ${d.nCodTitulo}` : `nCodMovCC ${d.nCodMovCC}`} (empresa ${emp}, \`${d.cGrupo}\`, \`cNatureza\` ${d.cNatureza}, \`cStatus\` ${d.cStatus}, \`nCodCC\` ${d.nCodCC}, \`cCodCateg\` ${d.cCodCateg ?? '(sem)'}, \`cOrigem\` ${d.cOrigem ?? '(sem)'}, pago em ${d.dDtPagamento})`;
+  const texto = `${eTitulo ? `nCodTitulo ${d.nCodTitulo}` : `nCodMovCC ${d.nCodMovCC}`} (empresa ${emp}, \`${d.cGrupo}\`, \`cNatureza\` ${d.cNatureza}, \`cStatus\` ${d.cStatus}, \`nCodCC\` ${d.nCodCC}, \`cCodCateg\` ${d.cCodCateg ?? '(sem)'}, \`cOrigem\` ${d.cOrigem ?? '(sem)'}, pago em ${d.dDtPagamento})`;
+  if (noMes(d.dDtPagamento)) CASOS_DO_MES.add(texto);
+  return texto;
 };
 
 // Escolhe o caso do indicador: prefere o título (que tem mais campos para comparar), e entre eles o de menor código.
@@ -228,27 +275,31 @@ const textoDoCaso = (caso, prefixo = '', vazio = 'nenhum lançamento entrou nest
 
 // ================================================================ as contagens de docs/fontes.md, refeitas
 //
-// De janeiro a setembro, `docs/fontes.md` já publica as contagens. Refazê-las aqui é o que prova que o filtro
-// implementado neste script é o mesmo do documento — antes de aplicá-lo ao mês pedido.
+// De janeiro a setembro o script refaz as contagens e as PUBLICA: elas vão para o bloco gerado de `docs/fontes.md` na
+// mesma rodada em que esta página é gravada, com o carimbo da leitura. Não travam mais nada — ver o topo.
 
 const janSet = (s) => { const d = dataBR(s); return Boolean(d) && d.a === ANO && d.m >= 1 && d.m <= 9; };
 const trinca = (b) => [b.titulos.size, b.baixas.size, b.avulsos.size];
 const igual = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-const CONTAGEM_DO_FONTES = { 1: { R: [9, 0, 162], P: [809, 9, 276] }, 2: { R: [536, 25, 611], P: [556, 3, 547] } };
+// A LEITURA DE REFERÊNCIA é HISTÓRIA, não trava. A prosa de `docs/fontes.md` cita, em cada indicador, as contagens de
+// jan–set da leitura abaixo; os números daqui são exatamente os dela. Ficam para o bloco gerado poder mostrar, lado a
+// lado, o que esta leitura dá e o que aquela dava — e assim dizer de que leitura é cada contagem publicada. Um número
+// diferente não é erro: é o Omie tendo recebido lançamento com data retroativa entre as duas leituras.
+const LEITURA_DE_REFERENCIA = '27/09/2026, 09h11–09h17';
+const CONTAGEM_DA_REFERENCIA = { 1: { R: [9, 0, 162], P: [809, 9, 276] }, 2: { R: [536, 25, 611], P: [556, 3, 547] } };
 const totalJanSet = {};
+const CONFERENCIAS_DO_FONTES = [];
+const registrar = (id, rotulo, meu, ref) => CONFERENCIAS_DO_FONTES.push({ id, rotulo, meu, ref, bate: igual(meu, ref) });
+
 for (const emp of EMPRESAS) {
   totalJanSet[emp] = { R: contar(emp, janSet, 'R'), P: contar(emp, janSet, 'P') };
   for (const nat of ['R', 'P']) {
-    const meu = trinca(totalJanSet[emp][nat]), dito = CONTAGEM_DO_FONTES[emp][nat];
-    if (!igual(meu, dito)) falhar(`TRAVA: empresa ${emp}, ${nat === 'R' ? 'entradas' : 'saídas'} de jan–set: o cache dá ${meu.join(' + ')} e docs/fontes.md diz ${dito.join(' + ')}. Não gravo uma página que discorda da fonte.`);
+    registrar(`total-${emp}-${nat}`,
+      `total da leitura de **${nat === 'R' ? 'receita' : 'despesa'}** da empresa ${emp}, jan–set (títulos, baixas de parcial, avulsos)`,
+      trinca(totalJanSet[emp][nat]), CONTAGEM_DA_REFERENCIA[emp][nat]);
   }
 }
-
-// As outras contagens que docs/fontes.md publica. Não param o script: uma que não bata vira "divergente:" na linha do
-// indicador a que pertence.
-const CONFERENCIAS_DO_FONTES = [];
-const registrar = (id, rotulo, meu, dito) => CONFERENCIAS_DO_FONTES.push({ id, rotulo, meu, dito, bate: igual(meu, dito) });
 const conferencia = (id) => CONFERENCIAS_DO_FONTES.find((c) => c.id === id);
 const naLista = (lista) => (cod) => lista.includes(cod);
 
@@ -510,7 +561,6 @@ linhaDoDfc({
     contagem: `${pagos[1].length + pagos[2].length} lançamentos pagos nas categorias de pessoal (${pagos[1].length} na empresa 1 e ${pagos[2].length} na 2)`,
     porEmpresa: pagos,
     dfc: ePessoalDfc, dfcRotulo: 'linhas de saída de pessoal no mês, pela classificação escrita na própria linha',
-    extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(' e ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(' e ')})`,
   });
 }
 
@@ -711,7 +761,9 @@ for (const c of [
   const caso = conferirPrimeiro(ambos(venda, outras));
   const cg = conferencia('grupos-receita');
   const cat = caso ? categorias[caso.emp].get(String(caso.d.cCodCateg)) : null;
-  const ok = Boolean(caso) && caso.r.ok && cg.bate;
+  // A contagem de jan–set de `cg` não entra aqui: ela é publicação, não trava (ver o topo). O que decide esta linha é
+  // o caso real do mês.
+  const ok = Boolean(caso) && caso.r.ok;
   const casoTexto = caso
     ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está em \`geral/categorias\` da empresa ${caso.emp} com \`conta_receita\` ${cat?.conta_receita ?? '?'} e \`totalizadora\` ${cat?.totalizadora ?? '?'}, e cai em ${VENDA_DE_PRODUTOS.includes(String(caso.d.cCodCateg)) ? '"vendas de produtos"' : '"outras receitas"'}`
     : 'nenhum lançamento de receita entrou neste mês';
@@ -723,7 +775,6 @@ for (const c of [
     motivo: ok ? null : [
       caso ? null : 'nenhum lançamento de receita entrou neste mês',
       caso && !caso.r.ok ? (caso.r.motivo ?? caso.r.dif.join('; ')) : null,
-      cg.bate ? null : `o cadastro do cache dá ${cg.meu.join(' e ')} códigos de outra receita e \`docs/fontes.md\` diz ${cg.dito.join(' e ')}`,
     ].filter(Boolean).join('; '),
     caso: casoTexto,
   });
@@ -795,7 +846,6 @@ add({
     dfcRotulo: `linhas de custo no mês (\`CLASS. CONTABIL\` de COGS com \`SUB 2\` de compra, frete ou armazenagem)${ERRADAS_COGS === null || ERRADAS_COGS.pegas === 0 ? '' : `, das quais ${ERRADAS_COGS.pegas} pela grafia errada \`FORNECEODORES COGS\`, que a regra passou a aceitar em 25/09/2026`}`,
     casoExtra: ERRADAS_COGS === null || ERRADAS_COGS.total === 0 ? null
       : `a grafia errada \`FORNECEODORES COGS\`, que a regra aceita desde 25/09/2026, aparece em ${ERRADAS_COGS.total} ${ERRADAS_COGS.total === 1 ? 'linha' : 'linhas'} do mês e o filtro leva ${ERRADAS_COGS.pegas}${ERRADAS_COGS.pegas === ERRADAS_COGS.total ? '' : `: as ${ERRADAS_COGS.total - ERRADAS_COGS.pegas} que ficam de fora têm \`SUB 2\` ${ERRADAS_COGS.sub2.map((x) => `\`${x}\``).join(', ')}, que não está entre os três \`SUB 2\` de custo que a regra de \`docs/fontes.md\` lista — **o dono decidiu a grafia e, na mesma data (25/09/2026), que marketing não é custo de vendas: a regra fica como está**, e elas seguem fora desta linha`}`,
-    extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(', ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(', ')})`,
   });
 }
 
@@ -851,7 +901,8 @@ add({
   };
   const caso = conferirPrimeiro({ 1: [...fin[1].R.todos, ...fin[1].P.todos], 2: [...fin[2].R.todos, ...fin[2].P.todos] });
   const c = conferencia('financeiro');
-  const ok = Boolean(caso) && caso.r.ok && c.bate;
+  // Como nas outras linhas: a contagem de jan–set de `c` é publicação, não trava. Quem decide é o caso real do mês.
+  const ok = Boolean(caso) && caso.r.ok;
   add({
     tela: 'Tela 2', nome: '(+/−) Resultado financeiro: receitas e despesas financeiras', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
     filtro: `${FILTRO_CAIXA}, separando por \`detalhes.cNatureza\` o que é \`R\` (rendimentos) do que é \`P\` (juros, tarifas, IOF, empréstimo), pelas 15 categorias que o dono decidiu em 25/09/2026 (7 na empresa 1 e 8 na 2), **pelo código da categoria e não pela conta do DRE**; cartão de crédito, aluguel de veículo e os empréstimos e transferências Intercompany não entram aqui. Confronto no DFC por \`SUB 2\` (J) em \`JUROS\`, \`RENDIMENTO FINANCEIRO\`, \`EMPRESTIMO\`, \`TARIFAS BANCÁRIAS\``,
@@ -860,7 +911,6 @@ add({
     motivo: ok ? null : [
       caso ? null : 'nenhum lançamento de resultado financeiro entrou neste mês',
       caso && !caso.r.ok ? (caso.r.motivo ?? caso.r.dif.join('; ')) : null,
-      c.bate ? null : `a contagem de jan–set refeita por este script (${c.meu.join(', ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(', ')})`,
     ].filter(Boolean).join('; '),
     caso: caso
       ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está na lista de resultado financeiro da empresa ${caso.emp} e vem no lado ${caso.d.cNatureza === 'R' ? 'de receita financeira' : 'de despesa financeira'}`
@@ -879,7 +929,6 @@ add({
     contagem: `${imp[1].total + imp[2].total} lançamentos — ${pl(imp[1].titulos.size + imp[2].titulos.size, "título", "títulos")}, ${pl(imp[1].baixas.size + imp[2].baixas.size, "baixa de parcial", "baixas de parcial")} e ${pl(imp[1].avulsos.size + imp[2].avulsos.size, "avulso", "avulsos")}, somando as duas empresas`,
     porEmpresa: { 1: imp[1].todos, 2: imp[2].todos },
     dfc: (l) => l.classe === 'IMPOSTOS E CONTRIBUICOES' && DFC_IMPOSTO_SUB2.includes(l.sub2), dfcRotulo: 'linhas de guia no mês (`IMPOSTOS E CONTRIBUIÇÕES` com `SUB 2` em ISS, INSS ou IRPJ / CSLL)',
-    extraMotivo: c.bate ? null : `além disso, a contagem de jan–set do confronto refeita por este script (${c.meu.join(', ')}) não bate com a de \`docs/fontes.md\` (${c.dito.join(', ')})`,
   });
 }
 
@@ -943,7 +992,13 @@ function linhaT3({ nome, filtro, contagem, lista, motivoExtra = null, estadoForc
   if (candidatos.length) {
     const e = candidatos.slice().sort((a, b) => Number(a.cab.nCodTitulo) - Number(b.cab.nCodTitulo))[0];
     const r = conferirTituloR(e.emp, e.cab, faixas);
-    caso = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'}) — ${r.ok ? `achado de volta na página ${r.pagina} ${ondeCaso} com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}${casoExtra ? `, ${casoExtra}` : ''}`;
+    // A IDENTIDADE do caso, separada do resultado da conferência: é ela que vai para a trava do mês. A página em que o
+    // título foi achado de volta fica fora — ela muda quando a releitura repagina a leitura, e isso não é divergência.
+    const identidade = `nCodTitulo ${e.cab.nCodTitulo} (empresa ${e.emp}, \`cNatureza\` ${e.cab.cNatureza}, \`cStatus\` ${e.cab.cStatus}, \`nCodCC\` ${e.cab.nCodCC}, \`cCodCateg\` ${e.cab.cCodCateg}, vence em ${e.cab.dDtVenc}, \`resumo.cLiquidado\` ${e.resumo.cLiquidado ?? '?'})`;
+    // Só os casos do mês pedido entram na trava. A faixa "em aberto" do "Valor pendente" lê outra janela de
+    // vencimento, de propósito (ver o topo), e é a única que chega aqui com `faixas` diferente do ano inteiro.
+    if (faixas === FAIXAS_TIT_R) CASOS_DO_MES.add(identidade);
+    caso = `${identidade} — ${r.ok ? `achado de volta na página ${r.pagina} ${ondeCaso} com os mesmos campos` : `**não conferiu**: ${r.motivo ?? r.dif.join('; ')}`}${casoExtra ? `, ${casoExtra}` : ''}`;
     if (!r.ok) { estado = 'divergente'; motivo = [motivo, r.motivo ?? r.dif.join('; ')].filter(Boolean).join('; '); }
   } else if (!estadoForcado) {
     estado = 'a-conferir';
@@ -1078,6 +1133,111 @@ linhaT3({
   lista: T3_NA_TELA,
 });
 
+// ================================================================ a trava do mês conferido
+//
+// O QUE ELA GUARDA, E POR QUE ELA E NÃO A DE JAN–SET. A conferência caso a caso relê a fonte pelo caminho de trás,
+// mas relê o MESMO cache que o cálculo leu: se o dono mexeu num lançamento de agosto e a releitura de hora em hora o
+// trouxe mexido, os dois lados leem o valor novo e batem — a divergência passa. A trava fecha essa porta: o que agosto
+// de 2026 deu quando foi conferido fica FIXADO em `docs/trava-agosto-2026.json`, que entra no git, e toda rodada
+// compara com ele antes de gravar qualquer coisa.
+//
+// São três coisas, e nenhuma delas é valor em dinheiro:
+//   baldes   → os três baldes de agosto (títulos, baixas de parcial, avulsos) por empresa e natureza;
+//   tela-3   → as faixas de agosto da Tela 3 (na tela, pago, atrasado, em aberto, e a sobra de status);
+//   digitais → o sha1 dos campos de cadastro de TODOS os lançamentos de agosto, por empresa e natureza e na Tela 3;
+//   casos    → a identidade de cada caso real que a página confere: o código e os campos de cadastro que o filtro usou.
+//
+// As digitais pegam qualquer lançamento de agosto que mude, mesmo sem mudar contagem; os casos dizem, em português, o
+// que mudou naqueles que a página cita. Uma coisa sem a outra deixa buraco: o filtro só exclui o `CANCELADO`, então um
+// `cStatus` que vira outro não mexe em nenhuma contagem.
+//
+// Lançamento novo com data de um mês ANTERIOR não mexe em nada disto, e é justamente o que passou a acontecer toda
+// hora. Lançamento novo com data de AGOSTO, ou um lançamento de agosto que mudou de status, de conta, de categoria ou
+// de data, mexe — e aí o script para. Refixar é dizer, na mão, que a mudança é de propósito: `--refazer-trava`.
+//
+// Fora de agosto de 2026 (`--mes 7`, outro ano) não há o que comparar: a trava não vale e a rodada segue.
+
+// A IMPRESSÃO DIGITAL DO MÊS: o sha1 dos campos de cadastro de TODOS os lançamentos do mês, e não só dos casos
+// escolhidos. Os casos dão o diff legível ("este título mudou de status"); a digital fecha o resto — um lançamento
+// qualquer de agosto que mude de `cStatus`, de conta corrente, de categoria, de origem ou de data muda a digital do
+// lado dele, mesmo que a contagem não mude (o filtro só deixa de fora o `CANCELADO`). Só campo de cadastro entra aqui:
+// nenhum valor em dinheiro, nenhum nome.
+const identidadeCrua = (emp, d) => {
+  const eTitulo = d.cGrupo === 'CONTA_A_PAGAR' || d.cGrupo === 'CONTA_A_RECEBER';
+  return [emp, eTitulo ? d.nCodTitulo : d.nCodMovCC, d.cGrupo, d.cNatureza, d.cStatus, d.nCodCC,
+    d.cCodCateg ?? '', d.cOrigem ?? '', d.dDtPagamento].join('|');
+};
+const digitalDe = (linhas) => ({
+  lancamentos: linhas.length,
+  digital: crypto.createHash('sha1').update(linhas.slice().sort().join('\n')).digest('hex').slice(0, 12),
+});
+
+const travaDaRodada = {
+  mes: `${MES2}/${ANO}`,
+  'o-que-e': 'o que agosto de 2026 deu na leitura abaixo. scripts/numeros-das-telas.mjs compara com isto antes de gravar e para se algo mudou; refixar é --refazer-trava. Só contagem e campo de cadastro: nenhum valor em dinheiro, nenhum nome.',
+  'da-leitura': { id: CARIMBO.id, gravadoEm: CARIMBO.gravadoEm, okEm: CARIMBO.okEm, paginas: CARIMBO.paginas, arquivos: CARIMBO.arquivos },
+  baldes: Object.fromEntries(EMPRESAS.map((e) => [e, { R: trinca(MES_R[e]), P: trinca(MES_P[e]) }])),
+  'tela-3': {
+    'na-tela': t3Total(T3_NA_TELA), pago: t3Total(T3_PAGO), atrasado: t3Total(T3_ATRASADO),
+    aberto: t3Total(T3_ABERTO), 'fora-das-faixas': t3Total(T3_OUTRO),
+  },
+  digitais: {
+    ...Object.fromEntries(EMPRESAS.flatMap((e) => [
+      [`empresa-${e}-entradas`, digitalDe(MES_R[e].todos.map((d) => identidadeCrua(e, d)))],
+      [`empresa-${e}-saidas`, digitalDe(MES_P[e].todos.map((d) => identidadeCrua(e, d)))],
+    ])),
+    'tela-3': digitalDe(EMPRESAS.flatMap((e) => T3_NA_TELA[e].map((t) => {
+      const c = t.cabecTitulo ?? {};
+      return [e, c.nCodTitulo, c.cNatureza, c.cStatus, c.nCodCC, c.cCodCateg ?? '', c.dDtVenc].join('|');
+    }))),
+  },
+  casos: [...CASOS_DO_MES].sort(),
+};
+
+const TRAVA_VALE = ANO === 2026 && MES === 8;
+const fixada = TRAVA_VALE && fs.existsSync(TRAVA_MES) ? JSON.parse(fs.readFileSync(TRAVA_MES, 'utf8')) : null;
+const GRAVAR_TRAVA = TRAVA_VALE && (REFAZER_TRAVA || !fixada);
+let TRAVA_TEXTO;
+
+if (!TRAVA_VALE) {
+  TRAVA_TEXTO = `esta rodada é de ${NOME_DO_MES} de ${ANO}, e a trava vale só para agosto de 2026 — nada foi comparado`;
+} else if (GRAVAR_TRAVA) {
+  TRAVA_TEXTO = fixada
+    ? `refixada nesta rodada (\`--refazer-trava\`), nesta leitura: ${CARIMBO_TEXTO}`
+    : `fixada nesta rodada pela primeira vez, nesta leitura: ${CARIMBO_TEXTO}`;
+} else {
+  const dif = [];
+  for (const emp of EMPRESAS) {
+    for (const nat of ['R', 'P']) {
+      const meu = travaDaRodada.baldes[emp][nat], fix = fixada.baldes?.[String(emp)]?.[nat] ?? [];
+      if (!igual(meu, fix)) dif.push(`empresa ${emp}, ${nat === 'R' ? 'entradas' : 'saídas'} de ${NOME_DO_MES}: esta leitura dá ${meu.join(' + ')} e a trava fixou ${fix.join(' + ')}`);
+    }
+  }
+  for (const [faixa, quantos] of Object.entries(travaDaRodada['tela-3'])) {
+    const fix = fixada['tela-3']?.[faixa];
+    if (quantos !== fix) dif.push(`Tela 3, faixa "${faixa}" de ${NOME_DO_MES}: esta leitura dá ${quantos} e a trava fixou ${fix}`);
+  }
+  for (const [onde, meu] of Object.entries(travaDaRodada.digitais)) {
+    const fix = fixada.digitais?.[onde];
+    if (!fix) { dif.push(`a trava não tem a impressão digital de "${onde}" — ela foi fixada antes de a digital existir; refixe`); continue; }
+    if (fix.digital === meu.digital && fix.lancamentos === meu.lancamentos) continue;
+    dif.push(`"${onde}" de ${NOME_DO_MES}: esta leitura tem ${meu.lancamentos} lançamentos com impressão digital ${meu.digital}, e a trava fixou ${fix.lancamentos} com ${fix.digital}${fix.lancamentos === meu.lancamentos ? ' — a contagem é a mesma, então o que mudou é campo de cadastro (`cStatus`, `nCodCC`, `cCodCateg`, `cOrigem` ou a data) de algum lançamento do mês' : ''}`);
+  }
+  const fixCasos = new Set(fixada.casos ?? []);
+  for (const c of travaDaRodada.casos) if (!fixCasos.has(c)) dif.push(`caso real que esta leitura confere e a trava não tem: ${c}`);
+  for (const c of fixCasos) if (!CASOS_DO_MES.has(c)) dif.push(`caso real que a trava fixou e esta leitura não achou: ${c}`);
+  if (dif.length) {
+    falhar([
+      `TRAVA DE AGOSTO DE 2026 (docs/trava-agosto-2026.json): ${dif.length} coisa(s) que a trava fixou mudaram nesta leitura. Não gravo nada.`,
+      ...dif.map((d) => `  - ${d}`),
+      `A trava foi fixada na leitura ${fixada['da-leitura']?.id ?? '(sem carimbo)'} e esta é a ${CARIMBO.id}.`,
+      'Se a mudança é de propósito — o dono lançou ou corrigiu algo com data de agosto de 2026 —, refixe na mão:',
+      '  node scripts/numeros-das-telas.mjs --refazer-trava',
+    ].join('\n'));
+  }
+  TRAVA_TEXTO = `conferida: os três baldes das duas empresas, as faixas da Tela 3, os ${travaDaRodada.casos.length} casos reais de ${NOME_DO_MES} e a impressão digital dos campos de cadastro dos ${Object.values(travaDaRodada.digitais).reduce((s, d) => s + d.lancamentos, 0)} lançamentos do mês são os mesmos que \`docs/trava-agosto-2026.json\` fixou na leitura \`${fixada['da-leitura']?.id ?? '(sem carimbo)'}\``;
+}
+
 // ================================================================ a saída
 
 const ROTULO = { conferido: '', divergente: 'divergente: ', 'a-conferir': 'a conferir: ' };
@@ -1095,8 +1255,7 @@ for (const l of LINHAS_MD) {
 }
 if (quantos('conferido') + quantos('divergente') + quantos('a-conferir') !== indicadores.length) throw new Error('o resumo contado nas linhas não fecha com o número de indicadores');
 
-const linhaTravaMd = (c) => `| ${c.rotulo} | ${c.meu.join(', ')} | ${c.dito.join(', ')} | ${c.bate ? 'sim' : '**não**'} |`;
-const travaPrincipal = EMPRESAS.map((e) => `empresa ${e}: receita ${trinca(totalJanSet[e].R).join(' + ')}, despesa ${trinca(totalJanSet[e].P).join(' + ')}`).join('; ');
+const linhaTravaMd = (c) => `| ${c.rotulo} | ${c.meu.join(', ')} | ${c.ref.join(', ')} | ${c.bate ? 'sim' : '**não** — a releitura mexeu'} |`;
 
 const md = `# Conferência dos números das 3 telas — ${NOME_DO_MES} de ${ANO}
 
@@ -1148,15 +1307,32 @@ lançamento, que é o que a consulta do mês devolveria. O **DFC** ${DFC.ok
 
 **${indicadores.length} indicadores**: ${quantos('conferido')} conferidos, ${quantos('divergente')} divergentes e ${quantos('a-conferir')} a conferir.
 
-## As contagens de jan–set de \`docs/fontes.md\`, refeitas por este script
+## De que leitura são estes números
 
-Antes de aplicar o filtro ao mês, o script refaz as contagens que \`docs/fontes.md\` já publica para janeiro a setembro.
-É o que prova que a regra implementada aqui é a mesma do documento. A primeira é trava: se não bater, o script para e
-não grava nada.
+Esta rodada leu o cache do Omie assim: **${CARIMBO_TEXTO}**. Tudo nesta página sai dessa leitura. As contagens de
+janeiro a setembro, abaixo, também — e a MESMA rodada as escreveu no bloco gerado de
+[\`docs/fontes.md\`](fontes.md): o documento e esta página nunca podem ficar em leituras diferentes, porque quem grava
+os dois é a mesma passagem do script.
 
-| o que | este script | \`docs/fontes.md\` | bate? |
+**A trava do mês conferido.** ${TRAVA_TEXTO}. O que ela fixa está em
+[\`docs/trava-agosto-2026.json\`](trava-agosto-2026.json), que entra no git: os três baldes de ${NOME_DO_MES} por
+empresa e natureza, as faixas de ${NOME_DO_MES} da Tela 3, a identidade de cada caso real desta página (o código e os
+campos de cadastro que o filtro usou) e a impressão digital dos campos de cadastro de **todos** os lançamentos do mês —
+que pega um \`cStatus\` trocado mesmo quando nenhuma contagem muda, porque o filtro só deixa de fora o \`CANCELADO\`. Se
+algum deles mudar, o script para e não grava nada — refixar é na mão, com
+\`--refazer-trava\`. Ela existe porque a conferência caso a caso relê o MESMO cache que o cálculo leu: se um lançamento
+de ${NOME_DO_MES} mudou no Omie e a releitura o trouxe mudado, os dois lados leem o valor novo e batem. Quem pega isso
+é a trava.
+
+**As contagens de jan–set não travam nada.** O app relê o Omie de hora em hora e o Omie recebe lançamento com data
+retroativa: um mês já passado muda de contagem sozinho. Comparar a contagem de agora com um número escrito à mão no
+documento só fazia o script parar e pedir que alguém recontasse o documento — e nunca provou nada sobre a regra, porque
+os dois lados saíam deste mesmo script. A coluna da direita mostra o que a **leitura de referência**
+(${LEITURA_DE_REFERENCIA}), citada na prosa de \`docs/fontes.md\` indicador por indicador, dava: um número diferente ali
+não é erro, é o que a releitura mexeu.
+
+| o que | esta leitura (\`${CARIMBO.id}\`) | a leitura de referência (${LEITURA_DE_REFERENCIA}) | igual? |
 |---|---|---|---|
-| **trava** — total de receita e despesa por empresa, em títulos + baixas de parcial + avulsos | ${travaPrincipal} | o mesmo | sim |
 ${CONFERENCIAS_DO_FONTES.map(linhaTravaMd).join('\n')}
 
 ## Os indicadores
@@ -1243,12 +1419,23 @@ ${indicadores.length - 1} indicadores são de ${NOME_DO_MES} de ${ANO}.</p>
 leituras do ano pela data de cada lançamento. O <strong>DFC</strong> ${DFC.ok
     ? `saiu das planilhas da pasta da MeuBESS, abertas só para leitura: o arquivo <code>${esc(DFC.arquivo)}</code>, com ${DFC.linhas.length} linhas de lançamento no mês na aba <code>FLUXO DE CAIXA</code> e o bloco <code>Entradas</code>/<code>Gastos</code> na aba <code>${esc(DFC.abaDoMes?.aba ?? '(sem)')}</code>, e os arquivos dos outros meses do ano, de onde sai a série mensal (${DFC.serie.filter((x) => x.ok).length} dos 12 com o bloco)`
     : `<strong>não foi lido nesta rodada</strong>: ${inline(DFC.motivo)}`}.</p>
-<h2>As contagens de jan–set de <code>docs/fontes.md</code>, refeitas</h2>
-<p>Antes de aplicar o filtro ao mês, o script refaz as contagens que o documento já publica. É o que prova que a regra
-implementada é a mesma. A primeira é trava: se não bater, o script para e não grava nada.</p>
-<div class="tabela"><table><thead><tr><th>o que</th><th>este script</th><th>docs/fontes.md</th><th>bate?</th></tr></thead><tbody>
-<tr><td><strong>trava</strong> — total de receita e despesa por empresa, em títulos + baixas de parcial + avulsos</td><td>${esc(travaPrincipal)}</td><td>o mesmo</td><td>sim</td></tr>
-${CONFERENCIAS_DO_FONTES.map((c) => `<tr><td>${inline(c.rotulo)}</td><td>${c.meu.join(', ')}</td><td>${c.dito.join(', ')}</td><td>${c.bate ? 'sim' : '<strong>não</strong>'}</td></tr>`).join('\n')}
+<h2>De que leitura são estes números</h2>
+<p>Esta rodada leu o cache do Omie assim: <strong>${inline(CARIMBO_TEXTO)}</strong>. Tudo nesta página sai dessa
+leitura, e a mesma rodada escreveu as contagens de jan–set no bloco gerado de <a href="fontes.md">docs/fontes.md</a> —
+o documento e esta página não têm como ficar em leituras diferentes.</p>
+<p><strong>A trava do mês conferido.</strong> ${inline(TRAVA_TEXTO)}. O que ela fixa está em
+<a href="trava-agosto-2026.json">docs/trava-agosto-2026.json</a>, que entra no git: os três baldes de ${NOME_DO_MES}
+por empresa e natureza, as faixas de ${NOME_DO_MES} da Tela 3, a identidade de cada caso real desta página e a impressão
+digital dos campos de cadastro de todos os lançamentos do mês. Se algum
+deles mudar, o script para e não grava nada. Ela existe porque a conferência caso a caso relê o MESMO cache que o
+cálculo leu: um lançamento que mudou no Omie e voltou mudado na releitura bate dos dois lados — quem pega isso é a
+trava.</p>
+<p><strong>As contagens de jan–set não travam nada.</strong> O app relê o Omie de hora em hora e o Omie recebe
+lançamento com data retroativa: um mês já passado muda de contagem sozinho. A coluna da direita mostra o que a leitura
+de referência (${LEITURA_DE_REFERENCIA}), citada na prosa do documento, dava — um número diferente ali é o que a
+releitura mexeu, não um erro.</p>
+<div class="tabela"><table><thead><tr><th>o que</th><th>esta leitura (<code>${esc(CARIMBO.id)}</code>)</th><th>a leitura de referência (${LEITURA_DE_REFERENCIA})</th><th>igual?</th></tr></thead><tbody>
+${CONFERENCIAS_DO_FONTES.map((c) => `<tr><td>${inline(c.rotulo)}</td><td>${c.meu.join(', ')}</td><td>${c.ref.join(', ')}</td><td>${c.bate ? 'sim' : '<strong>não</strong> — a releitura mexeu'}</td></tr>`).join('\n')}
 </tbody></table></div>
 ${['Tela 1', 'Tela 2', 'Tela 3'].map((t) => `<h2>${t}</h2><ul class="ind">
 ${indicadores.filter((i) => i.tela === t).map((i) => `<li class="${CLASSE[i.estado]}"><span class="selo">${SELO[i.estado]}</span><span class="nome">${inline(i.nome)}</span>
@@ -1268,8 +1455,63 @@ for (const [re, oQue] of PROIBIDO) {
 }
 fs.writeFileSync(SAIDA_HTML, html, 'utf8');
 
+// AS CONTAGENS DE JAN–SET VÃO PARA `docs/fontes.md`, num bloco gerado entre marcas.
+//
+// POR QUE ESCREVER NO DOCUMENTO, E NÃO CONFERIR CONTRA ELE. O que a trava antiga queria garantir é que o número
+// publicado no documento e o da página fossem da mesma leitura. Comparar não garante isso — só avisa quando já
+// divergiram, e desde que o app relê o Omie de hora em hora isso passou a acontecer sozinho. Escrever garante: a mesma
+// passagem do script grava os dois, na mesma leitura, com o mesmo carimbo. O que está no documento FORA das marcas é
+// prosa do dono e história, e este script não toca nela.
+const blocoDoFontes = `${MARCA_INICIO}
+### As contagens de jan–set desta leitura (bloco gerado — não edite à mão)
+
+Escrito por [\`scripts/numeros-das-telas.mjs\`](../scripts/numeros-das-telas.mjs) a cada rodada da conferência, na mesma
+passagem que grava [\`docs/conferencia.md\`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
+do Omie, e é assim que este documento e aquela página não têm como discordar.
+
+**De que leitura são as contagens desta tabela:** ${CARIMBO_TEXTO}.
+
+**De que leitura são as contagens escritas em PROSA neste documento:** da leitura de ${LEITURA_DE_REFERENCIA} — a
+leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
+agora. Uma diferença não é erro: o app relê o Omie de hora em hora e o Omie recebe lançamento com data retroativa, então
+um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar é
+[\`docs/trava-agosto-2026.json\`](trava-agosto-2026.json), que fixa agosto de 2026 — os baldes do mês, as faixas da
+Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
+do mês.
+
+| o que | esta leitura (\`${CARIMBO.id}\`) | a leitura de referência (${LEITURA_DE_REFERENCIA}) | igual? |
+|---|---|---|---|
+${CONFERENCIAS_DO_FONTES.map(linhaTravaMd).join('\n')}
+
+${MARCA_FIM}`;
+
+{
+  const fontes = fs.readFileSync(FONTES, 'utf8');
+  const i = fontes.indexOf(MARCA_INICIO), f = fontes.indexOf(MARCA_FIM);
+  if (i < 0 || f < 0 || f < i) falhar(`não achei as marcas ${MARCA_INICIO} e ${MARCA_FIM} em docs/fontes.md — é entre elas que as contagens de jan–set são publicadas.`);
+  for (const [re, oQue] of PROIBIDO) {
+    const m = re.exec(blocoDoFontes);
+    if (m) falhar(`GUARDA (fontes.md): o bloco gerado tem ${oQue} ("${m[0]}").`);
+  }
+  const novo = fontes.slice(0, i) + blocoDoFontes + fontes.slice(f + MARCA_FIM.length);
+  if (novo !== fontes) fs.writeFileSync(FONTES, novo, 'utf8');
+}
+
+// A trava do mês só é gravada quando é para fixar (primeira vez ou `--refazer-trava`); quando só confere, nada muda.
+if (GRAVAR_TRAVA) {
+  const texto = `${JSON.stringify(travaDaRodada, null, 2)}\n`;
+  for (const [re, oQue] of PROIBIDO) {
+    const m = re.exec(texto);
+    if (m) falhar(`GUARDA (trava): o arquivo ia sair com ${oQue} ("${m[0]}").`);
+  }
+  fs.writeFileSync(TRAVA_MES, texto, 'utf8');
+}
+
+const semMarca = (s) => String(s).replace(/[`*]/g, '');
 console.log(`${NOME_DO_MES} de ${ANO}: ${indicadores.length} indicadores — ${quantos('conferido')} conferidos, ${quantos('divergente')} divergentes, ${quantos('a-conferir')} a conferir.`);
-console.log('contagens de jan–set de docs/fontes.md, refeitas:');
-for (const c of CONFERENCIAS_DO_FONTES) console.log(`  ${c.bate ? 'ok  ' : 'NÃO '} ${c.rotulo}: ${c.meu.join(', ')} (fontes.md: ${c.dito.join(', ')})`);
+console.log(`leitura do Omie: ${semMarca(CARIMBO_TEXTO)}`);
+console.log(`trava de agosto de 2026: ${semMarca(TRAVA_TEXTO)}`);
+console.log(`contagens de jan–set desta leitura (a de referência é a leitura de ${LEITURA_DE_REFERENCIA}):`);
+for (const c of CONFERENCIAS_DO_FONTES) console.log(`  ${c.bate ? 'igual ' : 'MUDOU '} ${semMarca(c.rotulo)}: ${c.meu.join(', ')} (referência: ${c.ref.join(', ')})`);
 for (const i of indicadores.filter((x) => x.estado !== 'conferido')) console.log(`  ${ROTULO[i.estado]}${i.tela} — ${i.nome}: ${i.motivo}`);
-console.log(`gravados ${path.relative(RAIZ, SAIDA_MD)} e ${path.relative(RAIZ, SAIDA_HTML)}`);
+console.log(`gravados ${path.relative(RAIZ, SAIDA_MD)}, ${path.relative(RAIZ, SAIDA_HTML)} e o bloco de jan–set em ${path.relative(RAIZ, FONTES)}${GRAVAR_TRAVA ? `; trava fixada em ${path.relative(RAIZ, TRAVA_MES)}` : ''}`);

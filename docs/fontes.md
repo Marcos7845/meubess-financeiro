@@ -357,6 +357,38 @@ O que o pedido **não** é: não traz data de pagamento nem quanto já foi receb
 `ListarMovimentos` nos números (o regime de caixa continua no título). Ele entra só onde o título não responde —
 descrição e produto — e essas linhas dizem "pedido de venda" na coluna de filtro.
 
+<!-- CONTAGENS-JAN-SET:INICIO -->
+### As contagens de jan–set desta leitura (bloco gerado — não edite à mão)
+
+Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) a cada rodada da conferência, na mesma
+passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
+do Omie, e é assim que este documento e aquela página não têm como discordar.
+
+**De que leitura são as contagens desta tabela:** leitura `d59ddbbd5851` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 14h31; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 09h20 (ok, 287 páginas).
+
+**De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
+leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
+agora. Uma diferença não é erro: o app relê o Omie de hora em hora e o Omie recebe lançamento com data retroativa, então
+um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar é
+[`docs/trava-agosto-2026.json`](trava-agosto-2026.json), que fixa agosto de 2026 — os baldes do mês, as faixas da
+Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
+do mês.
+
+| o que | esta leitura (`d59ddbbd5851`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+|---|---|---|---|
+| total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |
+| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 536, 25, 611 | 536, 25, 611 | sim |
+| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 556, 3, 547 | 556, 3, 547 | sim |
+| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 66, 1, 20, 447, 3, 137 | 66, 1, 20, 447, 3, 137 | sim |
+| resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2) | 55, 11, 98, 33 | 55, 11, 98, 33 | sim |
+| pessoal pago, jan–set (empresa 1, empresa 2) | 253, 322 | 253, 322 | sim |
+| impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
+| códigos de outra receita no cadastro (empresa 1, empresa 2) | 26, 28 | 26, 28 | sim |
+| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
+
+<!-- CONTAGENS-JAN-SET:FIM -->
+
 ### As planilhas de fluxo de caixa (DFC) de 2026 (vale para as três telas)
 
 Lidas em 24/09/2026 por `scripts/estrutura-dfc.mjs` (só leitura; o script imprime estrutura e contagens, nunca valor de
@@ -660,6 +692,20 @@ nota e sem o ISS retido nas deduções, opção A). As listas por empresa estão
 
 As três telas num app só, com menu no topo. A referência da tela 1 mostra também Contas a Pagar, Centro de Custo, Fluxo
 de Caixa e Detalhes como abas; ficam de fora até o dono pedir.
+
+---
+
+**De que leitura são as contagens de jan–set citadas daqui para baixo.** Toda contagem de janeiro a setembro escrita nas
+linhas das três telas abaixo — "809 títulos + 9 baixas de parcial + 276 avulsos", "os 14 títulos de guia", e as demais —
+é da **leitura de referência de 27/09/2026, 09h11–09h17**, a mesma que "A contagem de 2026" cita no começo da Tela 1.
+Elas são história e ficam como estão. A contagem de **agora** está em "As contagens de jan–set desta leitura", o bloco
+gerado no fim de "Como lemos o Omie": quem o escreve é `scripts/numeros-das-telas.mjs`, na mesma passagem em que grava
+`docs/conferencia.md`, então o número deste documento e o da página de conferência são sempre da mesma leitura. Uma
+diferença entre as duas colunas não é erro: o app relê o Omie de hora em hora e o Omie recebe lançamento com data
+retroativa, então um mês já passado muda de contagem sozinho. O que **não** pode mudar sozinho é agosto de 2026, e é
+`docs/trava-agosto-2026.json` que o fixa — os baldes do mês, as faixas da Tela 3, a identidade de cada caso real
+conferido e a impressão digital dos campos de cadastro de todos os lançamentos do mês. Se algum deles mudar, a
+conferência para e não grava nada.
 
 ---
 

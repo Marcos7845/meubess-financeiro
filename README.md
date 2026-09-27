@@ -130,6 +130,35 @@ alguma linha ficar **divergente**.
 ainda não venceu. `docs/conferencia.md` mede essa faixa noutra janela de vencimento e diz na própria linha qual foi;
 o teste **lê a janela do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
 
+### O que trava, e o que só é publicado
+
+O app relê o Omie de hora em hora e grava no mesmo cache, e o Omie recebe lançamento com **data retroativa**: um mês já
+passado muda de contagem sozinho — de 24/09 a 27/09/2026, jan–set passou de 1.322 para 1.343 entradas. Por isso as duas
+coisas são tratadas de formas diferentes.
+
+**As contagens de jan–set são publicadas, não conferidas.** `npm run conferencia` as refaz e as **escreve** num bloco
+gerado de [`docs/fontes.md`](docs/fontes.md), na mesma passagem em que grava `docs/conferencia.md` — o número do
+documento e o da página são sempre da mesma leitura porque quem grava os dois é a mesma rodada, e ninguém edita o
+documento à mão quando a releitura mexe em algo. Cada contagem publicada diz **de que leitura é**: o bloco gerado traz o
+carimbo da leitura desta rodada, e as contagens escritas em prosa no documento dizem que são da leitura de referência de
+27/09/2026, 09h11–09h17.
+
+**O que trava é agosto de 2026**, o mês conferido, em
+[`docs/trava-agosto-2026.json`](docs/trava-agosto-2026.json): os três baldes do mês por empresa e natureza, as faixas do
+mês da Tela 3, a identidade de cada caso real que a conferência confere e a impressão digital dos campos de cadastro de
+todos os lançamentos do mês. Se algum deles mudar, a conferência **para e não grava nada**; refixar é na mão, com
+`node scripts/numeros-das-telas.mjs --refazer-trava`. A trava é necessária porque a conferência caso a caso relê o
+**mesmo cache** que o cálculo leu: um lançamento que mudou no Omie e voltou mudado na releitura bate dos dois lados.
+
+```
+npm run testar-trava
+```
+
+Prova a separação, em três casos, cada um numa **cópia** do cache (nada vai ao Omie e nada fica em `docs/`): lançamento
+novo num mês anterior → a conferência passa, e a saída mostra a contagem de jan–set que mudou; o caso real de agosto
+mudando de `cStatus` → a conferência para, e a mensagem é da trava, mesmo sem nenhuma contagem mudar; lançamento novo
+com data de agosto → a conferência para.
+
 Uma **captura de cada tela sem dinheiro** (valores trocados por "—", contagens e percentuais mantidos) fica em
 [`docs/tela-1-captura.html`](docs/tela-1-captura.html),
 [`docs/tela-2-captura.html`](docs/tela-2-captura.html) e

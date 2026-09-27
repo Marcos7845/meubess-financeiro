@@ -4,14 +4,25 @@ Este documento diz, **tela por tela e filtro por filtro**, em que cartões e blo
 e por quê, e traz **um caso real filtrado conferido contra a fonte** para cada um.
 
 Quais filtros cada tela tem não é escolha deste documento: está em [`docs/fontes.md`](fontes.md), tirado das
-referências que o dono mandou e das decisões dele — a Tela 1 na linha 771, a Tela 2 na 845, a Tela 3 na 911. Aqui eles
-são construídos, e nada além deles: **fornecedor, conta corrente, categoria e situação nas Telas 1 e 2, e qualquer outro
-filtro esperam decisão do dono** e não existem nas telas.
+referências que o dono mandou, e nas decisões dele — a Tela 1 na linha 771, a Tela 2 na 845, a Tela 3 na 911. Aqui eles
+são construídos, e nada além deles.
 
-**O filtro de empresa é o primeiro que atravessa as três telas** (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou
-as duas. Ele tem seção própria no fim, porque o que ele alcança e o que ele não alcança é a mesma coisa nas três, e
-porque o "não alcança" dele tem uma prova atrás — o de-para da coluna `EMP.` do DFC com as filiais do Omie **não
-fecha**.
+**Os quatro filtros de 27/09/2026.** Nessa data o dono aprovou mais quatro, e eles estão construídos: **categoria**,
+**cliente/fornecedor** e **situação** na Tela 1, e **conta bancária** nas três telas. Nenhum dos quatro fica em aberto
+e nenhum espera decisão — o que cada um alcança e o que não alcança está medido abaixo, filtro por filtro.
+
+**Dois filtros atravessam as três telas**, e cada um tem seção própria no fim, porque o que alcançam e o que não
+alcançam é a mesma coisa nas três, e porque o "não alcança" dos dois tem uma prova medida atrás:
+
+- **empresa** (decisão do dono, 27/09/2026) — empresa 1, empresa 2 ou as duas. O de-para da coluna `EMP.` do DFC com as
+  filiais do Omie **não fecha**.
+- **conta bancária** (decisão do dono, 27/09/2026) — as contas da MeuBESS. O de-para da coluna `BANCO` do DFC com as
+  contas correntes do Omie **também não fecha**: o rótulo `ITAU`, que é 4.449 das 4.670 linhas cruzáveis do ano, casa
+  com **quatro** contas diferentes.
+
+**O DFC diz o banco, mas não diz QUAL conta do Omie.** O dono sabia que isso podia acontecer e pediu o filtro assim
+mesmo; foi medido, não deu, e por isso todo número de fonte DFC mostra **todas as contas somadas** e escreve isso ao
+lado do valor. A medida inteira está em "O filtro de conta bancária", no fim.
 
 **Onde o filtro mora: na URL.** É o mesmo lugar em que as pílulas de ano e mês sempre moraram. A tela é componente de
 servidor, então o estado do filtro chega pela query — e assim um link colado no chat, a página que o navegador mostra e
@@ -33,8 +44,13 @@ roda sempre com filtro vazio, contra [`docs/conferencia.md`](conferencia.md).
 
 ## Tela 1 — Gestão de Contas
 
-**Filtros:** ano · mês · **centro de custo (seleção múltipla)**. Os dois primeiros já existiam, em pílulas; o terceiro é
-o que esta tarefa construiu.
+**Filtros:** ano · mês · **centro de custo** · **categoria (as duas pontas)** · **cliente/fornecedor** ·
+**situação** — e mais os dois das três telas, empresa e conta bancária. Ano, mês e centro de custo já existiam; os três
+do meio são os que o dono aprovou em 27/09/2026.
+
+Os de escolha curta são pílulas (centro de custo, situação, empresa, conta bancária); as três listas longas —
+classificação do DFC, categoria do Omie e cliente/fornecedor — vão juntas num formulário `GET`, como na Tela 3:
+apertar "aplicar" escreve as três na URL de uma vez.
 
 ### centro de custo
 
@@ -96,12 +112,115 @@ Um filtro que não está construído e continua esperando: o seletor **"ver por 
 `docs/fontes.md` descreve na linha do "Top 10 despesas" — ele trocaria as barras do DFC por barras do Omie agrupadas por
 departamento. É uma forma de ver, não um filtro, e fica para outra tarefa.
 
+### categoria — e por que ela tem DUAS pontas
+
+Na URL, duas: `?classe=RECEITA DE CLIENTE` e `?categoria=1.01.01`. A primeira é a **classificação do DFC**
+(`CLASS. CONTABIL`, coluna I do `FLUXO DE CAIXA` — **a mesma que os cartões já usam**, e a mesma pela qual o
+"Top 10 despesas" agrupa as barras); a segunda é a **categoria do Omie** (`cCodCateg` do lançamento).
+
+**Por que não é um filtro só.** As duas fontes classificam com vocabulários diferentes e **nenhuma delas escreve o
+de-para entre eles**: o `SUB 2` e a `CLASS. CONTABIL` do DFC saem do cadastro da aba `BASE` da própria planilha (em
+setembro, 69 contas de `SUB 2` e 24 de `CLASS. CONTABIL`, `docs/fontes.md`), e o `cCodCateg` sai do plano de contas do
+Omie. Um filtro só, com um vocabulário só, teria de adivinhar a tradução — e este projeto não adivinha. Então são duas
+pontas, lado a lado, e **cada uma diz, ao lado do número da outra, que não a alcança**.
+
+**As opções saem do próprio mês**, e não do cadastro inteiro: em agosto de 2026 são 22 classificações no DFC e 56
+categorias no Omie. Categoria sem lançamento no mês não vira opção, porque escolhê-la só daria tela vazia — e um
+`?classe=` ou `?categoria=` que não esteja no mês é ignorado, com aviso na tela.
+
+#### Em que cartões e blocos vale
+
+| cartão / bloco | fonte principal | `?classe=` (DFC) | `?categoria=` (Omie) |
+|---|---|---|---|
+| Saldo · Receitas · Despesas · Desp. Pagas · Desp. Funcionários · % D. Func. / Rec. Líquida | DFC | **vale no valor e na contagem do DFC** | **só na contagem do Omie** |
+| Desp. Pendentes | Omie, títulos a pagar por vencimento | **não vale** | **vale inteiro** — valor e contagem |
+| Top 10 despesas | DFC, por `CLASS. CONTABIL` | **vale nas barras e na contagem do DFC** | **só na contagem do Omie** |
+| Top 10 receitas | Omie | **não vale** | **vale inteiro** |
+| Receita × despesa por dia · por mês | DFC, bloco pronto | **não vale** | **só na contagem do Omie** |
+
+#### Onde não vale, e por quê
+
+- **A classificação do DFC não alcança nenhum número do Omie.** O lançamento do Omie não tem `CLASS. CONTABIL` — essa
+  coluna é da planilha. Isso alcança a contagem do Omie dos sete cartões e dos quatro blocos, o "Top 10 receitas"
+  inteiro e o cartão "Desp. Pendentes" inteiro, e cada um diz isso ali mesmo, convidando a escolher também uma
+  categoria do Omie.
+- **A categoria do Omie não alcança nenhum valor do DFC**, pelo mesmo motivo do outro lado: a planilha não tem
+  `cCodCateg`. O valor dos seis cartões de fonte DFC e as barras do "Top 10 despesas" saem do mês inteiro, e dizem isso.
+- **Os dois gráficos de receita × despesa não aceitam nem uma ponta nem a outra nas barras.** Elas não são linha de
+  lançamento nenhuma: são o bloco `Entradas`/`Gastos` já somado da aba do mês, que não tem coluna de classificação para
+  filtrar. É a mesma razão pela qual o centro de custo não as alcança.
+
+### cliente/fornecedor
+
+Na URL: `?fornecedor=2-5199865257` — **empresa + `nCodCliente`**, como o cliente da Tela 3, porque o código é próprio de
+cada empresa. A lista mostra o nome, sempre com o código ao lado em `data-codigo`: é por ele que
+`scripts/capturar-tela.mjs` troca o nome antes de a captura entrar no repositório. As opções saem do próprio mês (176
+pares em agosto de 2026).
+
+#### Em que cartões e blocos vale
+
+| cartão / bloco | o filtro de cliente/fornecedor |
+|---|---|
+| Saldo · Receitas · Despesas · Desp. Pagas · Desp. Funcionários · % D. Func. / Rec. Líquida | **só na contagem do Omie** |
+| Desp. Pendentes | **vale inteiro** — valor e contagem. É o cartão do Omie |
+| Top 10 receitas | **vale inteiro** |
+| Top 10 despesas · Receita × despesa por dia · por mês | **só na contagem do Omie.** As barras são do DFC |
+
+#### Onde não vale, e por quê
+
+- **Todo valor que vem do DFC, e a medida disso.** A planilha TEM a coluna `FORNECEDOR / CLIENTE` (G), mas ela é um
+  **nome digitado à mão, sem código nenhum**, e o filtro escolhe pelo `nCodCliente` do cadastro do Omie. O de-para foi
+  procurado no dado em 27/09/2026 por [`scripts/de-para-conta-dfc.mjs`](../scripts/de-para-conta-dfc.mjs), que cruza
+  cada linha do `FLUXO DE CAIXA` com os lançamentos do Omie por data, valor e nome (a mesma comparação estrita do
+  cruzamento de `EMP.`): das **4.670 linhas cruzáveis do ano, 3.550 — 76% — não acharam nome nenhum** no cadastro
+  `geral/clientes`. Sem de-para, o número do DFC é de todos os clientes e fornecedores, e a tela diz isso ao lado dele.
+- **O lançamento sem `nCodCliente`.** Em 2026 são 97 dos 3.569 lançamentos do recorte da MeuBESS. Eles não têm código
+  para casar e ficam fora de qualquer escolha; a contagem do mês aparece no caso real, no fim deste documento.
+
+### situação — pago · recebido · a pagar
+
+Na URL: `?situacao=pago,recebido` — pílulas, seleção múltipla, "todas" limpa.
+
+**Os três rótulos não foram inventados:** eles são, letra por letra, os valores da coluna `PAGAMENTO` (N) do
+`FLUXO DE CAIXA` que `docs/fontes.md` registra — `PAGO`, `RECEBIDO` e `A PAGAR`. Por isso **este é o único dos quatro
+filtros novos que alcança o VALOR do DFC**, e não só a contagem do Omie.
+
+**Do lado do Omie o de-para é a NATUREZA do lançamento**, e não um `cStatus` novo: a leitura das Telas 1 e 2 é de
+**caixa** (`financas/mf` por data de pagamento), e nela todo lançamento já está baixado — os 3.569 lançamentos de 2026
+no recorte da MeuBESS têm só dois `cStatus`, `PAGO` nos 2.217 de natureza `P` e `RECEBIDO` nos 1.352 de natureza `R`
+(medido em 27/09/2026 por [`scripts/de-para-conta-dfc.mjs`](../scripts/de-para-conta-dfc.mjs)). Então **pago é a
+natureza `P`, recebido é a `R`**, e **"a pagar" é o cartão "Desp. Pendentes"** — o único lugar da tela onde mora um
+título ainda não pago.
+
+#### Em que cartões e blocos vale
+
+| cartão / bloco | o filtro de situação |
+|---|---|
+| Saldo · Receitas · Despesas · Desp. Pagas · Desp. Funcionários · % D. Func. / Rec. Líquida | **vale inteiro** — valor e contagem do DFC (pela coluna `PAGAMENTO`) e contagem do Omie (pela natureza) |
+| Desp. Pendentes | **vale como cartão inteiro**: "a pagar" o deixa cheio, "pago" ou "recebido" o deixam vazio — e a tela escreve isso junto do zero |
+| Top 10 despesas | **vale inteiro** — nas barras e nas duas contagens |
+| Top 10 receitas | **vale** — escolher só "pago" o deixa vazio, e a tela diz isso |
+| Receita × despesa por dia · por mês | **só na contagem do Omie.** As barras não aceitam |
+
+#### Onde não vale, e por quê
+
+- **As barras dos dois gráficos de receita × despesa.** Como no centro de custo e na categoria: elas são o bloco
+  `Entradas`/`Gastos` já somado da aba do mês, que não tem a coluna `PAGAMENTO` para filtrar.
+- **"A pagar" é sempre 0 do lado do DFC, e não é falha do filtro.** A linha `A PAGAR` da planilha **nunca entra nesta
+  tela**: o regime de caixa (`docs/fontes.md`) só conta linha já baixada, e `BAIXADO()` a deixa de fora antes de
+  qualquer filtro. Em agosto de 2026 o mês tem 285 linhas `PAGO` e 103 `RECEBIDO`, que somam as 388 do cartão "Saldo",
+  e nenhuma `A PAGAR`. A tela mostra essas três contagens junto do filtro, para o zero não ficar sem explicação.
+- **O rótulo de `PAGAMENTO` que não é nenhum dos três** fica fora de qualquer escolha. No ano de 2026 são 95 linhas
+  (`CARTAO DE CREDITO` 66, `TRANSFERENCIA` 19, `C. CREDITO` 8, `RETIRADA SOCIO - PAGO` 2); em agosto, nenhuma. A tela
+  mostra esse número junto do filtro quando ele existe.
+
 ---
 
 ## Tela 2 — DRE
 
 **Filtros:** **mês, seleção múltipla** — vários meses de uma vez. Na URL: `?meses=7,8`, ao lado do `ah` e do `av` que já
-moravam lá. Cada pílula de mês acende e apaga; "todos" limpa e a tela volta ao de sempre.
+moravam lá. Cada pílula de mês acende e apaga; "todos" limpa e a tela volta ao de sempre. E mais os dois filtros das
+três telas, **empresa** e **conta bancária**, cada um com a sua seção no fim deste documento.
 
 **Este filtro não muda regra nenhuma.** Os doze meses continuam sendo calculados pelas mesmas regras; o filtro escolhe
 **quais** aparecem. O que ele muda, e a tela diz:
@@ -139,7 +258,9 @@ moravam lá. Cada pílula de mês acende e apaga; "todos" limpa e a tela volta a
 ## Tela 3 — Contas a Receber
 
 **Filtros:** **data de vencimento (de–até) · status · cliente · categoria**. Os quatro são campos da própria consulta
-que a tela faz (`financas/pesquisartitulos` → `PesquisarLancamentos`), e os quatro moram na URL:
+que a tela faz (`financas/pesquisartitulos` → `PesquisarLancamentos`), e os quatro moram na URL. E mais os dois das três
+telas, **empresa** e **conta bancária** — este último vale INTEIRO aqui, porque a conta é o `cabecTitulo.nCodCC`, o
+mesmo campo pelo qual a tela já faz o recorte da MeuBESS:
 
 | filtro | na URL | o que é |
 |---|---|---|
@@ -277,6 +398,107 @@ não é da MeuBESS continua fora), nem o regime de caixa, nem a trava de agosto,
 
 ---
 
+## O filtro de conta bancária — nas três telas
+
+**Filtro das três telas** (decisão do dono, 27/09/2026): as **contas bancárias da MeuBESS**, "onde a fonte disser o
+banco". Na URL: `?conta=Caixinha,Stone` — seleção múltipla, como o centro de custo: clicar acende, clicar de novo
+apaga, "todas" limpa. A escolha **atravessa as abas**, como a de empresa. O desenho da pílula está em
+[`app/conta.js`](../app/conta.js), um lugar só para as três telas; a leitura e a normalização, em
+[`lib/regras/filtros.mjs`](../lib/regras/filtros.mjs) (`contasBancarias` e `filtroDeConta`).
+
+**As nove opções são as contas que o DONO disse serem da MeuBESS**, em
+[`dados/contas-correntes-por-negocio.json`](../dados/contas-correntes-por-negocio.json) — as mesmas que já fazem o
+recorte das três telas. O **nome** de cada opção é o `dito_como` daquele arquivo, o nome que o próprio dono deu à conta
+quando respondeu de que negócio ela era (24 e 25/09/2026): Adiantamento ao Fornecedor · Adiantamento de Cliente · Banco
+do Brasil (empresas 1 e 2) · Banco Implementação · Caixinha · cartão Itaú 1106 · Cora · Itaú (empresas 1 e 2) · Stone.
+
+**É esse nome que junta as duas empresas**, como o nome do departamento junta os dois cadastros no centro de custo: a
+mesma conta física está cadastrada nas duas com `nCodCC` diferente e, às vezes, com descrição diferente
+(`CARTÃO B3W ITAU (1106)` na empresa 1 e `CARTÃO B3W ITAU (1106) - FILIAL` na 2). O de-para é a resposta do dono, e não
+semelhança de texto adivinhada por código.
+
+### Onde ele NÃO vale, e a prova disso: o DFC
+
+**Todo número que vem do DFC.** A planilha **tem** uma coluna de banco — `BANCO` (C), com 17 rótulos diferentes em 2026
+(`ITAU`, `BB`, `SICOOB`, `CORA`, `APP BB`, `BANCO DO BRASIL`, `STONE`, `CRED.REPASSE`, `INFINITYPAY`, `SANTANDER`,
+`VEXPENSES`, `SALDO ANTERIOR`…) —, mas **nenhum deles é uma conta corrente do Omie**. Isso não é suposição: foi medido
+em 27/09/2026 por [`scripts/de-para-conta-dfc.mjs`](../scripts/de-para-conta-dfc.mjs), que cruza cada linha do
+`FLUXO DE CAIXA` com os lançamentos do Omie por **data, valor e nome do cliente/fornecedor** — a mesma comparação
+estrita do cruzamento de `EMP.` — e olha em que conta do Omie cada rótulo cai. Das 4.670 linhas cruzáveis:
+
+| `BANCO` | linhas cruzáveis | sem par no Omie | casou com mais de uma conta ao mesmo tempo | casou com uma conta só |
+|---|---|---|---|---|
+| `ITAU` | **4.449** | 3.347 | **113** | Itaú (empresas 1 e 2) **918** · cartão Itaú 1106 **50** · Adiantamento de Cliente **18** · Banco Implementação **3** |
+| `(vazio)` | 63 | 58 | 0 | Banco do Brasil **4** · Stone **1** |
+| `BANCO DO BRASIL` | 11 | 7 | 0 | Banco do Brasil 4 |
+| `CORA` | 15 | 12 | 0 | Cora 3 |
+| `BB` · `SICOOB` · `APP BB` · `STONE` · `CRED.REPASSE` · `INFINITYPAY` · `SANTANDER` · `APLIC.BB` · `APLIC.SANTANDER` · `BRADESCO` · `SICOOBI` · `VEXPENSES` · `SALDO ANTERIOR` | 132 | 132 | 0 | nenhuma — estes rótulos não dizem nada sobre conta |
+
+**O rótulo `ITAU` é 95% das linhas do ano e casa com QUATRO contas diferentes do Omie**, e ainda deixa 113 linhas
+casando com mais de uma ao mesmo tempo. O rótulo `(vazio)` casa com duas. E o `STONE` do DFC não casou com a conta
+Stone do Omie nenhuma vez — as nove linhas dele não acharam par. **O de-para não fecha**, e por isso o DFC é tratado
+como **não filtrável por conta**: onde ele é a fonte, a tela mostra o número de **todas as contas somadas** e escreve
+isso ali mesmo, junto do valor. A contagem do Omie, no mesmo cartão, está filtrada.
+
+O dono sabia que isso podia acontecer — ele pediu o filtro "onde a fonte disser o banco" — e foi assim que a resposta
+saiu: a fonte diz um banco, mas não diz a conta.
+
+### Em que cartões, blocos e linhas ele vale
+
+**Tela 1 — Gestão de Contas**
+
+| cartão / bloco | o filtro de conta bancária |
+|---|---|
+| Saldo · Receitas · Despesas · Desp. Pagas · Desp. Funcionários · % D. Func. / Rec. Líquida | **só na contagem do Omie.** O valor e a contagem do DFC são de todas as contas |
+| **Desp. Pendentes** | **vale inteiro** — valor e contagem. É o cartão do Omie, e é nele que o caso real confere |
+| Top 10 receitas | **vale inteiro** — é do Omie |
+| Top 10 despesas · Receita × despesa por dia · Receita × despesa por mês | **só na contagem do Omie.** As barras são do DFC |
+
+**Tela 2 — DRE**
+
+| linha / cartão | fonte do valor | o filtro de conta bancária |
+|---|---|---|
+| (+) Receitas (e as 2 de detalhe) · (=) Receita bruta · (−) Despesas gerais · (+/−) Resultado financeiro · (=) sem conta | Omie | **vale inteiro** |
+| (−) Deduções · (−) Custos de vendas · (−) Impostos pagos (guias) | DFC | **não vale no valor**; a contagem do Omie ao lado, sim |
+| Receita total · Custos e despesas (os 2 primeiros cartões do topo) | DFC | **não vale no valor**; a contagem do Omie ao lado, sim |
+| (=) Receita líquida · (=) Lucro bruto · (=) EBITDA · (=) Lucro líquido · Margem de lucro | mistura as duas | **vale em parte** — a ponta do Omie é filtrada, a do DFC não, e a linha diz isso |
+| as 2 contagens de cadastro ao lado de "(=) Receita bruta" | cadastro `geral/dre` | **não vale** |
+
+**Tela 3 — Contas a Receber**
+
+| cartão / bloco | o filtro de conta bancária |
+|---|---|
+| Valor Previsto · Valor Recebido · Valor Pendente · Valor Vencido | **vale inteiro** — valor e contagem |
+| Lançamentos por mês e status · Valor previsto por cliente e status · Lista de títulos · Lançamentos por status | **vale inteiro** |
+| as 2 contagens do cadastro de clientes ao lado do gráfico por cliente | **não vale** |
+
+### As duas outras ressalvas
+
+- **As duas contagens de cadastro do DRE** ("quantas contas o DRE tem" e "quantas totalizam") saem de `geral/dre` →
+  `ListarCadastroDRE`, que é o **plano de contas do DRE** e não tem conta corrente nenhuma para filtrar. A linha
+  "(=) Receita bruta" diz isso na tela.
+- **As duas contagens do cadastro de clientes** da Tela 3 são o tamanho do cadastro `geral/clientes` de cada empresa —
+  não são títulos, e um cadastro de cliente não tem conta corrente. O bloco diz isso.
+
+### Somar as contas uma a uma NÃO dá a tela sem filtro, e é de propósito
+
+Nos **três baldes de caixa** das Telas 1 e 2, um título e a baixa dele podem estar em contas diferentes. Sem filtro, a
+regra de `lib/regras/movimentos.mjs` conta o **título** e joga a baixa fora, para não contar duas vezes; com a conta da
+baixa escolhida sozinha, o título não está mais no conjunto e **a baixa volta a contar por si**. Em agosto de 2026 isso
+dá **425 lançamentos somando as nove contas uma a uma, contra 419 da tela sem filtro** — seis casos.
+
+Isso não é erro do filtro: é o que escolher uma conta quer dizer. Escolher **as nove de uma vez** dá exatamente os 419,
+e é essa a conferência do conjunto. Já o cartão **"Desp. Pendentes"** e a **Tela 3 inteira** são um **título por
+linha**, sem essa junção — lá a conta reparte o conjunto exatamente, as contas uma a uma somam o total, e é por isso
+que os casos reais da conta bancária conferem nesses dois lugares.
+
+### O que ele NÃO muda
+
+Nem o recorte da MeuBESS (as nove opções **são** esse recorte; conta de outro negócio continua fora e não é opção), nem
+o regime de caixa, nem a trava de agosto, nem regra de indicador nenhuma.
+
+---
+
 ## Os casos reais conferidos
 
 Um caso real por filtro, aplicado pela **mesma camada de dados que o navegador recebe** e reencontrado na **fonte**.
@@ -299,8 +521,8 @@ O que é "a fonte" em cada tela:
 <!-- casos-conferidos:inicio -->
 <!-- Escrito por scripts/conferir-filtros.mjs. Não edite à mão: rode `npm run conferir-filtros`. -->
 
-**11 filtros conferidos**: 11 conferidos e 0 divergentes. Leitura do Omie:
-`df3edc45cfea` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
+**19 filtros conferidos**: 19 conferidos e 0 divergentes. Leitura do Omie:
+`000a67f4d027` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
 
 Cada linha é um filtro real aplicado pela **mesma camada de dados que o navegador recebe**, e reencontrado na **fonte** —
 os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem passar pela montagem de
@@ -318,6 +540,14 @@ os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem pas
 - **Tela 3 — cliente = `2-5199865257` (empresa + `nCodCliente`).** **Vale em:** os 4 cartões e os 4 blocos. **Na tela:** 4. **Na fonte:** 4 — o mesmo conjunto cru, recortado aqui pelo par empresa + `nCodCliente` do `cabecTitulo`. **Caso real:** nos arquivos crus, 4 dos 128 títulos da janela têm esse `nCodCliente` na empresa 2, em 87 códigos de cliente distintos na janela.
 - **Tela 3 — categoria = `1.01.03`, na janela de 01/07/2026 a 31/08/2026.** **Vale em:** os 4 cartões e os 4 blocos. **Na tela:** 1. **Na fonte:** 1 — o mesmo conjunto cru da janela, recortado aqui pelo `cCodCateg` do `cabecTitulo`. **Caso real:** o título `5272798590` da empresa 2 tem `cCodCateg` `1.01.03` no arquivo cru; a janela tem 2 categorias distintas e 1 dos 262 títulos está nesta.
 - **Tela 3 — empresa = 1, na janela de 01/01/2026 a 31/12/2026.** **Vale em:** os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira. **Na tela:** 9. **Na fonte:** 9 — os `titulosEncontrados` lidos dos arquivos `1-financas-pesquisartitulos-…` do cache, recortados aqui pelo `nCodCC` da MeuBESS, pelo `dDtVenc` no ano e sem os `CANCELADO`. **Caso real:** dos 736 títulos do ano nos arquivos crus, 9 estão em arquivo da empresa 1 e 727 em arquivo da empresa 2; o título `5986750138` é um dos da empresa 1, com `cStatus` `RECEBIDO` e vencimento 03/03/2026. Em agosto sozinho a carteira é inteira da empresa 2 (128 de 128 títulos), e escolher a empresa 2 ali não tira nenhum — é por isso que o caso é o do ano. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso.
+- **Tela 1 — categoria pela classificação do DFC = RECEITA DE CLIENTE.** **Vale em:** o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas" — é a MESMA `CLASS. CONTABIL` que as barras desse bloco já agrupam. **Na tela:** 90. **Na fonte:** 90 — as linhas do `FLUXO DE CAIXA` do arquivo do mês, lidas aqui com o recorte de linha escrito de novo neste arquivo (sem as linhas de saldo, sem as de valor zero, só as baixadas e com data no mês) e contadas pela `CLASS. CONTABIL`. **Caso real:** a planilha reaberta aqui tem 388 linhas no recorte do mês — o mesmo número que a tela sem filtro mostra no cartão "Saldo" (388) — e 90 delas têm esta classificação, em 22 classificações distintas no mês; a linha 7 do `FLUXO DE CAIXA` de agosto é uma delas, com `SUB 2` `RECEITA COM VENDAS` e `PAGAMENTO` `RECEBIDO`. A contagem do Omie NÃO é recortada por este filtro, e cada cartão diz isso na tela: o lançamento do Omie não tem `CLASS. CONTABIL`.
+- **Tela 1 — situação = pago.** **Vale em:** o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas", E a contagem do Omie de todos eles — é o único dos quatro filtros novos que alcança os dois lados. **Na tela:** 285. **Na fonte:** 285 — as mesmas linhas da planilha reaberta aqui, contadas pelo rótulo da coluna `PAGAMENTO` (N) de cada uma. **Caso real:** das 388 linhas do mês na planilha reaberta aqui, pago 285, recebido 103, a-pagar 0 — e a soma das três é 388, a planilha inteira do mês; "a pagar" é 0 porque a linha `A PAGAR` nunca entra nesta tela, que é de caixa. A linha 3 do `FLUXO DE CAIXA` tem `PAGAMENTO` `PAGO`. Do lado do Omie o de-para é a natureza do lançamento: a tela conta 299 lançamentos com esta escolha, contra 419 sem filtro.
+- **Tela 1 — categoria pela categoria do Omie = `1.01.01`.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro. **Na tela:** 107. **Na fonte:** 107 — os lançamentos da base do mês contados aqui, um a um, pelo `cCodCateg` de cada um. **Caso real:** a base do mês tem 419 lançamentos em 56 categorias distintas, e 107 deles estão nesta. O valor do DFC NÃO é recortado por este filtro, e cada cartão de fonte DFC diz isso na tela: a planilha classifica cada linha por `CLASS. CONTABIL` e `SUB 2`, que saem do cadastro da aba `BASE`, e nenhuma das duas fontes escreve o de-para entre os dois vocabulários.
+- **Tela 1 — cliente/fornecedor = `2-5198391628` (empresa + `nCodCliente`).** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro. **Na tela:** 28. **Na fonte:** 28 — o `nCodCliente` de cada lançamento da base do mês, lido dos arquivos crus de `financas/mf` do cache — e não da montagem de `lib/regras/cache-omie.mjs`. **Caso real:** nos arquivos crus do cache, 28 dos 419 lançamentos da base do mês têm esse `nCodCliente` na empresa 2, em 176 pares empresa + código distintos — e 10 lançamentos do mês não têm `nCodCliente` nenhum e ficam fora de qualquer escolha. O lado do DFC não é recortado: lá o cliente/fornecedor é um NOME digitado à mão, e das 4.670 linhas cruzáveis do ano 3.550 não acham nome nenhum no cadastro (`scripts/de-para-conta-dfc.mjs`).
+- **Tela 1 — conta bancária = Caixinha.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro — é neste último que o caso confere, porque ele é um título por linha. **Na tela:** 3. **Na fonte:** 3 — os `movimentos` dos arquivos crus da leitura de títulos a pagar por vencimento do cache, achados aqui pela chave exata da consulta e recortados pelo `nCodCC` da MeuBESS, pelo `dDtVenc` no mês, por `cLiquidado = "N"` e sem os `CANCELADO`. **Caso real:** nos arquivos crus da leitura `cTpLancamento: "CP"` do cache, 3 dos 161 títulos a pagar vencendo no mês têm o `nCodCC` desta conta — o título `5269208232`, com `nCodCC` `5191219611` e vencimento 17/08/2026, é um deles. A carteira toda se reparte em cartão Itaú 1106 96, Itaú (empresas 1 e 2) 62, Caixinha 3, que somam os 161 do cartão. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o rótulo `ITAU` da coluna `BANCO` casa com quatro contas diferentes do Omie.
+- **Tela 1 — conta bancária = as 9 contas de uma vez.** **Vale em:** os mesmos cartões e blocos; é a conferência do conjunto, e não de uma conta. **Na tela:** 419. **Na fonte:** 419 — a base do mês sem filtro — a mesma que `docs/conferencia.md` confere indicador por indicador. **Caso real:** a base do mês tem 419 lançamentos e 0 deles estão em conta que não é da MeuBESS nos arquivos crus: escolhendo as 9 contas, a tela mostra a base inteira. Nos arquivos crus ela se reparte em Itaú (empresas 1 e 2) 343, Adiantamento de Cliente 76 — que somam mais que 419, e é assim de propósito: um título pago de outra conta faz a baixa dele voltar a contar sozinha quando só a conta da baixa é escolhida.
+- **Tela 2 — conta bancária = as 9 contas de uma vez, e depois só Caixinha.** **Vale em:** as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela. **Na tela:** 17. **Na fonte:** 17 — a tela sem filtro, a tela com todas as contas e a tela com uma só, comparadas aqui indicador por indicador — e a contagem do DFC conferida parada nas três. **Caso real:** a coluna de agosto tem 419 lançamentos do Omie sem filtro e os mesmos 419 com as 9 contas escolhidas; com só Caixinha ela cai para 3, e a contagem do DFC de cada um dos 17 indicadores fica igual nas três leituras — é o filtro não alcançando o DFC, como `docs/filtros.md` diz. As duas contagens de cadastro do DRE também não mudam, e a linha "(=) Receita bruta" diz isso na tela.
+- **Tela 3 — conta bancária = Banco do Brasil (empresas 1 e 2).** **Vale em:** os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira, e a conta é o mesmo `cabecTitulo.nCodCC` do recorte da MeuBESS. **Na tela:** 1. **Na fonte:** 1 — os `titulosEncontrados` dos arquivos crus de `financas/pesquisartitulos`, recortados aqui pelo `cabecTitulo.nCodCC` da conta escolhida, pelo `dDtVenc` no mês e sem os `CANCELADO`. **Caso real:** dos 128 títulos da janela nos arquivos crus, 1 têm o `nCodCC` desta conta; o título `5267029155` da empresa 2 é um deles, com `cStatus` `ATRASADO` e vencimento 01/08/2026. A janela toda se reparte em Itaú (empresas 1 e 2) 99, Adiantamento de Cliente 28, Banco do Brasil (empresas 1 e 2) 1, que somam os 128 títulos dela. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso.
 <!-- casos-conferidos:fim -->
 
 ---
@@ -339,6 +569,7 @@ node scripts/capturar-tela.mjs --tela 2 --q "meses=7,8"  --nome filtro
 node scripts/capturar-tela.mjs --tela 3 --q "status=atrasado" --nome filtro
 node scripts/capturar-tela.mjs --tela 1 --q "empresa=2" --nome empresa
 node scripts/capturar-tela.mjs --tela 3 --q "empresa=1&de=2026-01-01&ate=2026-12-31" --nome empresa
+node scripts/capturar-tela.mjs --tela 1 --q "situacao=recebido&conta=Caixinha" --nome situacao-conta
 ```
 
 As duas últimas são as capturas do filtro de empresa que estão no repositório —
@@ -348,8 +579,19 @@ as contagens do DFC ficam como na captura sem filtro (388, 101, 281, 281, 109, 1
 299 → 132, 92 → 53, e "Desp. Pendentes" 161 → 44), com as 9 frases de "o filtro de empresa não vale" ao lado dos números
 que vêm do DFC.
 
-E o cruzamento que descobriu que o DFC não é filtrável por empresa:
+E os dois cruzamentos que descobriram o que o DFC **não** deixa filtrar — por empresa, por conta bancária e por
+cliente/fornecedor. Os dois são só leitura e imprimem contagem, código e data, nunca dinheiro; o nome sai mascarado:
 
 ```
-node scripts/de-para-empresa-dfc.mjs   # só leitura; imprime contagem, código e data, nunca dinheiro
+node scripts/de-para-empresa-dfc.mjs   # a coluna EMP. contra as filiais do Omie
+node scripts/de-para-conta-dfc.mjs     # a coluna BANCO contra as contas correntes do Omie,
+                                       # a coluna FORNECEDOR / CLIENTE contra o cadastro geral/clientes,
+                                       # e os cStatus da base do Omie, que são o de-para da situação
 ```
+
+E a captura da Tela 1 com **dois filtros novos ao mesmo tempo** — situação "recebido" e conta "Caixinha" — está em
+[`docs/tela-1-captura-situacao-conta.html`](tela-1-captura-situacao-conta.html). Nela dá para ver a regra inteira de
+uma vez: a contagem do DFC do cartão "Saldo" cai de **388 para 103** (a situação alcança o DFC, pela coluna
+`PAGAMENTO`), a do Omie cai de **419 para 3** (a conta só alcança o Omie), e as **9 frases de "o filtro de conta
+bancária não vale"** estão ao lado de cada número que vem do DFC — nenhuma para a situação, porque ela alcança os
+dois lados.

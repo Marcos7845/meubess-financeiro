@@ -364,7 +364,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `df3edc45cfea` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 19h20; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas).
+**De que leitura são as contagens desta tabela:** leitura `09be5ee8028f` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 20h37; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 16h33 (ok, 287 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -374,7 +374,7 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`df3edc45cfea`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`09be5ee8028f`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |

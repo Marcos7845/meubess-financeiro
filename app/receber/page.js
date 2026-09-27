@@ -15,6 +15,7 @@ import React from 'react';
 import { dadosDaTela3, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import Atualizar from '../atualizar.js';
+import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,6 +145,8 @@ export default async function Pagina({ searchParams }) {
         </nav>
       </header>
 
+      <AvisoDoOmie leituras={d.leituras} />
+
       <div className="barra-filtros receber">
         <span className="grupo">
           {anos.map((a) => (
@@ -256,11 +259,13 @@ export default async function Pagina({ searchParams }) {
       </div>
 
       <footer className="rodape">
-        <Atualizar />
+        <Atualizar ano={ano} />
         <span>
-          Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora. Os `CANCELADO` ficam fora da
-          tela. Leitura desta janela: {d.janela.leitura === 'janela' ? 'a consulta da própria janela' : 'a consulta do ano, recortada'}.
+          Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta.
+          Os `CANCELADO` ficam fora da tela. Leitura desta janela:{' '}
+          {d.janela.leitura === 'janela' ? 'a consulta da própria janela' : 'a consulta do ano, recortada'}.
         </span>
+        <UltimaLeitura leituras={d.leituras} usaDfc={false} />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </>

@@ -61,18 +61,22 @@ no ar. Não há TypeScript nem biblioteca de gráfico: os gráficos são CSS e o
 
 ```
 npm install
-npm run dev
+npm run local
 ```
 
-O app sobe em **http://localhost:4781** (a porta está no `npm run dev` do `package.json`; 4747 já é da Central de
-Comando neste computador). Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão **atualizar
-agora**. Para agosto de 2026:
+O app sobe em **modo de produção e só em <http://127.0.0.1:4781>** (decisão do dono, 27/09/2026: usar as telas neste
+computador, só ele, sem publicar). `127.0.0.1` é a placa de rede que só existe dentro desta máquina: ninguém da rede
+abre estes números, nem sabendo o IP daqui. A porta é 4781 porque 4747 já é da Central de Comando neste computador.
+O passo a passo inteiro — subir, a "última leitura", forçar a releitura e o que fazer quando uma fonte não responde —
+está em [`docs/uso-local.md`](docs/uso-local.md).
+
+Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão **atualizar agora**. Para agosto de 2026:
 
 | tela | rota |
 |---|---|
-| **Tela 1 — Gestão de Contas** | <http://localhost:4781/?ano=2026&mes=8> |
-| **Tela 2 — DRE** | <http://localhost:4781/dre?ano=2026&mes=8> |
-| **Tela 3 — Contas a Receber** | <http://localhost:4781/receber?ano=2026&mes=8> |
+| **Tela 1 — Gestão de Contas** | <http://127.0.0.1:4781/?ano=2026&mes=8> |
+| **Tela 2 — DRE** | <http://127.0.0.1:4781/dre?ano=2026&mes=8> |
+| **Tela 3 — Contas a Receber** | <http://127.0.0.1:4781/receber?ano=2026&mes=8> |
 
 As **empresas 1 e 2 entram sempre somadas** e o recorte é o da MeuBESS.
 
@@ -91,13 +95,20 @@ A **Tela 3 é a carteira de títulos a receber** e fica **no Omie inteira**: o D
 aberto nem tem cadastro de cliente. O seletor de mês é a **janela de vencimento** da consulta, e as três faixas
 (pago, atrasado, em aberto) são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. Num mês já
 fechado o cartão **Valor Pendente** é sempre zero — todo título que venceu está pago ou atrasado —, e a própria tela
-diz isso; escolha um mês à frente (por exemplo <http://localhost:4781/receber?ano=2026&mes=10>) para ver a carteira a
+diz isso; escolha um mês à frente (por exemplo <http://127.0.0.1:4781/receber?ano=2026&mes=10>) para ver a carteira a
 vencer. O **nome do cliente** aparece na tela, vindo de `geral/clientes`, e **nunca** em arquivo versionado: a
 captura troca cada nome pelo código antes de gravar.
 
 **As fontes são relidas de hora em hora** (decisão do dono, 25/09/2026), e "atualizar agora" força a releitura na
-hora. O que é relido são o cache local do Omie (`.cache/omie/`) e as planilhas do DFC; buscar página nova na API do
-Omie continua sendo trabalho de `scripts/confronto-dfc-omie.mjs` e `scripts/ler-omie-faltante.mjs`.
+hora. Desde 27/09/2026 reler o Omie quer dizer **ir à API do Omie**, não só reabrir o cache: a releitura busca as 22
+leituras que as três telas abrem — **só por método de consulta**, com as chaves que os scripts já usam — e grava no
+mesmo cache local `.cache/omie/`. As planilhas do DFC continuam lidas da pasta a cada cálculo.
+
+A volta inteira leva alguns minutos (perto de 280 páginas, com a pausa que o limite de consumo do Omie pede), então
+ela **roda ao lado**: a tela espera um tanto e, se não der, desenha o último guardado e diz que a releitura está em
+curso. **Se o Omie falhar, a tela mostra o último guardado e avisa** — uma leitura só entra no cache inteira, e por
+isso o cache nunca fica com meia leitura. O rodapé de cada tela traz a **"Última leitura"** das duas fontes, com a
+hora de cada uma.
 
 ### Conferir as telas contra a conferência
 
@@ -133,6 +144,9 @@ ou nome de cliente no HTML.
 | `lib/regras/` | **as regras, num lugar só.** O recorte da MeuBESS, os três baldes, as listas que o dono decidiu, o vocabulário do DFC e a leitura das planilhas. `scripts/numeros-das-telas.mjs` (a conferência) e o app importam **estes mesmos** arquivos — nenhuma regra é copiada de um lado para o outro. |
 | `lib/indicadores/` | cada tela: o valor que ela mostra e a contagem que a conferência confere, montados com as regras acima. |
 | `lib/dados.mjs` | a camada de dados do servidor: releitura de hora em hora e o "atualizar agora". |
+| `lib/regras/omie-releitura.mjs` | a releitura do Omie pelas telas: quais leituras, uma volta por vez, a hora da última. |
+| `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |
+| `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis. |
 | `scripts/` | as leituras do Omie, a conferência e os testes. |
 

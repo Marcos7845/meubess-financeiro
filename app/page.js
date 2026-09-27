@@ -7,6 +7,7 @@
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES, dois } from '../lib/regras/periodo.mjs';
 import Atualizar from './atualizar.js';
+import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
 export const dynamic = 'force-dynamic';
@@ -77,6 +78,8 @@ export default async function Pagina({ searchParams }) {
           <span>Fluxo de caixa</span>
         </nav>
       </header>
+
+      <AvisoDoOmie leituras={d.leituras} />
 
       {!d.dfc.ok && (
         <p className="aviso">
@@ -152,11 +155,12 @@ export default async function Pagina({ searchParams }) {
       </div>
 
       <footer className="rodape">
-        <Atualizar />
+        <Atualizar ano={ano} />
         <span>
-          Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora.
+          Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta.
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo}.` : ''}
         </span>
+        <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </>

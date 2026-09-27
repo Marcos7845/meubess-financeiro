@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 4781",
-    "build": "next build",
-    "start": "next start -p 4781",
+    "dev": "next dev -H 127.0.0.1 -p 4781",
+    "build": "node scripts/subir-local.mjs --so-build",
+    "start": "node scripts/subir-local.mjs --sem-build",
+    "local": "node scripts/subir-local.mjs",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
     "capturar-tela-1": "node scripts/capturar-tela.mjs --tela 1",

@@ -522,7 +522,7 @@ O que é "a fonte" em cada tela:
 <!-- Escrito por scripts/conferir-filtros.mjs. Não edite à mão: rode `npm run conferir-filtros`. -->
 
 **19 filtros conferidos**: 19 conferidos e 0 divergentes. Leitura do Omie:
-`000a67f4d027` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
+`1d414b4a5bfa` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
 
 Cada linha é um filtro real aplicado pela **mesma camada de dados que o navegador recebe**, e reencontrado na **fonte** —
 os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem passar pela montagem de

@@ -23,11 +23,13 @@ import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
 import { abrirCacheOmie, pastaDoCacheOmie } from '../lib/regras/cache-omie.mjs';
-import { lerRecorte, criarRegras } from '../lib/regras/movimentos.mjs';
+import { lerRecorte, lerContas, criarRegras } from '../lib/regras/movimentos.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
+import { norm, cent } from '../lib/regras/dfc.mjs';
+import { lerZip, sharedStrings, abasDo, lerAba, dataDaCelula, SUB2_SALDO, COLUNAS_DE_DATA, BAIXADO } from '../lib/regras/xlsx.mjs';
 import { noMesDe, NOMES_DOS_MESES, dataBR, dois, ultimoDia } from '../lib/regras/periodo.mjs';
 import { FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
-import { centrosDeCusto } from '../lib/regras/filtros.mjs';
+import { centrosDeCusto, contasBancarias, SITUACOES } from '../lib/regras/filtros.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SAIDA_MD = path.join(RAIZ, 'docs', 'filtros.md');
@@ -84,6 +86,74 @@ function empresaDaFonte() {
   }
   const ambas = [...mapa.values()].filter((x) => x.size > 1).length;
   return { mapa, ambas, so: (k, emp) => { const x = mapa.get(k); return Boolean(x) && x.size === 1 && x.has(emp); } };
+}
+
+// A CONTA CORRENTE E O CLIENTE/FORNECEDOR DE CADA LANÇAMENTO, da fonte: os mesmos arquivos crus de `financas/mf`,
+// lidos aqui com `fs` e `JSON.parse`. O `nCodCC` é o campo do filtro de conta bancária e o `nCodCliente`, o do filtro
+// de cliente/fornecedor — os dois saem do arquivo, e não da montagem de `lib/regras/cache-omie.mjs`. A identidade é a
+// mesma trinca do rateio (`nCodMovCC` + `nCodTitulo` + `cGrupo`).
+function camposDaFonte(emp) {
+  const mapa = new Map();
+  for (const f of doPrefixo(emp, 'financas-mf-ListarMovimentos')) {
+    for (const m of abrir(f).movimentos ?? []) {
+      const d = m.detalhes ?? {};
+      const k = `${d.nCodMovCC ?? 0}|${d.nCodTitulo ?? 0}|${d.cGrupo ?? ''}`;
+      if (!mapa.has(k)) mapa.set(k, { nCodCC: String(d.nCodCC ?? ''), nCodCliente: String(d.nCodCliente ?? '') });
+    }
+  }
+  return mapa;
+}
+
+// OS TÍTULOS A PAGAR POR VENCIMENTO, da fonte: a leitura `cTpLancamento: "CP"`, que é de onde sai o cartão
+// "Desp. Pendentes". Ela é achada pela CHAVE EXATA da consulta — e não pelo prefixo do arquivo —, porque o prefixo
+// `financas-mf-ListarMovimentos` serve a três leituras diferentes (a de caixa, a de caixa com departamentos e esta), e
+// misturá-las trocaria um título a pagar por um lançamento de caixa com a mesma identidade.
+function pendentesDaFonte(emp) {
+  const fora = [];
+  for (let n = 1; ; n++) {
+    const arq = OMIE.arqCache(emp, 'financas/mf', 'ListarMovimentos', OMIE.leituras.CP_VENC(n));
+    if (!fs.existsSync(arq)) break;
+    const j = JSON.parse(fs.readFileSync(arq, 'utf8'));
+    for (const m of j.movimentos ?? []) fora.push({ ...(m.detalhes ?? {}), _resumo: m.resumo ?? {} });
+    if (n >= (Number(j.nTotPaginas) || 1)) break;
+  }
+  return fora;
+}
+
+// AS LINHAS DO `FLUXO DE CAIXA` DO MÊS, DA FONTE: a planilha reaberta AQUI, com o mesmo recorte de linha das telas
+// (sem as linhas de saldo, sem as de valor zero, só as já baixadas e com data no mês do arquivo) escrito de novo neste
+// arquivo, e não chamado de `lib/regras/dfc.mjs`. É o lado da fonte dos dois filtros novos que alcançam o DFC: a
+// `CLASS. CONTABIL` (a ponta do DFC da categoria) e a coluna `PAGAMENTO` (a situação).
+async function linhasDoDfcDaFonte(fonte, ano, mes) {
+  const nomes = await fonte.arquivos();
+  const arq = nomes.find((f) => new RegExp(`^0?${mes}\\s*-`).test(f));
+  if (!arq) return null;
+  const zip = lerZip(await fonte.ler(arq));
+  const ss = sharedStrings(zip);
+  const aba = abasDo(zip).find((a) => norm(a.nome) === 'FLUXO DE CAIXA');
+  if (!aba) return null;
+  const fora = [];
+  let mapa = null;
+  for (const l of lerAba(zip, aba.parte, ss)) {
+    const textos = [...l.cel.entries()].filter(([, c]) => c.t);
+    const rotulos = textos.map(([, c]) => norm(c.t));
+    if (rotulos.includes('VENCIMENTO') && rotulos.includes('DIA PG')) { mapa = new Map(textos.map(([col, c]) => [norm(c.t), col])); continue; }
+    if (!mapa) continue;
+    const texto = (r) => { const c = l.cel.get(mapa.get(r)); return c?.t ? c.t.trim() : ''; };
+    const numero = (r) => { const c = l.cel.get(mapa.get(r)); return c?.v !== undefined ? c.v : 0; };
+    const sub2 = norm(texto('SUB 2'));
+    if (SUB2_SALDO.has(sub2)) continue;
+    const k = numero('ENTRADA'), v = numero('SAIDA');
+    const bruto = cent(k) !== 0 ? k : v;
+    if (cent(bruto) === 0) continue;
+    const pagamento = norm(texto('PAGAMENTO'));
+    if (!BAIXADO(pagamento)) continue;
+    let dt = null;
+    for (const rot of COLUNAS_DE_DATA) { dt = dataDaCelula(l.cel.get(mapa.get(rot))); if (dt) break; }
+    if (!dt || dt.a !== ano || dt.m !== mes) continue;
+    fora.push({ arquivo: arq, linha: l.n, classe: norm(texto('CLASS. CONTABIL')) || '(vazio)', sub2: sub2 || '(vazio)', pagamento });
+  }
+  return { arquivo: arq, linhas: fora };
 }
 
 // O CADASTRO DE DEPARTAMENTOS, da fonte.
@@ -426,6 +496,211 @@ conferir({
   naTela: previsto(t3Emp),
   naFonte: t3PorEmpresa[EMPRESAS.indexOf(EMPRESA_DA_TELA_3)],
   comoNaFonte: `os \`titulosEncontrados\` lidos dos arquivos \`${EMPRESA_DA_TELA_3}-financas-pesquisartitulos-…\` do cache, recortados aqui pelo \`nCodCC\` da MeuBESS, pelo \`dDtVenc\` no ano e sem os \`CANCELADO\``,
+});
+
+
+// ================================================================ Tela 1 — os quatro filtros de 27/09/2026
+//
+// CADA UM DELES TEM UMA PONTA DIFERENTE, e é por ela que o caso confere:
+//
+//   a CLASSIFICAÇÃO DO DFC e a SITUAÇÃO alcançam o VALOR do DFC, porque são colunas da planilha — o caso compara a
+//   contagem do DFC da tela com a planilha REABERTA aqui, com o recorte de linha escrito de novo neste arquivo;
+//   a CATEGORIA DO OMIE, o CLIENTE/FORNECEDOR e a CONTA BANCÁRIA alcançam o lado do Omie — o caso compara a contagem
+//   do Omie da tela com os campos lidos dos arquivos CRUS do cache.
+
+const camposFonte = Object.fromEntries(EMPRESAS.map((emp) => [emp, camposDaFonte(emp)]));
+const dfcFonte = await linhasDoDfcDaFonte(fonteDoDfc(), ANO, MES);
+const dfcDoSaldo = (t) => t.cartoes.find((c) => c.id === 'saldo').contagem.dfc;
+
+// --- 1. categoria, a ponta do DFC: a `CLASS. CONTABIL` com mais linhas no mês.
+if (dfcFonte) {
+  const porClasse = new Map();
+  for (const l of dfcFonte.linhas) porClasse.set(l.classe, (porClasse.get(l.classe) ?? 0) + 1);
+  const [classeEscolhida, quantas] = [...porClasse.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'))[0];
+  const t1Classe = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { classe: [classeEscolhida] } });
+  const exemplo = dfcFonte.linhas.find((l) => l.classe === classeEscolhida);
+  conferir({
+    tela: 'Tela 1',
+    filtro: `categoria pela classificação do DFC = ${classeEscolhida}`,
+    onde: 'o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas" — é a MESMA `CLASS. CONTABIL` que as barras desse bloco já agrupam',
+    caso: `a planilha reaberta aqui tem ${num(dfcFonte.linhas.length)} linhas no recorte do mês — o mesmo número que a tela sem filtro mostra no cartão "Saldo" (${num(dfcDoSaldo(t1Sem))}) — e ${num(quantas)} delas têm esta classificação, em ${num(porClasse.size)} classificações distintas no mês; a linha ${exemplo.linha} do \`FLUXO DE CAIXA\` de ${NOMES_DOS_MESES[MES]} é uma delas, com \`SUB 2\` \`${exemplo.sub2}\` e \`PAGAMENTO\` \`${exemplo.pagamento}\`. A contagem do Omie NÃO é recortada por este filtro, e cada cartão diz isso na tela: o lançamento do Omie não tem \`CLASS. CONTABIL\``,
+    naTela: dfcDoSaldo(t1Classe),
+    naFonte: quantas,
+    comoNaFonte: `as linhas do \`FLUXO DE CAIXA\` do arquivo do mês, lidas aqui com o recorte de linha escrito de novo neste arquivo (sem as linhas de saldo, sem as de valor zero, só as baixadas e com data no mês) e contadas pela \`CLASS. CONTABIL\``,
+  });
+
+  // --- 2. situação: a faixa com mais linhas no mês, e as três fechando o total.
+  const porSituacao = SITUACOES.map((f) => [f.chave, dfcFonte.linhas.filter((l) => f.dfc.includes(l.pagamento)).length]);
+  const [sitEscolhida, sitQuantas] = [...porSituacao].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  const t1Sit = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { situacao: [sitEscolhida] } });
+  const umDaSituacao = dfcFonte.linhas.find((l) => SITUACOES.find((f) => f.chave === sitEscolhida).dfc.includes(l.pagamento));
+  conferir({
+    tela: 'Tela 1',
+    filtro: `situação = ${sitEscolhida}`,
+    onde: 'o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas", E a contagem do Omie de todos eles — é o único dos quatro filtros novos que alcança os dois lados',
+    caso: `das ${num(dfcFonte.linhas.length)} linhas do mês na planilha reaberta aqui, ${porSituacao.map(([f, n]) => `${f} ${num(n)}`).join(', ')} — e a soma das três é ${num(porSituacao.reduce((a, b) => a + b[1], 0))}, a planilha inteira do mês; "a pagar" é 0 porque a linha \`A PAGAR\` nunca entra nesta tela, que é de caixa. A linha ${umDaSituacao.linha} do \`FLUXO DE CAIXA\` tem \`PAGAMENTO\` \`${umDaSituacao.pagamento}\`. Do lado do Omie o de-para é a natureza do lançamento: a tela conta ${num(omieDoSaldo(t1Sit))} lançamentos com esta escolha, contra ${num(omieDoSaldo(t1Sem))} sem filtro`,
+    naTela: dfcDoSaldo(t1Sit),
+    naFonte: sitQuantas,
+    comoNaFonte: 'as mesmas linhas da planilha reaberta aqui, contadas pelo rótulo da coluna `PAGAMENTO` (N) de cada uma',
+  });
+}
+
+// --- 3. categoria, a ponta do Omie: o `cCodCateg` com mais lançamentos na base do mês.
+const porCategoriaOmie = new Map();
+for (const { d } of baseDoMes) {
+  const cod = String(d.cCodCateg ?? '');
+  porCategoriaOmie.set(cod, (porCategoriaOmie.get(cod) ?? 0) + 1);
+}
+const [catOmie, catOmieQuantos] = [...porCategoriaOmie.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+const t1CatOmie = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { categoria: [catOmie] } });
+conferir({
+  tela: 'Tela 1',
+  filtro: `categoria pela categoria do Omie = \`${catOmie}\``,
+  onde: 'a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro',
+  caso: `a base do mês tem ${num(omieDoSaldo(t1Sem))} lançamentos em ${num(porCategoriaOmie.size)} categorias distintas, e ${num(catOmieQuantos)} deles estão nesta. O valor do DFC NÃO é recortado por este filtro, e cada cartão de fonte DFC diz isso na tela: a planilha classifica cada linha por \`CLASS. CONTABIL\` e \`SUB 2\`, que saem do cadastro da aba \`BASE\`, e nenhuma das duas fontes escreve o de-para entre os dois vocabulários`,
+  naTela: omieDoSaldo(t1CatOmie),
+  naFonte: catOmieQuantos,
+  comoNaFonte: 'os lançamentos da base do mês contados aqui, um a um, pelo `cCodCateg` de cada um',
+});
+
+// --- 4. cliente/fornecedor: o par empresa + `nCodCliente` com mais lançamentos, LIDO DO ARQUIVO CRU.
+const porFornecedor = new Map();
+for (const { emp, d } of baseDoMes) {
+  const cod = camposFonte[emp].get(chaveDoMov(d))?.nCodCliente ?? '';
+  porFornecedor.set(`${emp}-${cod}`, (porFornecedor.get(`${emp}-${cod}`) ?? 0) + 1);
+}
+const semCodigo = [...porFornecedor.entries()].filter(([k]) => k.endsWith('-') || k.endsWith('-0')).reduce((a, b) => a + b[1], 0);
+const [fornEscolhido, fornQuantos] = [...porFornecedor.entries()]
+  .filter(([k]) => !k.endsWith('-') && !k.endsWith('-0'))
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+const t1Forn = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { fornecedor: fornEscolhido } });
+conferir({
+  tela: 'Tela 1',
+  filtro: `cliente/fornecedor = \`${fornEscolhido}\` (empresa + \`nCodCliente\`)`,
+  onde: 'a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro',
+  caso: `nos arquivos crus do cache, ${num(fornQuantos)} dos ${num(omieDoSaldo(t1Sem))} lançamentos da base do mês têm esse \`nCodCliente\` na empresa ${fornEscolhido.split('-')[0]}, em ${num(porFornecedor.size)} pares empresa + código distintos — e ${num(semCodigo)} lançamentos do mês não têm \`nCodCliente\` nenhum e ficam fora de qualquer escolha. O lado do DFC não é recortado: lá o cliente/fornecedor é um NOME digitado à mão, e das 4.670 linhas cruzáveis do ano 3.550 não acham nome nenhum no cadastro (\`scripts/de-para-conta-dfc.mjs\`)`,
+  naTela: omieDoSaldo(t1Forn),
+  naFonte: fornQuantos,
+  comoNaFonte: 'o `nCodCliente` de cada lançamento da base do mês, lido dos arquivos crus de `financas/mf` do cache — e não da montagem de `lib/regras/cache-omie.mjs`',
+});
+
+// ================================================================ Telas 1, 2 e 3 — o filtro de conta bancária
+//
+// O SEGUNDO FILTRO QUE AS TRÊS TELAS DIVIDEM (decisão do dono, 27/09/2026). A FONTE dele é o `nCodCC` lido dos arquivos
+// CRUS do cache, e as opções são as contas da MeuBESS pelo nome que o dono deu a cada uma em
+// `dados/contas-correntes-por-negocio.json`.
+//
+// ONDE ELE NÃO VALE: em todo número que vem do DFC. A planilha TEM a coluna `BANCO`, mas o cruzamento de 27/09/2026
+// (`scripts/de-para-conta-dfc.mjs`) casou o rótulo `ITAU` com QUATRO contas diferentes do Omie. Por isso os casos das
+// Telas 1 e 2 conferem a contagem do OMIE, e o da Tela 2 confere também que o lado do DFC fica PARADO.
+
+const contasDaMeuBess = contasBancarias(lerContas(RAIZ));
+// De `empresa|nCodCC` para o nome da conta, pela MESMA lista — é o de-para do dono, e o único que existe.
+const contaDoCodigo = new Map();
+for (const c of contasDaMeuBess) {
+  for (const [emp, cods] of Object.entries(c.codigos)) for (const cod of cods) contaDoCodigo.set(`${emp}|${cod}`, c.nome);
+}
+const contaNaFonte = ({ emp, d }) => contaDoCodigo.get(`${emp}|${camposFonte[emp].get(chaveDoMov(d))?.nCodCC ?? ''}`) ?? null;
+const porConta = new Map();
+for (const x of baseDoMes) porConta.set(contaNaFonte(x), (porConta.get(contaNaFonte(x)) ?? 0) + 1);
+
+// OS TÍTULOS A PAGAR POR VENCIMENTO, da fonte, com o mesmo recorte do cartão "Desp. Pendentes": recorte da MeuBESS,
+// vencimento no mês, sem baixa (`cLiquidado = "N"`) e sem os `CANCELADO`.
+//
+// É NESSE CARTÃO QUE O CASO DA CONTA CONFERE, e não no "Saldo", por um motivo que `docs/filtros.md` explica: esta
+// leitura é um TÍTULO POR LINHA, sem a junção de título e baixa que os três baldes de caixa fazem — então a conta a
+// reparte exatamente, e as contas uma a uma somam a carteira inteira. Nos três baldes não somam: um título pago de
+// OUTRA conta faz a baixa dele voltar a contar sozinha, e em agosto de 2026 as contas uma a uma dão 425 contra os 419
+// da tela sem filtro. Isso não é erro do filtro; é o que escolher uma conta quer dizer, e o documento o registra.
+const pendFonte = Object.fromEntries(EMPRESAS.map((emp) => [emp, pendentesDaFonte(emp).filter((d) =>
+  d.cStatus !== 'CANCELADO' && recorte.has(`${emp}|${d.nCodCC}`) && noMes(d.dDtVenc)
+  && (d._resumo.cLiquidado ?? 'N') === 'N')]));
+const porContaPend = new Map();
+for (const emp of EMPRESAS) {
+  for (const d of pendFonte[emp]) {
+    const nome = contaDoCodigo.get(`${emp}|${String(d.nCodCC ?? '')}`) ?? null;
+    porContaPend.set(nome, (porContaPend.get(nome) ?? 0) + 1);
+  }
+}
+// A CONTA DO CASO É A QUE TEM MENOS TÍTULOS no mês, e não a maior: quase tudo da MeuBESS passa pelo Itaú, então
+// filtrar pela maior deixaria quase tudo dentro e provaria pouco. A menor é o recorte apertado — se o filtro errar por
+// um título, a contagem muda de cara.
+const [contaEscolhida, contaQuantos] = [...porContaPend.entries()].filter(([n, q]) => n && q > 0)
+  .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], 'pt-BR'))[0];
+const t1Conta = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { conta: [contaEscolhida] } });
+const t1Contas = await calcularTela1({
+  raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { conta: contasDaMeuBess.map((c) => c.nome) },
+});
+const pendentesDe = (t) => t.cartoes.find((c) => c.id === 'despesas-pendentes').contagem.omie;
+const umDaConta = EMPRESAS.flatMap((emp) => pendFonte[emp]
+  .filter((d) => contaDoCodigo.get(`${emp}|${String(d.nCodCC ?? '')}`) === contaEscolhida))[0];
+conferir({
+  tela: 'Tela 1',
+  filtro: `conta bancária = ${contaEscolhida}`,
+  onde: 'a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro — é neste último que o caso confere, porque ele é um título por linha',
+  caso: `nos arquivos crus da leitura \`cTpLancamento: "CP"\` do cache, ${num(contaQuantos)} dos ${num(pendentesDe(t1Sem))} títulos a pagar vencendo no mês têm o \`nCodCC\` desta conta — o título \`${umDaConta.nCodTitulo}\`, com \`nCodCC\` \`${umDaConta.nCodCC}\` e vencimento ${umDaConta.dDtVenc}, é um deles. A carteira toda se reparte em ${[...porContaPend.entries()].filter(([n, q]) => n && q > 0).sort((a, b) => b[1] - a[1]).map(([n, q]) => `${n} ${num(q)}`).join(', ')}, que somam os ${num(pendentesDe(t1Sem))} do cartão. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o rótulo \`ITAU\` da coluna \`BANCO\` casa com quatro contas diferentes do Omie`,
+  naTela: pendentesDe(t1Conta),
+  naFonte: contaQuantos,
+  comoNaFonte: 'os `movimentos` dos arquivos crus da leitura de títulos a pagar por vencimento do cache, achados aqui pela chave exata da consulta e recortados pelo `nCodCC` da MeuBESS, pelo `dDtVenc` no mês, por `cLiquidado = "N"` e sem os `CANCELADO`',
+});
+
+// A SEGUNDA CONFERÊNCIA DO MESMO FILTRO, e a que fecha a porta do "quase certo": escolhendo TODAS as contas, a tela tem
+// de mostrar a base do mês inteira — porque o recorte da MeuBESS já É essa lista de contas, e nenhum lançamento da base
+// pode estar fora dela.
+conferir({
+  tela: 'Tela 1',
+  filtro: `conta bancária = as ${contasDaMeuBess.length} contas de uma vez`,
+  onde: 'os mesmos cartões e blocos; é a conferência do conjunto, e não de uma conta',
+  caso: `a base do mês tem ${num(omieDoSaldo(t1Sem))} lançamentos e ${num([...porConta.entries()].filter(([n]) => !n).reduce((a, b) => a + b[1], 0))} deles estão em conta que não é da MeuBESS nos arquivos crus: escolhendo as ${contasDaMeuBess.length} contas, a tela mostra a base inteira. Nos arquivos crus ela se reparte em ${[...porConta.entries()].filter(([n]) => n).sort((a, b) => b[1] - a[1]).map(([n, q]) => `${n} ${num(q)}`).join(', ')} — que somam mais que ${num(omieDoSaldo(t1Sem))}, e é assim de propósito: um título pago de outra conta faz a baixa dele voltar a contar sozinha quando só a conta da baixa é escolhida`,
+  naTela: omieDoSaldo(t1Contas),
+  naFonte: omieDoSaldo(t1Sem),
+  comoNaFonte: 'a base do mês sem filtro — a mesma que `docs/conferencia.md` confere indicador por indicador',
+});
+
+// NA TELA 2 A PROVA TEM DUAS PERNAS, e nenhuma delas é a soma das contas uma a uma, pelo mesmo motivo de cima:
+//
+//   1. escolher TODAS as contas tem de dar, indicador por indicador, o que a tela sem filtro dá — porque o recorte da
+//      MeuBESS já é essa lista de contas;
+//   2. escolher UMA conta só tem de deixar o lado do DFC PARADO e o lado do Omie menor — é o filtro não alcançando o
+//      DFC, que é a ressalva inteira deste filtro nesta tela.
+const t2Contas = await calcularTela2({
+  raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { conta: contasDaMeuBess.map((c) => c.nome) },
+});
+const t2UmaConta = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { conta: [contaEscolhida] } });
+const contaBateNaT2 = idsT2.filter((id) => {
+  const sem = contagemDe(t2Sem, id), todas = contagemDe(t2Contas, id), uma = contagemDe(t2UmaConta, id);
+  return (sem.omie ?? 0) === (todas.omie ?? 0) && sem.dfc === todas.dfc
+    && (uma.omie ?? 0) <= (sem.omie ?? 0) && uma.dfc === sem.dfc;
+}).length;
+conferir({
+  tela: 'Tela 2',
+  filtro: `conta bancária = as ${contasDaMeuBess.length} contas de uma vez, e depois só ${contaEscolhida}`,
+  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela',
+  caso: `a coluna de ${NOMES_DOS_MESES[MES]} tem ${num(omieDoMes(t2Sem))} lançamentos do Omie sem filtro e os mesmos ${num(omieDoMes(t2Contas))} com as ${contasDaMeuBess.length} contas escolhidas; com só ${contaEscolhida} ela cai para ${num(omieDoMes(t2UmaConta))}, e a contagem do DFC de cada um dos ${idsT2.length} indicadores fica igual nas três leituras — é o filtro não alcançando o DFC, como \`docs/filtros.md\` diz. As duas contagens de cadastro do DRE também não mudam, e a linha "(=) Receita bruta" diz isso na tela`,
+  naTela: contaBateNaT2,
+  naFonte: idsT2.length,
+  comoNaFonte: 'a tela sem filtro, a tela com todas as contas e a tela com uma só, comparadas aqui indicador por indicador — e a contagem do DFC conferida parada nas três',
+});
+
+// E NA TELA 3 A FONTE É O `cabecTitulo.nCodCC` DOS TÍTULOS CRUS — o MESMO campo pelo qual a tela já faz o recorte da
+// MeuBESS, então o filtro só aperta o recorte e não muda regra nenhuma. Aqui também é um título por linha, e por isso
+// a conta reparte a janela exatamente. O caso é a conta com MENOS títulos na janela do mês.
+const contaDoTitulo = (x) => contaDoCodigo.get(`${x.emp}|${x.cab.nCodCC}`) ?? null;
+const porContaT3 = new Map();
+for (const x of naFonteMes) porContaT3.set(contaDoTitulo(x), (porContaT3.get(contaDoTitulo(x)) ?? 0) + 1);
+const [contaT3, contaT3Quantos] = [...porContaT3.entries()].filter(([n, q]) => n && q > 0)
+  .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], 'pt-BR'))[0];
+const t3Conta = await calcularTela3({ raiz: RAIZ, ano: ANO, mes: MES, filtro: { conta: [contaT3] } });
+const umDaContaT3 = naFonteMes.find((x) => contaDoTitulo(x) === contaT3);
+conferir({
+  tela: 'Tela 3',
+  filtro: `conta bancária = ${contaT3}`,
+  onde: 'os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira, e a conta é o mesmo `cabecTitulo.nCodCC` do recorte da MeuBESS',
+  caso: `dos ${num(naFonteMes.length)} títulos da janela nos arquivos crus, ${num(contaT3Quantos)} têm o \`nCodCC\` desta conta; o título \`${umDaContaT3.cab.nCodTitulo}\` da empresa ${umDaContaT3.emp} é um deles, com \`cStatus\` \`${umDaContaT3.cab.cStatus}\` e vencimento ${umDaContaT3.cab.dDtVenc}. A janela toda se reparte em ${[...porContaT3.entries()].filter(([n, q]) => n && q > 0).sort((a, b) => b[1] - a[1]).map(([n, q]) => `${n} ${num(q)}`).join(', ')}, que somam os ${num(naFonteMes.length)} títulos dela. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso`,
+  naTela: previsto(t3Conta),
+  naFonte: contaT3Quantos,
+  comoNaFonte: 'os `titulosEncontrados` dos arquivos crus de `financas/pesquisartitulos`, recortados aqui pelo `cabecTitulo.nCodCC` da conta escolhida, pelo `dDtVenc` no mês e sem os `CANCELADO`',
 });
 
 

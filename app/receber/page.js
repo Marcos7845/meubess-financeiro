@@ -134,7 +134,7 @@ export default async function Pagina({ searchParams }) {
   return (
     <>
       <header className="topo">
-        <span className="marca">MeuBESS</span>
+        <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Contas a Receber</span>
         <nav className="abas">
           <a href={`/?ano=${ano}&mes=${mes}`}>Gestão de Contas</a>

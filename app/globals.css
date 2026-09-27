@@ -1,8 +1,13 @@
 /* AS CORES DA MARCA MEUBESS FICAM TODAS AQUI, e em nenhum outro lugar.
  *
- * ATENÇÃO: a identidade visual da MeuBESS não está no repositório — não há logo, manual de marca nem paleta em
- * lugar nenhum dele. Os valores abaixo são um ESBOÇO para a tela existir; quando o dono mandar as cores certas,
- * troque só estas linhas e a tela inteira acompanha. Nenhum arquivo `.js` tem cor escrita.
+ * As cinco abaixo saem de pixel real das três imagens que o dono mandou em 27/09/2026 (`public/marca/` e
+ * `C:/Users/vrmfe/Central de Comando/workspace/data/anexos/meubess-as-3-telas-construidas/`), amostradas com
+ * Pillow — nenhuma é inventada:
+ *   --marca-escura   #102040  cor sólida de `LOGO MEU BESS AZUL.png` (ícone e "MeuBess"), a mesma do texto em `Ativo 7.png`
+ *   --marca          #004888  tom médio do degradê de `Ativo 4PNG.png` (o mesmo tom aparece em `Ativo 7.png`)
+ *   --marca-clara    #0060a8  tom claro-médio do mesmo degradê
+ *   --destaque       #0079cb  ponta mais clara do degradê (canto superior esquerdo do ícone)
+ *   --destaque-escuro #002242  ponta mais escura do degradê (canto inferior direito do ícone)
  *
  * O LAYOUT é o de `docs/referencias/tela-1-gestao-de-contas.jpg`; as cores daquela imagem NÃO valem (o próprio
  * `docs/referencias/LEIAME.md` diz isso).
@@ -10,11 +15,11 @@
 
 :root {
   /* marca */
-  --marca-escura: #0d2440;
-  --marca: #143a63;
-  --marca-clara: #1f5289;
-  --destaque: #f5a524;
-  --destaque-escuro: #d98c0c;
+  --marca-escura: #102040;
+  --marca: #004888;
+  --marca-clara: #0060a8;
+  --destaque: #0079cb;
+  --destaque-escuro: #002242;
 
   /* leitura de números */
   --positivo: #1c8f5a;
@@ -49,7 +54,7 @@ a { color: inherit; }
   background: var(--marca-escura); color: var(--texto-claro);
   padding: 0 16px; height: 46px;
 }
-.topo .marca { font-weight: 700; letter-spacing: .3px; }
+.topo .logo { height: 24px; width: auto; display: block; filter: brightness(0) invert(1); }
 .topo .titulo {
   font-size: 19px; font-weight: 600;
   border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 18px;

@@ -94,7 +94,9 @@ export default async function Pagina({ searchParams }) {
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
-  const mes = Number(q?.mes ?? corrente.mes);
+  // A tela só tem coluna de abril em diante (decisão do dono, 27/09/2026; ver a nota abaixo do topo e
+  // `lib/indicadores/tela-2.mjs`); um `mes` de janeiro a março na URL cai em abril.
+  const mes = Math.max(4, Number(q?.mes ?? corrente.mes));
   const comAh = q?.ah !== '0';
   const comAv = q?.av === '1';
   const d = await dadosDaTela2({ ano, mes });
@@ -113,7 +115,7 @@ export default async function Pagina({ searchParams }) {
   return (
     <>
       <header className="topo">
-        <span className="marca">MeuBESS</span>
+        <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">DRE — Demonstrativo de Resultados</span>
         <nav className="abas">
           <a href={`/?ano=${ano}&mes=${mes}`}>Gestão de Contas</a>
@@ -137,14 +139,19 @@ export default async function Pagina({ searchParams }) {
         lucro líquido desta tela não as descontam (decisão do dono, 25/09/2026).
       </p>
 
+      <p className="aviso leve">
+        <strong>Janeiro a março de 2026 ficam fora desta tela:</strong> o Omie tem poucos lançamentos da MeuBESS
+        nesses três meses (decisão do dono, 27/09/2026).
+      </p>
+
       <section className="cartoes dre">
         {d.cartoes.map((c) => <Cartao c={c} key={c.id} />)}
       </section>
 
       <div className="barra-filtros">
         <span className="grupo">
-          {MESES_CURTOS.slice(1).map((m, i) => (
-            <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={url({ mes: i + 1 })} key={m}>{m}</a>
+          {MESES_CURTOS.slice(4).map((m, i) => (
+            <a className={`pilula${i + 4 === mes ? ' ativa' : ''}`} href={url({ mes: i + 4 })} key={m}>{m}</a>
           ))}
         </span>
         <span className="grupo">
@@ -230,9 +237,9 @@ export default async function Pagina({ searchParams }) {
         <p className="legenda rodape-tabela">
           <strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números
           estiverem muito distantes, os totalizadores daquele mês misturam um lado cheio com outro quase vazio, e a
-          coluna não se lê como DRE — em 2026 é o caso de <strong>janeiro e fevereiro</strong>, em que o recorte da
-          MeuBESS quase não tem lançamento no Omie. A leitura do Omie que está no cache vai de{' '}
-          <strong>01/01 a 30/09</strong>: mês fora dessa janela não tem coluna aqui.
+          coluna não se lê como DRE — é por isso que <strong>janeiro a março</strong> não têm coluna aqui (nota acima).
+          A leitura do Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não
+          tem coluna.
         </p>
       </section>
 

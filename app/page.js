@@ -34,14 +34,20 @@ function Cartao({ c }) {
   );
 }
 
-function Barras({ itens, rotulo = (i) => i.nome }) {
+// O NOME DO CLIENTE, sempre com o código ao lado no `data-codigo`: é por ele que `scripts/capturar-tela.mjs` troca o
+// nome antes de a captura entrar no repositório. Igual à Tela 3 — toda aparição de nome de cliente passa por aqui.
+function Cliente({ c }) {
+  return <span className="cliente" data-codigo={c.codigo}>{c.nome ?? `cliente ${c.codigo}`}</span>;
+}
+
+function Barras({ itens, conteudo = (i) => i.nome, titulo = (i) => i.nome }) {
   const maior = Math.max(1, ...itens.map((i) => Math.abs(i.valor)));
   return (
     <div className="barras">
       {itens.length === 0 && <p className="legenda">nenhum lançamento entrou neste mês.</p>}
       {itens.map((i, n) => (
         <div className="barra" key={n}>
-          <span className="nome" title={rotulo(i)}>{rotulo(i)}</span>
+          <span className="nome" title={titulo(i)}>{conteudo(i)}</span>
           <span className="trilho"><span className="preenche" style={{ width: `${(Math.abs(i.valor) / maior) * 100}%` }} /></span>
           <span className="valor">{emReais(i.valor)}</span>
         </div>
@@ -68,7 +74,7 @@ export default async function Pagina({ searchParams }) {
   return (
     <>
       <header className="topo">
-        <span className="marca">MeuBESS</span>
+        <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Gestão de Contas</span>
         <nav className="abas">
           <span className="ativa">Dashboard</span>
@@ -101,7 +107,11 @@ export default async function Pagina({ searchParams }) {
 
         <section className="painel">
           <h2>Top 10 receitas</h2>
-          <div className="corpo"><Barras itens={bloco('top-10-receitas').dados} rotulo={(i) => i.descricao} /></div>
+          <div className="corpo">
+            <Barras itens={bloco('top-10-receitas').dados}
+              conteudo={(i) => <Cliente c={i.cliente} />}
+              titulo={(i) => i.cliente.nome ?? `cliente ${i.cliente.codigo}`} />
+          </div>
         </section>
 
         <section className="painel">

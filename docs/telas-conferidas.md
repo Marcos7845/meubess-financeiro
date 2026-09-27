@@ -39,7 +39,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 ## Os indicadores
 
 - **Tela 1 — Saldo.** **Na tela:** DFC 388 e Omie 419. **Na conferência:** DFC 388 e Omie 419. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Receitas.** **Na tela:** DFC 107 e Omie 120. **Na conferência:** DFC 107 e Omie 120. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Receitas.** **Na tela:** DFC 101 e Omie 120. **Na conferência:** DFC 101 e Omie 120. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas.** **Na tela:** DFC 281 e Omie 299. **Na conferência:** DFC 281 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas pagas.** **Na tela:** DFC 281 e Omie 299. **Na conferência:** DFC 281 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas pendentes.** **Na tela:** Omie 161. **Na conferência:** Omie 161. **Fonte:** Omie recortado (principal) / DFC (confronto).

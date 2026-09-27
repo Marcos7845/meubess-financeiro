@@ -52,7 +52,7 @@ import { abrirCacheOmie } from '../lib/regras/cache-omie.mjs';
 import { lerRecorte, criarRegras } from '../lib/regras/movimentos.mjs';
 import { NOMES_DOS_MESES, dois, ultimoDia, dataBR, noMesDe, noAnoDe } from '../lib/regras/periodo.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
-import { lerDfc, norm, ePessoalDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
+import { lerDfc, norm, ePessoalDfc, eReceitaTela1Dfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
 import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -235,7 +235,7 @@ const janSet = (s) => { const d = dataBR(s); return Boolean(d) && d.a === ANO &&
 const trinca = (b) => [b.titulos.size, b.baixas.size, b.avulsos.size];
 const igual = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-const CONTAGEM_DO_FONTES = { 1: { R: [9, 0, 159], P: [804, 8, 272] }, 2: { R: [523, 24, 607], P: [550, 3, 539] } };
+const CONTAGEM_DO_FONTES = { 1: { R: [9, 0, 162], P: [809, 9, 276] }, 2: { R: [536, 25, 611], P: [556, 3, 547] } };
 const totalJanSet = {};
 for (const emp of EMPRESAS) {
   totalJanSet[emp] = { R: contar(emp, janSet, 'R'), P: contar(emp, janSet, 'P') };
@@ -255,7 +255,7 @@ const naLista = (lista) => (cod) => lista.includes(cod);
 const jsCustos = {};
 for (const emp of EMPRESAS) jsCustos[emp] = contar(emp, janSet, 'P', { categoria: naLista(CUSTO_DE_VENDAS[emp]) });
 registrar('custos', 'custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2)',
-  [...trinca(jsCustos[1]), ...trinca(jsCustos[2])], [65, 1, 19, 441, 3, 130]);
+  [...trinca(jsCustos[1]), ...trinca(jsCustos[2])], [66, 1, 20, 447, 3, 137]);
 
 const jsFin = {};
 for (const emp of EMPRESAS) jsFin[emp] = {
@@ -263,17 +263,17 @@ for (const emp of EMPRESAS) jsFin[emp] = {
   P: contar(emp, janSet, 'P', { categoria: naLista(RESULTADO_FINANCEIRO[emp]) }),
 };
 registrar('financeiro', 'resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2)',
-  [jsFin[1].R.total, jsFin[2].R.total, jsFin[1].P.total, jsFin[2].P.total], [54, 11, 98, 33]);
+  [jsFin[1].R.total, jsFin[2].R.total, jsFin[1].P.total, jsFin[2].P.total], [55, 11, 98, 33]);
 
 const jsPessoal = {};
 for (const emp of EMPRESAS) jsPessoal[emp] = contar(emp, janSet, 'P', { categoria: naLista(PESSOAL[emp]), comTransferencia: false });
 registrar('pessoal', 'pessoal pago, jan–set (empresa 1, empresa 2)',
-  [jsPessoal[1].todos.filter((d) => d.cStatus === 'PAGO').length, jsPessoal[2].todos.filter((d) => d.cStatus === 'PAGO').length], [251, 321]);
+  [jsPessoal[1].todos.filter((d) => d.cStatus === 'PAGO').length, jsPessoal[2].todos.filter((d) => d.cStatus === 'PAGO').length], [253, 322]);
 
 const jsGuias = {};
 for (const emp of EMPRESAS) jsGuias[emp] = contar(emp, janSet, 'P', { categoria: naLista(IMPOSTOS_GUIAS[emp]), comTransferencia: false });
 registrar('guias', 'impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas)',
-  [jsGuias[1].titulos.size + jsGuias[2].titulos.size, jsGuias[1].baixas.size + jsGuias[2].baixas.size, jsGuias[1].avulsos.size + jsGuias[2].avulsos.size], [14, 0, 9]);
+  [jsGuias[1].titulos.size + jsGuias[2].titulos.size, jsGuias[1].baixas.size + jsGuias[2].baixas.size, jsGuias[1].avulsos.size + jsGuias[2].avulsos.size], [14, 0, 10]);
 
 // A divisão da linha "(+) Receitas": docs/fontes.md diz 3 códigos de venda e 26 / 28 de outras receitas.
 const outrasReceitasDe = (emp) => [...categorias[emp].values()]
@@ -430,10 +430,10 @@ linhaDoDfc({
 
 linhaDoDfc({
   tela: 'Tela 1', nome: 'Receitas', fonte: 'DFC (principal) / Omie recortado (confronto)',
-  filtro: `DFC: \`ENTRADA\` (K) de \`FLUXO DE CAIXA\`, somada pelo mês de \`DIA PG\` (F). Omie: ${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\``,
+  filtro: `DFC: \`ENTRADA\` (K) de \`FLUXO DE CAIXA\`, somada pelo mês de \`DIA PG\` (F), **fora as linhas de \`SUB 2\` (J) = \`TRANSFERENCIAS BANCARIAS - RECEITA\`** — transferência entre contas não é receita (decisão do dono, 27/09/2026), e é por elas que este cartão contava mais linhas que o "Receita total" da Tela 2. Omie: ${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\``,
   contagem: `${soma(MES_R)} lançamentos no Omie recortado — ${trincaTexto(MES_R)}`,
   porEmpresa: porEmp(MES_R),
-  dfc: (l) => l.natureza === 'R', dfcRotulo: 'linhas de entrada no mês',
+  dfc: eReceitaTela1Dfc, dfcRotulo: 'linhas de entrada no mês, fora as de transferência entre contas',
 });
 
 linhaDoDfc({
@@ -1117,7 +1117,9 @@ a janela de vencimento. A própria linha diz qual mês foi usado e por quê. Os 
 indicadores são de ${NOME_DO_MES} de ${ANO}.
 
 **Não há valor em dinheiro nesta página, de propósito** — só contagens, códigos, datas e campos de cadastro. Os valores
-em reais ficam em [\`docs/confronto-dfc-omie.html\`](confronto-dfc-omie.html), que não é gerado por este script. Nome de
+em reais ficam em \`docs/confronto-dfc-omie.html\`, que não é gerado por este script e **não entra no git**: é uma
+página local, gerada neste computador por [\`scripts/confronto-dfc-omie.mjs\`](../scripts/confronto-dfc-omie.mjs) e
+coberta pelo \`.gitignore\` — por isso o nome dela aqui não é link, que daqui não abriria. Nome de
 pessoa também não entra: nenhum campo de nome é lido.
 
 **Como o caso é conferido.** O cálculo trabalha sobre estruturas já filtradas e deduplicadas; a conferência faz o

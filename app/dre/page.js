@@ -27,6 +27,7 @@ import { dadosDaTela2, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import FiltroDeConta from '../conta.js';
 import FiltroDeEmpresa from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
@@ -115,14 +116,20 @@ export default async function Pagina({ searchParams }) {
   const comAh = q?.ah !== '0';
   const comAv = q?.av === '1';
   // O FILTRO DE MESES vem da URL como lista de números; quem o normaliza é `lib/regras/filtros.mjs`, no cálculo.
-  const d = await dadosDaTela2({ ano, mes, filtro: { meses: comoLista(q?.meses), empresa: comoLista(q?.empresa) } });
+  const d = await dadosDaTela2({
+    ano,
+    mes,
+    filtro: { meses: comoLista(q?.meses), empresa: comoLista(q?.empresa), conta: comoLista(q?.conta) },
+  });
   const fMeses = d.filtros.meses;
   const femp = d.filtros.empresa;
+  const fconta = d.filtros.conta;
 
   const url = (troca) => {
     const p = new URLSearchParams({ ano: String(ano), mes: String(mes), ah: comAh ? '1' : '0', av: comAv ? '1' : '0' });
     if (fMeses.escolhidos.length) p.set('meses', fMeses.escolhidos.join(','));
     if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
+    if (fconta.ativo) p.set('conta', fconta.escolhidas.join(','));
     for (const [k, v] of Object.entries(troca)) {
       if (v === null || v === '') p.delete(k); else p.set(k, String(v));
     }
@@ -142,7 +149,12 @@ export default async function Pagina({ searchParams }) {
   // "(+) Receitas" sobe é bom; "(−) alguma coisa" sobe é ruim. As linhas "(=)" seguem o resultado.
   const bomSubir = (linha) => linha.sinal !== '−';
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
-  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
+  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
+  // A conta bancária é seleção múltipla, como o centro de custo da Tela 1: clicar acende, clicar de novo apaga.
+  const alternarConta = (nome) => (fconta.escolhidas.includes(nome)
+    ? fconta.escolhidas.filter((x) => x !== nome)
+    : [...fconta.escolhidas, nome]);
 
   return (
     <>
@@ -183,6 +195,13 @@ export default async function Pagina({ searchParams }) {
         cada um, que o número é das duas empresas somadas; e as linhas &quot;(=)&quot; que misturam as duas fontes dizem
         que uma das pontas não é filtrada. A última linha da tabela também: o lado do DFC dela é das duas empresas.
       </FiltroDeEmpresa>
+
+      <FiltroDeConta f={fconta} href={(l) => url({ conta: l.join(',') || null })} alternar={alternarConta}>
+        Ele vale nas mesmas linhas e nos mesmos cartões que o de empresa — &quot;(+) Receitas&quot;,
+        &quot;(=) Receita bruta&quot;, &quot;(−) Despesas gerais&quot;, &quot;(+/−) Resultado financeiro&quot; e
+        &quot;(=) sem conta&quot; — e em toda contagem do Omie da tabela. As linhas de fonte DFC e os dois primeiros
+        cartões do topo dizem, cada um, que o número é de todas as contas somadas.
+      </FiltroDeConta>
 
       <section className="cartoes dre">
         {d.cartoes.map((c) => <Cartao c={c} key={c.id} />)}

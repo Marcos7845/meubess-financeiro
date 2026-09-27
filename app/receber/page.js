@@ -11,6 +11,10 @@
 //   ?cliente=2-1234567              empresa + `nCodCliente`, porque o código é próprio de cada empresa
 //   ?categoria=1.01.01              o `cCodCateg` do título
 //
+// E O SEXTO, A CONTA BANCÁRIA (decisão do dono, 27/09/2026): `?conta=Caixinha,Stone`, seleção múltipla pelas contas
+// da MeuBESS, desenhada por `app/conta.js` — o segundo filtro que as três telas dividem. Aqui ele vale INTEIRO: a
+// conta é o `cabecTitulo.nCodCC`, o mesmo campo do recorte da MeuBESS.
+//
 // E O QUINTO FILTRO, O DE EMPRESA (decisão do dono, 27/09/2026): `?empresa=2`, três escolhas exclusivas — empresa 1,
 // empresa 2 ou as duas —, desenhado por `app/empresa.js`, que as três telas usam. Nesta tela ele vale INTEIRO: os 4
 // cartões e os 4 blocos são do Omie, lido uma vez por empresa. As duas contagens do cadastro de clientes são a única
@@ -29,6 +33,7 @@ import { dadosDaTela3, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista, comoTexto, paraCampoDeData } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import FiltroDeConta from '../conta.js';
 import FiltroDeEmpresa from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
@@ -143,11 +148,12 @@ export default async function Pagina({ searchParams }) {
     filtro: {
       de: comoTexto(q?.de), ate: comoTexto(q?.ate),
       status: comoLista(q?.status), cliente: comoTexto(q?.cliente), categoria: comoTexto(q?.categoria),
-      empresa: comoLista(q?.empresa),
+      empresa: comoLista(q?.empresa), conta: comoLista(q?.conta),
     },
   });
   const f = d.filtros;
   const femp = f.empresa;
+  const fconta = f.conta;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -170,6 +176,7 @@ export default async function Pagina({ searchParams }) {
     if (f.cliente.escolhido) p.set('cliente', f.cliente.escolhido);
     if (f.categoria.escolhido) p.set('categoria', f.categoria.escolhido);
     if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
+    if (fconta.ativo) p.set('conta', fconta.escolhidas.join(','));
     for (const [k, v] of Object.entries(troca)) {
       if (v === null || v === '') p.delete(k); else p.set(k, String(v));
     }
@@ -180,7 +187,11 @@ export default async function Pagina({ searchParams }) {
     : [...f.status.escolhidos, chave]);
   const algumFiltro = f.vencimento.ativo || f.status.ativo || f.cliente.ativo || f.categoria.ativo;
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
-  const paraOutraTela = femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : '';
+  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
+  const alternarConta = (nome) => (fconta.escolhidas.includes(nome)
+    ? fconta.escolhidas.filter((x) => x !== nome)
+    : [...fconta.escolhidas, nome]);
 
   return (
     <>
@@ -229,11 +240,18 @@ export default async function Pagina({ searchParams }) {
         do filtro passa a ser só a desta empresa, porque o <code>nCodCliente</code> é próprio de cada uma.
       </FiltroDeEmpresa>
 
+      <FiltroDeConta f={fconta} href={(l) => url({ conta: l.join(',') || null, cliente: null })} alternar={alternarConta}>
+        Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a conta é o
+        {' '}<code>cabecTitulo.nCodCC</code>, o mesmo campo pelo qual a tela já faz o recorte da MeuBESS. Só as duas
+        contagens do cadastro de clientes ficam de fora, e o bloco delas diz isso.
+      </FiltroDeConta>
+
       <div className="barra-filtros receber">
         <form className="filtros-form" method="get" action="/receber">
           <input type="hidden" name="ano" value={ano} />
           <input type="hidden" name="mes" value={mes} />
           {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
+          {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
           {f.status.escolhidos.length > 0 && <input type="hidden" name="status" value={f.status.escolhidos.join(',')} />}
           <label className="campo-filtro">
             <span>vencimento de</span>

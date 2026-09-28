@@ -4,7 +4,9 @@ Dashboards do departamento financeiro da MeuBESS, usados pela equipe **fora da C
 acesso próprio). Não se mistura com o Painel Logístico (`meubess_dashboard`), com a plataforma da MeuBESS nem com o
 Lovable.
 
-**Estado:** as **três telas** — Gestão de Contas, DRE e Contas a Receber — estão construídas e rodando localmente.
+**Estado:** as **três telas** — Gestão de Contas, DRE e **Fluxo de Caixa** — estão construídas e rodando localmente.
+A Tela 3 era Contas a Receber até 28/09/2026, quando o dono a redefiniu como Fluxo de Caixa (`docs/layout.md`); as
+despesas fixas dela esperam a classificação da gestora (`docs/despesas-fixas-para-classificar.xlsx`).
 As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
 [`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
 [`docs/telas-conferidas.md`](docs/telas-conferidas.md). Os **filtros** de cada tela — onde valem e onde não valem, com um
@@ -95,7 +97,7 @@ Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão 
 |---|---|
 | **Tela 1 — Gestão de Contas** | <http://127.0.0.1:4781/?ano=2026&mes=8> |
 | **Tela 2 — DRE** | <http://127.0.0.1:4781/dre?ano=2026&mes=8> |
-| **Tela 3 — Contas a Receber** | <http://127.0.0.1:4781/receber?ano=2026&mes=8> |
+| **Tela 3 — Fluxo de Caixa** | <http://127.0.0.1:4781/fluxo-de-caixa?ano=2026&mes=8> |
 
 As **empresas 1 e 2 entram somadas** — e, desde 27/09/2026, o **filtro de empresa** (`?empresa=1`, `?empresa=2` ou as
 duas) escolhe quais das duas entram na soma, nas três telas. O recorte é o da MeuBESS.

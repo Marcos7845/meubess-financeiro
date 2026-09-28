@@ -417,6 +417,26 @@ a { color: inherit; }
  * telas — é a regra da skill, e é o que deixa os dois rankings da Tela 1 lado a lado sem legenda. */
 .serie-receita { color: var(--marca-escura); }   /* entrada de dinheiro, Tela 1 */
 .serie-despesa { color: var(--destaque); }       /* saída de dinheiro, Tela 1 */
+.serie-saldo { color: var(--marca); }            /* o saldo de cada mês, Tela 3 — Fluxo de Caixa */
+.media-do-saldo line { stroke: var(--texto-fraco); stroke-dasharray: 5 4; }
+.media-do-saldo-texto { fill: var(--texto-fraco); font-size: 10.5px; }
+.fluxo-veredito { font-weight: 700; }
+.fluxo-veredito.lucro { color: var(--positivo); }
+.fluxo-veredito.prejuizo { color: var(--negativo); }
+.origem { margin-top: 6px; font-size: 11px; color: var(--texto-fraco); }
+.origem summary { cursor: pointer; }
+.origem table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.origem th, .origem td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.origem td.num, .origem th.num { text-align: right; }
+.rolagem-origem { max-height: 260px; overflow: auto; }
+.curva { margin: 0; padding-left: 18px; }
+.curva li { margin: 4px 0; }
+.chave.serie-receita, .chave.serie-despesa, .chave.serie-saldo { background: currentColor; }
+.tabela-fixas { border-collapse: collapse; width: 100%; font-size: 11px; }
+.tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
+.tabela-fixas thead th { color: var(--texto-fraco); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--texto-fraco); }
+.tabela-fixas tfoot th, .tabela-fixas tfoot td { font-weight: 700; border-top: 1px solid var(--texto-fraco); border-bottom: 0; }
+.tabela-fixas .num { text-align: right; font-variant-numeric: tabular-nums; }
 /* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
  * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */
 .serie-margem { color: var(--marca); }

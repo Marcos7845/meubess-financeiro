@@ -282,7 +282,47 @@ trocado por "—".
 
 ---
 
-# Tela 3 — Contas a Receber
+# Tela 3 — Fluxo de Caixa (desde 28/09/2026)
+
+## A história (escrita pelo dono, 28/09/2026)
+
+A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
+
+- **Para quem é:** o dono da empresa e os membros do departamento financeiro.
+- **Que decisão ela ajuda a tomar:** a **estratégia de venda** — com os números apresentados, identificar que decisão
+  precisa ser tomada em relação ao setor comercial.
+- **A mensagem de 5 segundos:** *quanto entrou, quanto saiu e como vamos fechar o mês: com lucro ou prejuízo?* Na
+  tela: "Entrou X, saiu Y e o mês caminha para fechar com lucro (ou prejuízo) de Z", em que Z é o cartão "Projeção do
+  mês", em verde ou vermelho.
+- **As perguntas que a tela responde:**
+  1. O caixa do mês fechou positivo ou negativo, e quanto entrou e saiu? — os cartões Entrou, Saiu e Saldo.
+  2. Para onde foi a despesa? — **todas** as despesas classificadas como fixa, com o total, para visão geral e controle.
+  3. De quem veio a receita? — **indiferente**, sem detalhamento (decisão do dono): a tela não quebra a receita.
+  4. Este mês foi típico ou ficou fora da curva? — o gráfico do ano, com a média dos meses anteriores.
+  5. Quanto ainda está por pagar, e quanto as despesas fixas consomem da receita líquida? — os cartões "Ainda a pagar",
+     "Ainda a receber", "Despesas fixas pagas" e "Fixas / receita líquida", e a projeção do fechamento.
+  6. De onde saiu cada número? — "de onde saiu", embaixo de cada cartão, com as linhas da planilha.
+
+## O plano de gráficos
+
+| A pergunta | Gráfico | Por quê |
+|---|---|---|
+| "Quanto entrou, saiu, e como fecha?" | duas filas de 4 números: o caixa do mês (entrou, saiu, saldo, projeção — esta em destaque) e o que falta (a pagar, a receber, fixas, peso das fixas) | é um número por vez; a projeção é o número da frase |
+| "Este mês foi típico?" | **colunas** de entrou e saiu por mês, **linha** do saldo de cada mês por cima, a média do saldo dos meses anteriores tracejada e a marca do mês da tela; embaixo, em português, cada série "dentro do normal" ou "fora da curva" | colunas porque entrada e saída são evento do mês (a mesma troca da Tela 1); a linha do saldo liga os meses porque o que interessa é a tendência do resultado |
+| "Para onde foi a despesa fixa?" | barra deitada com **todas** as contas fixas do mês, ao lado da tabela conta por conta (pago, % da receita líquida, linhas) | o dono pediu todas, não as dez maiores; a tabela é o controle, a barra é a proporção |
+| "De onde saiu cada número?" | não é gráfico: "de onde saiu" fechado embaixo de cada cartão | a origem está junto do número, e abre só quando alguém quer conferir |
+
+## O que ficou de fora, e por quê
+
+- **A receita por cliente**: o dono disse que é indiferente.
+- **A despesa fixa ainda a pagar**: o que falta pagar vem do Omie, e o Omie não tem o `SUB 2` do DFC — os dois
+  vocabulários não têm de-para (`docs/fontes.md`). A tela mostra o total a pagar do mês, e as fixas pagas.
+- **A lista de títulos a receber, um a um, e o "para quem ligar"**: eram o propósito da antiga tela, que saiu da
+  navegação. O cálculo dela continua, e volta como tela se o dono pedir.
+
+---
+
+# Tela 3 — Contas a Receber (até 28/09/2026; substituída pelo Fluxo de Caixa)
 
 <!-- captura 3 -->
 

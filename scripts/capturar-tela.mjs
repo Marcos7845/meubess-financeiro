@@ -51,9 +51,11 @@ const TELAS = {
     referencia: 'docs/referencias/tela-2-dre.jpg',
   },
   3: {
-    rota: '/receber',
-    titulo: 'Tela 3 — Contas a Receber',
-    referencia: 'docs/referencias/tela-3-contas-a-receber.jpg',
+    // A Tela 3 virou o Fluxo de Caixa em 28/09/2026 (pedido do dono). A referência de blocos continua a imagem da
+    // antiga Contas a Receber até o dono mandar uma nova: os blocos desta tela estão escritos em `docs/layout.md`.
+    rota: '/fluxo-de-caixa',
+    titulo: 'Tela 3 — Fluxo de Caixa',
+    referencia: 'docs/layout.md (seção "Tela 3 — Fluxo de Caixa")',
   },
 };
 

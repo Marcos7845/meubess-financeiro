@@ -1,0 +1,9 @@
+{
+  "o-que-e": "Quais contas do DFC (coluna SUB 2 da aba FLUXO DE CAIXA) são despesa FIXA. Quem decide é a gestora do financeiro, respondendo docs/despesas-fixas-para-classificar.xlsx; quem grava este arquivo é scripts/despesas-fixas.mjs, lendo a planilha respondida. Enquanto a lista estiver vazia, a tela Fluxo de Caixa não mostra número de despesa fixa: diz que a classificação está pendente.",
+  "respondido": false,
+  "respondidoEm": null,
+  "fixas": [],
+  "variaveis": [],
+  "naoEDespesa": [],
+  "semResposta": []
+}

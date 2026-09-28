@@ -116,9 +116,8 @@ export default async function Pagina({ searchParams }) {
         <nav className="abas">
           <span className="ativa">Dashboard</span>
           <a href={`/dre?ano=${ano}&mes=${mes}${paraOutraTela}`}>DRE</a>
-          <a href={`/receber?ano=${ano}&mes=${mes}${paraOutraTela}`}>Contas a Receber</a>
+          <a href={`/fluxo-de-caixa?ano=${ano}&mes=${mes}${paraOutraTela}`}>Fluxo de Caixa</a>
           <span>Centro de Custo</span>
-          <span>Fluxo de caixa</span>
         </nav>
       </header>
 

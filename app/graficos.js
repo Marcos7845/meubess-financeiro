@@ -30,7 +30,7 @@
 // captura entrar no repositório.
 
 import {
-  Bar, BarChart, CartesianGrid, LabelList, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, ComposedChart, LabelList, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { emPorcento, emReais } from './dinheiro.js';
 
@@ -325,4 +325,45 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
       </BarChart>
     </div>
   );
+}
+
+// ================================================================ TELA 3 — FLUXO DE CAIXA
+//
+// O MÊS CONTRA OS ANTERIORES. Colunas de entrada e saída por mês (evento do mês, como na Tela 1) e uma linha do saldo
+// de cada mês por cima, com a média do saldo dos meses anteriores ao da tela como linha tracejada — é ela que diz se o
+// mês ficou fora da curva. Nenhum número novo: entradas e saídas são o bloco `Entradas`/`Gastos` que o gráfico "Receita
+// × despesa por mês" da Tela 1 já desenha; o saldo é a diferença dos dois; a média é a dos meses anteriores, escrita
+// em `docs/fontes.md`.
+export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
+  const dados = meses.map((m) => ({ rotulo: MESES_CURTOS[m.mes], entrou: m.entradas, saiu: m.gastos, saldo: m.saldo }));
+  const foco = MESES_CURTOS[mesEmFoco];
+  return (
+    <div className="grafico">
+      <ComposedChart width={760} height={290} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
+        <CartesianGrid {...GRADE} />
+        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
+        <YAxis {...EIXO_VALOR} />
+        <ReferenceLine y={0} className="linha-zero" />
+        {dados.some((d) => d.rotulo === foco) && (
+          <ReferenceLine x={foco} className="marca-do-mes"
+            label={{ value: `${foco} — o mês desta tela`, position: 'top', className: 'marca-do-mes-texto' }} />
+        )}
+        {mediaDoSaldo !== null && mediaDoSaldo !== undefined && (
+          <ReferenceLine y={mediaDoSaldo} className="media-do-saldo"
+          />
+        )}
+        <Tooltip {...DICA} />
+        <Bar dataKey="entrou" name="entrou" className="serie-receita" fill="currentColor" isAnimationActive={false} />
+        <Bar dataKey="saiu" name="saiu" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
+        <Line type="linear" dataKey="saldo" name="saldo" className="serie-saldo" stroke="currentColor" strokeWidth={2}
+          dot={{ r: 3, strokeWidth: 0, fill: 'currentColor' }} isAnimationActive={false} />
+      </ComposedChart>
+    </div>
+  );
+}
+
+// PARA ONDE FOI A DESPESA FIXA: o mesmo ranking de "Para onde foi a despesa" da Tela 1, com as contas fixas no lugar
+// das classificações. Todas as contas, e não as dez maiores: a pergunta do dono é ver todas as fixas.
+export function DespesasFixas({ itens }) {
+  return <ParaOndeFoiADespesa itens={itens.map((i) => ({ nome: i.conta, valor: i.valor }))} />;
 }

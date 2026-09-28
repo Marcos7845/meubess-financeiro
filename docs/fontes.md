@@ -916,7 +916,62 @@ contra o cadastro de contas do DRE (`ListarCadastroDRE`); a lista acima é a da 
 
 ---
 
-## Tela 3 — Contas a receber
+## Tela 3 — Fluxo de Caixa (desde 28/09/2026)
+
+**Pedido do dono, 28/09/2026:** a tela "Contas a receber" passa a ser o **Fluxo de Caixa**, para o dono e o
+departamento financeiro, com a estratégia de venda como a decisão que ela ajuda a tomar. A história e o desenho estão
+em [`layout.md`](layout.md); aqui está de onde sai cada número. Rota: `/fluxo-de-caixa` (a antiga `/receber` leva
+para cá). Cálculo: `lib/indicadores/fluxo-de-caixa.mjs`.
+
+**Filtros:** ano · mês · empresa · a chave "incluir dados do Omie" — os que ela divide com as outras duas telas. A
+empresa só alcança o lado do Omie; os números de fonte DFC dizem isso ao lado, pelo mesmo motivo da Tela 1 ("A coluna
+`EMP.` não é a filial do Omie").
+
+**Quase nenhum número nasce nesta tela.** Seis dos oito cartões são cartões que já existiam, pelo mesmo cálculo e o
+mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão:
+
+| cartão | é o mesmo que | fonte |
+|---|---|---|
+| Entrou | Tela 1, "Receitas" | DFC, `FLUXO DE CAIXA`, `ENTRADA` (K) pelo mês de `DIA PG` (F), fora `SUB 2` = `TRANSFERENCIAS BANCARIAS - RECEITA` |
+| Saiu | Tela 1, "Despesas" | DFC, `FLUXO DE CAIXA`, `SAIDA` (L) pelo mês de `DIA PG` (F) |
+| Saldo do caixa no mês | Tela 1, "Saldo" | DFC, `ENTRADA` menos `SAIDA`, todas as linhas baixadas do mês. Difere de "entrou − saiu" pelas transferências entre contas que entraram, que o "Entrou" não conta como receita; a tela diz quantas |
+| Ainda a pagar no mês | Tela 1, "Desp. Pendentes" | Omie, títulos a pagar com vencimento no mês e sem baixa |
+| Ainda a receber no mês | antiga Tela 3, "Valor Pendente" | Omie, títulos a receber com vencimento no mês, faixa EM ABERTO |
+| a série do ano | Tela 1, "Receita × despesa por mês" | DFC, o bloco `Entradas` / `Gastos` da aba do mês de cada arquivo |
+
+**Os quatro números que nascem aqui — todos contas simples dos de cima:**
+
+| número | conta | fonte |
+|---|---|---|
+| Despesas fixas pagas | soma da `SAIDA` (L) das linhas baixadas do mês cujo `SUB 2` (J) está na lista de fixas | DFC, pela lista `dados/despesas-fixas.json` |
+| Fixas / receita líquida | despesas fixas ÷ receita líquida do mês | DFC nas duas pontas. A receita líquida é **a mesma conta** do cartão "% D. Func. / Rec. Líquida" da Tela 1: linhas de `SUB 2` em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, menos as de dedução (`SUB 2` `DEVOLUCÃO` ou `CLASS. CONTABIL` `ESTORNO`) |
+| Projeção do mês | saldo do caixa no mês + ainda a receber no mês − ainda a pagar no mês | DFC + Omie. **É projeção de caixa, não lucro contábil** (esse é a Tela 2): diz se, recebendo e pagando o que vence no mês, o caixa fecha positivo ou negativo. O que já venceu e não foi recebido **não entra** — a tela o mostra à parte. **A confirmar pelo dono:** incluir ou não o vencido, e se "lucro/prejuízo" na frase deve ser esta projeção |
+| Fora da curva | o mês se afasta da média dos meses anteriores do mesmo ano mais que um desvio-padrão deles; só com 3 meses anteriores ou mais | a série do ano, acima. **A confirmar pelo dono:** a régua de um desvio-padrão |
+
+**A despesa fixa não existe nas fontes.** Nem o DFC nem o Omie marcam uma despesa como fixa. Quem decide é a
+gestora do financeiro (pedido do dono, 28/09/2026), respondendo `docs/despesas-fixas-para-classificar.xlsx` conta por
+conta: as 55 contas de despesa do `SUB 2` da aba `BASE` (as outras 14 — receitas, saldos e transferências — ficam
+numa aba à parte, para ela conferir). `node scripts/despesas-fixas.mjs <planilha respondida>` grava a resposta em
+`dados/despesas-fixas.json`; vale só a coluna "Resposta da gestora", nunca a sugestão. **Enquanto a lista não for
+respondida, a tela não mostra número de despesa fixa**, e diz que a classificação está pendente.
+
+**De onde saiu cada número.** Cada cartão tem, embaixo, "de onde saiu": a frase desta tabela e, quando o número é soma
+de linhas do DFC, as linhas uma a uma — o número da linha na aba `FLUXO DE CAIXA` do arquivo do mês, o dia, a
+`CLASS. CONTABIL`, o `SUB 2` e o valor —, para achar cada uma de volta na planilha.
+
+**Ainda não conferido com a fonte.** A tela foi construída numa sessão sem acesso às fontes (o cache do Omie e as
+planilhas do DFC só existem no computador do dono) e testada com dados de mentira. Seis cartões são os mesmos números
+já conferidos das Telas 1 e 3; os quatro novos precisam da conferência de um mês real, como os outros tiveram.
+
+---
+
+## Contas a receber — o cálculo que o Fluxo de Caixa usa
+
+**Desde 28/09/2026 esta não é mais uma tela** (virou o Fluxo de Caixa, acima). O cálculo continua inteiro em
+`lib/indicadores/tela-3.mjs`: é dele que sai o "ainda a receber no mês", e as conferências seguem conferindo-o. O que
+está abaixo é o contrato dele, como era.
+
+### Tela 3 — Contas a receber (até 28/09/2026)
 
 Referência: `referencias/tela-3-contas-a-receber.jpg`
 

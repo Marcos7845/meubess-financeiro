@@ -32,7 +32,30 @@
 import {
   Bar, BarChart, CartesianGrid, ComposedChart, LabelList, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis,
 } from 'recharts';
+import { useEffect, useRef, useState } from 'react';
+
 import { emPorcento, emReais } from './dinheiro.js';
+
+// A LARGURA DE VERDADE DO GRÁFICO (correção de 28/09/2026: o dono passava o mouse e não via os valores). O gráfico é
+// desenhado no SERVIDOR com largura fixa — `scripts/capturar-tela.mjs` joga fora todo `<script>`, e a captura precisa do
+// SVG pronto — e o CSS o esticava até a largura do quadro. Esticado, o Recharts lê o mouse na escala errada: medido,
+// numa janela de 1280 px o mouse na barra do dia 12 mostrava o dia 14, e numa de 1920 px não mostrava nada. Agora, no
+// navegador, cada gráfico mede o quadro e se redesenha naquela largura, e o mouse cai no ponto certo. No servidor (e na
+// captura) continua a largura fixa de sempre, e a primeira pintura é idêntica — sem diferença de hidratação.
+function useLargura(padrao) {
+  const ref = useRef(null);
+  const [largura, setLargura] = useState(padrao);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const medir = () => { const w = Math.round(el.getBoundingClientRect().width); if (w > 0) setLargura(w); };
+    medir();
+    const obs = new ResizeObserver(medir);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, largura };
+}
 
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -61,12 +84,13 @@ function PontaDaLinha({ x, y, index, ultimo, texto, desvio }) {
 }
 
 export function AnoInteiro({ meses, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = meses.map((m) => ({ rotulo: MESES_CURTOS[m.mes], receita: m.entradas, despesa: m.gastos }));
   const ultimo = dados.length - 1;
   const foco = MESES_CURTOS[mesEmFoco];
   return (
-    <div className="grafico">
-      <LineChart width={760} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <LineChart width={medida.largura} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_VALOR} />
@@ -95,10 +119,11 @@ export function AnoInteiro({ meses, mesEmFoco }) {
 // COLUNAS, E NÃO LINHA (a troca está justificada em `docs/layout.md`): pagamento e recebimento acontecem em dias
 // certos, e boa parte dos dias é zero. Uma linha ligaria o dia 3 ao dia 9 como se houvesse fluxo no meio.
 export function DiaADia({ dias, mes, ano }) {
+  const medida = useLargura(760);
   const dados = dias.map((d) => ({ rotulo: String(d.dia), receita: d.entradas, despesa: d.gastos }));
   return (
-    <div className="grafico">
-      <BarChart width={760} height={220} data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 4 }} barGap={1}>
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={220} data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 4 }} barGap={1}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 8.5 }} />
         <YAxis {...EIXO_VALOR} />
@@ -118,10 +143,11 @@ export function DiaADia({ dias, mes, ano }) {
 const corta = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 function Ranking({ dados, serie, tick }) {
+  const medida = useLargura(430);
   const altura = Math.max(120, 30 * dados.length + 16);
   return (
-    <div className="grafico">
-      <BarChart width={430} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 96, left: 0, bottom: 4 }}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="chave" width={148} {...EIXO_ROTULO} tick={tick} interval={0} />
@@ -179,12 +205,13 @@ const EIXO_PORCENTO = {
 // a única referência que não inventa número: abaixo dela o mês deu prejuízo. A tracejada no mês em foco é a mesma da
 // Tela 1, e pelo mesmo motivo — põe o mês escolhido dentro do ano sem precisar de um segundo gráfico.
 export function MargemNoAno({ serie, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = serie.map((x) => ({ rotulo: MESES_CURTOS[x.mes], margem: x.valor }));
   const ultimo = dados.length - 1;
   const foco = MESES_CURTOS[mesEmFoco];
   return (
-    <div className="grafico">
-      <LineChart width={760} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <LineChart width={medida.largura} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_PORCENTO} />
@@ -210,6 +237,7 @@ export function MargemNoAno({ serie, mesEmFoco }) {
 // e ordenar por tamanho, como se faz num ranking, desmontaria a conta. O valor vai na ponta, como nos rankings da
 // Tela 1: ler o número é a tarefa.
 export function PesoNaReceita({ linhas }) {
+  const medida = useLargura(430);
   const dados = linhas.map((l, n) => ({ chave: String(n), rotulo: l.rotulo, valor: l.av }));
   const altura = Math.max(120, 26 * dados.length + 16);
   const tick = ({ x, y, payload }) => {
@@ -217,8 +245,8 @@ export function PesoNaReceita({ linhas }) {
     return <text x={x - 6} y={y} dy={3.5} textAnchor="end" className="rotulo-eixo">{corta(String(i.rotulo ?? ''), 26)}</text>;
   };
   return (
-    <div className="grafico">
-      <BarChart width={430} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 78, left: 0, bottom: 4 }}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="chave" width={158} {...EIXO_ROTULO} tick={tick} interval={0} />
@@ -256,6 +284,7 @@ const FAIXAS_DA_TELA_3 = [
 // E O NOME DO CLIENTE sai num `text` com `class="cliente"` e `data-codigo`, a mesma marca da Tela 1, para
 // `scripts/capturar-tela.mjs` trocar o nome pelo código antes de a captura entrar no repositório.
 export function PorClienteEStatus({ clientes }) {
+  const medida = useLargura(760);
   const dados = clientes.map((c, n) => ({
     chave: String(n), nome: c.nome ?? `cliente ${c.codigo}`, codigo: c.codigo,
     ...Object.fromEntries(FAIXAS_DA_TELA_3.map((f) => [f.chave, c[f.chave]])),
@@ -270,8 +299,8 @@ export function PorClienteEStatus({ clientes }) {
     );
   };
   return (
-    <div className="grafico">
-      <BarChart width={760} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} horizontal={false} vertical />
         <XAxis type="number" {...EIXO_VALOR} height={22} />
@@ -296,6 +325,7 @@ export function PorClienteEStatus({ clientes }) {
 // O EIXO É CONTAGEM DE TÍTULOS, e não dinheiro: é o que este bloco sempre mostrou ("Qtde Lançamentos"), e é a
 // contagem que `docs/conferencia.md` confere.
 export function PorMesEStatus({ porMes, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = porMes.map((x) => ({
     rotulo: MESES_CURTOS[x.mes], total: x.total,
     ...Object.fromEntries(FAIXAS_DA_TELA_3.map((f) => [f.chave, x[f.chave]])),
@@ -303,8 +333,8 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
   const foco = MESES_CURTOS[mesEmFoco];
   const ultima = FAIXAS_DA_TELA_3.length - 1;
   return (
-    <div className="grafico">
-      <BarChart width={760} height={230} data={dados} margin={{ top: 22, right: 8, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={230} data={dados} margin={{ top: 22, right: 8, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_ROTULO} width={34} allowDecimals={false} />
@@ -335,11 +365,12 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
 // × despesa por mês" da Tela 1 já desenha; o saldo é a diferença dos dois; a média é a dos meses anteriores, escrita
 // em `docs/fontes.md`.
 export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
+  const medida = useLargura(1100);
   const dados = meses.map((m) => ({ rotulo: MESES_CURTOS[m.mes], entrou: m.entradas, saiu: m.gastos, saldo: m.saldo }));
   const foco = MESES_CURTOS[mesEmFoco];
   return (
-    <div className="grafico">
-      <ComposedChart width={1100} height={300} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
+    <div className="grafico" ref={medida.ref}>
+      <ComposedChart width={medida.largura} height={300} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_VALOR} />
@@ -367,29 +398,35 @@ export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
 // mês — consolidado até hoje, e daí em diante somando a previsão. A marca tracejada é hoje. Nenhum número nasce aqui:
 // cada dia chega pronto de `lib/indicadores/fluxo-de-caixa.mjs`.
 export function DiaADiaDoFluxo({ dias, hoje }) {
+  const medida = useLargura(1100);
   const dados = dias.map((d) => ({
     rotulo: String(d.dia),
-    entrou: d.entrou, aReceber: d.aReceber, saiu: -d.saiu, aPagar: -d.aPagar, acumulado: d.acumulado,
+    // Zero vira `null`: a dica do mouse mostra só o que aconteceu naquele dia, e não quatro linhas de "R$ 0".
+    entrou: d.entrou || null, aReceber: d.aReceber || null, saiu: d.saiu ? -d.saiu : null, aPagar: d.aPagar ? -d.aPagar : null,
+    acumulado: d.acumulado,
   }));
   const dica = { ...DICA, formatter: (v, n) => [emReais(Math.abs(v)), n] };
   return (
-    <div className="grafico">
-      <ComposedChart width={1100} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}
+    <div className="grafico" ref={medida.ref}>
+      <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}
         stackOffset="sign" barCategoryGap={2}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
-        <YAxis {...EIXO_VALOR} />
-        <ReferenceLine y={0} className="linha-zero" />
+        {/* DOIS EIXOS: o do movimento do dia (as colunas), à esquerda, e o da posição de caixa (a linha), à direita. No
+            mesmo eixo, um caixa de milhões achatava as colunas do dia até sumirem. */}
+        <YAxis yAxisId="dia" {...EIXO_VALOR} />
+        <YAxis yAxisId="caixa" orientation="right" {...EIXO_VALOR} />
+        <ReferenceLine yAxisId="dia" y={0} className="linha-zero" />
         {hoje && (
-          <ReferenceLine x={String(hoje)} className="marca-do-mes"
+          <ReferenceLine yAxisId="dia" x={String(hoje)} className="marca-do-mes"
             label={{ value: 'hoje', position: 'top', className: 'marca-do-mes-texto' }} />
         )}
         <Tooltip {...dica} labelFormatter={(d) => `dia ${d}`} />
-        <Bar dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor" isAnimationActive={false} />
-        <Bar dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-receita previsao" fill="currentColor" isAnimationActive={false} />
-        <Bar dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
-        <Bar dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-despesa previsao" fill="currentColor" isAnimationActive={false} />
-        <Line type="linear" dataKey="acumulado" name="acumulado do mês" className="serie-saldo" stroke="currentColor"
+        <Bar yAxisId="dia" dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-receita previsao" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-despesa previsao" fill="currentColor" isAnimationActive={false} />
+        <Line yAxisId="caixa" type="linear" dataKey="acumulado" name="posição de caixa" className="serie-saldo" stroke="currentColor"
           strokeWidth={2} dot={false} isAnimationActive={false} />
       </ComposedChart>
     </div>

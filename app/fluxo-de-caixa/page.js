@@ -98,6 +98,16 @@ export default async function Pagina({ searchParams }) {
   const doResultado = veredito(resultado.valor);
   const daProjecao = veredito(projecao.valor);
   const maior = Math.max(1, ...d.fixas.porConta.map((g) => g.valor));
+  // A LINHA CONFERIDA COM A PLANILHA: no último dia consolidado, a posição que a tela calculou contra o `Final` que a
+  // própria aba do mês escreve para aquele dia. Diferença não é erro da tela nem da planilha: é o que o quadro dela conta
+  // e as linhas baixadas do `FLUXO DE CAIXA` não (transferências entre contas que entraram, lançamentos ainda não
+  // baixados). A tela diz quanto é, em vez de esconder.
+  const ultimoConsolidado = [...d.diaADia.dias].reverse().find((x) => x.fase !== 'previsao' && x.finalDaPlanilha !== null);
+  const conferencia = d.diaADia.inicial !== null && ultimoConsolidado
+    ? (Math.abs(ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar) - ultimoConsolidado.finalDaPlanilha) < 100
+      ? `No dia ${ultimoConsolidado.dia}, a posição bate com o Final da planilha.`
+      : `No dia ${ultimoConsolidado.dia}, a planilha diz ${emReais(ultimoConsolidado.finalDaPlanilha)} de Final, e a linha dá ${emReais(ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar))}: a diferença é o que o quadro da planilha conta e as linhas baixadas do FLUXO DE CAIXA não (como a transferência entre contas que entrou).`)
+    : null;
   const nomeDoMes = NOMES_DOS_MESES?.[mes] ?? MESES_CURTOS[mes];
   // O PÉ DE CADA CARTÃO: quantas linhas do DFC e quantos títulos do Omie entraram nele — só a fonte que ele usa. Um
   // cartão só do DFC não escreve "sem o Omie", que daria a entender que faltou dado.
@@ -204,17 +214,23 @@ export default async function Pagina({ searchParams }) {
             {d.diaADia.comPrevisao && <><span className="chave serie-receita previsao" />a receber (previsão) &nbsp;</>}
             <span className="chave serie-despesa" />saiu &nbsp;
             {d.diaADia.comPrevisao && <><span className="chave serie-despesa previsao" />a pagar (previsão) &nbsp;</>}
-            <span className="chave serie-saldo" />acumulado do mês
+            <span className="chave serie-saldo" />posição de caixa (eixo da direita)
             {d.diaADia.hoje ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
           </p>
           <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />
           <p className="legenda">
+            {d.diaADia.inicial !== null
+              ? <>O mês começou com <b>{emReais(d.diaADia.inicial)}</b> em caixa (linha <code>Inicial</code>, dia 1, da
+                aba {d.diaADia.abaDoQuadro ? <code>{d.diaADia.abaDoQuadro}</code> : 'do mês'} do DFC). </>
+              : <>A planilha deste mês não tem a linha <code>Inicial</code> do quadro do caixa: a linha começa no zero e
+                mostra só o que o mês movimentou. </>}
             {d.diaADia.mesFechado
-              ? 'Mês fechado: tudo o que aparece é consolidado — o que entrou e saiu de fato, pelo dia do pagamento.'
+              ? <>Mês fechado, tudo consolidado: o caixa terminou o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b>.</>
               : !d.diaADia.comPrevisao
               ? 'Sem o Omie não há previsão: aparece só o consolidado.'
-              : <>Fecha o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b> se tudo o que vence for recebido e
-                pago no dia.</>}
+              : <>O caixa termina o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b> se tudo o que vence for
+                recebido e pago no dia.</>}
+            {conferencia && <> {conferencia}</>}
             {d.diaADia.atrasadoAPagar.valor > 0 && (
               <> Fora do gráfico: <b>{emReais(d.diaADia.atrasadoAPagar.valor)}</b> a pagar que venceu antes de hoje e
                 não foi baixado no Omie ({d.diaADia.atrasadoAPagar.n} títulos) — não tem dia previsto.

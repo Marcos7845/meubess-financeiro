@@ -405,7 +405,10 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
     entrou: d.entrou || null, aReceber: d.aReceber || null, saiu: d.saiu ? -d.saiu : null, aPagar: d.aPagar ? -d.aPagar : null,
     acumulado: d.acumulado,
   }));
-  const dica = { ...DICA, formatter: (v, n) => [emReais(Math.abs(v)), n] };
+  // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
+  // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
+  // versão tirava o sinal de tudo, e uma posição de −R$ 819.727 aparecia como R$ 819.727).
+  const dica = { ...DICA, formatter: (v, n) => [emReais(n === 'posição de caixa' ? v : Math.abs(v)), n] };
   return (
     <div className="grafico" ref={medida.ref}>
       <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}

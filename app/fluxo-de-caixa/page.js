@@ -219,11 +219,17 @@ export default async function Pagina({ searchParams }) {
           </p>
           <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />
           <p className="legenda">
-            {d.diaADia.inicial !== null
-              ? <>O mês começou com <b>{emReais(d.diaADia.inicial)}</b> em caixa (linha <code>Inicial</code>, dia 1, da
-                aba {d.diaADia.abaDoQuadro ? <code>{d.diaADia.abaDoQuadro}</code> : 'do mês'} do DFC). </>
-              : <>A planilha deste mês não tem a linha <code>Inicial</code> do quadro do caixa: a linha começa no zero e
-                mostra só o que o mês movimentou. </>}
+            {d.diaADia.finalDoMesAnterior !== null
+              ? <>A linha parte de <b>{emReais(d.diaADia.finalDoMesAnterior)}</b>, o caixa com que {NOMES_DOS_MESES[mes - 1]}{' '}
+                fechou (linha <code>Final</code> do último dia, na planilha do mês anterior). </>
+              : d.diaADia.inicial !== null
+              ? <>A linha parte de <b>{emReais(d.diaADia.inicial)}</b>, o <code>Inicial</code> do dia 1 da planilha deste mês. </>
+              : <>Sem o quadro do caixa na planilha, a linha parte do zero e mostra só o que o mês movimentou. </>}
+            {d.diaADia.finalDoMesAnterior !== null && d.diaADia.inicial !== null && (
+              Math.abs(d.diaADia.finalDoMesAnterior - d.diaADia.inicial) < 100
+                ? <>Bate com o <code>Inicial</code> do dia 1 desta planilha. </>
+                : <><b>Não bate com o <code>Inicial</code> do dia 1 desta planilha, que é {emReais(d.diaADia.inicial)}</b>
+                  {' '}(diferença de {emReais(d.diaADia.finalDoMesAnterior - d.diaADia.inicial)}). </>)}
             {d.diaADia.mesFechado
               ? <>Mês fechado, tudo consolidado: o caixa terminou o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b>.</>
               : !d.diaADia.comPrevisao
@@ -238,6 +244,42 @@ export default async function Pagina({ searchParams }) {
                   é o cartão &quot;Projeção do mês&quot;.</>}</>
             )}
           </p>
+          {/* A CONFERÊNCIA DIA A DIA COM A PLANILHA (pedido do dono, 28/09/2026: "tem algo estranho no dia 1"). Para cada
+              dia consolidado: o que a tela somou das linhas do FLUXO DE CAIXA, e o que o quadro do caixa da aba do mês
+              escreve para o mesmo dia. Onde os dois não batem, a linha fica marcada — e o "de onde saiu" do cartão Saiu
+              lista as linhas de cada dia. */}
+          <details className="origem">
+            <summary>conferir o dia a dia com o quadro do caixa da planilha</summary>
+            <div className="rolagem-origem">
+              <table>
+                <thead><tr>
+                  <th>dia</th><th className="num">entrou (tela)</th><th className="num">Entradas (planilha)</th>
+                  <th className="num">saiu (tela)</th><th className="num">Gastos (planilha)</th>
+                  <th className="num">posição (tela)</th><th className="num">Final (planilha)</th>
+                </tr></thead>
+                <tbody>
+                  {d.diaADia.dias.filter((x) => x.fase !== 'previsao').map((x) => {
+                    const difere = (a, b) => a !== null && b !== null && Math.abs(a - b) >= 100;
+                    const posicao = x.acumulado - (x.aReceber - x.aPagar);
+                    const marca = difere(x.entrou, x.planilha.entradas) || difere(x.saiu, x.planilha.gastos) || difere(posicao, x.planilha.final);
+                    return (
+                      <tr key={x.dia} className={marca ? 'difere' : ''}>
+                        <td>{x.dia}</td>
+                        <td className="num">{emReais(x.entrou)} ({x.linhasEntrou})</td>
+                        <td className="num">{emReais(x.planilha.entradas)}</td>
+                        <td className="num">{emReais(x.saiu)} ({x.linhasSaiu})</td>
+                        <td className="num">{emReais(x.planilha.gastos)}</td>
+                        <td className="num">{emReais(posicao)}</td>
+                        <td className="num">{emReais(x.planilha.final)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p>Entre parênteses, quantas linhas do <code>FLUXO DE CAIXA</code> entraram no dia. Linha marcada: a tela e o
+              quadro da planilha não batem naquele dia.</p>
+          </details>
         </Quadro>
       </div>
 

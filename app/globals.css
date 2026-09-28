@@ -429,6 +429,7 @@ a { color: inherit; }
 .origem th, .origem td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
 .origem td.num, .origem th.num { text-align: right; }
 .rolagem-origem { max-height: 260px; overflow: auto; }
+.origem tr.difere td { background: #fdecea; }
 .curva { margin: 0; padding-left: 18px; }
 .curva li { margin: 4px 0; }
 .chave.serie-receita, .chave.serie-despesa, .chave.serie-saldo { background: currentColor; }

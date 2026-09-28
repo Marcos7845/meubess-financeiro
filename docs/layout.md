@@ -58,8 +58,10 @@ conferidos e `npm run conferir-telas` 36, com os mesmos números. Quatro coisas 
   preenchido venceria a troca de mês.
 
 Nas Telas 2 e 3 os filtros também se juntaram numa faixa só, antes dos números, porque agora os quatro (ou sete)
-escrevem a mesma URL de uma vez e têm de viver no mesmo formulário. **Fora isso, e fora a frase da Tela 3, nada nas
-Telas 2 e 3 mudou**: nenhum gráfico, nenhuma tabela, nenhum número.
+escrevem a mesma URL de uma vez e têm de viver no mesmo formulário. Quando as duas foram refeitas, ainda em
+28/09/2026, essa faixa virou o `recorte` das três, com o que cada filtro alcança num bloco que abre e fecha — **e
+nenhum filtro mudou nem ali**: as opções, os valores e a URL são os mesmos, e é por isso que `npm run conferir-filtros`
+continua dando 19 conferidos com as mesmas contagens.
 
 ## As adaptações que valem mais que a skill (pedido do dono, 28/09/2026)
 
@@ -152,10 +154,9 @@ cartão, do gráfico e da linha da tabela, como `docs/filtros.md` manda.
 - **Onde cada filtro não alcança**, com a frase ao lado do número (`app/filtrado.js`).
 - **As fontes e as regras**: `lib/regras/` e `lib/dados.mjs` não mudaram uma linha.
 - **A trava de agosto de 2026** e as três conferências.
-- **Os gráficos, as tabelas e os números das Telas 2 e 3.** Nelas mudaram três coisas, e só estas: os filtros, que
-  viraram listas suspensas como os desta tela; o lugar da faixa de filtros, que subiu para antes dos cartões porque
-  agora todos escrevem a mesma URL de uma vez; e a frase de 5 segundos da Tela 3. Nenhum gráfico, nenhuma linha de
-  tabela e nenhum indicador foi tocado.
+- **Os números das Telas 2 e 3.** As duas foram refeitas no mesmo padrão em 28/09/2026, depois de o dono aprovar
+  esta aqui, e nelas mudou só o desenho: os 17 indicadores da Tela 2 e os 8 da Tela 3 continuam vindo inteiros de
+  `lib/indicadores/`, com o mesmo valor e a mesma contagem. O plano e o checklist de cada uma estão na seção dela.
 
 ## O checklist da fase 5 da skill, respondido
 
@@ -281,7 +282,7 @@ trocado por "—".
 
 ---
 
-# Tela 3 — Contas a Receber (o desenho, a fazer; os filtros e a frase, feitos em 28/09/2026)
+# Tela 3 — Contas a Receber
 
 <!-- captura 3 -->
 
@@ -289,7 +290,7 @@ trocado por "—".
 
 - **Para quem é:** quem cobra — hoje o próprio dono.
 - **Que decisão ela ajuda a tomar:** *para quem eu ligo hoje.*
-- **A mensagem de 5 segundos:** *"X venceu e ainda não foi recebido."* Já está escrita na tela, embaixo do título, e
+- **A mensagem de 5 segundos:** *"X venceu e ainda não foi recebido."* Está escrita na tela, embaixo do título, e
   não traz número novo: X é o cartão "Valor Vencido", logo abaixo. **A primeira escrita dizia "X já venceu e não
   entrou", e o dono trocou em 28/09/2026:** "não entrou" é vago — não diz se o título foi cancelado, renegociado ou só
   não pago. "Venceu e ainda não foi recebido" é exatamente o que o número é: o valor em aberto dos títulos na faixa
@@ -304,19 +305,71 @@ trocado por "—".
 
 | A pergunta | Caminho na árvore da skill | Gráfico | Por quê |
 |---|---|---|---|
-| "Quanto está previsto, recebido, pendente e vencido?" | não passa pela árvore | fila de 4 números, o "Valor Vencido" em destaque | é o número que decide a ligação de hoje |
-| "Como se divide entre pago, em aberto e atrasado?" | CATEGÓRICO → 1 variável → **Rosca** | a rosca de hoje, com as três fatias | são três fatias, e a skill só proíbe pizza acima de cinco. Fica, com o número escrito ao lado de cada fatia |
-| "De quem é o vencido?" | CATEGÓRICO 2+ → subgrupo (cliente × status) → **Barra empilhada** | barra deitada empilhada por cliente, uma faixa por status | mostra de uma vez quem deve mais e quanto disso já venceu — é a lista de quem ligar, na ordem |
-| "O que vence quando?" | TIME SERIES → várias séries → poucas séries (<7) → Multi-linha, **trocado por colunas empilhadas** | colunas empilhadas por mês, uma faixa por status | mesma troca da Tela 1 e pelo mesmo motivo: vencimento é evento de um mês, não fluxo contínuo. Empilhado porque a soma das três faixas é o total do mês, e essa soma é uma leitura que interessa |
-| "Quais títulos, um a um?" | tabela de detalhe | a lista de títulos de hoje | já é a tabela de detalhe que fecha o F |
+| "Quanto está previsto, recebido, pendente e vencido?" | não passa pela árvore: é um número por vez | fila de 4 números, o "Valor Vencido" em destaque, cada um com o quadradinho da cor da sua faixa | é o número que decide a ligação de hoje. O quadradinho amarra o cartão ao gráfico e à rosca que falam da mesma faixa |
+| "De quem é o vencido?" | CATEGÓRICO 2+ → subgrupo (cliente × status) → **Barra empilhada** | barra deitada empilhada por cliente, uma faixa por status, os 10 maiores | mostra de uma vez quem deve mais e quanto disso já venceu — é a lista de quem ligar, na ordem. É o gráfico **principal**: o maior e no canto de cima à esquerda, porque é ele que responde à decisão da tela |
+| "Como se divide entre pago, em aberto e atrasado?" | CATEGÓRICO → 1 variável → **Rosca** | a rosca de hoje, com as três fatias e o total no centro | são três fatias, e a skill só proíbe pizza acima de cinco. Fica, com a contagem e o percentual escritos ao lado de cada fatia |
+| "O que vence quando?" | TIME SERIES → várias séries → poucas séries (<7) → Multi-linha, **trocado por colunas empilhadas** | colunas empilhadas por mês, uma faixa por status, com o total em cima de cada coluna | mesma troca da Tela 1 e pelo mesmo motivo: vencimento é evento de um mês, não fluxo contínuo — uma linha ligaria agosto a outubro como se houvesse alguma coisa em setembro. Empilhado porque a soma das três faixas é o total do mês, e essa soma é uma leitura que interessa |
+| "Quais títulos, um a um?" | não é gráfico: é a "tabela de detalhe" que fecha o F | a lista de títulos de hoje, inteira | já é a tabela de detalhe: fica igual, e só perde a moldura |
+
+### A ordem da página (o "F" da skill)
+
+De cima para baixo: o título e a frase de 5 segundos; o recorte (os sete filtros, numa faixa só, com o que cada um
+alcança num bloco que abre e fecha); a fila de 4 números; o gráfico principal, o maior, no canto de cima à esquerda;
+a rosca à direita; as colunas por mês na largura inteira; a lista de títulos; e o rodapé. É a mesma ordem das outras
+duas telas, com as mesmas peças (`app/quadro.js`, `app/graficos.js`, `app/globals.css`).
+
+**A frase de "o filtro não vale" NÃO entrou no bloco que abre e fecha:** ela é parte do número, e continua dentro do
+cartão e de cada gráfico, como `docs/filtros.md` manda. O que foi para dentro do bloco foram as duas explicações de
+empresa e conta bancária e a frase da janela de vencimento, que ficavam soltas entre os filtros e os números.
 
 ## O que fica igual
 
-Os 8 indicadores da tela, o de-para dos `cStatus` do Omie para pago / atrasado / em aberto, a janela de vencimento,
-os filtros de status, cliente, categoria, empresa e conta bancária, as frases de "o filtro não vale" e a conferência.
-O que já mudou em 28/09/2026 foram duas coisas: o desenho dos filtros (as etiquetas viraram listas suspensas com
-caixas de marcar, e os dois campos de data passaram a vir vazios quando a janela é a do mês) e a frase de 5 segundos,
-que passou a existir — nenhum número entrou na tela por causa dela.
+- **Os 8 indicadores** — os 4 cartões e os 4 blocos —, um por um, com o mesmo valor e a mesma contagem: eles continuam
+  vindo inteiros de `lib/indicadores/tela-3.mjs`, que não foi tocado.
+- **O de-para dos `cStatus` do Omie** para pago / atrasado / em aberto (decisão do dono, 25/09/2026), a janela de
+  vencimento e os `CANCELADO` fora da tela inteira.
+- **Os sete filtros** (ano, mês, status, empresa, conta bancária, as duas datas de vencimento, cliente e categoria),
+  com as mesmas opções e na mesma URL de sempre.
+- **Onde cada filtro não alcança**, com a frase ao lado do número (`app/filtrado.js`).
+- **A lista de títulos**, coluna por coluna, com a descrição vinda do pedido de venda e o total no pé.
+- **As fontes e as regras**: `lib/regras/` e `lib/dados.mjs` não mudaram uma linha.
+- **A trava de agosto de 2026** e as três conferências.
+
+## O checklist da fase 5 da skill, respondido
+
+- [x] **Dá para entender a mensagem principal em 5 segundos?** Sim: a frase está escrita em português embaixo do
+  título, em corpo maior que o resto — *"X venceu e ainda não foi recebido"* —, com a contagem de títulos entre
+  parênteses, e o número dela é o cartão "Valor Vencido" da fila logo abaixo. Quando nada venceu sem ser recebido, a
+  frase diz isso, em vez de mostrar um zero.
+- [x] **Cada gráfico responde a uma pergunta específica?** Sim, e o título de cada um é a pergunta respondida, não a
+  descrição do desenho: "De quem é o vencido", "Como está a carteira desta janela", "O que vence quando". Os títulos
+  antigos descreviam o desenho ("Qtde Lançamentos — por mês e status"). A tabela de amarração está acima.
+- [x] **Há hierarquia visual clara?** Sim: frase > número do "Valor Vencido" (28px) > os outros três (20px) > gráfico
+  principal (duas colunas de três) > a rosca > as colunas por mês > a lista de títulos (11px). **O destaque não é o
+  primeiro número da fila, e é de propósito:** a ordem dos quatro é a cascata da carteira — previsto, recebido,
+  pendente, vencido —, e é dela que vem o sentido da leitura. O que destaca é o corpo do número.
+- [x] **Funcionaria impresso em cinza?** Em parte, e onde não funcionaria o número está escrito junto. As três faixas
+  são verde, vermelho e azul — em cinza, tons próximos —, e por isso **a contagem de cada faixa está escrita**: na
+  rosca, ao lado de cada fatia, com o percentual; nas colunas por mês, o total em cima de cada uma; e nos cartões, um
+  por faixa, com o nome dela. A barra por cliente é a única que depende da cor para separar as três partes, e o eixo
+  de dinheiro embaixo dela dá o tamanho de cada barra inteira.
+- [x] **Há linha de referência e a fonte dos dados?** Linha de referência: a **tracejada no mês em que a janela
+  começa**, nas colunas por mês — a mesma marca das outras duas telas. **Não pus média, meta nem benchmark** (seriam
+  números novos), e aqui nem a linha do zero cabe: não há valor negativo numa carteira a receber. Fonte: cada gráfico
+  diz a sua numa linha embaixo do título, a frase da janela de vencimento diz quantos títulos entraram nela, e o
+  rodapé diz as empresas somadas, se a leitura foi a da própria janela ou a do ano recortada, e a hora dela.
+- [x] **A paleta é consistente e tem significado?** Sim, e nesta tela a regra é mais apertada que nas outras duas: a
+  cor é a FAIXA, e a mesma faixa tem a mesma cor no quadradinho do cartão, na legenda, na barra por cliente, na coluna
+  por mês, na rosca e no selo da lista de títulos — `--positivo` para pago, `--negativo` para atrasado, `--destaque`
+  para em aberto, todas já na paleta. O "Valor previsto" não é faixa nenhuma (é a soma das três) e leva a cor da
+  marca. Nenhuma cor está escrita em `app/graficos.js` nem em `app/receber/page.js`.
+- [x] **A narrativa desce de contexto para ação?** Sim: contexto (quanto venceu e ainda não foi recebido) → tensão
+  (de quem é esse vencido, na ordem de quem ligar) → o que explica (como a carteira se divide, e o que vence em cada
+  mês) → prova (os títulos, um a um, com código, vencimento e status).
+
+**A captura** está lá em cima, logo abaixo do título desta tela: [`tela-3-captura.html`](tela-3-captura.html), gerada
+por `node scripts/capturar-tela.mjs --tela 3`, de 08/2026, com todo valor em dinheiro trocado por "—" e todo nome de
+cliente trocado pelo código.
 
 ---
 
@@ -329,10 +382,12 @@ que passou a existir — nenhum número entrou na tela por causa dela.
 3. **A Fase 2 (inspecionar a tabela com DuckDB) não roda.** A fonte deste projeto não é uma tabela: é o cache do
    Omie mais as planilhas do DFC, e o que elas têm está levantado, coluna por coluna, em `docs/fontes.md` —
    documento mais completo do que um `DESCRIBE` devolveria. A "forma dos dados" que a fase pede já estava pronta.
-4. **Não perguntei "este plano de gráficos faz sentido?" antes de construir.** A tarefa pedia a Tela 1 refeita naquela
-   passagem; o plano ficou escrito aqui para o dono responder com a tela na frente, e **em 28/09/2026 ele respondeu** —
-   as quatro respostas estão lá em cima, e as quatro estão feitas. O plano das Telas 2 e 3 continua esperando a
-   passagem em que elas forem refeitas.
+4. **Não perguntei "este plano de gráficos faz sentido?" antes de construir, em nenhuma das três telas.** A skill
+   manda perguntar isso no fim da fase 3. Na Tela 1 a tarefa pedia a tela refeita naquela passagem, e o plano ficou
+   escrito aqui para o dono responder com a tela na frente — **em 28/09/2026 ele respondeu**, e as quatro respostas
+   estão lá em cima, as quatro feitas. Nas Telas 2 e 3 o plano estava escrito aqui desde aquela passagem e o dono
+   pediu as duas construídas por ele, sem nova pergunta: foi o que esta passagem fez, sem sair do que estava escrito.
+   A fase 5 (o checklist) está respondida para as três, cada uma na seção dela, e é por ali que ele corrige.
 5. **Nenhuma linha de referência de média, meta ou benchmark.** A skill pede "thresholds, benchmarks ou guias onde
    couber". Média do ano ou meta de despesa seriam números novos, e esta reforma não pode criar número. Só entraram
    as referências que não inventam nada: o mês em foco e a linha do zero.

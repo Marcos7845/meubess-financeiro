@@ -60,9 +60,11 @@ telas dentro, em [`docs/layout.html`](docs/layout.html).
 É o framework nativo da Vercel — sobe sem configuração — e os *server components* deixam o cálculo no servidor: o
 navegador recebe o número pronto, nunca uma chave do Omie nem um caminho de pasta. O que ainda falta (login com a
 conta Microsoft da empresa e lista de e-mails liberados) é primeira classe nessa pilha e fica para a tarefa de pôr
-no ar. Não há TypeScript. A **única** biblioteca de gráfico é o **Recharts 2** (`app/graficos.js`, só na Tela 1): ele
+no ar. Não há TypeScript. A **única** biblioteca de gráfico é o **Recharts 2** (`app/graficos.js`, as três telas): ele
 desenha no servidor, o que é obrigatório aqui porque `scripts/capturar-tela.mjs` joga fora todo `<script>` antes de
-gravar a captura. As Telas 2 e 3 ainda desenham com CSS, até o dono aprovar a Tela 1.
+gravar a captura. Quatro desenhos continuam sendo CSS ou SVG escrito à mão, por serem simples demais para valer uma
+biblioteca: a fita dos doze meses do cartão da Tela 2, a rosca por status da Tela 3 e as barras do "o que cada filtro
+alcança".
 
 ### Subir o app neste computador
 

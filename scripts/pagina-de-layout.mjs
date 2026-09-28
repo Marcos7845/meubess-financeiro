@@ -32,8 +32,10 @@ const SAIDA = path.join(RAIZ, 'docs', 'layout.html');
 // isso rola dentro do próprio quadro, e não se perde.
 const TELAS = {
   1: { arquivo: 'tela-1-captura.html', titulo: 'Tela 1 — Gestão de Contas', altura: 2120 },
-  2: { arquivo: 'tela-2-captura.html', titulo: 'Tela 2 — DRE, Demonstrativo de Resultados', altura: 1500 },
-  3: { arquivo: 'tela-3-captura.html', titulo: 'Tela 3 — Contas a Receber', altura: 1700 },
+  // As alturas das Telas 2 e 3 cresceram em 28/09/2026, quando elas foram refeitas no padrão da Tela 1: onde havia
+  // painéis apertados agora há gráficos com a proporção da Tela 1, mais o mapa de calor na 2.
+  2: { arquivo: 'tela-2-captura.html', titulo: 'Tela 2 — DRE, Demonstrativo de Resultados', altura: 1960 },
+  3: { arquivo: 'tela-3-captura.html', titulo: 'Tela 3 — Contas a Receber', altura: 1900 },
 };
 
 const escapar = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -208,9 +210,9 @@ thead th {
   <h1>MeuBESS · o layout das três telas</h1>
   <p>
     Como as três telas passam a ser desenhadas, e por quê — uma pergunta por gráfico. A captura de cada uma está aqui
-    dentro, embaixo do título dela. A Tela 1 está refeita; nas Telas 2 e 3, o que já mudou foram os filtros e a frase
-    de 5 segundos da Tela 3, e o resto do desenho delas espera a sua aprovação. Nenhum número, indicador, filtro ou
-    regra mudou.
+    dentro, embaixo do título dela. <strong>As três estão refeitas</strong>: a Tela 1 primeiro, e as Telas 2 e 3 no
+    mesmo padrão depois que você o aprovou, em 28/09/2026. Cada uma traz a história, o plano de gráficos e o
+    checklist da skill respondido, para você corrigir item a item. Nenhum número, indicador, filtro ou regra mudou.
   </p>
 </header>
 <main>

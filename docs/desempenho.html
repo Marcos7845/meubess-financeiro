@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O tempo de um clique de filtro nas 3 telas</title>
+<style>
+ :root { --fundo:#fbfaf7; --papel:#fff; --tinta:#1d1b16; --fraco:#6b6559; --linha:#e3ded2; --ok:#1f6f43; --okf:#e8f4ec; }
+ @media (prefers-color-scheme: dark) { :root {
+   --fundo:#16150f; --papel:#1e1c16; --tinta:#efece2; --fraco:#a49d8d; --linha:#34312a; --ok:#7cc79b; --okf:#17301f; } }
+ * { box-sizing:border-box } html { -webkit-text-size-adjust:100% }
+ body { margin:0; padding:0 16px 64px; background:var(--fundo); color:var(--tinta);
+   font:16px/1.6 ui-serif, Georgia, "Times New Roman", serif; overflow-wrap:break-word }
+ main { max-width:62rem; margin:0 auto }
+ h1 { font-size:1.9rem; line-height:1.2; margin:2.5rem 0 .5rem }
+ h2 { font-size:1.3rem; margin:2.5rem 0 .75rem; padding-bottom:.35rem; border-bottom:1px solid var(--linha) }
+ h3 { font-size:1.05rem; margin:1.8rem 0 .5rem; font-family:ui-sans-serif,system-ui,sans-serif }
+ h4 { font-size:.95rem; margin:1.4rem 0 .4rem; font-family:ui-sans-serif,system-ui,sans-serif; color:var(--fraco) }
+ p, li { max-width:70ch } a { color:inherit }
+ code { font:0.86em ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--papel);
+   border:1px solid var(--linha); border-radius:3px; padding:.05em .3em }
+ pre { background:var(--papel); border:1px solid var(--linha); border-radius:8px; padding:.8rem 1rem;
+   overflow-x:auto; font:0.84rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace }
+ .tabela { overflow-x:auto } table { border-collapse:collapse; width:100%; margin:1rem 0; font-size:.9rem }
+ th, td { border:1px solid var(--linha); padding:.4rem .6rem; text-align:left; vertical-align:top }
+ th { background:var(--papel); font-family:ui-sans-serif,system-ui,sans-serif; font-size:.74rem;
+   text-transform:uppercase; letter-spacing:.06em; color:var(--fraco) }
+ td strong { font-family:ui-sans-serif,system-ui,sans-serif }
+ .par { margin:1.2rem 0 1.6rem }
+ .par h4 { margin:0 0 .4rem }
+ .linha { display:flex; align-items:center; gap:.6rem; margin:.25rem 0;
+   font:0.82rem ui-sans-serif,system-ui,sans-serif }
+ .quem { width:3.6rem; color:var(--fraco); text-align:right }
+ .trilho { flex:1; background:var(--papel); border:1px solid var(--linha); border-radius:99px; height:.9rem }
+ .barra { display:block; height:100%; border-radius:99px }
+ .barra.antes { background:var(--fraco) } .barra.depois { background:var(--ok) }
+ .qto { width:5rem; font-variant-numeric:tabular-nums }
+ .rodape { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--linha); font-size:.86rem; color:var(--fraco) }
+</style></head><body><main>
+<h1>O tempo de um clique de filtro nas 3 telas</h1>
+<p>Medido por <code>scripts/medir-filtros.mjs</code> neste computador, em 27/09/2026, 23:20, sobre agosto de 2026. As duas colunas — antes e depois — foram medidas na MESMA rodada, com o mesmo relógio: o script sabe fazer as duas coisas, e por isso a comparação não depende de ninguém ter anotado um número ontem. A leitura do Omie desta rodada é a <code>04b01bfcb247</code>, com 357 arquivos no cache.</p>
+<p><strong>O que era.</strong> Cada combinação de filtro era um balde novo em <code>lib/dados.mjs</code>, e o balde novo refazia o cálculo inteiro. Refazer o cálculo inteiro queria dizer reabrir as fontes: os 357 arquivos do cache do Omie e as planilhas <code>.xlsx</code> da pasta que o OneDrive espelha — treze arquivos na Tela 1 (o mês, mais os doze da série do ano) e doze na Tela 2. E, se a leitura do Omie tinha passado de uma hora, o clique ainda esperava até 8 s por ela antes de começar a contar.</p>
+<p><strong>O que é.</strong> As fontes são lidas e preparadas uma vez, numa <strong>base local</strong> (<code>lib/regras/base-local.mjs</code>), e o clique de filtro só calcula em cima dela. Nada do que se lê depende do filtro — a planilha é a mesma, o cache é o mesmo, e o recorte do filtro é aplicado depois.</p>
+<h2>O resumo</h2>
+<div class="tabela"><table><thead><tr><th>tela</th><th>o pior clique</th><th>antes</th><th>depois</th><th></th></tr></thead><tbody><tr><td>Tela 1</td><td>situação recebido</td><td>15,5 s</td><td>39 ms</td><td>dentro de 2 s</td></tr><tr><td>Tela 2</td><td>mês 8 só</td><td>16,0 s</td><td>629 ms</td><td>dentro de 2 s</td></tr><tr><td>Tela 3</td><td>status atrasado</td><td>8,2 s</td><td>3 ms</td><td>dentro de 2 s</td></tr></tbody></table></div>
+<h2>As fases, clique por clique</h2>
+<p>As quatro fases de dentro do Node. A quinta — o desenho — está mais abaixo, porque ela só existe com o app no ar.</p>
+<h3>Antes: um balde novo por combinação de filtro</h3>
+<pre>node scripts/medir-filtros.mjs --modo antes</pre>
+<p>O modo antes refaz o que a camada de dados fazia até 27/09/2026: esperar a releitura do Omie e montar uma base nova a cada clique. Uma diferença joga contra ele e a favor da honestidade: a leitura de hoje abre doze arquivos na Tela 1, e a de antes abria treze — o antes que o dono viveu era um pouco pior que este.</p>
+<h4>Tela 1 — Gestão de Contas</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>8027 ms</td><td>7474 ms</td><td>151 ms</td><td>61 ms</td><td><strong>15,7 s</strong></td></tr><tr><td>empresa 2</td><td>8012 ms</td><td>7176 ms</td><td>135 ms</td><td>53 ms</td><td><strong>15,4 s</strong></td></tr><tr><td>centro de custo TI</td><td>8003 ms</td><td>7143 ms</td><td>136 ms</td><td>47 ms</td><td><strong>15,3 s</strong></td></tr><tr><td>situação recebido</td><td>8014 ms</td><td>7323 ms</td><td>120 ms</td><td>44 ms</td><td><strong>15,5 s</strong></td></tr><tr><td>conta Caixinha</td><td>8011 ms</td><td>7257 ms</td><td>135 ms</td><td>57 ms</td><td><strong>15,5 s</strong></td></tr></tbody></table></div>
+<h4>Tela 2 — DRE</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>8016 ms</td><td>7165 ms</td><td>123 ms</td><td>533 ms</td><td><strong>15,8 s</strong></td></tr><tr><td>meses 7 e 8</td><td>8003 ms</td><td>6951 ms</td><td>147 ms</td><td>563 ms</td><td><strong>15,7 s</strong></td></tr><tr><td>empresa 1</td><td>8004 ms</td><td>7234 ms</td><td>116 ms</td><td>198 ms</td><td><strong>15,6 s</strong></td></tr><tr><td>conta Caixinha</td><td>8005 ms</td><td>7044 ms</td><td>117 ms</td><td>587 ms</td><td><strong>15,8 s</strong></td></tr><tr><td>mês 8 só</td><td>8015 ms</td><td>7246 ms</td><td>131 ms</td><td>569 ms</td><td><strong>16,0 s</strong></td></tr></tbody></table></div>
+<h4>Tela 3 — Contas a receber</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>8015 ms</td><td>0 ms</td><td>133 ms</td><td>9 ms</td><td><strong>8,2 s</strong></td></tr><tr><td>status atrasado</td><td>8013 ms</td><td>0 ms</td><td>138 ms</td><td>6 ms</td><td><strong>8,2 s</strong></td></tr><tr><td>empresa 2</td><td>8012 ms</td><td>0 ms</td><td>131 ms</td><td>4 ms</td><td><strong>8,1 s</strong></td></tr><tr><td>conta Caixinha</td><td>8005 ms</td><td>0 ms</td><td>125 ms</td><td>3 ms</td><td><strong>8,1 s</strong></td></tr><tr><td>status pago</td><td>8015 ms</td><td>0 ms</td><td>129 ms</td><td>4 ms</td><td><strong>8,1 s</strong></td></tr></tbody></table></div>
+<h3>Depois: a base local, e o clique só calculando</h3>
+<pre>node scripts/medir-filtros.mjs --modo depois</pre>
+<h4>Tela 1 — Gestão de Contas</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>0 ms</td><td>7089 ms</td><td>120 ms</td><td>44 ms</td><td><strong>7,3 s</strong></td></tr><tr><td>empresa 2</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>37 ms</td><td><strong>38 ms</strong></td></tr><tr><td>centro de custo TI</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>33 ms</td><td><strong>34 ms</strong></td></tr><tr><td>situação recebido</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>38 ms</td><td><strong>39 ms</strong></td></tr><tr><td>conta Caixinha</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>37 ms</td><td><strong>38 ms</strong></td></tr></tbody></table></div>
+<h4>Tela 2 — DRE</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>575 ms</td><td><strong>575 ms</strong></td></tr><tr><td>meses 7 e 8</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>601 ms</td><td><strong>601 ms</strong></td></tr><tr><td>empresa 1</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>225 ms</td><td><strong>225 ms</strong></td></tr><tr><td>conta Caixinha</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>511 ms</td><td><strong>512 ms</strong></td></tr><tr><td>mês 8 só</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>628 ms</td><td><strong>629 ms</strong></td></tr></tbody></table></div>
+<h4>Tela 3 — Contas a receber</h4>
+<div class="tabela"><table><thead><tr><th>clique</th><th>espera do Omie</th><th>planilhas do DFC</th><th>cache do Omie</th><th>cálculo</th><th>total</th></tr></thead><tbody><tr><td>abertura, sem filtro</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>4 ms</td><td><strong>4 ms</strong></td></tr><tr><td>status atrasado</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>2 ms</td><td><strong>2 ms</strong></td></tr><tr><td>empresa 2</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>3 ms</td><td><strong>3 ms</strong></td></tr><tr><td>conta Caixinha</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td><strong>1 ms</strong></td></tr><tr><td>status pago</td><td>0 ms</td><td>0 ms</td><td>0 ms</td><td>2 ms</td><td><strong>2 ms</strong></td></tr></tbody></table></div>
+<p><strong>A espera do Omie apareceu nesta rodada, e é a fase que a base local tirou do caminho por inteiro.</strong> A releitura de hora em hora estava em curso enquanto o modo antes rodava, e cada clique dele ficou parado esperando por ela — o maior foi 8015 ms, contra o teto de 8 s de <code>ESPERA_PADRAO_MS</code> (<code>lib/regras/omie-releitura.mjs</code>). No modo depois a MESMA releitura continuou em curso, pela mesma regra do mesmo arquivo, e a coluna mediu 0 ms em todos os cliques: o clique não passa mais por ela. A releitura não foi encurtada nem adiada — ela só deixou de segurar a tela.</p>
+<p>A linha da <strong>abertura</strong> é a única que ainda lê as fontes, e é a leitura que o dono aceita esperar. Na Tela 1 ela abre os doze meses de planilha (a tela desenha a série do ano), e é por isso que a abertura das Telas 2 e 3, logo depois, já não abre planilha nenhuma: os doze meses que a Tela 2 precisa estão prontos.</p>
+<h2>O clique de verdade, sobre HTTP</h2>
+<div class="tabela"><table><thead><tr><th>tela</th><th>rota</th><th>pior clique antes</th><th>pior clique depois</th><th>desenho (por diferença)</th></tr></thead><tbody><tr><td>Tela 1</td><td><code>/</code></td><td>8,5 s</td><td>75 ms</td><td>27 ms</td></tr><tr><td>Tela 2</td><td><code>/dre</code></td><td>8,2 s</td><td>676 ms</td><td>91 ms</td></tr><tr><td>Tela 3</td><td><code>/receber</code></td><td>140 ms</td><td>29 ms</td><td>26 ms</td></tr></tbody></table></div>
+<p>O <strong>desenho</strong> é a diferença entre a página inteira e os dados: é o React montando a marcação e o Next respondendo. Nenhuma linha de <code>app/</code> mudou nesta tarefa, então ele é o mesmo antes e depois — e é por isso que a coluna aparece uma vez só. A conta do desenho é boa na coluna do depois, em que os dados custam quase nada; na do antes ela seria a diferença de dois números de oito segundos, e é por isso que ela não aparece lá. O antes foi medido em 27/09/2026, 22:49 e o depois em 27/09/2026, 22:53, cada um contra o app construído daquele lado da mudança: o antes não pode ser remedido, porque o código que ele media deixou de existir.</p>
+<p><strong>Estas medições de HTTP (antes e depois) caíram numa hora em que a releitura do Omie NÃO estava em curso</strong> — a espera do Omie mediu zero nelas. É por isso que o pior clique do antes aqui é menor que o total do antes da tabela de fases mais acima: lá a releitura estava em curso e os 8 s de espera entraram na conta. As duas coisas são verdade, cada uma na sua hora, e é a soma delas que o dono sentia como "uma eternidade".</p>
+<h2>Onde fica a base local, e quando ela é renovada</h2>
+<p><strong>Onde:</strong> na memória do processo do servidor (<code>lib/regras/base-local.mjs</code>), uma base por ano pedido. Não é arquivo e não é banco, por três motivos, nesta ordem:</p>
+<ul><li><strong>dinheiro não vai para disco.</strong> A base guarda o valor de cada linha do DFC, em centavos, e o nome de cada cliente do cadastro do Omie. Neste repositório valor em reais e nome de pessoa vivem na memória do servidor e vão só para a tela; um arquivo ou um SQLite com a base seria um lugar novo, no disco, com o dinheiro da empresa dentro.</li><li><strong>o processo sobrevive entre os cliques.</strong> As telas rodam em <code>next start</code> neste computador (<code>npm run local</code>) e o mesmo processo atende todas as visitas. O único caso que um arquivo cobriria a mais é a primeira abertura depois de reiniciar o app — que é justamente a leitura que o dono aceita esperar.</li><li><strong>serializar custaria o que economiza.</strong> O cache do Omie já é disco, e reabri-lo inteiro custa uma fração do que custa a planilha (as duas colunas acima medem isso). Passar a base por JSON — com os <code>Map</code> e os <code>Set</code> que o cache monta — custaria a mesma ordem de grandeza, e o ganho de verdade, que são os sete segundos de planilha, não precisa de disco nenhum para acontecer uma vez só.</li></ul>
+<p><strong>Quando é renovada</strong> — as três horas de <code>lib/dados.mjs</code>, e nenhuma a mais:</p>
+<div class="tabela"><table><thead><tr><th>quando</th><th>o que acontece</th><th>quem espera</th></tr></thead><tbody><tr><td>na abertura</td><td>não há base para o ano pedido: esta visita lê as fontes</td><td>esta visita</td></tr><tr><td>na virada da hora</td><td>a base completou uma hora, ou a releitura do Omie trouxe leitura nova: a visita responde com a base que tem e manda preparar a nova <strong>ao lado</strong>; quando ela fica pronta, entra no lugar e os baldes de resultado são jogados fora</td><td>ninguém</td></tr><tr><td>no "atualizar agora"</td><td><code>esquecer()</code> joga fora a base e os baldes; a visita seguinte é uma abertura</td><td>quem apertou o botão</td></tr></tbody></table></div>
+<p><strong>A regra da releitura de hora em hora não mudou.</strong> As fontes continuam relidas de hora em hora e o Omie continua relido pela API por <code>lib/regras/omie-releitura.mjs</code>, com a mesma janela de uma hora e só por método de consulta. O que saiu foi a espera: a releitura é disparada com <code>esperarMs: 0</code> quando uma base é preparada, e segue ao lado. O preço é que uma falha imediata do Omie — credencial faltando, por exemplo — aparece na visita seguinte em vez de na mesma; a hora da última leitura, que o rodapé da tela mostra, continua saindo da marca que a releitura grava.</p>
+<h2>Como remedir</h2>
+<pre>npm run medir-filtros                                      # os dois modos, e reescreve este documento
+node scripts/medir-filtros.mjs --modo depois               # só o de hoje, sem escrever nada
+node scripts/medir-filtros.mjs --so-documento              # reescreve o texto do que já foi medido, sem medir
+npm run local                                              # e, com o app no ar, numa outra janela:
+node scripts/medir-filtros.mjs --url http://127.0.0.1:4781 --http depois --gravar</pre>
+<p>E o pior caso, com a releitura do Omie em curso — mandando a releitura gravar numa cópia, para o cache de verdade não ser tocado. É assim que a medição publicada aqui foi feita:</p>
+<pre>cp -rp .cache/omie .cache/omie-copia
+OMIE_CACHE_DIR=.cache/omie-copia node scripts/medir-filtros.mjs --omie forcar --modo os-dois</pre>
+<p>Tudo o que foi medido fica em <code>docs/desempenho-medicoes.json</code>, e este documento é escrito dele — por isso consertar uma frase não obriga a medir tudo de novo, e as duas medições que não podiam ser da mesma rodada (a do antes com a releitura em curso e a do clique sobre HTTP, que precisa do app no ar) aparecem lado a lado, cada uma dizendo de quando é.</p>
+<p>Só leitura: nada foi escrito no Omie nem nas planilhas, e este documento tem milissegundos e nomes de filtro — nenhum valor em reais e nenhum nome de cliente.</p>
+
+<h2>As três telas em barras</h2>
+<p>O mesmo resumo do alto, na mesma escala para as três telas: a barra cheia é o pior clique de antes, e a barra de baixo
+é o mesmo clique depois. É a única parte que só existe na página — em texto ela seria a tabela do resumo de novo.</p>
+<div class="par"><h4>Tela 1 — situação recebido</h4>
+  <div class="linha"><span class="quem">antes</span><span class="trilho"><span class="barra antes" style="width:97.11%"></span></span><span class="qto">15,5 s</span></div>
+  <div class="linha"><span class="quem">depois</span><span class="trilho"><span class="barra depois" style="width:0.24%"></span></span><span class="qto">39 ms</span></div>
+</div>
+<div class="par"><h4>Tela 2 — mês 8 só</h4>
+  <div class="linha"><span class="quem">antes</span><span class="trilho"><span class="barra antes" style="width:100.00%"></span></span><span class="qto">16,0 s</span></div>
+  <div class="linha"><span class="quem">depois</span><span class="trilho"><span class="barra depois" style="width:3.94%"></span></span><span class="qto">629 ms</span></div>
+</div>
+<div class="par"><h4>Tela 3 — status atrasado</h4>
+  <div class="linha"><span class="quem">antes</span><span class="trilho"><span class="barra antes" style="width:51.10%"></span></span><span class="qto">8,2 s</span></div>
+  <div class="linha"><span class="quem">depois</span><span class="trilho"><span class="barra depois" style="width:0.15%"></span></span><span class="qto">3 ms</span></div>
+</div>
+<p class="rodape">Gerado por <code>scripts/medir-filtros.mjs</code>, só leitura: nada foi escrito no Omie nem nas
+planilhas. A mesma coisa em texto está em <code>docs/desempenho.md</code>.</p>
+</main></body></html>

@@ -167,3 +167,5 @@ O que fazer:
 | De onde vêm as planilhas do DFC | `lib/regras/dfc-fonte.mjs` |
 | A linha "Última leitura" e os avisos | `app/ultima-leitura.js` |
 | A regra de cada indicador | `docs/fontes.md` |
+| Como cada tela é desenhada, e por quê | `docs/layout.md` (a página para ler: `docs/layout.html`) |
+| Os gráficos da Tela 1 | `app/graficos.js` — as cores, em `app/globals.css` |

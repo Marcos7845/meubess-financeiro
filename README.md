@@ -13,8 +13,11 @@ filtro**, medido fase por fase e antes e depois da base local, está em [`docs/d
 
 ## As três telas
 
-As referências visuais ficam em [`docs/referencias/`](docs/referencias/). O que cada tela mostra e de onde vem cada
-número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto: indicador sem fonte escrita não entra na tela.
+As referências visuais ficam em [`docs/referencias/`](docs/referencias/) — elas dizem **quais blocos** cada tela tem.
+O que cada tela mostra e de onde vem cada número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
+indicador sem fonte escrita não entra na tela. **Como as telas são desenhadas** — a história de cada uma, o plano de
+gráficos e o checklist — fica em [`docs/layout.md`](docs/layout.md), e a página para o dono ler, com a captura dentro,
+em [`docs/layout.html`](docs/layout.html).
 
 ## Regras
 
@@ -57,7 +60,9 @@ número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
 É o framework nativo da Vercel — sobe sem configuração — e os *server components* deixam o cálculo no servidor: o
 navegador recebe o número pronto, nunca uma chave do Omie nem um caminho de pasta. O que ainda falta (login com a
 conta Microsoft da empresa e lista de e-mails liberados) é primeira classe nessa pilha e fica para a tarefa de pôr
-no ar. Não há TypeScript nem biblioteca de gráfico: os gráficos são CSS e o resto do repositório já é JavaScript.
+no ar. Não há TypeScript. A **única** biblioteca de gráfico é o **Recharts 2** (`app/graficos.js`, só na Tela 1): ele
+desenha no servidor, o que é obrigatório aqui porque `scripts/capturar-tela.mjs` joga fora todo `<script>` antes de
+gravar a captura. As Telas 2 e 3 ainda desenham com CSS, até o dono aprovar a Tela 1.
 
 ### Subir o app neste computador
 
@@ -187,6 +192,23 @@ releitura do Omie em curso; para fazer isso sem mexer no cache de verdade, é s�
 (`cp -rp .cache/omie .cache/omie-copia` e `OMIE_CACHE_DIR=.cache/omie-copia`, que é como a medição publicada foi feita).
 Só leitura, e só tempo: o documento tem milissegundos e nomes de filtro, nunca dinheiro nem nome de cliente.
 
+### Refazer o layout de uma tela
+
+O layout segue a **skill de visualização de dados do dono**, guardada no repositório em
+[`.claude/skills/visualizacao-de-dados/SKILL.md`](.claude/skills/visualizacao-de-dados/SKILL.md), com as adaptações da
+MeuBESS no topo (Recharts no servidor, dinheiro num formato só, nenhuma cor no componente, e **só o visual muda**). O
+plano de cada tela e o checklist de revisão ficam em [`docs/layout.md`](docs/layout.md).
+
+Com o app no ar, a página que o dono lê sai em dois passos:
+
+```
+node scripts/capturar-tela.mjs --tela 1
+npm run pagina-de-layout
+```
+
+O primeiro grava `docs/tela-1-captura.html` — a página de verdade, com **todo valor em dinheiro trocado por "—"** e
+todo nome de cliente trocado pelo código. O segundo grava `docs/layout.html`, com essa captura dentro.
+
 ### O que trava, e o que só é publicado
 
 O app relê o Omie de hora em hora e grava no mesmo cache, e o Omie recebe lançamento com **data retroativa**: um mês já
@@ -247,7 +269,10 @@ como na captura sem filtro e as do Omie caem, com a frase do "não vale" ao lado
 | `app/empresa.js` | a pílula de empresa, num lugar só para as três telas. |
 | `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
-| `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis. |
+| `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis — inclusive a cor de cada série de gráfico. |
+| `app/graficos.js` | os gráficos da Tela 1 (Recharts), desenhados no servidor. Sem cor e sem regra: chega o número pronto e sai o desenho. |
+| `app/dinheiro.js` | o formato do dinheiro e do percentual, num lugar só — é a forma que a trava da captura sabe apagar. |
+| `scripts/pagina-de-layout.mjs` | escreve `docs/layout.html` a partir de `docs/layout.md` e da captura da Tela 1. |
 | `scripts/` | as leituras do Omie, a conferência e os testes. |
 
 **A leitura do DFC está atrás de uma interface** (`lib/regras/dfc-fonte.mjs`): hoje, neste computador, os arquivos

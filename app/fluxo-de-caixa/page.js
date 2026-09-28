@@ -210,10 +210,11 @@ export default async function Pagina({ searchParams }) {
         <Quadro className="larga" titulo={`${nomeDoMes} dia a dia: o que já foi e o que ainda vem`} fonte={comCodigo(d.diaADia.fonte)}>
           <p className="legenda">
             <span className="chave serie-receita" />entrou &nbsp;
-            {d.diaADia.comPrevisao && <><span className="chave serie-receita previsao" />a receber (previsão) &nbsp;</>}
+            {d.diaADia.comPrevisao && <><span className="chave previsao" />a receber e a pagar (previsão, em cinza) &nbsp;</>}
             <span className="chave serie-despesa" />saiu &nbsp;
-            {d.diaADia.comPrevisao && <><span className="chave serie-despesa previsao" />a pagar (previsão) &nbsp;</>}
+
             <span className="chave serie-saldo" />posição de caixa
+            {d.diaADia.comPrevisao && <> &nbsp;<span className="chave previsao-linha" />posição prevista</>}
             {d.diaADia.hoje ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
           </p>
           <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />

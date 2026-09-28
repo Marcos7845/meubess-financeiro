@@ -22,6 +22,10 @@
   --destaque-escuro: #002242;
 
   /* leitura de números */
+  /* A previsão do fluxo diário (pedido do dono, 28/09/2026: "um degradê cinza"): o que ainda não aconteceu não usa
+   * as cores da marca, que são o que já entrou e saiu. */
+  --previsao-escuro: #8a929c;
+  --previsao-claro: #d9dde2;
   --positivo: #1c8f5a;
   --negativo: #c4453b;
 
@@ -433,8 +437,12 @@ a { color: inherit; }
 .curva { margin: 0; padding-left: 18px; }
 .curva li { margin: 4px 0; }
 .chave.serie-receita, .chave.serie-despesa, .chave.serie-saldo { background: currentColor; }
-.previsao { opacity: .42; }            /* a parte prevista do fluxo diário: a mesma cor, mais clara */
-.chave.previsao { opacity: .42; }
+.previsao-escuro { stop-color: var(--previsao-escuro); }
+.previsao-claro { stop-color: var(--previsao-claro); }
+.serie-previsao-linha { color: var(--previsao-escuro); }  /* a posição prevista do fluxo diário: cinza, tracejada */
+/* A chave da legenda da previsão: o mesmo degradê cinza das barras. */
+.chave.previsao { background: linear-gradient(to top, var(--previsao-escuro), var(--previsao-claro)) !important; }
+.chave.previsao-linha { background: repeating-linear-gradient(to right, var(--previsao-escuro) 0 4px, transparent 4px 7px) !important; height: 3px !important; vertical-align: 2px !important; }
 .tabela-fixas { border-collapse: collapse; width: 100%; font-size: 11px; }
 .tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
 .tabela-fixas thead th { color: var(--texto-fraco); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--texto-fraco); }

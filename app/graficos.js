@@ -403,16 +403,33 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
     rotulo: String(d.dia),
     // Zero vira `null`: a dica do mouse mostra só o que aconteceu naquele dia, e não quatro linhas de "R$ 0".
     entrou: d.entrou || null, aReceber: d.aReceber || null, saiu: d.saiu ? -d.saiu : null, aPagar: d.aPagar ? -d.aPagar : null,
-    acumulado: d.acumulado,
+    // A posição em duas séries: a consolidada (cheia, na cor da marca) até hoje e a prevista (cinza, tracejada) de hoje
+    // em diante. Hoje entra nas duas, para a linha não se partir.
+    posicao: d.fase === 'previsao' ? null : d.acumulado,
+    posicaoPrevista: d.fase === 'consolidado' ? null : d.acumulado,
   }));
+  // Sem mês em andamento não há "hoje": num mês à frente tudo é previsão, e a linha inteira fica cinza.
+  if (!hoje && dados.length && dias.every((d) => d.fase === 'previsao')) for (const x of dados) x.posicao = null;
   // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
   // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
   // versão tirava o sinal de tudo, e uma posição de −R$ 819.727 aparecia como R$ 819.727).
-  const dica = { ...DICA, formatter: (v, n) => [emReais(n === 'posição de caixa' ? v : Math.abs(v)), n] };
+  const dica = { ...DICA, formatter: (v, n) => [emReais(n.startsWith('posição de caixa') ? v : Math.abs(v)), n] };
   return (
     <div className="grafico" ref={medida.ref}>
       <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}
         stackOffset="sign" barCategoryGap={2}>
+        {/* A PREVISÃO EM DEGRADÊ CINZA (pedido do dono, 28/09/2026): o que ainda não aconteceu não usa as cores de
+            entrou e saiu. Mais escuro perto do zero, mais claro na ponta — o degradê é por barra, e não por valor. */}
+        <defs>
+          <linearGradient id="previsao-entrada" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" className="previsao-escuro" />
+            <stop offset="100%" className="previsao-claro" />
+          </linearGradient>
+          <linearGradient id="previsao-saida" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="previsao-escuro" />
+            <stop offset="100%" className="previsao-claro" />
+          </linearGradient>
+        </defs>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
         {/* UM EIXO SÓ, para colunas e linha (correção de 28/09/2026). Com dois, o zero de um ficava noutra altura que o
@@ -426,11 +443,13 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
         )}
         <Tooltip {...dica} labelFormatter={(d) => `dia ${d}`} />
         <Bar yAxisId="dia" dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor" isAnimationActive={false} />
-        <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-receita previsao" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-entrada)" isAnimationActive={false} />
         <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
-        <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-despesa previsao" fill="currentColor" isAnimationActive={false} />
-        <Line yAxisId="dia" type="linear" dataKey="acumulado" name="posição de caixa" className="serie-saldo" stroke="currentColor"
-          strokeWidth={2} dot={false} isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-saida)" isAnimationActive={false} />
+        <Line yAxisId="dia" type="linear" dataKey="posicao" name="posição de caixa" className="serie-saldo" stroke="currentColor"
+          strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
+        <Line yAxisId="dia" type="linear" dataKey="posicaoPrevista" name="posição de caixa (prevista)" className="serie-previsao-linha"
+          stroke="currentColor" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} connectNulls={false} />
       </ComposedChart>
     </div>
   );

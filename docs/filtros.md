@@ -24,6 +24,11 @@ alcançam é a mesma coisa nas três, e porque o "não alcança" dos dois tem um
 mesmo; foi medido, não deu, e por isso todo número de fonte DFC mostra **todas as contas somadas** e escreve isso ao
 lado do valor. A medida inteira está em "O filtro de conta bancária", no fim.
 
+**E uma coisa que NÃO é filtro, mas mora ao lado deles:** a **chave "incluir dados do Omie"** (decisão do dono,
+28/09/2026), ligada por padrão nas três telas. Um filtro recorta os lançamentos que entram num número; a chave tira uma
+**fonte inteira** da conta. Ela tem seção própria no fim, [logo antes dos casos conferidos](#a-chave-incluir-dados-do-omie--as-três-telas),
+com o que cada bloco de cada tela mostra **sem o Omie**.
+
 **Onde o filtro mora: na URL.** É o mesmo lugar em que o ano e o mês sempre moraram. A tela é componente de
 servidor, então o estado do filtro chega pela query — e assim um link colado no chat, a página que o navegador mostra e
 a captura versionada mostram exatamente a mesma coisa.
@@ -504,6 +509,147 @@ o regime de caixa, nem a trava de agosto, nem regra de indicador nenhuma.
 
 ---
 
+## A chave "incluir dados do Omie" — as três telas
+
+Na URL: `?omie=0` desliga e `?omie=1` liga; **sem `omie` nenhum na URL ela está ligada**, que é o padrão. Na tela ela é
+uma lista suspensa com uma caixa de marcar — o mesmo formato dos outros filtros de escolha (`app/suspensa.js`) —, e o
+formulário manda um `omie=0` escondido junto: uma caixa **desmarcada** não manda nada, e sem o `0` a chave voltaria a
+ligar sozinha a cada "aplicar". É o mesmo desenho das duas leituras da tabela da Tela 2 (`?ah=`, `?av=`), pelo mesmo
+motivo. Ela atravessa as três telas e o "limpar", como a empresa e a conta bancária: trocar de aba ou limpar o recorte
+não a religa.
+
+**Por que ela existe.** O dono suspeita de informação desatualizada ou imprecisa no Omie e quis ver como as três telas
+ficam **sem ela** (28/09/2026). A chave é uma **forma de ver**, e não um julgamento sobre o dado: ela não corrige nada,
+não apaga nada no Omie e não muda regra nenhuma.
+
+**Ela não é filtro, e a diferença importa.** Um filtro escolhe QUAIS lançamentos entram num número e o número continua
+existindo; a chave tira a FONTE, e o número que só vinha dali **deixa de existir**. Por isso, onde ela derruba um
+número, a tela escreve um travessão e a frase de "sem o Omie" ali mesmo, junto do lugar onde o número estava — e nunca
+um zero. Zero seria dado: diria "a despesa pendente do mês é zero", que é justamente a afirmação que esta tela não pode
+fazer sem ter lido o Omie.
+
+**O que ela NÃO faz.** Não mexe em número do DFC — **os números do DFC ficam exatamente como estão** —, não muda regra
+nenhuma, não muda o recorte da MeuBESS, não muda o regime de caixa e **não mexe na trava de agosto**. Também não para
+de ler o Omie: o cache continua sendo relido de hora em hora, porque a chave é uma forma de ver e não um jeito de
+parar de ler. E não tira os filtros da tela: as listas de opções continuam saindo do cadastro, inclusive as que saem do
+cadastro do Omie, porque **uma lista de opções não é número da tela** — é o que se pode escolher, e a escolha tem de
+continuar ali para a chave poder ser religada sem o recorte se perder no caminho. O que cada tela diz, enquanto a chave
+está desligada, é **quais filtros deixaram de alcançar número**.
+
+**Com a chave ligada, nada muda.** É por isso que `npm run conferir-telas` continua dando **36 conferidos** e
+`npm run conferir-filtros`, **19 conferidos**, com os mesmos números: os dois chamam o cálculo sem a chave, e a chave é
+transparente. Quem prova isso, afirmação por afirmação, é
+[`scripts/conferir-chave-omie.mjs`](../scripts/conferir-chave-omie.mjs) (`npm run conferir-chave-omie`).
+
+### Tela 1 — o que cada bloco mostra sem o Omie
+
+Esta é a tela que menos perde: **9 dos 11 indicadores são do DFC e ficam inteiros**, com o mesmo valor de sempre.
+
+| cartão / bloco | fonte principal | **sem o Omie** |
+|---|---|---|
+| Saldo | DFC | **fica inteiro** — o valor e a contagem do DFC; a contagem "do Omie", embaixo, vira "sem o Omie" |
+| Receitas | DFC | **fica inteiro**, do mesmo jeito |
+| Despesas | DFC | **fica inteiro**, do mesmo jeito |
+| Desp. Pagas | DFC | **fica inteiro**, do mesmo jeito |
+| Desp. Pendentes | **Omie**, títulos a pagar por vencimento | **sai**: o cartão fica sem número e diz que ele sai de `cTpLancamento: "CP"` do Omie, e que o DFC não tem carteira a pagar para pôr no lugar — a aba `FLUXO DE CAIXA` é de caixa e a linha `A PAGAR` nunca entra nesta tela |
+| Desp. Funcionários | DFC | **fica inteiro**, do mesmo jeito |
+| % D. Func. / Rec. Líquida | DFC nas duas pontas | **fica inteiro** — as duas pontas da razão são do DFC |
+| Top 10 despesas | DFC, por `CLASS. CONTABIL` | **fica inteiro** — as barras são do DFC |
+| Top 10 receitas ("De quem veio a receita") | **Omie** | **sai**: o bloco fica sem barras e diz que os dez maiores recebimentos saem do Omie e que ele nunca teve lado do DFC — as SAÍDAS do mês continuam ali ao lado, no "Para onde foi a despesa" |
+| Receita × despesa por dia | DFC, bloco pronto da aba do mês | **fica inteiro** |
+| Receita × despesa por mês | DFC, bloco pronto de cada mês | **fica inteiro** |
+
+**A frase de 5 segundos continua inteira** ("o caixa do mês fechou em X"): ela é o cartão "Saldo", que é do DFC. Na
+tabela do fim, a coluna **do Omie** passa a dizer "sem o Omie" nas onze linhas.
+
+**Os filtros que deixam de alcançar número:** centro de custo, categoria do Omie, cliente/fornecedor, empresa e conta
+bancária — os cinco só recortavam o lado do Omie desta tela. **Continuam valendo:** situação e categoria pela
+classificação do DFC, que alcançam o valor da planilha.
+
+### Tela 2 — o que cada bloco mostra sem o Omie
+
+| cartão / linha | fonte do valor | **sem o Omie** |
+|---|---|---|
+| Receita total | DFC | **fica inteiro** |
+| Custos e despesas | DFC | **fica inteiro** |
+| EBITDA · Lucro líquido · Margem de lucro | mistura as duas | **saem**, com a fita dos doze meses |
+| (+) Receitas (e as duas linhas de detalhe) | Omie | **sai** |
+| (=) Receita bruta | Omie | **sai** |
+| (−) Deduções | DFC | **fica inteira**, com a AH |
+| (=) Receita líquida | mistura | **sai** |
+| (−) Custos de vendas | DFC | **fica inteira**, com a AH |
+| (=) Lucro bruto | mistura | **sai** |
+| (−) Despesas gerais | Omie | **sai** |
+| (=) EBITDA | mistura | **sai** |
+| (+/−) Resultado financeiro | Omie | **sai** |
+| (−) Impostos pagos (guias) | DFC | **fica inteira**, com a AH |
+| (=) Lucro líquido | mistura | **sai** |
+| (=) sem conta | Omie | **sai** |
+
+**As linhas "(=)" saem porque somam as DUAS fontes.** Escrever só a metade do DFC daria um EBITDA que não é o EBITDA —
+e é por isso que a frase delas na tela é "sem o Omie, **esta conta não fecha**", e não "esta linha não tem número".
+
+**A coluna AV sai de todas as linhas, inclusive das de fonte DFC**: ela é a linha sobre a **receita líquida** do mês, e
+a receita líquida mistura as duas fontes — sem o Omie não há denominador. A **AH** de uma linha de fonte DFC continua,
+porque compara o DFC com o DFC. **Os três gráficos saem** (a margem no ano, o peso de cada linha sobre a receita e o
+mapa da variação): os três desenham números que precisam do Omie. E a **frase de 5 segundos sai**, porque o lucro
+líquido e a margem do ano são mistura — no lugar dela a tela diz de onde as duas descem.
+
+**Os filtros que deixam de alcançar número:** empresa e conta bancária. **Continua valendo:** o de meses, que escolhe
+QUAIS colunas a tabela mostra — e as três linhas do DFC seguem essa escolha.
+
+### Tela 3 — o que sobra dela sem o Omie
+
+**Nada de número.** Esta tela é do Omie inteira: os **4 cartões** (Valor Previsto, Valor Recebido, Valor Pendente,
+Valor Vencido) e os **4 blocos** (De quem é o vencido, a rosca por status, O que vence quando, e a lista de títulos)
+saem todos de **uma consulta só** — `financas/pesquisartitulos` → `PesquisarLancamentos`, os títulos a receber por
+vencimento. E não há lado do DFC para pôr no lugar: a planilha é de **caixa**, e não tem carteira a receber nem
+cadastro de cliente (`docs/fontes.md`, "Esta tela fica no Omie, inteira").
+
+**O que sobra dela:** o título com a janela de vencimento escolhida — que é a **pergunta**, e vem da URL, não do Omie
+—, os sete filtros com as opções que já tinham, a própria chave, e a hora da última leitura no rodapé. Os oito
+indicadores ficam com um travessão e a frase que diz que a tela inteira é do Omie; os três gráficos não são desenhados,
+porque um eixo vazio ou uma rosca de raio zero seriam um desenho fingindo número. **Nenhum dos sete filtros alcança
+número nenhum** enquanto ela estiver desligada.
+
+### O caso real, conferido com a chave desligada
+
+Escrito por [`scripts/conferir-chave-omie.mjs`](../scripts/conferir-chave-omie.mjs) (`npm run conferir-chave-omie`),
+em **agosto de 2026**, e com a mesma regra dos outros: **só contagem**, nunca dinheiro e nunca nome.
+
+**Dois cartões vizinhos da Tela 1, o mesmo mês, um de cada lado da chave:**
+
+- **"Despesas" (fonte DFC).** Com a chave **ligada**: `281 do DFC · 299 do Omie`. Com a chave **desligada**:
+  `281 do DFC · sem o Omie` — **as mesmas 281 linhas da planilha**, e o valor em reais do cartão **intacto**, byte por
+  byte igual ao da chave ligada. É o que o pedido do dono manda: ver a tela sem o Omie, e não ver outra tela.
+- **"Desp. Pendentes" (fonte Omie).** Com a chave **ligada**: `161 títulos a pagar do Omie`. Com a chave
+  **desligada**: o cartão fica **sem valor** (`null`, e não zero) e com **uma frase** no lugar do número, dizendo que
+  ele sai da leitura de títulos a pagar por vencimento do Omie e que o DFC não tem carteira a pagar.
+
+**E as 18 afirmações que o script confere**, seis por tela — as três que a chave precisa provar:
+
+1. **Ligada, ela não existe.** A tela com `?omie=1` e a tela sem `omie` na URL saem **idênticas**, indicador por
+   indicador, no valor e nas duas contagens: 11 indicadores na Tela 1, 17 na Tela 2, 8 na Tela 3. É isso que mantém os
+   **36** e os **19** dos outros dois conferidores.
+2. **Desligada, o lado do DFC não se move.** A contagem do DFC dos 11 + 17 + 8 indicadores é a mesma de quando a chave
+   está ligada, e o valor dos **6** indicadores de fonte DFC da Tela 1 e dos **5** da Tela 2 também.
+3. **Desligada, o lado do Omie sai como ausência.** Toda contagem do Omie vira `null` — nunca zero — nos 36
+   indicadores, e os **2** da Tela 1, **12** da Tela 2 e **8** da Tela 3 cuja fonte principal é o Omie ficam sem valor
+   **e com a frase** que diz por quê.
+
+Saída da rodada de 28/09/2026: **18 afirmações: 18 conferidas, 0 divergentes**.
+
+### As três capturas, com a chave desligada
+
+As três telas, servidas pelo app a partir do código novo, com todo valor em dinheiro trocado por "—" e todo nome de
+cliente trocado pelo código:
+
+- [`docs/tela-1-captura-sem-omie.html`](tela-1-captura-sem-omie.html)
+- [`docs/tela-2-captura-sem-omie.html`](tela-2-captura-sem-omie.html)
+- [`docs/tela-3-captura-sem-omie.html`](tela-3-captura-sem-omie.html)
+
+---
+
 ## Os casos reais conferidos
 
 Um caso real por filtro, aplicado pela **mesma camada de dados que o navegador recebe** e reencontrado na **fonte**.
@@ -527,7 +673,7 @@ O que é "a fonte" em cada tela:
 <!-- Escrito por scripts/conferir-filtros.mjs. Não edite à mão: rode `npm run conferir-filtros`. -->
 
 **19 filtros conferidos**: 19 conferidos e 0 divergentes. Leitura do Omie:
-`c78b63dc940b` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
+`c3eaf4ede691` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
 
 Cada linha é um filtro real aplicado pela **mesma camada de dados que o navegador recebe**, e reencontrado na **fonte** —
 os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem passar pela montagem de
@@ -536,7 +682,7 @@ os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem pas
 
 - **Tela 1 — centro de custo = FISCAL.** **Vale em:** os 7 cartões (a contagem do Omie de cada um), o "Top 10 despesas" e os dois gráficos de receita × despesa (a contagem do Omie) e o "Top 10 receitas" inteiro, que é do Omie. **Na tela:** 78. **Na fonte:** 78 — contados um a um na base do mês pelo `departamentos[]` que está nos arquivos crus de `financas/mf` com `cExibirDepartamentos: "S"`, casando o `cCodDepartamento` de cada empresa com o nome FISCAL pelo cadastro cru `geral/departamentos`. **Caso real:** o lançamento do grupo `CONTA_A_RECEBER` da empresa 2, título `5276599584`, categoria `1.01.01`: no arquivo cru do cache ele tem `cCodDepartamento` `5191334709`, que o cadastro `geral/departamentos` da empresa 2 chama de FISCAL, com `nDistrPercentual` 50 em 2 linhas de rateio.
 - **Tela 1 — centro de custo = os 16 nomes de uma vez.** **Vale em:** os mesmos cartões e blocos; é a conferência do conjunto, e não de um nome. **Na tela:** 154. **Na fonte:** 154 — a base do mês menos os lançamentos cujo `departamentos[]` vem vazio no arquivo cru — contados aqui, um a um. **Caso real:** a base do mês tem 419 lançamentos e 265 deles não têm nenhuma linha de rateio nos arquivos crus: escolhendo os 16 nomes, sobram 154.
-- **Tela 1 — empresa = 2.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro (que é do Omie) e o cartão "Desp. Pendentes" inteiro, que sai dos títulos a pagar por vencimento. **Na tela:** 242. **Na fonte:** 242 — os lançamentos da base do mês que só aparecem em arquivo `2-financas-mf-ListarMovimentos…` do cache, contados aqui um a um pela identidade `nCodMovCC` + `nCodTitulo` + `cGrupo`. **Caso real:** a base do mês tem 419 lançamentos, e nos arquivos crus do cache 177 deles só aparecem em arquivo da empresa 1 e 242 só em arquivo da empresa 2 — 0 das 7.765 identidades lidas aparecem nos arquivos das duas, então o arquivo diz a empresa sem ambiguidade. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o de-para de `EMP.` não fecha.
+- **Tela 1 — empresa = 2.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro (que é do Omie) e o cartão "Desp. Pendentes" inteiro, que sai dos títulos a pagar por vencimento. **Na tela:** 242. **Na fonte:** 242 — os lançamentos da base do mês que só aparecem em arquivo `2-financas-mf-ListarMovimentos…` do cache, contados aqui um a um pela identidade `nCodMovCC` + `nCodTitulo` + `cGrupo`. **Caso real:** a base do mês tem 419 lançamentos, e nos arquivos crus do cache 177 deles só aparecem em arquivo da empresa 1 e 242 só em arquivo da empresa 2 — 0 das 7.769 identidades lidas aparecem nos arquivos das duas, então o arquivo diz a empresa sem ambiguidade. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o de-para de `EMP.` não fecha.
 - **Tela 2 — meses = só agosto.** **Vale em:** os 5 cartões do topo, as 12 linhas da tabela e a coluna Total — a tela inteira é por mês. **Na tela:** 17. **Na fonte:** 17 — a tela sem filtro em agosto, que é a que `docs/conferencia.md` confere indicador por indicador. **Caso real:** os 17 indicadores da tela com o filtro em agosto sozinho batem, um a um, com os mesmos 17 da tela sem filtro no mesmo mês — que são os que `docs/conferencia.md` publica e `scripts/conferir-telas.mjs` confere contra o arquivo.
 - **Tela 2 — meses = julho e agosto.** **Vale em:** os mesmos cartões, linhas e a coluna Total, que passa a ser o total dos dois meses. **Na tela:** 17. **Na fonte:** 17 — cada mês calculado sozinho, sem filtro, e somado aqui — agosto é o mês que `docs/conferencia.md` publica. **Caso real:** a coluna de julho tem 636 lançamentos do Omie e a de agosto, 419; com os dois meses escolhidos a tela mostra 1.055, e os 17 indicadores somam os dois meses um a um. As duas contagens de cadastro do DRE não somam, de propósito, e a linha "(=) Receita bruta" diz isso na tela.
 - **Tela 2 — empresa = 1 e empresa = 2, somadas.** **Vale em:** as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela. **Na tela:** 17. **Na fonte:** 17 — cada empresa calculada sozinha e somada aqui, indicador por indicador, contra a tela sem filtro — e a contagem do DFC conferida parada nas três. **Caso real:** a coluna de agosto tem 419 lançamentos do Omie sem filtro, 177 com a empresa 1 e 242 com a empresa 2; os 17 indicadores somam as duas empresas um a um, e a contagem do DFC de cada um fica igual nas três telas — é o filtro não alcançando o DFC, como `docs/filtros.md` diz.
@@ -544,7 +690,7 @@ os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem pas
 - **Tela 3 — status = pago.** **Vale em:** os 4 cartões, os 4 blocos — inclusive o gráfico por mês e status, que é o único que a janela de vencimento não alcança. **Na tela:** 91. **Na fonte:** 91 — o mesmo conjunto cru do caso acima, recortado aqui pela faixa do `cStatus` de cada título, pelo de-para de `lib/regras/listas.mjs`. **Caso real:** o título `5293814087` da empresa 2 tem `cStatus` `RECEBIDO` no arquivo cru, que o de-para do dono (25/09/2026) põe na faixa pago; as três faixas do mês são pago 91, atrasado 37, em aberto 0.
 - **Tela 3 — cliente = `2-5199865257` (empresa + `nCodCliente`).** **Vale em:** os 4 cartões e os 4 blocos. **Na tela:** 4. **Na fonte:** 4 — o mesmo conjunto cru, recortado aqui pelo par empresa + `nCodCliente` do `cabecTitulo`. **Caso real:** nos arquivos crus, 4 dos 128 títulos da janela têm esse `nCodCliente` na empresa 2, em 87 códigos de cliente distintos na janela.
 - **Tela 3 — categoria = `1.01.03`, na janela de 01/07/2026 a 31/08/2026.** **Vale em:** os 4 cartões e os 4 blocos. **Na tela:** 1. **Na fonte:** 1 — o mesmo conjunto cru da janela, recortado aqui pelo `cCodCateg` do `cabecTitulo`. **Caso real:** o título `5272798590` da empresa 2 tem `cCodCateg` `1.01.03` no arquivo cru; a janela tem 2 categorias distintas e 1 dos 262 títulos está nesta.
-- **Tela 3 — empresa = 1, na janela de 01/01/2026 a 31/12/2026.** **Vale em:** os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira. **Na tela:** 9. **Na fonte:** 9 — os `titulosEncontrados` lidos dos arquivos `1-financas-pesquisartitulos-…` do cache, recortados aqui pelo `nCodCC` da MeuBESS, pelo `dDtVenc` no ano e sem os `CANCELADO`. **Caso real:** dos 738 títulos do ano nos arquivos crus, 9 estão em arquivo da empresa 1 e 729 em arquivo da empresa 2; o título `5986750138` é um dos da empresa 1, com `cStatus` `RECEBIDO` e vencimento 03/03/2026. Em agosto sozinho a carteira é inteira da empresa 2 (128 de 128 títulos), e escolher a empresa 2 ali não tira nenhum — é por isso que o caso é o do ano. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso.
+- **Tela 3 — empresa = 1, na janela de 01/01/2026 a 31/12/2026.** **Vale em:** os 4 cartões e os 4 blocos, no valor e na contagem — a tela é do Omie inteira. **Na tela:** 9. **Na fonte:** 9 — os `titulosEncontrados` lidos dos arquivos `1-financas-pesquisartitulos-…` do cache, recortados aqui pelo `nCodCC` da MeuBESS, pelo `dDtVenc` no ano e sem os `CANCELADO`. **Caso real:** dos 739 títulos do ano nos arquivos crus, 9 estão em arquivo da empresa 1 e 730 em arquivo da empresa 2; o título `5986750138` é um dos da empresa 1, com `cStatus` `RECEBIDO` e vencimento 03/03/2026. Em agosto sozinho a carteira é inteira da empresa 2 (128 de 128 títulos), e escolher a empresa 2 ali não tira nenhum — é por isso que o caso é o do ano. As duas contagens do cadastro de clientes continuam as duas, e o bloco delas diz isso.
 - **Tela 1 — categoria pela classificação do DFC = RECEITA DE CLIENTE.** **Vale em:** o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas" — é a MESMA `CLASS. CONTABIL` que as barras desse bloco já agrupam. **Na tela:** 90. **Na fonte:** 90 — as linhas do `FLUXO DE CAIXA` do arquivo do mês, lidas aqui com o recorte de linha escrito de novo neste arquivo (sem as linhas de saldo, sem as de valor zero, só as baixadas e com data no mês) e contadas pela `CLASS. CONTABIL`. **Caso real:** a planilha reaberta aqui tem 388 linhas no recorte do mês — o mesmo número que a tela sem filtro mostra no cartão "Saldo" (388) — e 90 delas têm esta classificação, em 22 classificações distintas no mês; a linha 7 do `FLUXO DE CAIXA` de agosto é uma delas, com `SUB 2` `RECEITA COM VENDAS` e `PAGAMENTO` `RECEBIDO`. A contagem do Omie NÃO é recortada por este filtro, e cada cartão diz isso na tela: o lançamento do Omie não tem `CLASS. CONTABIL`.
 - **Tela 1 — situação = pago.** **Vale em:** o valor E a contagem do DFC dos 7 cartões e do "Top 10 despesas", E a contagem do Omie de todos eles — é o único dos quatro filtros novos que alcança os dois lados. **Na tela:** 285. **Na fonte:** 285 — as mesmas linhas da planilha reaberta aqui, contadas pelo rótulo da coluna `PAGAMENTO` (N) de cada uma. **Caso real:** das 388 linhas do mês na planilha reaberta aqui, pago 285, recebido 103, a-pagar 0 — e a soma das três é 388, a planilha inteira do mês; "a pagar" é 0 porque a linha `A PAGAR` nunca entra nesta tela, que é de caixa. A linha 3 do `FLUXO DE CAIXA` tem `PAGAMENTO` `PAGO`. Do lado do Omie o de-para é a natureza do lançamento: a tela conta 299 lançamentos com esta escolha, contra 419 sem filtro.
 - **Tela 1 — categoria pela categoria do Omie = `1.01.01`.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro e o cartão "Desp. Pendentes" inteiro. **Na tela:** 107. **Na fonte:** 107 — os lançamentos da base do mês contados aqui, um a um, pelo `cCodCateg` de cada um. **Caso real:** a base do mês tem 419 lançamentos em 56 categorias distintas, e 107 deles estão nesta. O valor do DFC NÃO é recortado por este filtro, e cada cartão de fonte DFC diz isso na tela: a planilha classifica cada linha por `CLASS. CONTABIL` e `SUB 2`, que saem do cadastro da aba `BASE`, e nenhuma das duas fontes escreve o de-para entre os dois vocabulários.
@@ -563,6 +709,7 @@ os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem pas
 npm run conferencia        # docs/conferencia.md e docs/fontes.md — 36 indicadores, filtro vazio
 npm run conferir-telas     # docs/telas-conferidas.md — as telas contra a conferência, filtro vazio
 npm run conferir-filtros   # este documento e docs/filtros.html — os filtros contra a fonte
+npm run conferir-chave-omie  # a chave "incluir dados do Omie" — 18 afirmações, as três telas
 ```
 
 E para ver uma tela com um filtro aplicado, sem dinheiro e sem nome de cliente, num arquivo que pode entrar no git:
@@ -575,6 +722,9 @@ node scripts/capturar-tela.mjs --tela 3 --q "status=atrasado" --nome filtro
 node scripts/capturar-tela.mjs --tela 1 --q "empresa=2" --nome empresa
 node scripts/capturar-tela.mjs --tela 3 --q "empresa=1&de=2026-01-01&ate=2026-12-31" --nome empresa
 node scripts/capturar-tela.mjs --tela 1 --q "situacao=recebido&conta=Caixinha" --nome situacao-conta
+node scripts/capturar-tela.mjs --tela 1 --q "omie=0" --nome sem-omie
+node scripts/capturar-tela.mjs --tela 2 --q "omie=0" --nome sem-omie
+node scripts/capturar-tela.mjs --tela 3 --q "omie=0" --nome sem-omie
 ```
 
 As duas últimas são as capturas do filtro de empresa que estão no repositório —

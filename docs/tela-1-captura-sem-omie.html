@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeuBESS · Tela 1 — Gestão de Contas (captura sem valores)</title>
+<style>
+/* AS CORES DA MARCA MEUBESS FICAM TODAS AQUI, e em nenhum outro lugar.
+ *
+ * As cinco abaixo saem de pixel real das três imagens que o dono mandou em 27/09/2026 (`public/marca/` e
+ * `C:/Users/vrmfe/Central de Comando/workspace/data/anexos/meubess-as-3-telas-construidas/`), amostradas com
+ * Pillow — nenhuma é inventada:
+ *   --marca-escura   #102040  cor sólida de `LOGO MEU BESS AZUL.png` (ícone e "MeuBess"), a mesma do texto em `Ativo 7.png`
+ *   --marca          #004888  tom médio do degradê de `Ativo 4PNG.png` (o mesmo tom aparece em `Ativo 7.png`)
+ *   --marca-clara    #0060a8  tom claro-médio do mesmo degradê
+ *   --destaque       #0079cb  ponta mais clara do degradê (canto superior esquerdo do ícone)
+ *   --destaque-escuro #002242  ponta mais escura do degradê (canto inferior direito do ícone)
+ *
+ * O LAYOUT é o de `docs/referencias/tela-1-gestao-de-contas.jpg`; as cores daquela imagem NÃO valem (o próprio
+ * `docs/referencias/LEIAME.md` diz isso).
+ */
+
+:root {
+  /* marca */
+  --marca-escura: #102040;
+  --marca: #004888;
+  --marca-clara: #0060a8;
+  --destaque: #0079cb;
+  --destaque-escuro: #002242;
+
+  /* leitura de números */
+  --positivo: #1c8f5a;
+  --negativo: #c4453b;
+
+  /* superfícies */
+  --fundo: #eef1f5;
+  --cartao: #ffffff;
+  --borda: #d5dbe4;
+  --texto: #16202e;
+  --texto-fraco: #5d6b7e;
+  --texto-claro: #ffffff;
+
+  --raio: 8px;
+  --sombra: 0 1px 3px rgba(13, 36, 64, .12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+a { color: inherit; }
+
+/* ---------------------------------------------------------------- topo */
+.topo {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--marca-escura); color: var(--texto-claro);
+  padding: 0 16px; height: 46px;
+}
+.topo .logo { height: 24px; width: auto; display: block; filter: brightness(0) invert(1); }
+.topo .titulo {
+  font-size: 19px; font-weight: 600;
+  border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 18px;
+}
+.abas { display: flex; gap: 6px; margin-left: auto; }
+.abas span, .abas a {
+  padding: 5px 14px; border-radius: var(--raio); font-size: 12.5px; text-decoration: none;
+  background: var(--marca); color: var(--texto-claro); opacity: .75;
+}
+.abas .ativa { background: var(--destaque); color: var(--marca-escura); font-weight: 600; opacity: 1; }
+
+/* ---------------------------------------------------------------- cartões */
+.cartoes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 12px; }
+.cartao {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  padding: 9px 11px; box-shadow: var(--sombra); min-width: 0;
+}
+.cartao .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cartao .numero { font-size: 21px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
+.cartao .numero.neg { color: var(--negativo); }
+.cartao .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+
+/* ---------------------------------------------------------------- grade */
+.grade { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; padding: 0 12px 12px; align-items: start; }
+.painel {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio);
+  box-shadow: var(--sombra); overflow: hidden;
+}
+.painel > h2 {
+  margin: 0; padding: 7px 11px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px;
+  background: var(--marca); color: var(--texto-claro);
+}
+.painel > h2.alt { background: var(--destaque); color: var(--marca-escura); }
+.painel .corpo { padding: 10px 11px; }
+.larga { grid-column: 1 / -1; }
+
+/* ---------------------------------------------------------------- barras horizontais (Top 10) */
+.barras { display: flex; flex-direction: column; gap: 6px; }
+.barra { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; font-size: 11.5px; }
+.barra .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-fraco); }
+.barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
+.barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ---------------------------------------------------------------- legenda
+ *
+ * As etiquetas (`.pilula`) que desenhavam os filtros até 27/09/2026 saíram daqui em 28/09/2026, com a decisão do dono
+ * de trocá-las por listas suspensas com caixas de marcar: o desenho dos filtros está lá embaixo, em `.suspensa`. */
+.legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
+.legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+
+/* ---------------------------------------------------------------- rodapé */
+.rodape {
+  padding: 9px 12px 20px; font-size: 11px; color: var(--texto-fraco);
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+}
+.botao {
+  background: var(--destaque); color: var(--marca-escura); border: 0; border-radius: var(--raio);
+  padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.botao:disabled { opacity: .55; cursor: default; }
+.aviso {
+  background: #fff6e3; border: 1px solid var(--destaque); border-radius: var(--raio);
+  padding: 8px 11px; margin: 0 12px 10px; font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- Tela 2: cartões do DRE
+ *
+ * São 5, e não 7 como na Tela 1, e cada um leva a fita dos doze meses embaixo do número. */
+.cartoes.dre { grid-template-columns: repeat(5, 1fr); }
+.cartao.dre { position: relative; }
+.cartao.dre .fita { display: block; width: 100%; height: 24px; margin: 4px 0 2px; color: var(--marca-clara); }
+.cartao.dre .numero.neg + .fita { color: var(--negativo); }
+
+/* ---------------------------------------------------------------- a barra de filtros (as três telas) */
+.barra-filtros {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 0 12px 10px;
+}
+
+/* ---------------------------------------------------------------- Tela 2: a tabela do DRE */
+.tabela-dre { margin: 0 12px 12px; }
+.tabela-dre .rolagem { overflow-x: auto; }
+.dre-tabela { border-collapse: collapse; font-size: 11.5px; white-space: nowrap; min-width: 100%; }
+.dre-tabela th, .dre-tabela td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: right; }
+.dre-tabela thead th {
+  background: var(--fundo); color: var(--texto-fraco); font-weight: 600; text-align: center;
+  position: sticky; top: 0;
+}
+.dre-tabela thead th.escolhido { background: var(--destaque); color: var(--marca-escura); }
+.dre-tabela thead th.total { background: var(--marca); color: var(--texto-claro); }
+.dre-tabela th.sub { font-size: 10px; text-transform: uppercase; letter-spacing: .3px; }
+.dre-tabela .grupo-col {
+  text-align: left; font-weight: 500; position: sticky; left: 0; z-index: 1;
+  background: var(--cartao); min-width: 210px; max-width: 210px; overflow: hidden; text-overflow: ellipsis;
+}
+.dre-tabela thead .grupo-col { background: var(--fundo); }
+.dre-tabela .num { font-variant-numeric: tabular-nums; }
+.dre-tabela .num.total { font-weight: 600; background: rgba(20, 58, 99, .05); }
+.dre-tabela .ah-col, .dre-tabela .av-col { color: var(--texto-fraco); }
+.dre-tabela .ah.up { color: var(--positivo); }
+.dre-tabela .ah.down { color: var(--negativo); }
+.dre-tabela .ah.vazio { opacity: .45; }
+.dre-tabela .cabeca-grupo td {
+  text-align: left; background: var(--fundo); color: var(--texto-fraco);
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; padding: 5px 8px;
+}
+.dre-tabela .linha-total th, .dre-tabela .linha-total td { font-weight: 700; background: rgba(31, 82, 137, .09); }
+.dre-tabela .linha-total .grupo-col { background: #e3eaf3; }
+.dre-tabela .linha-detalhe th, .dre-tabela .linha-detalhe td { color: var(--texto-fraco); }
+.dre-tabela .linha-detalhe .grupo-col { padding-left: 20px; font-weight: 400; }
+.dre-tabela .linha-fora th, .dre-tabela .linha-fora td { font-style: italic; opacity: .8; }
+.rodape-tabela { padding: 8px 11px 10px; margin: 0; }
+.aviso.leve { background: var(--cartao); border-color: var(--borda); color: var(--texto-fraco); }
+.dre-tabela tfoot .cobertura th, .dre-tabela tfoot .cobertura td {
+  font-size: 10.5px; color: var(--texto-fraco); background: var(--fundo); border-top: 2px solid var(--borda);
+  text-align: center;
+}
+.dre-tabela tfoot .cobertura .grupo-col { text-align: left; font-weight: 600; }
+
+/* ---------------------------------------------------------------- Tela 3: as três faixas
+ *
+ * O de-para dos `cStatus` do Omie para pago / atrasado / em aberto é decisão do dono (25/09/2026) e mora em
+ * `lib/regras/listas.mjs`; aqui só ficam as cores de cada faixa, uma vez, para a coluna, a barra, a rosca, a
+ * legenda e o selo da lista lerem todas o mesmo. */
+.f-pago { background: var(--positivo); }
+.f-atrasado { background: var(--negativo); }
+.f-aberto { background: var(--destaque); }
+
+/* ---------------------------------------------------------------- Tela 3: cartões do topo
+ *
+ * São 4, e cada um leva o disco colorido da referência à esquerda do número. */
+.cartoes.receber { grid-template-columns: repeat(4, 1fr); }
+.cartao.receber { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.cartao.receber .disco { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; }
+.cartao.receber .disco.marca { background: var(--marca); }
+.cartao.receber .texto { display: flex; flex-direction: column; min-width: 0; }
+.cartao.receber .numero { font-size: 23px; }
+
+/* ---------------------------------------------------------------- Tela 3: a grade */
+.grade.receber { grid-template-columns: 1.55fr 1fr; }
+
+/* ---------------------------------------------------------------- Tela 3: colunas empilhadas por mês */
+.colunas { display: flex; align-items: flex-end; gap: 6px; }
+.coluna { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; gap: 2px; }
+.coluna .pilha { display: flex; flex-direction: column-reverse; }
+.coluna .pedaco { display: block; width: 100%; }
+.coluna .n { font-size: 9.5px; text-align: center; color: var(--texto-fraco); }
+.coluna .topo-n { font-weight: 600; }
+.coluna.foco .n { color: var(--marca); font-weight: 700; }
+.coluna.foco .pilha { outline: 2px solid var(--marca-clara); outline-offset: 1px; }
+
+/* ---------------------------------------------------------------- Tela 3: barras empilhadas por cliente */
+.grade.receber .barra { grid-template-columns: 130px 1fr auto; }
+.grade.receber .barra .trilho { display: flex; background: var(--fundo); }
+.grade.receber .barra .pedaco { height: 100%; }
+
+/* ---------------------------------------------------------------- Tela 3: a rosca por status */
+.rosca { display: flex; align-items: center; gap: 12px; }
+.rosca svg { width: 148px; height: 148px; flex: 0 0 auto; }
+.rosca .arco { transform: rotate(-90deg); transform-origin: 70px 70px; }
+.rosca .arco.f-pago { stroke: var(--positivo); }
+.rosca .arco.f-atrasado { stroke: var(--negativo); }
+.rosca .arco.f-aberto { stroke: var(--destaque); }
+.rosca .centro { font-size: 26px; font-weight: 700; fill: var(--texto); }
+.rosca .fatias { list-style: none; margin: 0; padding: 0; font-size: 11.5px; }
+.rosca .fatias li { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.rosca .fatias b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.rosca .fatias i { font-style: normal; color: var(--texto-fraco); min-width: 46px; text-align: right; }
+
+/* ---------------------------------------------------------------- Tela 3: a lista de títulos */
+.rolagem-lista { max-height: 300px; overflow: auto; }
+.lista-titulos { border-collapse: collapse; width: 100%; font-size: 11px; }
+.lista-titulos th, .lista-titulos td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
+.lista-titulos thead th { background: var(--marca); color: var(--texto-claro); position: sticky; top: 0; font-weight: 600; }
+.lista-titulos .num { text-align: right; font-variant-numeric: tabular-nums; }
+.lista-titulos .cod { color: var(--texto-fraco); font-variant-numeric: tabular-nums; }
+.lista-titulos .desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-titulos tfoot th, .lista-titulos tfoot td {
+  position: sticky; bottom: 0; background: var(--marca-escura); color: var(--texto-claro); font-weight: 700;
+}
+.lista-titulos .selo {
+  display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  color: var(--texto-claro); white-space: nowrap;
+}
+.lista-titulos .selo.f-aberto { color: var(--marca-escura); }
+
+/* ---------------------------------------------------------------- a frase de 5 segundos (Telas 1 e 3)
+ *
+ * A frase que a tela escreve embaixo do título — o que o dono leva daqui se olhar e sair. Ela nunca traz número novo:
+ * é sempre um cartão da própria tela dito em português (o "Saldo" na Tela 1, o "Valor Vencido" na Tela 3). Mora aqui,
+ * e não na seção da Tela 1, porque as duas telas a usam. */
+.chamada { padding: 16px 20px 12px; }
+.chamada h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
+/* O nome do mês vem minúsculo de `NOMES_DOS_MESES`, e aqui ele começa frase. */
+.chamada h1::first-letter { text-transform: uppercase; }
+.chamada .frase { margin: 7px 0 0; font-size: 16.5px; line-height: 1.4; max-width: 74ch; }
+.chamada .frase b { color: var(--marca); font-weight: 700; }
+.chamada .para-que { margin: 6px 0 0; font-size: 11.5px; color: var(--texto-fraco); max-width: 86ch; }
+
+/* ---------------------------------------------------------------- os filtros das três telas
+ *
+ * Quais filtros existem em cada tela é decisão do dono, registrada em `docs/fontes.md` e construída em
+ * `lib/regras/filtros.mjs`; aqui só ficam as formas. Quatro peças:
+ *
+ *   .suspensa       a lista suspensa com caixas de marcar de `app/suspensa.js` — o desenho de TODO filtro de escolha
+ *                   das três telas desde 28/09/2026, quando o dono pediu as etiquetas fora;
+ *   .limpar-tudo    o link que volta a tela ao sem-filtro, guardando o mês que está sendo lido;
+ *   .campo-filtro   o par rótulo + campo (data, lista longa) dos filtros que não são escolha curta;
+ *   .sem-filtro     a frase que a tela escreve JUNTO do número quando o filtro não alcança aquela fonte. Ela é parte
+ *                   do número, não nota de rodapé: fica dentro do cartão, do bloco ou da linha.
+ */
+.filtros-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; width: 100%; }
+
+/* A LISTA SUSPENSA. Fechada, ela é do tamanho do que está escolhido; aberta, a lista de opções flutua por cima do
+ * resto da tela (`position: absolute`) para não empurrar os números para baixo — que é exatamente o que as etiquetas
+ * faziam. Quem abre e fecha é o `<details>` do HTML: nenhuma linha de JavaScript, porque a captura joga fora todo
+ * `<script>` e as telas são componentes de servidor. */
+.suspensa { position: relative; }
+.suspensa > summary {
+  display: inline-flex; align-items: baseline; gap: 6px; cursor: pointer; white-space: nowrap;
+  padding: 4px 9px; border: 1px solid var(--borda); border-radius: 4px; background: var(--cartao);
+  list-style: none;
+}
+.suspensa > summary::-webkit-details-marker { display: none; }
+.suspensa > summary::after { content: "▾"; font-size: 10px; color: var(--texto-fraco); }
+.suspensa > summary .nome {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+}
+.suspensa > summary .escolha {
+  font-size: 12px; font-weight: 600; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Com escolha feita, a caixa fica na cor da marca: é o que as etiquetas acesas diziam. */
+.suspensa.escolhida > summary { border-color: var(--marca); }
+.suspensa.escolhida > summary .escolha { color: var(--marca); }
+.suspensa[open] > summary { border-color: var(--marca-clara); }
+.suspensa .opcoes {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; min-width: 100%; max-height: 264px;
+  overflow: auto; padding: 5px; display: flex; flex-direction: column; gap: 1px;
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: 4px;
+  box-shadow: 0 8px 20px rgba(16, 32, 64, .16);
+}
+.suspensa .opcoes label {
+  display: flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer;
+  padding: 3px 7px; border-radius: 3px; font-size: 12px;
+}
+.suspensa .opcoes label:hover { background: var(--fundo); }
+.suspensa .opcoes input { margin: 0; accent-color: var(--marca); }
+
+.limpar-tudo { font-size: 11.5px; color: var(--marca-clara); align-self: center; }
+.campo-filtro { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.campo-filtro > span {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+}
+.campo-filtro input, .campo-filtro select {
+  font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--borda); border-radius: 4px;
+  background: var(--cartao); color: var(--texto); max-width: 230px;
+}
+.botao.filtro { padding: 4px 13px; }
+
+.sem-filtro {
+  display: flex; flex-direction: column; gap: 3px;
+  margin-top: 5px; padding: 4px 6px; border-left: 3px solid var(--destaque);
+  background: rgba(0, 121, 203, .07); font-size: 10.5px; color: var(--texto-fraco);
+}
+.sem-filtro strong { color: var(--texto); }
+.sem-filtro code { font-size: 10px; }
+
+/* A FRASE DA CHAVE "INCLUIR DADOS DO OMIE" DESLIGADA (decisão do dono, 28/09/2026). Ela mora na mesma caixa que as
+ * frases de "o filtro não vale", porque também é parte do número — mas é mais forte que elas: ali não há número
+ * nenhum, e não um número que o filtro não alcançou. Por isso vem primeiro e sai mais escura, na cor do texto. */
+.sem-filtro .sem-omie { color: var(--texto); }
+.sem-filtro .sem-omie strong { color: var(--destaque); }
+.cartao .sem-filtro { white-space: normal; }
+.tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
+
+/* ================================================================ O LAYOUT EM F DAS TRÊS TELAS
+ *
+ * DE ONDE VEM ESTE DESENHO. Da skill de visualização de dados que o dono mandou em 28/09/2026
+ * (`.claude/skills/visualizacao-de-dados/SKILL.md`); o plano de gráficos e a história de cada tela estão em
+ * `docs/layout.md`. Tema escolhido: "clean analytical" — fundo branco, sem moldura nem sombra, régua horizontal
+ * clara, e só as cinco cores da marca lá de cima. Nenhuma cor nova nasce aqui.
+ *
+ * ATÉ 28/09/2026 ESTA SEÇÃO ERA SÓ DA TELA 1, e as Telas 2 e 3 usavam `.cartao`, `.painel` e `.grade`, lá em cima.
+ * Na mesma data o dono aprovou o padrão da Tela 1 e pediu as outras duas iguais: agora as três usam as mesmas peças —
+ * `.tela` (o fundo), `.chamada` (o título e a frase de 5 segundos), `.recorte` (os filtros), `.kpi` (os números do
+ * topo), `.quadro` (cada gráfico), `.grafico` (o SVG do Recharts) e a tabela de detalhe que fecha o F. O que muda de
+ * uma tela para outra é só quantos números tem a fila e quantos gráficos tem a grade.
+ *
+ * AS CLASSES ANTIGAS (`.cartao`, `.painel`, `.cartoes.dre`, `.grade.receber`, `.colunas`, `.barras`) continuam
+ * escritas lá em cima, e nenhuma tela as usa mais: as capturas versionadas de antes desta reforma foram gravadas com
+ * o CSS inteiro dentro, e apagá-las agora mudaria o desenho daqueles arquivos, que são o registro de como a tela era.
+ *
+ * A COR DE CADA SÉRIE MORA AQUI, e não em `app/graficos.js`: lá cada série só recebe uma `className` e pinta com
+ * `currentColor`. É esta a razão de `.serie-receita` e `.serie-despesa` serem só uma linha de `color`.
+ */
+
+/* O fundo branco do "clean analytical". Desde 28/09/2026 as três telas o usam. */
+.tela { background: var(--cartao); min-height: 100vh; }
+
+/* ---------------------------------------------------------------- 2. o recorte (os filtros) */
+.recorte {
+  padding: 8px 20px 6px; margin-top: 4px;
+  border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda);
+}
+.recorte .barra-filtros { padding: 4px 0; }
+.recorte .explica { margin: 4px 0 8px; font-size: 11.5px; color: var(--texto-fraco); }
+.recorte .explica > summary {
+  cursor: pointer; color: var(--marca); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .4px; font-weight: 600;
+}
+.recorte .explica p { max-width: 104ch; margin: 8px 0; }
+/* As frases de empresa e de conta bancária vêm de `app/empresa.js` e `app/conta.js`, que as três telas dividem, e lá
+ * elas são `.aviso leve` — uma caixinha. Dentro do "o que cada filtro alcança" da Tela 1 elas são só mais um
+ * parágrafo, e a caixinha sai. */
+.recorte .explica .aviso { padding: 0; margin: 8px 0; border: 0; background: none; }
+.tela .aviso { margin: 10px 20px; }
+
+/* ---------------------------------------------------------------- 3. a fila de números do topo */
+/* A fila é uma coluna por número, e o destaque é o número de que a frase de 5 segundos fala. Na Tela 1 ele é o
+ * primeiro e por isso a coluna dele é maior; nas Telas 2 e 3 ele fica no lugar que a cascata lhe dá — o DRE se lê de
+ * cima para baixo (receita, custo, EBITDA, lucro, margem) e a carteira também (previsto, recebido, pendente,
+ * vencido) —, e o que o destaca é o corpo do número, não a posição. */
+.kpis { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); padding: 16px 20px 18px; }
+.kpis.de-5 { grid-template-columns: repeat(5, 1fr); }
+.kpis.de-4 { grid-template-columns: repeat(4, 1fr); }
+.kpi { padding: 0 14px; border-left: 1px solid var(--borda); min-width: 0; }
+.kpi:first-child { border-left: 0; padding-left: 0; }
+.kpi .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kpi .numero { font-size: 20px; font-weight: 700; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kpi .numero.neg { color: var(--negativo); }
+.kpi .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+.kpi .sem-filtro { white-space: normal; }
+/* O "Saldo" é o primeiro e o maior porque é dele que a frase de 5 segundos fala. */
+.kpi.destaque .rotulo { color: var(--marca); }
+.kpi.destaque .numero { font-size: 28px; color: var(--marca); }
+
+/* ---------------------------------------------------------------- 4 e 5. a grade dos gráficos
+ *
+ * Duas colunas, e o gráfico principal ocupa a larga: é o "F" da skill — o olho entra pelo canto de cima à esquerda,
+ * onde está o maior, e sai pelos dois rankings da direita. */
+.grade-g { display: grid; grid-template-columns: 2fr 1fr; gap: 26px 30px; padding: 4px 20px 20px; align-items: start; }
+.quadro { min-width: 0; }
+.quadro > h2 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.quadro .fonte-do-quadro { margin: 2px 0 10px; font-size: 11px; color: var(--texto-fraco); }
+.quadro .legenda { margin-top: 6px; }
+
+/* O SVG do Recharts sai do servidor com largura fixa (ver o cabeçalho de `app/graficos.js`); estas três linhas o
+ * fazem acompanhar a largura do painel, pelo `viewBox`, sem precisar medir nada no navegador. */
+.grafico { width: 100%; }
+.grafico .recharts-wrapper { width: 100% !important; height: auto !important; }
+.grafico .recharts-surface { width: 100% !important; height: auto !important; display: block; }
+
+/* A COR DE CADA SÉRIE, e o que ela quer dizer. A mesma cor quer dizer a mesma coisa em todos os gráficos das três
+ * telas — é a regra da skill, e é o que deixa os dois rankings da Tela 1 lado a lado sem legenda. */
+.serie-receita { color: var(--marca-escura); }   /* entrada de dinheiro, Tela 1 */
+.serie-despesa { color: var(--destaque); }       /* saída de dinheiro, Tela 1 */
+/* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
+ * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */
+.serie-margem { color: var(--marca); }
+/* As três faixas da Tela 3. São as MESMAS cores de `.f-pago`, `.f-atrasado` e `.f-aberto` lá em cima, que pintam a
+ * rosca, a legenda e o selo da lista; aqui elas viram `color`, porque o Recharts pinta com `currentColor`. */
+.serie-pago { color: var(--positivo); }
+.serie-atrasado { color: var(--negativo); }
+.serie-aberto { color: var(--destaque); }
+
+/* tinta de dado, e só: régua horizontal clara, sem moldura, sem eixo desenhado */
+.grade-grafico line { stroke: var(--borda); }
+/* O `font-size` dos rótulos que ESTA tela desenha à mão (o do eixo dos dois rankings) tem de vir daqui: sem ele
+ * o `<text>` herda os 14px do `body` e o nome comprido sai cortado na borda do SVG. */
+.eixo text { fill: var(--texto-fraco); }
+.rotulo-eixo { fill: var(--texto-fraco); font-size: 10.5px; }
+.rotulo-valor { fill: var(--texto); font-size: 10.5px; font-weight: 600; }
+.ponta-da-linha { fill: currentColor; font-size: 11.5px; font-weight: 600; }
+.linha-zero line { stroke: var(--texto-fraco); }
+.marca-do-mes line { stroke: var(--marca-clara); stroke-dasharray: 3 3; }
+.marca-do-mes-texto { fill: var(--marca-clara); font-size: 10.5px; font-weight: 600; }
+.dica-grafico .recharts-default-tooltip {
+  border: 1px solid var(--borda) !important; border-radius: var(--raio); box-shadow: var(--sombra); font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- 6. a tabela de detalhe */
+.quadro.detalhe { padding: 0 20px 24px; }
+.quadro.detalhe > h2 { margin-bottom: 0; }
+.tabela-detalhe { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+.tabela-detalhe th, .tabela-detalhe td {
+  padding: 5px 10px 5px 0; border-bottom: 1px solid var(--borda); text-align: left; font-weight: 400;
+}
+.tabela-detalhe thead th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  border-bottom: 1px solid var(--texto-fraco);
+}
+.tabela-detalhe tbody th { font-weight: 600; white-space: nowrap; }
+.tabela-detalhe .fonte { color: var(--texto-fraco); }
+.tabela-detalhe .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+
+.tela .rodape { border-top: 1px solid var(--borda); padding: 12px 20px 26px; }
+
+/* ---------------------------------------------------------------- as peças que só a Tela 2 tem no layout em F */
+
+/* A fita dos doze meses embaixo do número do cartão. Ela é a mesma de antes desta reforma; o que mudou é que o
+ * cartão virou `.kpi`, sem moldura. */
+.kpi .fita { display: block; width: 100%; max-width: 190px; height: 24px; margin: 5px 0 2px; color: var(--marca-clara); }
+.kpi .numero.neg + .fita { color: var(--negativo); }
+
+/* O MAPA DE CALOR DA VARIAÇÃO (a coluna AH da tabela, em intensidade de cor).
+ *
+ * As oito cores abaixo NÃO são cores novas: são a mesma `--positivo` (#1c8f5a) e a mesma `--negativo` (#c4453b) da
+ * paleta lá de cima, em quatro transparências. Ficam escritas em `rgba()` porque uma variável CSS não se deixa
+ * transparentar sem `color-mix()`, e os quatro degraus precisam da mesma cor em quatro forças.
+ *
+ * VERDE é a variação que joga A FAVOR do resultado e VERMELHO a que joga contra — a mesma leitura da seta da coluna
+ * AH da tabela (receita que sobe é bom, despesa que sobe não é), decidida na própria linha do DRE pelo `sinal` dela.
+ * Em cinza impresso os dois viram o mesmo tom, e é por isso que o NÚMERO continua escrito dentro de cada célula. */
+.mapa-ah { border-collapse: collapse; font-size: 11px; white-space: nowrap; min-width: 100%; }
+.mapa-ah th, .mapa-ah td { padding: 4px 8px; text-align: right; font-weight: 400; border: 1px solid var(--cartao); }
+.mapa-ah thead th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  border: 0; border-bottom: 1px solid var(--texto-fraco); text-align: center; padding-bottom: 5px;
+}
+.mapa-ah thead th.escolhido { color: var(--marca); font-weight: 700; }
+.mapa-ah .linha-col {
+  text-align: left; font-weight: 600; white-space: nowrap; border: 0;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+}
+.mapa-ah td { font-variant-numeric: tabular-nums; }
+.mapa-ah .vazio { color: var(--texto-fraco); opacity: .5; }
+.mapa-ah .neutra { color: var(--texto-fraco); }
+.mapa-ah .bom.g1 { background: rgba(28, 143, 90, .10); }
+.mapa-ah .bom.g2 { background: rgba(28, 143, 90, .22); }
+.mapa-ah .bom.g3 { background: rgba(28, 143, 90, .36); }
+.mapa-ah .bom.g4 { background: rgba(28, 143, 90, .52); }
+.mapa-ah .ruim.g1 { background: rgba(196, 69, 59, .10); }
+.mapa-ah .ruim.g2 { background: rgba(196, 69, 59, .22); }
+.mapa-ah .ruim.g3 { background: rgba(196, 69, 59, .36); }
+.mapa-ah .ruim.g4 { background: rgba(196, 69, 59, .52); }
+
+/* A tabela do DRE dentro do quadro de detalhe: a margem que ela tinha sozinha sai, porque quem dá o respiro agora é
+ * o `.quadro.detalhe`. O cabeçalho perde o fundo cinza cheio e fica com a régua embaixo, como a tabela de detalhe da
+ * Tela 1 — só a coluna escolhida e a do total continuam marcadas, que é informação e não enfeite. */
+.quadro.tabela-dre { margin: 0; }
+.quadro .dre-tabela thead th { background: var(--cartao); border-bottom: 1px solid var(--texto-fraco); }
+.quadro .dre-tabela thead .grupo-col { background: var(--cartao); }
+.quadro .dre-tabela thead th.escolhido { background: rgba(0, 121, 203, .14); color: var(--marca); }
+.quadro .dre-tabela thead th.total { background: var(--cartao); color: var(--marca); }
+.quadro .dre-tabela .num.total { background: rgba(20, 58, 99, .04); }
+.quadro .dre-tabela .linha-total th, .quadro .dre-tabela .linha-total td { background: rgba(31, 82, 137, .06); }
+.quadro .dre-tabela .linha-total .grupo-col { background: #eef2f7; }
+.quadro .dre-tabela tfoot .cobertura th, .quadro .dre-tabela tfoot .cobertura td { background: var(--cartao); }
+
+/* ---------------------------------------------------------------- as peças que só a Tela 3 tem no layout em F */
+
+/* O quadradinho da faixa ao lado do rótulo do número: é a MESMA cor que o gráfico e a rosca usam para aquela faixa.
+ * `.legenda .chave` lá em cima é o mesmo desenho dentro da legenda; aqui ele entra no cartão. */
+.kpi .rotulo .chave {
+  display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 5px;
+}
+.kpi .rotulo .chave.marca { background: var(--marca); }
+
+/* A rosca, dentro do quadro: sem o fundo do painel, ela fica um pouco menor e o texto do centro perde peso. */
+.quadro .rosca { margin-top: 4px; }
+.quadro .rosca svg { width: 132px; height: 132px; }
+
+/* A lista de títulos, dentro do quadro de detalhe: o cabeçalho azul cheio e o rodapé escuro saem, e ficam a régua e
+ * o texto miúdo da tabela de detalhe da Tela 1. Os selos de status continuam coloridos — ali a cor é a faixa. */
+.quadro .lista-titulos thead th {
+  background: var(--cartao); color: var(--texto-fraco); border-bottom: 1px solid var(--texto-fraco);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+}
+.quadro .lista-titulos tfoot th, .quadro .lista-titulos tfoot td {
+  background: var(--cartao); color: var(--texto); border-top: 1px solid var(--texto-fraco);
+}
+.quadro .rolagem-lista { max-height: 420px; }
+
+.nota {
+  margin: 0; padding: 11px 14px; background: var(--marca-escura); color: var(--texto-claro); font-size: 12.5px;
+}
+.nota strong { color: var(--destaque); }
+</style>
+</head>
+<body>
+<p class="nota">
+  <strong>Captura da Tela 1 — Gestão de Contas</strong> — a página que o app serve, de 08/2026, com o filtro <code>omie=0</code> aplicado, com
+  <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
+  <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
+  <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.
+  Quais blocos a tela tem é <code>docs/referencias/tela-1-gestao-de-contas.jpg</code>; como eles são desenhados é
+  <code>docs/layout.md</code>, que segue a skill de visualização de dados do dono. As cores são as variáveis de
+  <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
+</p>
+<div hidden=""></div><div class="tela"><header class="topo"><img class="logo" src="/marca/logo-meubess.png" alt="MeuBESS"/><span class="titulo">Gestão de Contas</span><nav class="abas"><span class="ativa">Dashboard</span><span class="">DRE</span><span class="">Contas a Receber</span><span>Centro de Custo</span><span>Fluxo de caixa</span></nav></header><section class="chamada"><h1>agosto de 2026, empresas 1 e 2 somadas</h1><p class="frase">O caixa do mês fechou em <b>—</b>.</p><p class="para-que">Para decidir o que pagar, o que segurar e onde cortar neste mês. Cada número diz, embaixo, quantos lançamentos entraram nele; onde um filtro não alcança a fonte, o número diz isso ali mesmo.</p></section><p class="aviso"><strong>A chave “incluir dados do Omie” está desligada</strong> — todo número cuja fonte é o Omie saiu da conta desta tela, e no lugar dele ficou um travessão e a frase que diz por quê, junto do próprio número. Nenhuma regra mudou e nenhum número do DFC mudou: a chave é uma forma de ver, e religá-la traz a tela de sempre de volta. <strong>O que sobra desta tela:</strong> 9 dos 11 indicadores, que são do DFC — os cartões &quot;Saldo&quot;, &quot;Receitas&quot;, &quot;Despesas&quot;, &quot;Desp. Pagas&quot;, &quot;Desp. Funcionários&quot; e &quot;% D. Func. / Rec. Líquida&quot;, o &quot;Para onde foi a despesa&quot; e os dois gráficos de receita × despesa. A frase de 5 segundos lá em cima é o cartão &quot;Saldo&quot;, e por isso continua inteira. <strong>O que sai:</strong> o cartão &quot;Desp. Pendentes&quot; e o bloco &quot;De quem veio a receita&quot; (o Top 10 receitas), que são do Omie, e a contagem &quot;do Omie&quot; embaixo de cada número e na tabela do fim. <strong>E os filtros</strong> de centro de custo, de categoria do Omie e de cliente/fornecedor continuam na tela, mas só recortam o lado do Omie: enquanto a chave está desligada, eles não alcançam número nenhum.</p><section class="recorte"><form class="barra-filtros filtros-form" action="/" method="get"><details class="suspensa"><summary><span class="nome">ano</span><span class="escolha">2026</span></summary><div class="opcoes"><label><input type="radio" name="ano" checked="" value="2026"/><span>2026</span></label></div></details><details class="suspensa"><summary><span class="nome">mês</span><span class="escolha">Ago</span></summary><div class="opcoes"><label><input type="radio" name="mes" value="1"/><span>Jan</span></label><label><input type="radio" name="mes" value="2"/><span>Fev</span></label><label><input type="radio" name="mes" value="3"/><span>Mar</span></label><label><input type="radio" name="mes" value="4"/><span>Abr</span></label><label><input type="radio" name="mes" value="5"/><span>Mai</span></label><label><input type="radio" name="mes" value="6"/><span>Jun</span></label><label><input type="radio" name="mes" value="7"/><span>Jul</span></label><label><input type="radio" name="mes" checked="" value="8"/><span>Ago</span></label><label><input type="radio" name="mes" value="9"/><span>Set</span></label><label><input type="radio" name="mes" value="10"/><span>Out</span></label><label><input type="radio" name="mes" value="11"/><span>Nov</span></label><label><input type="radio" name="mes" value="12"/><span>Dez</span></label></div></details><details class="suspensa"><summary><span class="nome">centro de custo</span><span class="escolha">todos</span></summary><div class="opcoes"><label><input type="checkbox" name="cc" value="ADMINISTRATIVO"/><span>ADMINISTRATIVO</span></label><label><input type="checkbox" name="cc" value="COMERCIAL"/><span>COMERCIAL</span></label><label><input type="checkbox" name="cc" value="COMPRAS"/><span>COMPRAS</span></label><label><input type="checkbox" name="cc" value="CONTÁBIL"/><span>CONTÁBIL</span></label><label><input type="checkbox" name="cc" value="DIRETORIA"/><span>DIRETORIA</span></label><label><input type="checkbox" name="cc" value="ESTOQUE"/><span>ESTOQUE</span></label><label><input type="checkbox" name="cc" value="FACILITIES"/><span>FACILITIES</span></label><label><input type="checkbox" name="cc" value="FINANCEIRO"/><span>FINANCEIRO</span></label><label><input type="checkbox" name="cc" value="FISCAL"/><span>FISCAL</span></label><label><input type="checkbox" name="cc" value="INSIDE SALES"/><span>INSIDE SALES</span></label><label><input type="checkbox" name="cc" value="LOGÍSTICA"/><span>LOGÍSTICA</span></label><label><input type="checkbox" name="cc" value="MARKETING"/><span>MARKETING</span></label><label><input type="checkbox" name="cc" value="MEU BESS"/><span>MEU BESS</span></label><label><input type="checkbox" name="cc" value="OPERACIONAL"/><span>OPERACIONAL</span></label><label><input type="checkbox" name="cc" value="RH"/><span>RH</span></label><label><input type="checkbox" name="cc" value="TI"/><span>TI</span></label></div></details><details class="suspensa"><summary><span class="nome">empresa</span><span class="escolha">as duas</span></summary><div class="opcoes"><label><input type="checkbox" name="empresa" value="1"/><span>Empresa 1</span></label><label><input type="checkbox" name="empresa" value="2"/><span>Empresa 2</span></label></div></details><details class="suspensa"><summary><span class="nome">conta bancária</span><span class="escolha">todas</span></summary><div class="opcoes"><label><input type="checkbox" name="conta" value="Adiantamento ao Fornecedor"/><span>Adiantamento ao Fornecedor</span></label><label><input type="checkbox" name="conta" value="Adiantamento de Cliente"/><span>Adiantamento de Cliente</span></label><label><input type="checkbox" name="conta" value="Banco do Brasil (empresas 1 e 2)"/><span>Banco do Brasil (empresas 1 e 2)</span></label><label><input type="checkbox" name="conta" value="Banco Implementação"/><span>Banco Implementação</span></label><label><input type="checkbox" name="conta" value="Caixinha"/><span>Caixinha</span></label><label><input type="checkbox" name="conta" value="cartão Itaú 1106"/><span>cartão Itaú 1106</span></label><label><input type="checkbox" name="conta" value="Cora"/><span>Cora</span></label><label><input type="checkbox" name="conta" value="Itaú (empresas 1 e 2)"/><span>Itaú (empresas 1 e 2)</span></label><label><input type="checkbox" name="conta" value="Stone"/><span>Stone</span></label></div></details><input type="hidden" name="omie" value="0"/><details class="suspensa"><summary><span class="nome">Omie</span><span class="escolha">sem o Omie</span></summary><div class="opcoes"><label><input type="checkbox" name="omie" value="1"/><span>incluir dados do Omie</span></label></div></details><details class="suspensa"><summary><span class="nome">situação</span><span class="escolha">todas</span></summary><div class="opcoes"><label><input type="checkbox" name="situacao" value="pago"/><span>Pago</span></label><label><input type="checkbox" name="situacao" value="recebido"/><span>Recebido</span></label><label><input type="checkbox" name="situacao" value="a-pagar"/><span>A pagar</span></label></div></details><label class="campo-filtro"><span>categoria — classificação do DFC (22 no mês)</span><select name="classe"><option value="" selected="">todas</option><option value="(vazio)">(vazio)</option><option value="DESPESA ADMNISTRATIVO">DESPESA ADMNISTRATIVO</option><option value="DESPESA CLT">DESPESA CLT</option><option value="DESPESA DIRETORIA">DESPESA DIRETORIA</option><option value="EMPRESTIMO">EMPRESTIMO</option><option value="ENDORMARKETING">ENDORMARKETING</option><option value="ESTORNO">ESTORNO</option><option value="FOLHA, IMPOSTOS E ADIANTAMENTOS">FOLHA, IMPOSTOS E ADIANTAMENTOS</option><option value="FORNECEDORES COGS">FORNECEDORES COGS</option><option value="FORNECEDORES G&amp;A">FORNECEDORES G&amp;A</option><option value="FORNECEODORES COGS">FORNECEODORES COGS</option><option value="IMPOSTOS E CONTRIBUICOES">IMPOSTOS E CONTRIBUICOES</option><option value="OUTRAS DESPESAS">OUTRAS DESPESAS</option><option value="OUTRAS SAIDAS">OUTRAS SAIDAS</option><option value="PESSOAL PJ">PESSOAL PJ</option><option value="PRO LABORE">PRO LABORE</option><option value="RECEITA DE CLIENTE">RECEITA DE CLIENTE</option><option value="REEMBOLSO">REEMBOLSO</option><option value="RETIRADA">RETIRADA</option><option value="RETIRADA DE SOCIO">RETIRADA DE SOCIO</option><option value="SEGURO">SEGURO</option><option value="TRANSFERENCIA">TRANSFERENCIA</option></select></label><label class="campo-filtro"><span>categoria — a do Omie (56 no mês)</span><select name="categoria"><option value="" selected="">todas</option><option value="1.01.01">1.01.01 — RECEITA DE VENDA DE PRODUTOS</option><option value="1.02.02">1.02.02 — Rendimentos de Aplicações</option><option value="1.04.94">1.04.94 — Rendimento Financeiro</option><option value="2.01">2.01 — Custos/Despesas Diretas</option><option value="2.01.01">2.01.01 — Compras de Mercadorias para Revenda</option><option value="2.01.02">2.01.02 — Fretes s/ compras</option><option value="2.01.03">2.01.03 — Compras de Materia Prima</option><option value="2.01.79">2.01.79 — Sistema de Ponto</option><option value="2.01.89">2.01.89 — Pensão Alimentícia- Custo (estoque)</option><option value="2.01.90">2.01.90 — Vigilância e Monitoramento -Custos</option><option value="2.01.93">2.01.93 — Seguros de carga -Custo</option><option value="2.01.97">2.01.97 — Salários - Custo (estoque)</option><option value="2.02.01">2.02.01 — Desp com Rep. Comercial- COMISSÕES s/ vendas</option><option value="2.02.02">2.02.02 — Desp com Rep. Comercial - AJUDA DE CUSTO PJS</option><option value="2.02.03">2.02.03 — Desp com Repres. Coml -REPASSES</option><option value="2.02.96">2.02.96 — Despesas vendas: Lanches/Refeições</option><option value="2.02.98">2.02.98 — Despesas Vendas - Propaganda e Marketing</option><option value="2.03.01">2.03.01 — Salários e Ordenados - Adm</option><option value="2.03.03">2.03.03 — Férias- Adm</option><option value="2.03.09">2.03.09 — Pensão Alimentícia</option><option value="2.03.10">2.03.10 — Assistência Médica e social -Adm</option><option value="2.03.11">2.03.11 — Vale Transporte- Adm</option><option value="2.03.12">2.03.12 — Vale Refeição-Adm</option><option value="2.03.14">2.03.14 — Outros Benefícios</option><option value="2.03.96">2.03.96 — Acordo Trabalhista</option><option value="2.04.01">2.04.01 — Aluguel -ADM</option><option value="2.04.02">2.04.02 — Condomínio- ADM</option><option value="2.04.04">2.04.04 — Energia Elétrica- ADM</option><option value="2.04.05">2.04.05 — Telefone e Internet</option><option value="2.04.06">2.04.06 — Material de Escritório-ADM</option><option value="2.04.09">2.04.09 — IPTU -ADM</option><option value="2.04.10">2.04.10 — Honorários Contábeis</option><option value="2.04.11">2.04.11 — Honorários Advocaticios</option><option value="2.04.12">2.04.12 — Serviços de Limpeza</option><option value="2.04.89">2.04.89 — Giro de Capital</option><option value="2.04.90">2.04.90 — Serviços de Terceiros - PJ ADM</option><option value="2.04.93">2.04.93 — Locação de Software- Adm</option><option value="2.04.96">2.04.96 — Despesas Indedutíveis</option><option value="2.04.99">2.04.99 — Mensalidades de Software-ADM</option><option value="2.05.04">2.05.04 — Tarifas Bancárias</option><option value="2.05.99">2.05.99 — Transferência Intercompany</option><option value="2.06.05">2.06.05 — IRPJ</option><option value="2.06.07">2.06.07 — ISS RETIDO</option><option value="2.06.98">2.06.98 — TAXA</option><option value="2.08.01">2.08.01 — Adiantamento/Retirada de Sócio</option><option value="2.08.02">2.08.02 — Outras Despesas</option><option value="2.08.98">2.08.98 — Reembolso</option><option value="2.08.99">2.08.99 — Reembolso - Custo</option><option value="2.10.99">2.10.99 — Implantação de saldos (saidas)</option><option value="2.11.95">2.11.95 — Financiamento Veiculo</option><option value="2.11.96">2.11.96 — Pró-Labore</option><option value="2.11.97">2.11.97 — Seguro</option><option value="2.11.99">2.11.99 — Aluguel Veiculo</option><option value="2.12.97">2.12.97 — Aguá / Esgoto</option><option value="2.12.98">2.12.98 — Energia Elétrica</option><option value="2.12.99">2.12.99 — Aluguel</option></select></label><label class="campo-filtro"><span>cliente/fornecedor (174 no mês)</span><select name="fornecedor"><option value="" selected="">todos</option><option value="1-6036233093">cliente 6036233093</option><option value="1-6023698259">cliente 6023698259</option><option value="1-5973301601">cliente 5973301601</option><option value="1-5973300984">cliente 5973300984</option><option value="1-5973822681">cliente 5973822681</option><option value="1-6015119938">cliente 6015119938</option><option value="1-6035829866">cliente 6035829866</option><option value="1-5973300656">cliente 5973300656</option><option value="1-5973299346">cliente 5973299346</option><option value="1-5973299145">cliente 5973299145</option><option value="1-5973299098">cliente 5973299098</option><option value="1-5980226249">cliente 5980226249</option><option value="1-6021744542">cliente 6021744542</option><option value="1-6040069696">cliente 6040069696</option><option value="1-6014322973">cliente 6014322973</option><option value="1-6035074841">cliente 6035074841</option><option value="2-5281125750">cliente 5281125750</option><option value="2-5283566579">cliente 5283566579</option><option value="2-5227686584">cliente 5227686584</option><option value="1-5973299789">cliente 5973299789</option><option value="2-5198388035">cliente 5198388035</option><option value="2-5287302034">cliente 5287302034</option><option value="2-5269671562">cliente 5269671562</option><option value="1-6026262482">cliente 6026262482</option><option value="1-5973302035">cliente 5973302035</option><option value="2-5198396081">cliente 5198396081</option><option value="2-5289187926">cliente 5289187926</option><option value="1-6030796316">cliente 6030796316</option><option value="2-5204520587">cliente 5204520587</option><option value="2-5199867259">cliente 5199867259</option><option value="1-5973299186">cliente 5973299186</option><option value="2-5286347316">cliente 5286347316</option><option value="1-5973304840">cliente 5973304840</option><option value="2-5279667922">cliente 5279667922</option><option value="1-5973303474">cliente 5973303474</option><option value="1-5973299156">cliente 5973299156</option><option value="1-5973301350">cliente 5973301350</option><option value="1-5991747293">cliente 5991747293</option><option value="1-6025579659">cliente 6025579659</option><option value="1-5973822325">cliente 5973822325</option><option value="1-5973298718">cliente 5973298718</option><option value="2-5257304295">cliente 5257304295</option><option value="2-5279883945">cliente 5279883945</option><option value="1-6019529167">cliente 6019529167</option><option value="1-5988712049">cliente 5988712049</option><option value="2-5217669679">cliente 5217669679</option><option value="1-5981016848">cliente 5981016848</option><option value="2-5209944293">cliente 5209944293</option><option value="1-5973301991">cliente 5973301991</option><option value="2-5198392005">cliente 5198392005</option><option value="1-5981018752">cliente 5981018752</option><option value="1-5973302087">cliente 5973302087</option><option value="2-5199812101">cliente 5199812101</option><option value="2-5283234665">cliente 5283234665</option><option value="2-5289808116">cliente 5289808116</option><option value="1-6034859731">cliente 6034859731</option><option value="2-5198394248">cliente 5198394248</option><option value="1-5973301615">cliente 5973301615</option><option value="2-5198391628">cliente 5198391628</option><option value="1-5973301447">cliente 5973301447</option><option value="2-5269120910">cliente 5269120910</option><option value="2-5198389913">cliente 5198389913</option><option value="2-5261083635">cliente 5261083635</option><option value="2-5278020193">cliente 5278020193</option><option value="2-5199828682">cliente 5199828682</option><option value="2-5277564014">cliente 5277564014</option><option value="2-5199822906">cliente 5199822906</option><option value="1-6021877642">cliente 6021877642</option><option value="1-6036590711">cliente 6036590711</option><option value="1-5973305863">cliente 5973305863</option><option value="1-5973301965">cliente 5973301965</option><option value="2-5286042182">cliente 5286042182</option><option value="2-5284625556">cliente 5284625556</option><option value="1-5973299506">cliente 5973299506</option><option value="2-5288716321">cliente 5288716321</option><option value="2-5275915564">cliente 5275915564</option><option value="2-5262146240">cliente 5262146240</option><option value="2-5279388899">cliente 5279388899</option><option value="2-5282680705">cliente 5282680705</option><option value="2-5289181596">cliente 5289181596</option><option value="2-5291937344">cliente 5291937344</option><option value="2-5287491501">cliente 5287491501</option><option value="2-5290317400">cliente 5290317400</option><option value="1-6009448417">cliente 6009448417</option><option value="1-5973304346">cliente 5973304346</option><option value="2-5198391557">cliente 5198391557</option><option value="1-5973305591">cliente 5973305591</option><option value="1-5973301386">cliente 5973301386</option><option value="1-5973301694">cliente 5973301694</option><option value="2-5287874522">cliente 5287874522</option><option value="2-5281624792">cliente 5281624792</option><option value="1-5973301264">cliente 5973301264</option><option value="2-5198392700">cliente 5198392700</option><option value="1-6022594604">cliente 6022594604</option><option value="1-5973299838">cliente 5973299838</option><option value="2-5287302427">cliente 5287302427</option><option value="2-5290305770">cliente 5290305770</option><option value="2-5285337782">cliente 5285337782</option><option value="1-5973298910">cliente 5973298910</option><option value="2-5198380226">cliente 5198380226</option><option value="2-5298672638">cliente 5298672638</option><option value="2-5290397468">cliente 5290397468</option><option value="1-5989595498">cliente 5989595498</option><option value="2-5282326806">cliente 5282326806</option><option value="2-5283610506">cliente 5283610506</option><option value="1-6048523530">cliente 6048523530</option><option value="1-5981067543">cliente 5981067543</option><option value="1-5982562777">cliente 5982562777</option><option value="2-5199835552">cliente 5199835552</option><option value="1-5973300593">cliente 5973300593</option><option value="1-5985141626">cliente 5985141626</option><option value="2-5285143824">cliente 5285143824</option><option value="2-5277575270">cliente 5277575270</option><option value="2-5286630072">cliente 5286630072</option><option value="2-5277462214">cliente 5277462214</option><option value="1-5983858412">cliente 5983858412</option><option value="1-5973299850">cliente 5973299850</option><option value="2-5199865257">cliente 5199865257</option><option value="2-5287143123">cliente 5287143123</option><option value="1-5973299184">cliente 5973299184</option><option value="1-5969622001">cliente 5969622001</option><option value="2-5191262165">cliente 5191262165</option><option value="2-5279511297">cliente 5279511297</option><option value="2-5293368428">cliente 5293368428</option><option value="1-5973305504">cliente 5973305504</option><option value="2-5198393615">cliente 5198393615</option><option value="1-5973301237">cliente 5973301237</option><option value="1-5973305483">cliente 5973305483</option><option value="2-5287610723">cliente 5287610723</option><option value="2-5198393834">cliente 5198393834</option><option value="1-5973304998">cliente 5973304998</option><option value="2-5198393399">cliente 5198393399</option><option value="1-5973299355">cliente 5973299355</option><option value="1-5993353066">cliente 5993353066</option><option value="1-5981017877">cliente 5981017877</option><option value="2-5284562247">cliente 5284562247</option><option value="2-5277298985">cliente 5277298985</option><option value="2-5273686446">cliente 5273686446</option><option value="2-5282985777">cliente 5282985777</option><option value="1-5973305208">cliente 5973305208</option><option value="2-5212170074">cliente 5212170074</option><option value="2-5273684966">cliente 5273684966</option><option value="2-5278849169">cliente 5278849169</option><option value="1-5981020024">cliente 5981020024</option><option value="1-5973300574">cliente 5973300574</option><option value="1-5973298535">cliente 5973298535</option><option value="2-5230723582">cliente 5230723582</option><option value="2-5287281442">cliente 5287281442</option><option value="2-5199866001">cliente 5199866001</option><option value="2-5262483682">cliente 5262483682</option><option value="2-5198378693">cliente 5198378693</option><option value="2-5198390934">cliente 5198390934</option><option value="1-5973301373">cliente 5973301373</option><option value="1-6027510466">cliente 6027510466</option><option value="1-5979970029">cliente 5979970029</option><option value="2-5235346637">cliente 5235346637</option><option value="2-5239062067">cliente 5239062067</option><option value="2-5282327977">cliente 5282327977</option><option value="2-5281226420">cliente 5281226420</option><option value="1-5973304467">cliente 5973304467</option><option value="1-5981019633">cliente 5981019633</option><option value="2-5209947417">cliente 5209947417</option><option value="1-5975434337">cliente 5975434337</option><option value="1-5973305061">cliente 5973305061</option><option value="1-5973301218">cliente 5973301218</option><option value="2-5281725759">cliente 5281725759</option><option value="2-5198382122">cliente 5198382122</option><option value="1-6013169694">cliente 6013169694</option><option value="1-6034871619">cliente 6034871619</option><option value="1-5973305234">cliente 5973305234</option><option value="2-5211564972">cliente 5211564972</option><option value="2-5198391191">cliente 5198391191</option><option value="1-6023698268">cliente 6023698268</option><option value="2-5286339800">cliente 5286339800</option></select></label><button class="botao filtro" type="submit">aplicar</button><span class="limpar-tudo">limpar</span></form><details class="explica"><summary>o que cada filtro alcança, e o que ele não alcança</summary><p><strong>A chave &quot;incluir dados do Omie&quot;</strong> está desligada. Os filtros de <strong>centro de custo</strong>, de <strong>categoria do Omie</strong> e de <strong>cliente/fornecedor</strong> só recortam o lado do Omie, e por isso não alcançam número nenhum enquanto ela estiver assim — eles continuam na tela, com as mesmas opções, para a escolha não se perder quando a chave voltar. Os de <strong>situação</strong> e de <strong>categoria pela classificação do DFC</strong> continuam valendo inteiros, porque alcançam o valor da planilha; os de <strong>empresa</strong> e de <strong>conta bancária</strong>, que só alcançavam o lado do Omie desta tela, também ficam sem número para recortar.</p><p class="aviso leve"><strong>As duas empresas:</strong> a tela soma as filiais <code>/0001-42</code> e <code>/0002-23</code> do Omie, como sempre — a terceira fica fora. A lista suspensa escolhe uma delas; marcar as duas é a soma de sempre.</p><p class="aviso leve"><strong>Todas as contas da MeuBESS:</strong> a tela soma as 9 contas com <code>negocio = &quot;MeuBESS&quot;</code>, como sempre — conta de outro negócio continua fora. A lista suspensa escolhe uma ou mais delas.</p><p><strong>Sem filtro de situação:</strong> a tela mostra as três. No DFC do mês há 285 linhas <code>PAGO</code>, 103 <code>RECEBIDO</code> e 0 <code>A PAGAR</code> — a linha <code>A PAGAR</code> nunca entra nesta tela, que é de caixa, e por isso &quot;a pagar&quot; aqui é só o cartão &quot;Desp. Pendentes&quot;.</p><p><strong>A categoria tem duas pontas, e não é descuido:</strong> a classificação do DFC (<code>CLASS. CONTABIL</code>, a mesma que o &quot;Para onde foi a despesa&quot; agrupa) recorta o lado do DFC, e a categoria do Omie (<code>cCodCateg</code>) recorta o lado do Omie. As duas fontes não escrevem o de-para entre os dois vocabulários, então escolher uma ponta só não recorta a outra — e cada número diz isso ali mesmo. O cliente/fornecedor é só do lado do Omie: no DFC ele é um nome digitado à mão, sem código, e 76% das linhas cruzáveis de 2026 não acham nome nenhum no cadastro.</p><p><strong>O centro de custo sai da conta com o Omie:</strong> o rateio por departamento (<code>departamentos[].nDistrValor</code>) é do Omie, e o DFC não tem coluna de centro de custo nenhuma — a aba <code>FLUXO DE CAIXA</code> classifica cada linha por <code>CLASS. CONTABIL</code> e <code>SUB 2</code>. Por isso os números que este filtro mostrava ao lado — quantos lançamentos do mês não têm rateio nenhum — também saem: eles são contagem do Omie.</p></details></section><section class="kpis"><div class="kpi destaque"><div class="rotulo">Saldo</div><div class="numero">—</div><div class="pe">388 do DFC · sem o Omie</div></div><div class="kpi"><div class="rotulo">Receitas</div><div class="numero">—</div><div class="pe">101 do DFC · sem o Omie</div></div><div class="kpi"><div class="rotulo">Despesas</div><div class="numero neg">—</div><div class="pe">281 do DFC · sem o Omie</div></div><div class="kpi"><div class="rotulo">Desp. Pagas</div><div class="numero">—</div><div class="pe">281 do DFC · sem o Omie</div></div><div class="kpi"><div class="rotulo">Desp. Pendentes</div><div class="numero">—</div><div class="pe">sem o Omie</div><div class="sem-filtro"><span class="sem-omie"><strong>sem o Omie, este cartão não tem número</strong> — ele é a exceção ao caixa e sai da leitura de títulos a pagar por VENCIMENTO do Omie (<code>cTpLancamento: &quot;CP&quot;</code>, sem baixa); o DFC não tem carteira a pagar para pôr no lugar, porque a aba <code>FLUXO DE CAIXA</code> é de caixa e a linha <code>A PAGAR</code> dela nunca entra nesta tela.</span></div></div><div class="kpi"><div class="rotulo">Desp. Funcionários</div><div class="numero">—</div><div class="pe">109 do DFC · sem o Omie</div></div><div class="kpi"><div class="rotulo">% D. Func. / Rec. Líquida</div><div class="numero">4%</div><div class="pe">109 do DFC · sem o Omie</div></div></section><div class="grade-g"><section class="quadro principal"><h2>O ano inteiro, e onde agosto cai nele</h2><p class="fonte-do-quadro">receita e despesa de cada mês de 2026, do bloco pronto de cada arquivo do DFC</p><div class="grafico"><div class="recharts-wrapper" style="position:relative;cursor:default;width:760px;height:286px"><svg class="recharts-surface" width="760" height="286" style="width:100%;height:100%" viewBox="0 0 760 286"><title></title><desc></desc><defs><clipPath id="recharts131-clip"><rect x="92" y="22" height="230" width="594"></rect></clipPath></defs><g class="recharts-cartesian-grid"><g class="recharts-cartesian-grid-horizontal"><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="22" width="594" height="230" x1="92" y1="252" x2="686" y2="252"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="22" width="594" height="230" x1="92" y1="194.5" x2="686" y2="194.5"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="22" width="594" height="230" x1="92" y1="137" x2="686" y2="137"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="22" width="594" height="230" x1="92" y1="79.5" x2="686" y2="79.5"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="22" width="594" height="230" x1="92" y1="22" x2="686" y2="22"></line></g></g><g class="recharts-layer recharts-cartesian-axis recharts-xAxis xAxis eixo"><g class="recharts-cartesian-axis-ticks"><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="92" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="92" dy="0.71em">Jan</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="146" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="146" dy="0.71em">Fev</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="200" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="200" dy="0.71em">Mar</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="254" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="254" dy="0.71em">Abr</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="308" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="308" dy="0.71em">Mai</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="362" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="362" dy="0.71em">Jun</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="416" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="416" dy="0.71em">Jul</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="470" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="470" dy="0.71em">Ago</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="524" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="524" dy="0.71em">Set</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="578" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="578" dy="0.71em">Out</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="632" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="632" dy="0.71em">Nov</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="594" height="30" stroke="none" font-size="10.5" x="686" y="260" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="686" dy="0.71em">Dez</tspan></text></g></g></g><g class="recharts-layer recharts-cartesian-axis recharts-yAxis yAxis eixo"><g class="recharts-cartesian-axis-ticks"><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="230" stroke="none" font-size="10.5" x="84" y="252" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="230" stroke="none" font-size="10.5" x="84" y="194.5" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="230" stroke="none" font-size="10.5" x="84" y="137" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="230" stroke="none" font-size="10.5" x="84" y="79.5" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="230" stroke="none" font-size="10.5" x="84" y="22" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g></g></g><g class="recharts-layer recharts-reference-line marca-do-mes"><line x="Ago" class="recharts-reference-line-line" fill="none" stroke="#ccc" fill-opacity="1" stroke-width="1" x1="470" y1="252" x2="470" y2="22"></line><text offset="5" x="470" y="17" class="recharts-text marca-do-mes-texto" text-anchor="middle" fill="#808080"><tspan x="470" dy="0em">Ago — o mês desta tela</tspan></text></g><g class="recharts-layer recharts-line serie-receita"><path name="receita" class="recharts-curve recharts-line-curve" stroke="currentColor" stroke-width="2" width="594" height="230" fill="none" d="M92,252C110,252,128,252,146,252C164,252,182,252,200,252C218,252,236,144.106,254,144.106C272,144.106,290,251.385,308,251.631C326,251.877,344,252,362,252C380,252,398,245.118,416,245.118C434,245.118,452,252,470,252C488,252,506,252,524,252C542,252,560,252,578,252C596,252,614,252,632,252C650,252,668,252,686,252"></path><g class="recharts-layer"></g><g class="recharts-layer recharts-line-dots"><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="92" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="146" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="200" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="254" cy="144.10550385"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="308" cy="251.6308059166667"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="362" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="416" cy="245.11823056666668"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="470" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="524" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="578" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="632" cy="252"></circle><circle r="2.5" name="receita" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="686" cy="252"></circle></g><g class="recharts-layer recharts-label-list"><text x="695" y="252" dy="-2" class="ponta-da-linha">receita</text></g></g><g class="recharts-layer recharts-line serie-despesa"><path name="despesa" class="recharts-curve recharts-line-curve" stroke="currentColor" stroke-width="2" width="594" height="230" fill="none" d="M92,252C110,252,128,252,146,252C164,252,182,252,200,252C218,252,236,94.368,254,94.368C272,94.368,290,165.517,308,190.368C326,215.22,344,243.479,362,243.479C380,243.479,398,234.357,416,234.357C434,234.357,452,250.844,470,251.218C488,251.591,506,251.706,524,251.778C542,251.849,560,251.885,578,251.885C596,251.885,614,251.885,632,251.885C650,251.885,668,251.885,686,251.885"></path><g class="recharts-layer"></g><g class="recharts-layer recharts-line-dots"><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="92" cy="252"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="146" cy="252"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="200" cy="252"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="254" cy="94.36825800000001"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="308" cy="190.36845441666665"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="362" cy="243.4788335"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="416" cy="234.35660608333333"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="470" cy="251.21766611666666"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="524" cy="251.77766666666665"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="578" cy="251.88500000000002"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="632" cy="251.88500000000002"></circle><circle r="2.5" name="despesa" class="recharts-dot recharts-line-dot" stroke="currentColor" stroke-width="0" width="594" height="230" fill="currentColor" cx="686" cy="251.88500000000002"></circle></g><g class="recharts-layer recharts-label-list"><text x="695" y="251.88500000000002" dy="11" class="ponta-da-linha">despesa</text></g></g></svg><div tabindex="-1" class="recharts-tooltip-wrapper" style="visibility:hidden;pointer-events:none;position:absolute;top:0;left:0"><div class="recharts-default-tooltip dica-grafico" style="margin:0;padding:10px;background-color:#fff;border:1px solid #ccc;white-space:nowrap"><p class="recharts-tooltip-label" style="margin:0"></p></div></div></div></div></section><section class="quadro "><h2>Para onde foi a despesa</h2><p class="fonte-do-quadro">as dez maiores classificações de saída do mês, do DFC</p><div class="grafico"><div class="recharts-wrapper" style="position:relative;cursor:default;width:430px;height:316px"><svg class="recharts-surface" width="430" height="316" style="width:100%;height:100%" viewBox="0 0 430 316"><title></title><desc></desc><defs><clipPath id="recharts136-clip"><rect x="148" y="4" height="308" width="186"></rect></clipPath></defs><g class="recharts-layer recharts-cartesian-axis recharts-yAxis yAxis eixo"><g class="recharts-cartesian-axis-ticks"><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="19.4" dy="3.5" text-anchor="end" class="rotulo-eixo">FORNECEDORES COGS</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="50.199999999999996" dy="3.5" text-anchor="end" class="rotulo-eixo">(vazio)</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="81" dy="3.5" text-anchor="end" class="rotulo-eixo">FORNECEDORES G&amp;A</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="111.80000000000001" dy="3.5" text-anchor="end" class="rotulo-eixo">PESSOAL PJ</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="142.6" dy="3.5" text-anchor="end" class="rotulo-eixo">RETIRADA</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="173.4" dy="3.5" text-anchor="end" class="rotulo-eixo">EMPRESTIMO</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="204.20000000000002" dy="3.5" text-anchor="end" class="rotulo-eixo">RETIRADA DE SOCIO</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="235" dy="3.5" text-anchor="end" class="rotulo-eixo">PRO LABORE</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="265.8" dy="3.5" text-anchor="end" class="rotulo-eixo">DESPESA DIRETORIA</text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text x="134" y="296.59999999999997" dy="3.5" text-anchor="end" class="rotulo-eixo">IMPOSTOS E CONTRIBUIC…</text></g></g></g><g class="recharts-layer recharts-bar serie-despesa"><g class="recharts-layer recharts-bar-rectangles"><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="12" width="150.80829315" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,12L 296.80829315,12A 2,2,0,0,1,
+        298.80829315,14L 298.80829315,24A 2,2,0,0,1,
+        296.80829315,26L 148,26Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="42.8" width="11.671308109999984" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,42.8L 157.67130810999998,42.8A 2,2,0,0,1,
+        159.67130810999998,44.8L 159.67130810999998,54.8A 2,2,0,0,1,
+        157.67130810999998,56.8L 148,56.8Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="73.6" width="6.327915919999981" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,73.6L 152.32791591999998,73.6A 2,2,0,0,1,
+        154.32791591999998,75.6L 154.32791591999998,85.6A 2,2,0,0,1,
+        152.32791591999998,87.6L 148,87.6Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="104.4" width="4.911121059999999" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,104.4L 150.91112106,104.4A 2,2,0,0,1,
+        152.91112106,106.4L 152.91112106,116.4A 2,2,0,0,1,
+        150.91112106,118.4L 148,118.4Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="135.2" width="1.564591390000004" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,135.2L 148.78229569500002,135.2A 0.782295695000002,0.782295695000002,0,0,1,
+        149.56459139,135.982295695L 149.56459139,148.41770430499997A 0.782295695000002,0.782295695000002,0,0,1,
+        148.78229569500002,149.2L 148,149.2Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="166" width="1.1911855399999922" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,166L 148.59559277,166A 0.5955927699999961,0.5955927699999961,0,0,1,
+        149.19118554,166.59559277L 149.19118554,179.40440723A 0.5955927699999961,0.5955927699999961,0,0,1,
+        148.59559277,180L 148,180Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="196.8" width="0.9299999999999784" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,196.8L 148.46499999999997,196.8A 0.4649999999999892,0.4649999999999892,0,0,1,
+        148.92999999999998,197.265L 148.92999999999998,210.33500000000004A 0.4649999999999892,0.4649999999999892,0,0,1,
+        148.46499999999997,210.8L 148,210.8Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="227.6" width="0.4154000000000053" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,227.6L 148.2077,227.6A 0.20770000000000266,0.20770000000000266,0,0,1,
+        148.4154,227.8077L 148.4154,241.39229999999998A 0.20770000000000266,0.20770000000000266,0,0,1,
+        148.2077,241.6L 148,241.6Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="258.4" width="0.32471104999999056" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,258.4L 148.162355525,258.4A 0.16235552499999528,0.16235552499999528,0,0,1,
+        148.32471105,258.562355525L 148.32471105,272.23764447499997A 0.16235552499999528,0.16235552499999528,0,0,1,
+        148.162355525,272.4L 148,272.4Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="148" y="289.2" width="0.27496596999998246" height="14" radius="0,2,2,0" name="valor" class="recharts-rectangle serie-despesa" fill="currentColor" d="M148,289.2L 148.137482985,289.2A 0.13748298499999123,0.13748298499999123,0,0,1,
+        148.27496596999998,289.33748298499995L 148.27496596999998,303.062517015A 0.13748298499999123,0.13748298499999123,0,0,1,
+        148.137482985,303.2L 148,303.2Z"></path></g></g><g class="recharts-layer"></g><g class="recharts-layer recharts-label-list"><text offset="5" width="150.80829315" height="14" x="303.80829315" y="19" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="303.80829315" dy="0.355em">—</tspan></text><text offset="5" width="11.671308109999984" height="14" x="164.67130810999998" y="49.8" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="164.67130810999998" dy="0.355em">—</tspan></text><text offset="5" width="6.327915919999981" height="14" x="159.32791591999998" y="80.6" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="159.32791591999998" dy="0.355em">—</tspan></text><text offset="5" width="4.911121059999999" height="14" x="157.91112106" y="111.4" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="157.91112106" dy="0.355em">—</tspan></text><text offset="5" width="1.564591390000004" height="14" x="154.56459139" y="142.2" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="154.56459139" dy="0.355em">—</tspan></text><text offset="5" width="1.1911855399999922" height="14" x="154.19118554" y="173" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="154.19118554" dy="0.355em">—</tspan></text><text offset="5" width="0.9299999999999784" height="14" x="153.92999999999998" y="203.8" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="153.92999999999998" dy="0.355em">—</tspan></text><text offset="5" width="0.4154000000000053" height="14" x="153.4154" y="234.6" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="153.4154" dy="0.355em">—</tspan></text><text offset="5" width="0.32471104999999056" height="14" x="153.32471105" y="265.4" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="153.32471105" dy="0.355em">—</tspan></text><text offset="5" width="0.27496596999998246" height="14" x="153.27496596999998" y="296.2" class="recharts-text rotulo-valor" text-anchor="start" fill="#808080"><tspan x="153.27496596999998" dy="0.355em">—</tspan></text></g></g></svg><div tabindex="-1" class="recharts-tooltip-wrapper" style="visibility:hidden;pointer-events:none;position:absolute;top:0;left:0"><div class="recharts-default-tooltip dica-grafico" style="margin:0;padding:10px;background-color:#fff;border:1px solid #ccc;white-space:nowrap"><p class="recharts-tooltip-label" style="margin:0"></p></div></div></div></div></section><section class="quadro principal"><h2>O mês, dia a dia</h2><p class="fonte-do-quadro">entradas e gastos de cada dia de agosto, do bloco pronto da aba do mês</p><div class="grafico"><div class="recharts-wrapper" style="position:relative;cursor:default;width:760px;height:220px"><svg class="recharts-surface" width="760" height="220" style="width:100%;height:100%" viewBox="0 0 760 220"><title></title><desc></desc><defs><clipPath id="recharts139-clip"><rect x="92" y="8" height="178" width="660"></rect></clipPath></defs><g class="recharts-cartesian-grid"><g class="recharts-cartesian-grid-horizontal"><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="8" width="660" height="178" x1="92" y1="186" x2="752" y2="186"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="8" width="660" height="178" x1="92" y1="141.5" x2="752" y2="141.5"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="8" width="660" height="178" x1="92" y1="97" x2="752" y2="97"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="8" width="660" height="178" x1="92" y1="52.5" x2="752" y2="52.5"></line><line class="grade-grafico" stroke-dasharray="0" stroke="#ccc" fill="none" x="92" y="8" width="660" height="178" x1="92" y1="8" x2="752" y2="8"></line></g></g><g class="recharts-layer recharts-cartesian-axis recharts-xAxis xAxis eixo"><g class="recharts-cartesian-axis-ticks"><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="102.64516129032258" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="102.64516129032258" dy="0.71em">1</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="123.93548387096773" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="123.93548387096773" dy="0.71em">2</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="145.2258064516129" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="145.2258064516129" dy="0.71em">3</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="166.51612903225808" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="166.51612903225808" dy="0.71em">4</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="187.80645161290323" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="187.80645161290323" dy="0.71em">5</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="209.09677419354838" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="209.09677419354838" dy="0.71em">6</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="230.38709677419357" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="230.38709677419357" dy="0.71em">7</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="251.67741935483872" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="251.67741935483872" dy="0.71em">8</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="272.96774193548384" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="272.96774193548384" dy="0.71em">9</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="294.258064516129" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="294.258064516129" dy="0.71em">10</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="315.54838709677415" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="315.54838709677415" dy="0.71em">11</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="336.83870967741933" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="336.83870967741933" dy="0.71em">12</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="358.1290322580645" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="358.1290322580645" dy="0.71em">13</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="379.41935483870964" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="379.41935483870964" dy="0.71em">14</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="400.7096774193548" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="400.7096774193548" dy="0.71em">15</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="421.99999999999994" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="421.99999999999994" dy="0.71em">16</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="443.2903225806451" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="443.2903225806451" dy="0.71em">17</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="464.5806451612903" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="464.5806451612903" dy="0.71em">18</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="485.87096774193543" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="485.87096774193543" dy="0.71em">19</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="507.1612903225806" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="507.1612903225806" dy="0.71em">20</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="528.4516129032257" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="528.4516129032257" dy="0.71em">21</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="549.7419354838709" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="549.7419354838709" dy="0.71em">22</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="571.0322580645161" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="571.0322580645161" dy="0.71em">23</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="592.3225806451612" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="592.3225806451612" dy="0.71em">24</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="613.6129032258065" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="613.6129032258065" dy="0.71em">25</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="634.9032258064516" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="634.9032258064516" dy="0.71em">26</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="656.1935483870967" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="656.1935483870967" dy="0.71em">27</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="677.4838709677418" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="677.4838709677418" dy="0.71em">28</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="698.7741935483871" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="698.7741935483871" dy="0.71em">29</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="720.0645161290322" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="720.0645161290322" dy="0.71em">30</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="bottom" width="660" height="30" stroke="none" font-size="8.5" x="741.3548387096773" y="194" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="middle" fill="#666"><tspan x="741.3548387096773" dy="0.71em">31</tspan></text></g></g></g><g class="recharts-layer recharts-cartesian-axis recharts-yAxis yAxis eixo"><g class="recharts-cartesian-axis-ticks"><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="178" stroke="none" font-size="10.5" x="84" y="186" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="178" stroke="none" font-size="10.5" x="84" y="141.5" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="178" stroke="none" font-size="10.5" x="84" y="97" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="178" stroke="none" font-size="10.5" x="84" y="52.5" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g><g class="recharts-layer recharts-cartesian-axis-tick"><text orientation="left" width="92" height="178" stroke="none" font-size="10.5" x="84" y="8" class="recharts-text recharts-cartesian-axis-tick-value" text-anchor="end" fill="#666"><tspan x="84" dy="0.355em">—</tspan></text></g></g></g><g class="recharts-layer recharts-reference-line linha-zero"><line y="0" class="recharts-reference-line-line" fill="none" stroke="#ccc" fill-opacity="1" stroke-width="1" x1="92" y1="186" x2="752" y2="186"></line></g><g class="recharts-layer recharts-bar serie-receita"><g class="recharts-layer recharts-bar-rectangles"><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g></g><g class="recharts-layer"></g></g><g class="recharts-layer recharts-bar serie-despesa"><g class="recharts-layer recharts-bar-rectangles"><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"><path x="209.5806451612903" y="180.1438" width="8" height="5.856200000000001" radius="0" name="despesa" class="recharts-rectangle serie-despesa" fill="currentColor" d="M 209.5806451612903,180.1438 h 8 v 5.856200000000001 h -8 Z"></path></g><g class="recharts-layer recharts-bar-rectangle"><path x="230.8709677419355" y="10.218680999999998" width="8" height="175.781319" radius="0" name="despesa" class="recharts-rectangle serie-despesa" fill="currentColor" d="M 230.8709677419355,10.218680999999998 h 8 v 175.781319 h -8 Z"></path></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g><g class="recharts-layer recharts-bar-rectangle"></g></g><g class="recharts-layer"></g></g></svg><div tabindex="-1" class="recharts-tooltip-wrapper" style="visibility:hidden;pointer-events:none;position:absolute;top:0;left:0"><div class="recharts-default-tooltip dica-grafico" style="margin:0;padding:10px;background-color:#fff;border:1px solid #ccc;white-space:nowrap"><p class="recharts-tooltip-label" style="margin:0"></p></div></div></div></div></section><section class="quadro "><h2>De quem veio a receita</h2><p class="fonte-do-quadro">os dez maiores recebimentos do mês, do Omie recortado da MeuBESS</p><div class="grafico"><div class="recharts-wrapper" style="position:relative;cursor:default;width:430px;height:120px"><svg class="recharts-surface" width="430" height="120" style="width:100%;height:100%" viewBox="0 0 430 120"><title></title><desc></desc><defs><clipPath id="recharts144-clip"><rect x="148" y="4" height="112" width="186"></rect></clipPath></defs></svg><div tabindex="-1" class="recharts-tooltip-wrapper" style="visibility:hidden;pointer-events:none;position:absolute;top:0;left:0"><div class="recharts-default-tooltip dica-grafico" style="margin:0;padding:10px;background-color:#fff;border:1px solid #ccc;white-space:nowrap"><p class="recharts-tooltip-label" style="margin:0"></p></div></div></div></div><p class="legenda">nenhum lançamento entrou neste mês.</p><div class="sem-filtro"><span class="sem-omie"><strong>sem o Omie, este bloco não tem barras</strong> — os dez maiores recebimentos do mês saem do Omie recortado da MeuBESS, e este bloco nunca teve lado do DFC; as SAÍDAS do mês, essas, continuam ali ao lado, no &quot;Para onde foi a despesa&quot;, que é do DFC.</span></div></section></div><section class="quadro detalhe"><h2>Os números exatos, indicador por indicador</h2><p class="fonte-do-quadro">quantos lançamentos entraram em cada um dos 11 indicadores desta tela — o mesmo que<code> npm run conferir-telas </code> compara com <code>docs/conferencia.md</code></p><table class="tabela-detalhe"><thead><tr><th>indicador</th><th>fonte</th><th class="num">do DFC</th><th class="num">do Omie</th></tr></thead><tbody><tr><th>Saldo</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">388</td><td class="num">sem o Omie</td></tr><tr><th>Receitas</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">101</td><td class="num">sem o Omie</td></tr><tr><th>Despesas</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">281</td><td class="num">sem o Omie</td></tr><tr><th>Desp. Pagas</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">281</td><td class="num">sem o Omie</td></tr><tr><th>Desp. Pendentes</th><td class="fonte">Omie recortado (principal) / DFC (confronto)</td><td class="num">—</td><td class="num">sem o Omie</td></tr><tr><th>Desp. Funcionários</th><td class="fonte">DFC (principal) / Omie recortado por categoria de pessoal (confronto)</td><td class="num">109</td><td class="num">sem o Omie</td></tr><tr><th>% D. Func. / Rec. Líquida</th><td class="fonte">DFC nas duas pontas (principal) / a mesma razão no Omie recortado (confronto)</td><td class="num">109</td><td class="num">sem o Omie</td></tr><tr><th>Top 10 despesas</th><td class="fonte">DFC (principal) / Omie recortado por centro de custo (confronto)</td><td class="num">281</td><td class="num">sem o Omie</td></tr><tr><th>Top 10 receitas</th><td class="fonte">Omie recortado (principal) / DFC (confronto)</td><td class="num">—</td><td class="num">sem o Omie</td></tr><tr><th>Receita × despesa por dia</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">31</td><td class="num">sem o Omie</td></tr><tr><th>Receita × despesa por mês</th><td class="fonte">DFC (principal) / Omie recortado (confronto)</td><td class="num">12</td><td class="num">sem o Omie</td></tr></tbody></table></section><footer class="rodape"><span class="botao" style="opacity:.55">atualizar agora</span><span>agosto de 2026 · empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta. DFC: pasta sincronizada, 08 - DFC AGOSTO 2026.xlsx.</span><span class="ultima-leitura"><strong>Última leitura</strong> — Omie: 28/09, 13:55 (releitura em curso desde 28/09, 15:00). DFC: 28/09, 15:00 (pasta sincronizada).</span><span>números do guardado desta hora</span></footer></div>
+</body>
+</html>

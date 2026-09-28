@@ -268,6 +268,15 @@ como na captura sem filtro e as do Omie caem, com a frase do "não vale" ao lado
 `scripts/capturar-tela.mjs` acrescenta os filtros à URL e o `--nome` muda o fim do nome do arquivo:
 `node scripts/capturar-tela.mjs --tela 1 --q "cc=FISCAL" --nome filtro`.
 
+E as três telas **sem o Omie** — a chave "incluir dados do Omie" desligada (decisão do dono, 28/09/2026):
+[`docs/tela-1-captura-sem-omie.html`](docs/tela-1-captura-sem-omie.html),
+[`docs/tela-2-captura-sem-omie.html`](docs/tela-2-captura-sem-omie.html) e
+[`docs/tela-3-captura-sem-omie.html`](docs/tela-3-captura-sem-omie.html). A chave é **uma forma de ver, e não um
+filtro**: ligada por padrão, ela não muda número, regra nem a trava de agosto; desligada, todo número cuja fonte é o
+Omie sai da conta e cada bloco que dependia dele diz isso ali mesmo, com um travessão no lugar — nunca um zero. O que
+cada bloco de cada tela mostra sem o Omie está em [`docs/filtros.md`](docs/filtros.md), e
+`npm run conferir-chave-omie` confere as 18 afirmações dela nas três telas.
+
 ### Onde mora o quê
 
 | pasta | o que é |
@@ -280,7 +289,9 @@ como na captura sem filtro e as do Omie caem, com a frase do "não vale" ao lado
 | `lib/regras/filtros.mjs` | **os filtros das três telas, num lugar só:** como cada um é lido da URL e normalizado, a junção dos dois cadastros de departamento pelo nome e o filtro de empresa, que as três telas dividem. Só os filtros que `docs/fontes.md` registra. |
 | `app/filtrado.js` | a frase que a tela escreve **junto do número** quando o filtro escolhido não alcança aquela fonte. |
 | `app/empresa.js` | o filtro de empresa, num lugar só para as três telas. |
+| `app/chave-omie.js` | a **chave "incluir dados do Omie"**, num lugar só para as três telas: a caixa de marcar, o `omie=0` escondido e o aviso do que sobra de cada tela sem ele (decisão do dono, 28/09/2026). |
 | `app/suspensa.js` | a **lista suspensa com caixas de marcar**: o desenho de todo filtro de escolha das três telas, sem uma linha de JavaScript (decisão do dono, 28/09/2026). |
+| `scripts/conferir-chave-omie.mjs` | confere a chave "incluir dados do Omie": ligada não muda nada, desligada o lado do DFC não se move e o do Omie sai como ausência (`null`), nunca como zero. |
 | `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis — inclusive a cor de cada série de gráfico. |

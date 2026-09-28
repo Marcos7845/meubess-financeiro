@@ -10,6 +10,7 @@
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
     "conferir-filtros": "node scripts/conferir-filtros.mjs",
+    "conferir-chave-omie": "node scripts/conferir-chave-omie.mjs",
     "medir-filtros": "node scripts/medir-filtros.mjs --gravar",
     "testar-trava": "node scripts/testar-trava-agosto.mjs",
     "pagina-de-layout": "node scripts/pagina-de-layout.mjs",

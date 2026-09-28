@@ -43,7 +43,12 @@ else {
     if (fin && fin.length >= n) { partida = fin[n - 1]; deOnde = `Final do dia ${n} do mês anterior`; }
   }
   console.log(`\n${r.arquivo} — aba do quadro: ${q?.aba ?? '(sem quadro)'}`);
-  console.log(`ponto de partida: ${R(partida)} (${deOnde}); Inicial do dia 1 deste mês: ${R(q?.posicao?.inicial?.[0])}\n`);
+  const bancos = r.saldosPorBanco ?? [];
+  if (bancos.length) {
+    partida = bancos.reduce((t, b) => t + b.abertura, 0);
+    deOnde = `abertura dos bancos pela coluna SALDO: ${bancos.map((b) => `${b.banco ?? '?'} ${R(b.abertura)}`).join(' · ')}; último SALDO somado ${R(bancos.reduce((t, b) => t + b.final, 0))}`;
+  }
+  console.log(`ponto de partida: ${R(partida)} (${deOnde}); Inicial do dia 1 do quadro: ${R(q?.posicao?.inicial?.[0])}\n`);
   console.log(`${col('dia', 3)} | ${col('entrou tela', 14)} ${col('Entradas plan.', 15)} | ${col('saiu tela', 14)} ${col('Gastos plan.', 14)} | ${col('posição tela', 14)} ${col('Final plan.', 14)} | linhas (pelo vencimento)`);
   const linhas = r.ok ? r.linhas : [];
   let pos = partida ?? 0;

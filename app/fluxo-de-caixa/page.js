@@ -98,15 +98,14 @@ export default async function Pagina({ searchParams }) {
   const doResultado = veredito(resultado.valor);
   const daProjecao = veredito(projecao.valor);
   const maior = Math.max(1, ...d.fixas.porConta.map((g) => g.valor));
-  // A LINHA CONFERIDA COM A PLANILHA: no último dia consolidado, a posição que a tela calculou contra o `Final` que a
-  // própria aba do mês escreve para aquele dia. Diferença não é erro da tela nem da planilha: é o que o quadro dela conta
-  // e as linhas baixadas do `FLUXO DE CAIXA` não (transferências entre contas que entraram, lançamentos ainda não
-  // baixados). A tela diz quanto é, em vez de esconder.
-  const ultimoConsolidado = [...d.diaADia.dias].reverse().find((x) => x.fase !== 'previsao' && x.finalDaPlanilha !== null);
-  const conferencia = d.diaADia.inicial !== null && ultimoConsolidado
-    ? (Math.abs(ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar) - ultimoConsolidado.finalDaPlanilha) < 100
-      ? `No dia ${ultimoConsolidado.dia}, a posição bate com o Final da planilha.`
-      : `No dia ${ultimoConsolidado.dia}, a planilha diz ${emReais(ultimoConsolidado.finalDaPlanilha)} de Final, e a linha dá ${emReais(ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar))}: a diferença é o que o quadro da planilha conta e as linhas baixadas do FLUXO DE CAIXA não (como a transferência entre contas que entrou).`)
+  // A LINHA CONFERIDA COM OS BANCOS: no último dia consolidado, a posição que a tela calculou contra a soma do último
+  // `SALDO` de cada banco no `FLUXO DE CAIXA`. Batendo, a linha é o caixa das contas; não batendo, a tela diz quanto.
+  const ultimoConsolidado = [...d.diaADia.dias].reverse().find((x) => x.fase !== 'previsao');
+  const posicaoConsolidada = ultimoConsolidado ? ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar) : null;
+  const conferencia = d.diaADia.finalDosBancos !== null && posicaoConsolidada !== null
+    ? (Math.abs(posicaoConsolidada - d.diaADia.finalDosBancos) < 100
+      ? `Conferido: no dia ${ultimoConsolidado.dia} a linha dá ${emReais(posicaoConsolidada)}, o mesmo que o último SALDO dos bancos na planilha.`
+      : `No dia ${ultimoConsolidado.dia} a linha dá ${emReais(posicaoConsolidada)}, e o último SALDO dos bancos na planilha soma ${emReais(d.diaADia.finalDosBancos)} (diferença de ${emReais(posicaoConsolidada - d.diaADia.finalDosBancos)}: lançamentos que entram no saldo da planilha e não nas linhas baixadas, como os ainda "a pagar").`)
     : null;
   const nomeDoMes = NOMES_DOS_MESES?.[mes] ?? MESES_CURTOS[mes];
   // O PÉ DE CADA CARTÃO: quantas linhas do DFC e quantos títulos do Omie entraram nele — só a fonte que ele usa. Um
@@ -219,17 +218,16 @@ export default async function Pagina({ searchParams }) {
           </p>
           <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />
           <p className="legenda">
-            {d.diaADia.finalDoMesAnterior !== null
-              ? <>A linha parte de <b>{emReais(d.diaADia.finalDoMesAnterior)}</b>, o caixa com que {NOMES_DOS_MESES[mes - 1]}{' '}
-                fechou (linha <code>Final</code> do último dia, na planilha do mês anterior). </>
+            {d.diaADia.aberturaDosBancos !== null
+              ? <>A linha parte de <b>{emReais(d.diaADia.aberturaDosBancos)}</b>, o caixa das contas antes do primeiro
+                lançamento do mês — da coluna <code>SALDO</code> do <code>FLUXO DE CAIXA</code>, banco por banco
+                ({d.diaADia.bancos.map((x) => `${x.banco ?? 'sem nome'} ${emReais(x.abertura)}`).join(' · ')}). </>
+              : d.diaADia.finalDoMesAnterior !== null
+              ? <>A linha parte de <b>{emReais(d.diaADia.finalDoMesAnterior)}</b>, o <code>Final</code> do último dia do
+                quadro do caixa do mês anterior (esta planilha não tem a coluna <code>SALDO</code>). </>
               : d.diaADia.inicial !== null
-              ? <>A linha parte de <b>{emReais(d.diaADia.inicial)}</b>, o <code>Inicial</code> do dia 1 da planilha deste mês. </>
-              : <>Sem o quadro do caixa na planilha, a linha parte do zero e mostra só o que o mês movimentou. </>}
-            {d.diaADia.finalDoMesAnterior !== null && d.diaADia.inicial !== null && (
-              Math.abs(d.diaADia.finalDoMesAnterior - d.diaADia.inicial) < 100
-                ? <>Bate com o <code>Inicial</code> do dia 1 desta planilha. </>
-                : <><b>Não bate com o <code>Inicial</code> do dia 1 desta planilha, que é {emReais(d.diaADia.inicial)}</b>
-                  {' '}(diferença de {emReais(d.diaADia.finalDoMesAnterior - d.diaADia.inicial)}). </>)}
+              ? <>A linha parte de <b>{emReais(d.diaADia.inicial)}</b>, o <code>Inicial</code> do dia 1 do quadro do caixa. </>
+              : <>Sem saldo na planilha, a linha parte do zero e mostra só o que o mês movimentou. </>}
             {d.diaADia.mesFechado
               ? <>Mês fechado, tudo consolidado: o caixa terminou o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b>.</>
               : !d.diaADia.comPrevisao

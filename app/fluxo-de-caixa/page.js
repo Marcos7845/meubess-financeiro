@@ -213,7 +213,7 @@ export default async function Pagina({ searchParams }) {
             {d.diaADia.comPrevisao && <><span className="chave serie-receita previsao" />a receber (previsão) &nbsp;</>}
             <span className="chave serie-despesa" />saiu &nbsp;
             {d.diaADia.comPrevisao && <><span className="chave serie-despesa previsao" />a pagar (previsão) &nbsp;</>}
-            <span className="chave serie-saldo" />posição de caixa (eixo da direita)
+            <span className="chave serie-saldo" />posição de caixa
             {d.diaADia.hoje ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
           </p>
           <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />

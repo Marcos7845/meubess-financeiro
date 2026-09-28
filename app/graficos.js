@@ -415,10 +415,10 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
         stackOffset="sign" barCategoryGap={2}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
-        {/* DOIS EIXOS: o do movimento do dia (as colunas), à esquerda, e o da posição de caixa (a linha), à direita. No
-            mesmo eixo, um caixa de milhões achatava as colunas do dia até sumirem. */}
+        {/* UM EIXO SÓ, para colunas e linha (correção de 28/09/2026). Com dois, o zero de um ficava noutra altura que o
+            do outro, e o dono leu uma posição de +R$ 385 mil, desenhada no eixo da direita, como −R$ 600 mil no da
+            esquerda. Com o caixa partindo da abertura dos bancos, linha e colunas são da mesma ordem de grandeza. */}
         <YAxis yAxisId="dia" {...EIXO_VALOR} />
-        <YAxis yAxisId="caixa" orientation="right" {...EIXO_VALOR} />
         <ReferenceLine yAxisId="dia" y={0} className="linha-zero" />
         {hoje && (
           <ReferenceLine yAxisId="dia" x={String(hoje)} className="marca-do-mes"
@@ -429,7 +429,7 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
         <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-receita previsao" fill="currentColor" isAnimationActive={false} />
         <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
         <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-despesa previsao" fill="currentColor" isAnimationActive={false} />
-        <Line yAxisId="caixa" type="linear" dataKey="acumulado" name="posição de caixa" className="serie-saldo" stroke="currentColor"
+        <Line yAxisId="dia" type="linear" dataKey="acumulado" name="posição de caixa" className="serie-saldo" stroke="currentColor"
           strokeWidth={2} dot={false} isAnimationActive={false} />
       </ComposedChart>
     </div>

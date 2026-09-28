@@ -934,17 +934,17 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 |---|---|---|
 | Entrou | Tela 1, "Receitas" | DFC, `FLUXO DE CAIXA`, `ENTRADA` (K) pelo mês de `DIA PG` (F), fora `SUB 2` = `TRANSFERENCIAS BANCARIAS - RECEITA` |
 | Saiu | Tela 1, "Despesas" | DFC, `FLUXO DE CAIXA`, `SAIDA` (L) pelo mês de `DIA PG` (F) |
-| Saldo do caixa no mês | Tela 1, "Saldo" | DFC, `ENTRADA` menos `SAIDA`, todas as linhas baixadas do mês. Difere de "entrou − saiu" pelas transferências entre contas que entraram, que o "Entrou" não conta como receita; a tela diz quantas |
 | Ainda a pagar no mês | Tela 1, "Desp. Pendentes" | Omie, títulos a pagar com vencimento no mês e sem baixa |
 | Ainda a receber no mês | antiga Tela 3, "Valor Pendente" | Omie, títulos a receber com vencimento no mês, faixa EM ABERTO |
 
-**Os quatro números que nascem aqui — todos contas simples dos de cima:**
+**Os números que nascem aqui — todos contas simples dos de cima:**
 
 | número | conta | fonte |
 |---|---|---|
+| Resultado do mês | Entrou − Saiu. **É ele que diz lucro ou prejuízo** na frase e no cartão em destaque: entrou mais do que saiu, é lucro | DFC. **Corrigido em 28/09/2026:** a primeira versão punha na frase a projeção (saldo + a receber − a pagar), e em agosto, com entrou maior que saiu, ela dizia prejuízo — o "a pagar" de um mês já fechado são títulos vencidos que o Omie ainda mostra em aberto. O cartão "Saldo" da Tela 1 saiu desta tela: ele conta as transferências entre contas que entraram, e dava um terceiro número para a mesma pergunta |
 | Despesas fixas pagas | soma da `SAIDA` (L) das linhas baixadas do mês cujo `SUB 2` (J) está na lista de fixas | DFC, pela lista `dados/despesas-fixas.json` |
 | Fixas / receita líquida | despesas fixas ÷ receita líquida do mês | DFC nas duas pontas. A receita líquida é **a mesma conta** do cartão "% D. Func. / Rec. Líquida" da Tela 1: linhas de `SUB 2` em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, menos as de dedução (`SUB 2` `DEVOLUCÃO` ou `CLASS. CONTABIL` `ESTORNO`) |
-| Projeção do mês | saldo do caixa no mês + ainda a receber no mês − ainda a pagar no mês | DFC + Omie. **É projeção de caixa, não lucro contábil** (esse é a Tela 2): diz se, recebendo e pagando o que vence no mês, o caixa fecha positivo ou negativo. O que já venceu e não foi recebido **não entra** — a tela o mostra à parte. **A confirmar pelo dono:** incluir ou não o vencido, e se "lucro/prejuízo" na frase deve ser esta projeção |
+| Projeção do mês | resultado do mês + ainda a receber no mês − ainda a pagar no mês, **só com o mês em andamento**; num mês fechado o cartão diz "mês fechado", e o "a pagar" vira "venceu no mês e não foi pago" | DFC + Omie. **É projeção de caixa, não lucro contábil** (esse é a Tela 2): diz se, recebendo e pagando o que vence no mês, o caixa fecha positivo ou negativo. O que já venceu e não foi recebido **não entra** — a tela o mostra à parte. **A confirmar pelo dono:** incluir ou não o vencido, e se "lucro/prejuízo" na frase deve ser esta projeção |
 | A série do ano | de janeiro ao mês da tela, cada mês pela **mesma conta dos cartões** (entrou, saiu e saldo), das linhas baixadas do `FLUXO DE CAIXA` do arquivo daquele mês | DFC. **Corrigido em 28/09/2026:** a primeira versão desenhava o bloco pronto `Entradas` / `Gastos` da aba do mês (o do gráfico da Tela 1), que é outra conta da planilha — a coluna do mês não batia com os cartões, e o gráfico mostrava o ano inteiro, sem mudar com o mês escolhido |
 | Fora da curva | o mês se afasta da média dos meses anteriores do mesmo ano mais que um desvio-padrão deles; só com 3 meses anteriores ou mais | a série do ano, acima. **A confirmar pelo dono:** a régua de um desvio-padrão |
 

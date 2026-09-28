@@ -436,7 +436,9 @@ a { color: inherit; }
 .tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
 .tabela-fixas thead th { color: var(--texto-fraco); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--texto-fraco); }
 .tabela-fixas tfoot th, .tabela-fixas tfoot td { font-weight: 700; border-top: 1px solid var(--texto-fraco); border-bottom: 0; }
-.tabela-fixas .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabela-fixas .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela-fixas .barra-col { width: 40%; }
+.tabela-fixas .barrinha { display: block; height: 10px; border-radius: 2px; background: var(--destaque); }
 /* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
  * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */
 .serie-margem { color: var(--marca); }

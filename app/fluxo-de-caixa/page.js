@@ -25,7 +25,7 @@ import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import { emPorcento, emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import { comCodigo } from '../filtrado.js';
-import { DespesasFixas, FluxoNoAno } from '../graficos.js';
+import { FluxoNoAno } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
@@ -87,18 +87,26 @@ export default async function Pagina({ searchParams }) {
   const femp = d.filtros.empresa;
   const comOmie = d.filtros.omie.ligado;
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
-  const entrou = cartao('entrou'), saiu = cartao('saiu'), saldo = cartao('saldo');
+  const entrou = cartao('entrou'), saiu = cartao('saiu'), resultado = cartao('resultado');
   const projecao = cartao('projecao'), fixas = cartao('fixas'), peso = cartao('peso-fixas');
   const anos = [2026];
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}${comOmie ? '' : '&omie=0'}`;
-  const fechaCom = projecao.valor === null ? null : projecao.valor >= 0 ? 'lucro' : 'prejuizo';
+  // LUCRO OU PREJUÍZO SAI DO RESULTADO (entrou − saiu), e só dele: se entrou mais do que saiu, é lucro. A projeção, que
+  // soma o que ainda vence no mês, aparece junto só com o mês em andamento.
+  const veredito = (v) => (v === null ? null : v >= 0 ? 'lucro' : 'prejuizo');
+  const nomeDo = (v) => (v === 'lucro' ? 'lucro' : 'prejuízo');
+  const doResultado = veredito(resultado.valor);
+  const daProjecao = veredito(projecao.valor);
+  const maior = Math.max(1, ...d.fixas.porConta.map((g) => g.valor));
   const nomeDoMes = NOMES_DOS_MESES?.[mes] ?? MESES_CURTOS[mes];
   // O PÉ DE CADA CARTÃO: quantas linhas do DFC e quantos títulos do Omie entraram nele — só a fonte que ele usa. Um
   // cartão só do DFC não escreve "sem o Omie", que daria a entender que faltou dado.
   const pe = (c) => [
     c.contagem.dfc !== null && c.contagem.dfc !== undefined ? `${c.contagem.dfc} ${c.contagem.dfc === 1 ? 'linha' : 'linhas'} do DFC` : null,
     c.contagem.omie !== null && c.contagem.omie !== undefined ? `${c.contagem.omie} ${c.contagem.omie === 1 ? 'título' : 'títulos'} do Omie` : null,
-    ['a-pagar', 'a-receber', 'projecao'].includes(c.id) && c.contagem.omie === null ? 'sem o Omie' : null,
+    ['a-pagar', 'a-receber'].includes(c.id) && c.contagem.omie === null ? 'sem o Omie' : null,
+    c.id === 'projecao' && d.mesFechado ? 'mês fechado' : null,
+    c.id === 'projecao' && !d.mesFechado && c.contagem.omie === null ? 'sem o Omie' : null,
   ].filter(Boolean).join(' · ') || '—';
 
   return (
@@ -121,11 +129,13 @@ export default async function Pagina({ searchParams }) {
           {!d.dfc.ok
             ? <>Sem a planilha do DFC deste mês não há caixa para mostrar: {d.dfc.motivo}.</>
             : <>
-              Entrou <b>{emReais(entrou.valor)}</b>, saiu <b>{emReais(saiu.valor)}</b>
-              {fechaCom
-                ? <> e o mês caminha para fechar com{' '}
-                  <span className={`fluxo-veredito ${fechaCom}`}>{fechaCom === 'lucro' ? 'lucro' : 'prejuízo'} de {emReais(Math.abs(projecao.valor))}</span>.</>
-                : <>; sem o Omie não dá para projetar o fechamento.</>}
+              {d.mesFechado ? 'Entrou' : 'Até agora entrou'} <b>{emReais(entrou.valor)}</b> e saiu <b>{emReais(saiu.valor)}</b>:{' '}
+              {d.mesFechado ? 'o mês fechou com' : 'até aqui,'}{' '}
+              <span className={`fluxo-veredito ${doResultado}`}>{nomeDo(doResultado)} de {emReais(Math.abs(resultado.valor))}</span>.
+              {!d.mesFechado && (daProjecao
+                ? <> Com o que ainda vence no mês, deve fechar com{' '}
+                  <span className={`fluxo-veredito ${daProjecao}`}>{nomeDo(daProjecao)} de {emReais(Math.abs(projecao.valor))}</span>.</>
+                : <> Sem o Omie não dá para projetar o fechamento.</>)}
             </>}
         </p>
         <p className="para-que">
@@ -137,7 +147,7 @@ export default async function Pagina({ searchParams }) {
 
       {comOmie && <AvisoDoOmie leituras={d.leituras} />}
       <AvisoSemOmie ligado={comOmie}>
-        <strong>Sem o Omie, sobra o caixa do DFC:</strong> entrou, saiu, o saldo e as despesas fixas continuam. O que
+        <strong>Sem o Omie, sobra o caixa do DFC:</strong> entrou, saiu, o resultado e as despesas fixas continuam. O que
         falta pagar e receber no mês é do Omie, e sem ele não há projeção do fechamento.
       </AvisoSemOmie>
 
@@ -155,7 +165,7 @@ export default async function Pagina({ searchParams }) {
         <details className="explica">
           <summary>o que cada filtro alcança, e o que ele não alcança</summary>
           <ExplicaEmpresa f={femp}>
-            Nesta tela ele vale no que falta pagar e receber (Omie). Entrou, saiu, o saldo e as despesas fixas são do
+            Nesta tela ele vale no que falta pagar e receber (Omie). Entrou, saiu, o resultado e as despesas fixas são do
             DFC, que não separa por empresa — cada um diz isso ao lado quando o filtro está ligado.
           </ExplicaEmpresa>
         </details>
@@ -164,9 +174,9 @@ export default async function Pagina({ searchParams }) {
       {/* 3. A FILA DE NÚMEROS: a pergunta 1 (o caixa fechou positivo ou negativo, e quanto entrou e saiu) e a 5 (quanto
           falta pagar, e como o mês fecha). */}
       <section className="kpis de-4">
-        {[entrou, saiu, saldo, projecao].map((c) => (
+        {[entrou, saiu, resultado, projecao].map((c) => (
           <div key={c.id}>
-            <Kpi c={c} destaque={c.id === 'projecao'} pe={pe(c)} tom={c.id === 'entrou' ? 'serie-receita' : c.id === 'saiu' ? 'serie-despesa' : null} />
+            <Kpi c={c} destaque={c.id === 'resultado'} pe={pe(c)} tom={c.id === 'entrou' ? 'serie-receita' : c.id === 'saiu' ? 'serie-despesa' : null} />
             <Origem c={c} />
           </div>
         ))}
@@ -181,8 +191,8 @@ export default async function Pagina({ searchParams }) {
       </section>
       {comOmie && d.vencidoAReceber.valor > 0 && (
         <p className="aviso leve">
-          Fora da projeção: <strong>{emReais(d.vencidoAReceber.valor)}</strong> a receber deste mês já venceu e ainda
-          não foi recebido ({d.vencidoAReceber.contagem.omie} títulos). Se entrar, o mês fecha melhor que a projeção.
+          <strong>{emReais(d.vencidoAReceber.valor)}</strong> a receber deste mês já venceu e ainda não foi recebido
+          ({d.vencidoAReceber.contagem.omie} títulos){d.mesFechado ? '' : ': fica fora da projeção. Se entrar, o mês fecha melhor'}.
         </p>
       )}
 
@@ -191,15 +201,15 @@ export default async function Pagina({ searchParams }) {
         <Quadro className="larga" titulo="Este mês foi típico ou ficou fora da curva?" fonte={comCodigo(d.serie.fonte)}>
           <p className="legenda">
             <span className="chave serie-receita" />entrou &nbsp;<span className="chave serie-despesa" />saiu &nbsp;
-            <span className="chave serie-saldo" />saldo do mês &nbsp;— a linha tracejada é a média do saldo dos meses
-            anteriores a {MESES_CURTOS[mes]}.
+            <span className="chave serie-saldo" />resultado do mês (entrou − saiu) &nbsp;— a linha tracejada é a média do
+            resultado dos meses anteriores a {MESES_CURTOS[mes]}.
           </p>
           <FluxoNoAno meses={d.serie.meses} mesEmFoco={mes} mediaDoSaldo={d.serie.comparacao?.saldo?.media ?? null} />
           {d.serie.comparacao && (
             <ul className="curva">
               <Curva nome="Entrou" c={d.serie.comparacao.entradas} />
               <Curva nome="Saiu" c={d.serie.comparacao.gastos} />
-              <Curva nome="Saldo" c={d.serie.comparacao.saldo} />
+              <Curva nome="Resultado" c={d.serie.comparacao.saldo} />
               {d.serie.comparacao.fixas && <Curva nome="Despesas fixas" c={d.serie.comparacao.fixas} />}
             </ul>
           )}
@@ -213,46 +223,37 @@ export default async function Pagina({ searchParams }) {
           )}
         </Quadro>
 
-        {/* 5. PARA ONDE FOI A DESPESA FIXA: todas as contas fixas, com o total. */}
-        <Quadro className="principal" titulo="Para onde foi a despesa fixa"
+        {/* 5. PARA ONDE FOI A DESPESA FIXA: todas as contas fixas, numa tabela só, com uma barra em cada linha. Era um
+            gráfico de barras do Recharts ao lado de uma tabela; com as 33 contas da gestora ele ficou gigante e ilegível
+            (o SVG é desenhado pequeno e esticado até a largura do quadro). Uma barra de CSS dentro da linha não estica
+            o texto, e o nome, a barra, o valor e o peso ficam lado a lado. */}
+        <Quadro className="larga" titulo="Para onde foi a despesa fixa"
           fonte={d.fixas.respondido
-            ? `todas as ${d.fixas.porConta.length} contas fixas com pagamento no mês, das ${d.fixas.contas} que a gestora marcou como fixas`
+            ? `as ${d.fixas.porConta.length} contas fixas com pagamento no mês (a gestora marcou ${d.fixas.contas} contas como fixas), da maior para a menor`
             : 'as contas do DFC que a gestora marcar como fixas'}>
-          {d.fixas.respondido
-            ? <>
-              <DespesasFixas itens={d.fixas.porConta} />
-              <p className="legenda">
-                Total: <b>{emReais(d.fixas.total)}</b>
-                {peso.valor !== null ? <> — {emPorcento(peso.valor)} da receita líquida do mês ({emReais(peso.extras.receitaLiquida)})</> : null}.
-              </p>
-            </>
-            : <p className="aviso leve">
+          {!d.fixas.respondido
+            ? <p className="aviso leve">
               <strong>A classificação de despesa fixa ainda não foi respondida.</strong> Nem o DFC nem o Omie dizem que
               despesa é fixa: quem decide é a gestora do financeiro, na planilha
-              {' '}<code>docs/despesas-fixas-para-classificar.xlsx</code>. Com ela respondida,
-              {' '}<code>node scripts/despesas-fixas.mjs &lt;planilha&gt;</code> grava a lista e este bloco passa a mostrar
-              todas as despesas fixas do mês, com o total e o peso na receita líquida.
-            </p>}
-        </Quadro>
-
-        {/* O CONTROLE DAS FIXAS, conta por conta: o mesmo número das barras ao lado, com o peso de cada uma na receita
-            líquida e quantas linhas do DFC a compõem. */}
-        <Quadro titulo="As fixas, conta por conta" fonte="valor pago no mês, peso na receita líquida e linhas do DFC">
-          {d.fixas.respondido && d.fixas.porConta.length > 0
-            ? <table className="tabela-fixas">
-              <thead><tr><th>Conta</th><th className="num">Pago</th><th className="num">% rec. líq.</th><th className="num">Linhas</th></tr></thead>
+              {' '}<code>docs/despesas-fixas-para-classificar.xlsx</code>.
+            </p>
+            : d.fixas.porConta.length === 0
+            ? <p className="legenda">Nenhuma despesa fixa paga neste mês.</p>
+            : <table className="tabela-fixas">
+              <thead><tr><th>Conta</th><th className="barra-col" /><th className="num">Pago</th><th className="num">% rec. líq.</th><th className="num">Linhas</th></tr></thead>
               <tbody>
                 {d.fixas.porConta.map((g) => (
                   <tr key={g.conta}>
-                    <td>{g.conta}</td><td className="num">{emReais(g.valor)}</td>
+                    <td>{g.conta}</td>
+                    <td className="barra-col"><span className="barrinha" style={{ width: `${Math.max(1, Math.round((g.valor / maior) * 100))}%` }} /></td>
+                    <td className="num">{emReais(g.valor)}</td>
                     <td className="num">{peso.extras.receitaLiquida ? emPorcento(g.valor / peso.extras.receitaLiquida) : '—'}</td>
                     <td className="num">{g.n}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot><tr><th>Total</th><td className="num">{emReais(d.fixas.total)}</td><td className="num">{emPorcento(peso.valor)}</td><td className="num">{d.fixas.porConta.reduce((s, g) => s + g.n, 0)}</td></tr></tfoot>
-            </table>
-            : <p className="legenda">{d.fixas.respondido ? 'Nenhuma despesa fixa paga neste mês.' : 'Aguardando a classificação da gestora.'}</p>}
+              <tfoot><tr><th>Total</th><td /><td className="num">{emReais(d.fixas.total)}</td><td className="num">{emPorcento(peso.valor)}</td><td className="num">{d.fixas.porConta.reduce((n, g) => n + g.n, 0)}</td></tr></tfoot>
+            </table>}
         </Quadro>
       </div>
 

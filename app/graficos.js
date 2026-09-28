@@ -339,7 +339,7 @@ export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
   const foco = MESES_CURTOS[mesEmFoco];
   return (
     <div className="grafico">
-      <ComposedChart width={760} height={290} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
+      <ComposedChart width={1100} height={300} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_VALOR} />
@@ -355,15 +355,9 @@ export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
         <Tooltip {...DICA} />
         <Bar dataKey="entrou" name="entrou" className="serie-receita" fill="currentColor" isAnimationActive={false} />
         <Bar dataKey="saiu" name="saiu" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
-        <Line type="linear" dataKey="saldo" name="saldo" className="serie-saldo" stroke="currentColor" strokeWidth={2}
+        <Line type="linear" dataKey="saldo" name="resultado" className="serie-saldo" stroke="currentColor" strokeWidth={2}
           dot={{ r: 3, strokeWidth: 0, fill: 'currentColor' }} isAnimationActive={false} />
       </ComposedChart>
     </div>
   );
-}
-
-// PARA ONDE FOI A DESPESA FIXA: o mesmo ranking de "Para onde foi a despesa" da Tela 1, com as contas fixas no lugar
-// das classificações. Todas as contas, e não as dez maiores: a pergunta do dono é ver todas as fixas.
-export function DespesasFixas({ itens }) {
-  return <ParaOndeFoiADespesa itens={itens.map((i) => ({ nome: i.conta, valor: i.valor }))} />;
 }

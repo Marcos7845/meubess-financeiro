@@ -55,24 +55,35 @@ No rodapé de cada tela, a linha **"Última leitura"** diz de quando são os nú
   `ListarPedidos`, `ListarClientesResumido`, `ListarCadastroDRE`. Nada neste repositório inclui, altera ou exclui no
   Omie, e `lib/regras/omie-api.mjs` barra qualquer método que não seja de leitura antes mesmo de chamar. O que a
   releitura traz é gravado no cache local `.cache/omie/`, fora do git.
-* O **DFC** é lido da pasta sincronizada a cada cálculo — ali não há cache nenhum além do da hora.
+* O **DFC** é lido da pasta sincronizada **uma vez por hora**, e não a cada cálculo: as planilhas do ano vão para uma
+  base local na memória do servidor, e é de lá que as telas tiram as linhas. Passada a hora, a próxima visita manda
+  ler de novo.
 
 **A releitura do Omie não segura a tela.** São perto de 280 páginas em duas empresas, e o Omie pede uma pausa entre
-chamadas: uma volta inteira leva **alguns minutos**. Então ela roda ao lado. A tela espera por ela uns 8 segundos e,
-se ainda não terminou, desenha **o último guardado** e avisa, no alto, que a releitura está em curso. **Recarregue
-daqui a pouco e os números novos aparecem**: quando a releitura termina, o guardado da hora é jogado fora sozinho, e
-a visita seguinte refaz as contas em cima do cache já renovado. Só uma releitura roda por vez, mesmo com as três
-telas abertas.
+chamadas: uma volta inteira leva **alguns minutos**. Então ela roda ao lado, e **a tela não espera nada por ela**: ela
+desenha o último guardado e avisa, no alto, que a releitura está em curso. **Recarregue daqui a pouco e os números
+novos aparecem**: quando a releitura termina, a base local é refeita sozinha em cima do cache já renovado, e a visita
+seguinte mostra os números novos. Só uma releitura roda por vez, mesmo com as três telas abertas.
+
+**E o clique num filtro responde na hora.** As fontes preparadas uma vez são o que faz isso: o clique não reabre
+planilha, não reabre cache e não espera releitura — ele só calcula em cima do que já está pronto. Quem paga a leitura é
+a **primeira abertura** depois de subir o app (uns 7 segundos, o tempo de abrir as doze planilhas do ano) e, uma vez por
+hora, uma preparação que roda **ao lado** sem segurar visita nenhuma. A medição, fase por fase e antes e depois, está em
+[`desempenho.md`](desempenho.md).
 
 ---
 
 ## Forçar a releitura
 
-O botão **"atualizar agora"**, no rodapé de qualquer uma das três telas. Ele joga fora o guardado da hora e manda a
-releitura ir ao Omie na hora, sem esperar a hora virar.
+O botão **"atualizar agora"**, no rodapé de qualquer uma das três telas. Ele joga fora o guardado da hora **e a base
+local** e manda a releitura ir ao Omie na hora, sem esperar a hora virar.
 
 O botão volta na hora — a releitura é que demora. Acompanhe pela linha "Última leitura" e pelo aviso do alto:
 `releitura em curso` → `N páginas nas 22 leituras`. Enquanto isso, os números na tela são os da leitura anterior.
+
+**A visita logo depois do botão é uma abertura**: como a base foi jogada fora, ela relê as planilhas e espera por elas
+(uns 7 segundos). É de propósito — quem aperta "atualizar agora" pediu número novo. Os cliques de filtro depois dela
+voltam a responder na hora.
 
 Pela linha de comando, quando quiser refazer o cache sem abrir o navegador:
 
@@ -80,8 +91,9 @@ Pela linha de comando, quando quiser refazer o cache sem abrir o navegador:
 node scripts/ler-omie-faltante.mjs     # completa no cache o que estiver faltando
 ```
 
-Para mudar quanto a tela espera pela releitura antes de desenhar o guardado, `OMIE_ESPERA_MS` (em milissegundos;
-`0` não espera nada).
+`OMIE_ESPERA_MS` (em milissegundos) diz quanto quem **pede** a releitura espera por ela. As telas pedem com `0` desde
+27/09/2026 — elas não esperam nada —, então esta variável só muda o comportamento de quem chamar
+`pedirReleituraDoOmie` com outra espera; ela existe para os scripts e para depurar.
 
 ---
 
@@ -148,6 +160,7 @@ O que fazer:
 | --- | --- |
 | Sobe o app preso em 127.0.0.1:4781 | `scripts/subir-local.mjs` |
 | Decide quando reler, e junta as duas fontes | `lib/dados.mjs` |
+| As fontes preparadas uma vez, de onde o clique de filtro calcula | `lib/regras/base-local.mjs` |
 | A releitura do Omie (quais leituras, uma volta por vez) | `lib/regras/omie-releitura.mjs` |
 | A chamada ao Omie (credencial, tentativas, só consulta) | `lib/regras/omie-api.mjs` |
 | Onde cada leitura mora no cache | `lib/regras/cache-omie.mjs` |

@@ -8,7 +8,8 @@ Lovable.
 As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
 [`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
 [`docs/telas-conferidas.md`](docs/telas-conferidas.md). Os **filtros** de cada tela — onde valem e onde não valem, com um
-caso real conferido para cada um — estão em [`docs/filtros.md`](docs/filtros.md).
+caso real conferido para cada um — estão em [`docs/filtros.md`](docs/filtros.md), e **quanto demora um clique num
+filtro**, medido fase por fase e antes e depois da base local, está em [`docs/desempenho.md`](docs/desempenho.md).
 
 ## As três telas
 
@@ -70,6 +71,16 @@ computador, só ele, sem publicar). `127.0.0.1` é a placa de rede que só exist
 abre estes números, nem sabendo o IP daqui. A porta é 4781 porque 4747 já é da Central de Comando neste computador.
 O passo a passo inteiro — subir, a "última leitura", forçar a releitura e o que fazer quando uma fonte não responde —
 está em [`docs/uso-local.md`](docs/uso-local.md).
+
+**A primeira abertura lê as fontes; os cliques de filtro depois dela respondem na hora** (decisão do dono, 27/09/2026:
+"cada clique num filtro das 3 telas demora uma eternidade"). O cache do Omie e as planilhas do DFC são lidos e
+preparados **uma vez**, numa base local na memória do servidor (`lib/regras/base-local.mjs`), e cada clique só calcula
+em cima dela — antes, cada combinação de filtro era um cálculo novo que reabria as treze planilhas do ano e ainda
+esperava até 8 s pela releitura do Omie. Medido, com a releitura em curso: o pior clique caiu de **15,6 s para 34 ms** na
+Tela 1, de **16,1 s para 573 ms** na Tela 2 e de **8,2 s para 3 ms** na Tela 3; a página inteira, sobre HTTP, caiu de
+**8,5 s para 75 ms** na Tela 1. A medição fase por fase está em [`docs/desempenho.md`](docs/desempenho.md). A base é
+renovada na abertura, na virada da hora (ao lado, sem segurar a tela) e no "atualizar agora", e a **releitura de hora em
+hora do Omie não mudou** — o que saiu foi a espera por ela.
 
 Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão **atualizar agora**. Para agosto de 2026:
 
@@ -157,6 +168,24 @@ um, aplica um caso real pela mesma camada de dados que o navegador recebe e reen
 arquivos crus do cache do Omie, abertos com `fs` e `JSON.parse`, sem passar pela montagem de `lib/regras/cache-omie.mjs`,
 para o lado da fonte não sair da mesma função que o lado do cálculo. **Só contagem e código**, nunca dinheiro e nunca
 nome de cliente. O comando sai com erro se algum filtro pegar um lançamento a mais ou a menos do que a fonte manda.
+
+### Medir o clique de filtro
+
+```
+npm run medir-filtros
+```
+
+Grava [`docs/desempenho.md`](docs/desempenho.md) e [`docs/desempenho.html`](docs/desempenho.html), e guarda o que mediu
+em `docs/desempenho-medicoes.json`. Mede **um clique de filtro em cada tela, fase por fase** — espera do Omie, planilhas
+do DFC, cache do Omie, cálculo — e mede **os dois lados da mudança na mesma rodada**: `--modo antes` refaz o que a camada
+de dados fazia até 27/09/2026 (um balde novo por combinação de filtro, reabrindo as fontes) e `--modo depois` passa pelo
+caminho de verdade, com a base local. Por isso a tabela do documento não depende de ninguém ter anotado um número ontem.
+
+Com o app no ar, `--url http://127.0.0.1:4781 --http depois` mede também **a página inteira**, sobre HTTP, que é o que o
+dono sente quando clica — e é de lá que sai a quinta fase, o **desenho**. E `--omie forcar` mede o pior caso, com a
+releitura do Omie em curso; para fazer isso sem mexer no cache de verdade, é só mandar a releitura gravar numa cópia
+(`cp -rp .cache/omie .cache/omie-copia` e `OMIE_CACHE_DIR=.cache/omie-copia`, que é como a medição publicada foi feita).
+Só leitura, e só tempo: o documento tem milissegundos e nomes de filtro, nunca dinheiro nem nome de cliente.
 
 ### O que trava, e o que só é publicado
 

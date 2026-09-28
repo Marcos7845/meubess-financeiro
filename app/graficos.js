@@ -361,3 +361,37 @@ export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
     </div>
   );
 }
+
+// O MÊS DIA A DIA: o que já foi (consolidado) e o que ainda vem (previsão), num gráfico só. Entrada para cima e saída
+// para baixo, cada dia uma coluna; a parte prevista é a mesma cor, mais clara (`.previsao`). A linha é o acumulado do
+// mês — consolidado até hoje, e daí em diante somando a previsão. A marca tracejada é hoje. Nenhum número nasce aqui:
+// cada dia chega pronto de `lib/indicadores/fluxo-de-caixa.mjs`.
+export function DiaADiaDoFluxo({ dias, hoje }) {
+  const dados = dias.map((d) => ({
+    rotulo: String(d.dia),
+    entrou: d.entrou, aReceber: d.aReceber, saiu: -d.saiu, aPagar: -d.aPagar, acumulado: d.acumulado,
+  }));
+  const dica = { ...DICA, formatter: (v, n) => [emReais(Math.abs(v)), n] };
+  return (
+    <div className="grafico">
+      <ComposedChart width={1100} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}
+        stackOffset="sign" barCategoryGap={2}>
+        <CartesianGrid {...GRADE} />
+        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
+        <YAxis {...EIXO_VALOR} />
+        <ReferenceLine y={0} className="linha-zero" />
+        {hoje && (
+          <ReferenceLine x={String(hoje)} className="marca-do-mes"
+            label={{ value: 'hoje', position: 'top', className: 'marca-do-mes-texto' }} />
+        )}
+        <Tooltip {...dica} labelFormatter={(d) => `dia ${d}`} />
+        <Bar dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor" isAnimationActive={false} />
+        <Bar dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-receita previsao" fill="currentColor" isAnimationActive={false} />
+        <Bar dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
+        <Bar dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-despesa previsao" fill="currentColor" isAnimationActive={false} />
+        <Line type="linear" dataKey="acumulado" name="acumulado do mês" className="serie-saldo" stroke="currentColor"
+          strokeWidth={2} dot={false} isAnimationActive={false} />
+      </ComposedChart>
+    </div>
+  );
+}

@@ -25,7 +25,7 @@ import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import { emPorcento, emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import { comCodigo } from '../filtrado.js';
-import { FluxoNoAno } from '../graficos.js';
+import { DiaADiaDoFluxo, FluxoNoAno } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
@@ -196,7 +196,36 @@ export default async function Pagina({ searchParams }) {
         </p>
       )}
 
-      {/* 4. O GRÁFICO PRINCIPAL: este mês foi típico dentro do ano ou ficou fora da curva? */}
+      {/* 4. O MÊS DIA A DIA (pedido do dono, 28/09/2026): o que já foi e o que ainda vem, num gráfico só. */}
+      <div className="grade-g">
+        <Quadro className="larga" titulo={`${nomeDoMes} dia a dia: o que já foi e o que ainda vem`} fonte={comCodigo(d.diaADia.fonte)}>
+          <p className="legenda">
+            <span className="chave serie-receita" />entrou &nbsp;
+            {d.diaADia.comPrevisao && <><span className="chave serie-receita previsao" />a receber (previsão) &nbsp;</>}
+            <span className="chave serie-despesa" />saiu &nbsp;
+            {d.diaADia.comPrevisao && <><span className="chave serie-despesa previsao" />a pagar (previsão) &nbsp;</>}
+            <span className="chave serie-saldo" />acumulado do mês
+            {d.diaADia.hoje ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
+          </p>
+          <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />
+          <p className="legenda">
+            {d.diaADia.mesFechado
+              ? 'Mês fechado: tudo o que aparece é consolidado — o que entrou e saiu de fato, pelo dia do pagamento.'
+              : !d.diaADia.comPrevisao
+              ? 'Sem o Omie não há previsão: aparece só o consolidado.'
+              : <>Fecha o mês em <b>{emReais(d.diaADia.dias.at(-1).acumulado)}</b> se tudo o que vence for recebido e
+                pago no dia.</>}
+            {d.diaADia.atrasadoAPagar.valor > 0 && (
+              <> Fora do gráfico: <b>{emReais(d.diaADia.atrasadoAPagar.valor)}</b> a pagar que venceu antes de hoje e
+                não foi baixado no Omie ({d.diaADia.atrasadoAPagar.n} títulos) — não tem dia previsto.
+                {projecao.valor !== null && <> Pagando também esse atraso, o mês fecha em {emReais(projecao.valor)}, que
+                  é o cartão &quot;Projeção do mês&quot;.</>}</>
+            )}
+          </p>
+        </Quadro>
+      </div>
+
+      {/* 5. O MÊS CONTRA OS ANTERIORES: este mês foi típico dentro do ano ou ficou fora da curva? */}
       <div className="grade-g">
         <Quadro className="larga" titulo="Este mês foi típico ou ficou fora da curva?" fonte={comCodigo(d.serie.fonte)}>
           <p className="legenda">

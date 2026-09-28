@@ -432,6 +432,8 @@ a { color: inherit; }
 .curva { margin: 0; padding-left: 18px; }
 .curva li { margin: 4px 0; }
 .chave.serie-receita, .chave.serie-despesa, .chave.serie-saldo { background: currentColor; }
+.previsao { opacity: .42; }            /* a parte prevista do fluxo diário: a mesma cor, mais clara */
+.chave.previsao { opacity: .42; }
 .tabela-fixas { border-collapse: collapse; width: 100%; font-size: 11px; }
 .tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
 .tabela-fixas thead th { color: var(--texto-fraco); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--texto-fraco); }

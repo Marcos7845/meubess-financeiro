@@ -99,7 +99,6 @@ a { color: inherit; }
 .barra { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; font-size: 11.5px; }
 .barra .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-fraco); }
 .barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
-.barra .preenche { background: var(--marca-clara); height: 100%; border-radius: 3px; }
 .barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
 
 /* ---------------------------------------------------------------- filtros */
@@ -112,15 +111,6 @@ a { color: inherit; }
 .pilula.ativa { background: var(--marca); border-color: var(--marca); color: var(--texto-claro); font-weight: 600; }
 .legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
 .legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
-.chave.rec { background: var(--marca-clara); }
-.chave.desp { background: var(--destaque); }
-
-/* ---------------------------------------------------------------- colunas por dia */
-.dias { display: flex; align-items: flex-end; gap: 2px; height: 130px; }
-.dia { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; min-width: 0; }
-.dia .rec { background: var(--marca-clara); border-radius: 1px 1px 0 0; }
-.dia .desp { background: var(--destaque); border-radius: 0 0 1px 1px; }
-.dia .n { font-size: 8px; text-align: center; color: var(--texto-fraco); }
 
 /* ---------------------------------------------------------------- rodapé */
 .rodape {
@@ -301,3 +291,112 @@ a { color: inherit; }
 .sem-filtro code { font-size: 10px; }
 .cartao .sem-filtro { white-space: normal; }
 .tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
+
+/* ================================================================ TELA 1 — o layout em F
+ *
+ * DE ONDE VEM ESTE DESENHO. Da skill de visualização de dados que o dono mandou em 28/09/2026
+ * (`.claude/skills/visualizacao-de-dados/SKILL.md`); o plano de gráficos e a história da tela estão em
+ * `docs/layout.md`. Tema escolhido: "clean analytical" — fundo branco, sem moldura nem sombra, régua horizontal
+ * clara, e só as cinco cores da marca lá de cima. Nenhuma cor nova nasce aqui.
+ *
+ * TUDO NESTA SEÇÃO É NOVO E SÓ DA TELA 1. As classes que as Telas 2 e 3 dividem com ela — `.cartao`, `.painel`,
+ * `.barras`, `.grade` — continuam intocadas acima, e por isso aquelas duas telas não mudaram um pixel. A Tela 1
+ * deixou de usá-las: os números do topo são `.kpi`, os painéis são `.quadro` e o desenho é SVG do Recharts.
+ *
+ * A COR DE CADA SÉRIE MORA AQUI, e não em `app/graficos.js`: lá cada série só recebe uma `className` e pinta com
+ * `currentColor`. É esta a razão de `.serie-receita` e `.serie-despesa` serem só uma linha de `color`.
+ */
+
+/* O fundo branco do "clean analytical" vale só nesta tela — `body` continua cinza para as Telas 2 e 3. */
+.pagina-1 { background: var(--cartao); min-height: 100vh; }
+
+/* ---------------------------------------------------------------- 1. o título e a frase de 5 segundos */
+.chamada { padding: 16px 20px 12px; }
+.chamada h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
+/* O nome do mês vem minúsculo de `NOMES_DOS_MESES`, e aqui ele começa frase. */
+.chamada h1::first-letter { text-transform: uppercase; }
+.chamada .frase { margin: 7px 0 0; font-size: 16.5px; line-height: 1.4; max-width: 74ch; }
+.chamada .frase b { color: var(--marca); font-weight: 700; }
+.chamada .para-que { margin: 6px 0 0; font-size: 11.5px; color: var(--texto-fraco); max-width: 86ch; }
+
+/* ---------------------------------------------------------------- 2. o recorte (os filtros) */
+.recorte {
+  padding: 8px 20px 6px; margin-top: 4px;
+  border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda);
+}
+.recorte .barra-filtros { padding: 4px 0; }
+.recorte .explica { margin: 4px 0 8px; font-size: 11.5px; color: var(--texto-fraco); }
+.recorte .explica > summary {
+  cursor: pointer; color: var(--marca); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .4px; font-weight: 600;
+}
+.recorte .explica p { max-width: 104ch; margin: 8px 0; }
+.pagina-1 .aviso { margin: 10px 20px; }
+
+/* ---------------------------------------------------------------- 3. a fila de números do topo */
+.kpis { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); padding: 16px 20px 18px; }
+.kpi { padding: 0 14px; border-left: 1px solid var(--borda); min-width: 0; }
+.kpi:first-child { border-left: 0; padding-left: 0; }
+.kpi .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kpi .numero { font-size: 20px; font-weight: 700; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kpi .numero.neg { color: var(--negativo); }
+.kpi .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+.kpi .sem-filtro { white-space: normal; }
+/* O "Saldo" é o primeiro e o maior porque é dele que a frase de 5 segundos fala. */
+.kpi.destaque .rotulo { color: var(--marca); }
+.kpi.destaque .numero { font-size: 28px; color: var(--marca); }
+
+/* ---------------------------------------------------------------- 4 e 5. a grade dos gráficos
+ *
+ * Duas colunas, e o gráfico principal ocupa a larga: é o "F" da skill — o olho entra pelo canto de cima à esquerda,
+ * onde está o maior, e sai pelos dois rankings da direita. */
+.grade-g { display: grid; grid-template-columns: 2fr 1fr; gap: 26px 30px; padding: 4px 20px 20px; align-items: start; }
+.quadro { min-width: 0; }
+.quadro > h2 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.quadro .fonte-do-quadro { margin: 2px 0 10px; font-size: 11px; color: var(--texto-fraco); }
+.quadro .legenda { margin-top: 6px; }
+
+/* O SVG do Recharts sai do servidor com largura fixa (ver o cabeçalho de `app/graficos.js`); estas três linhas o
+ * fazem acompanhar a largura do painel, pelo `viewBox`, sem precisar medir nada no navegador. */
+.grafico { width: 100%; }
+.grafico .recharts-wrapper { width: 100% !important; height: auto !important; }
+.grafico .recharts-surface { width: 100% !important; height: auto !important; display: block; }
+
+/* as duas séries das três telas de gráfico — receita e despesa, e nada mais */
+.serie-receita { color: var(--marca-escura); }
+.serie-despesa { color: var(--destaque); }
+
+/* tinta de dado, e só: régua horizontal clara, sem moldura, sem eixo desenhado */
+.grade-grafico line { stroke: var(--borda); }
+/* O `font-size` dos rótulos que ESTA tela desenha à mão (o do eixo dos dois rankings) tem de vir daqui: sem ele
+ * o `<text>` herda os 14px do `body` e o nome comprido sai cortado na borda do SVG. */
+.eixo text { fill: var(--texto-fraco); }
+.rotulo-eixo { fill: var(--texto-fraco); font-size: 10.5px; }
+.rotulo-valor { fill: var(--texto); font-size: 10.5px; font-weight: 600; }
+.ponta-da-linha { fill: currentColor; font-size: 11.5px; font-weight: 600; }
+.linha-zero line { stroke: var(--texto-fraco); }
+.marca-do-mes line { stroke: var(--marca-clara); stroke-dasharray: 3 3; }
+.marca-do-mes-texto { fill: var(--marca-clara); font-size: 10.5px; font-weight: 600; }
+.dica-grafico .recharts-default-tooltip {
+  border: 1px solid var(--borda) !important; border-radius: var(--raio); box-shadow: var(--sombra); font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- 6. a tabela de detalhe */
+.quadro.detalhe { padding: 0 20px 24px; }
+.quadro.detalhe > h2 { margin-bottom: 0; }
+.tabela-detalhe { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+.tabela-detalhe th, .tabela-detalhe td {
+  padding: 5px 10px 5px 0; border-bottom: 1px solid var(--borda); text-align: left; font-weight: 400;
+}
+.tabela-detalhe thead th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  border-bottom: 1px solid var(--texto-fraco);
+}
+.tabela-detalhe tbody th { font-weight: 600; white-space: nowrap; }
+.tabela-detalhe .fonte { color: var(--texto-fraco); }
+.tabela-detalhe .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+
+.pagina-1 .rodape { border-top: 1px solid var(--borda); padding: 12px 20px 26px; }

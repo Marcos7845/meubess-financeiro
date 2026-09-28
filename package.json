@@ -12,6 +12,7 @@
     "conferir-filtros": "node scripts/conferir-filtros.mjs",
     "medir-filtros": "node scripts/medir-filtros.mjs --gravar",
     "testar-trava": "node scripts/testar-trava-agosto.mjs",
+    "pagina-de-layout": "node scripts/pagina-de-layout.mjs",
     "capturar-tela-1": "node scripts/capturar-tela.mjs --tela 1",
     "capturar-tela-2": "node scripts/capturar-tela.mjs --tela 2",
     "capturar-tela-3": "node scripts/capturar-tela.mjs --tela 3"
@@ -19,6 +20,7 @@
   "dependencies": {
     "next": "16.3.6",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "recharts": "^2.15.4"
   }
 }

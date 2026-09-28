@@ -7,10 +7,11 @@
 // COMO. Busca a página no app rodando, joga fora todo `<script>` (é lá que o Next manda os dados crus, que TÊM os
 // valores), tira os `title=` (que também têm), inlineia o CSS e troca o dinheiro. No fim, confere o que sobrou.
 //
-// E O NOME DO CLIENTE SAI TAMBÉM. A Tela 3 mostra o nome do cliente no eixo do gráfico e na lista; arquivo
-// versionado aqui não tem nome de pessoa nem de empresa cliente, só o código. A tela marca cada nome com
-// `class="cliente"` e `data-codigo="…"`, e a troca abaixo põe o código no lugar do nome. A trava do fim recusa a
-// captura se sobrar um único `data-codigo`.
+// E O NOME DO CLIENTE SAI TAMBÉM. A Tela 3 mostra o nome do cliente no eixo do gráfico e na lista, e a Tela 1 no
+// eixo do "De quem veio a receita"; arquivo versionado aqui não tem nome de pessoa nem de empresa cliente, só o
+// código. A tela marca cada nome com `class="cliente"` e `data-codigo="…"`, e a troca abaixo põe o código no lugar
+// do nome — em `<span>` (HTML) e em `<text>` (dentro do SVG do gráfico da Tela 1). A trava do fim recusa a captura
+// se sobrar um único `data-codigo`.
 //
 // E COM FILTRO. `--q` acrescenta à URL os filtros da tela (os de `docs/filtros.md`, que moram na query), e `--nome`
 // muda o fim do nome do arquivo para a captura filtrada não sobrescrever a de sempre.
@@ -80,6 +81,15 @@ corpo = corpo.replace(/<span[^>]*class="cliente"[^>]*>[\s\S]*?<\/span>/g, (todo)
   return `<span class="cliente">${cod ? `cliente ${cod}` : 'cliente'}</span>`;
 });
 
+// E DENTRO DO SVG, no eixo do gráfico "De quem veio a receita" da Tela 1, o nome é um `<text>` e não um `<span>`.
+// A diferença é que aqui os OUTROS atributos têm de ficar: `x`, `y`, `dy` e `text-anchor` são a posição do rótulo no
+// desenho, e jogá-los fora empilharia todos os nomes no canto. Sai só o `data-codigo`, e o nome vira o código.
+corpo = corpo.replace(/<text([^>]*\bclass="[^"]*\bcliente\b[^"]*"[^>]*)>[\s\S]*?<\/text>/g, (todo, atributos) => {
+  const cod = /data-codigo="(\d+)"/.exec(atributos)?.[1];
+  const limpos = atributos.replace(/\s*data-codigo="[^"]*"/, '');
+  return `<text${limpos}>${cod ? `cliente ${cod}` : 'cliente'}</text>`;
+});
+
 // E A LISTA DO FILTRO DE CLIENTE TAMBÉM. O filtro da Tela 3 tem um `<select>` com um `<option>` por cliente da janela,
 // e cada um leva o mesmo `data-codigo` da tela: a troca é a mesma, num `<option>` em vez de num `<span>`.
 corpo = corpo.replace(/<option([^>]*)data-codigo="(\d+)"([^>]*)>[\s\S]*?<\/option>/g,
@@ -124,8 +134,9 @@ ${css}
   <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
   <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
   <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.
-  O layout é o de <code>${tela.referencia}</code>;
-  as cores são as variáveis de <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
+  Quais blocos a tela tem é <code>${tela.referencia}</code>; como eles são desenhados é
+  <code>docs/layout.md</code>, que segue a skill de visualização de dados do dono. As cores são as variáveis de
+  <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
 </p>
 ${corpo}
 </body>
@@ -133,6 +144,12 @@ ${corpo}
 `;
 
 // A TRAVA: se sobrou dinheiro, a captura não é gravada.
+//
+// O QUE A TRAVA OLHA. O HTML sem o `<style>` (que é só CSS) e sem os atributos de GEOMETRIA do SVG. Desde que a
+// Tela 1 passou a desenhar com Recharts, o arquivo tem coordenadas como `d="M65,165.333"` e `transform="translate(…)"`
+// — e `165.333` casa, por acidente, com a forma de "um número de milhar". Dinheiro nunca mora numa coordenada:
+// o que a captura precisa provar é que não sobrou valor no TEXTO, e é isso que a trava continua provando.
+const SO_GEOMETRIA = /\s(?:d|x|y|dx|dy|x1|y1|x2|y2|cx|cy|r|rx|ry|width|height|points|viewBox|transform|offset|stroke-dasharray|stroke-width|font-size)="[^"]*"/g;
 const PROIBIDO = [
   [/R\$/, 'a marca da moeda'],
   [/\b\d{1,3}(?:\.\d{3})+(?:,\d{2})?\b/, 'um número de milhar'],
@@ -140,8 +157,9 @@ const PROIBIDO = [
   // Se sobrou um `data-codigo`, sobrou o nome do cliente junto: a troca acima não pegou aquele pedaço.
   [/data-codigo=/, 'um nome de cliente que a troca não pegou'],
 ];
+const paraConferir = html.replace(/<style>[\s\S]*?<\/style>/, '').replace(SO_GEOMETRIA, '');
 for (const [re, oque] of PROIBIDO) {
-  const m = re.exec(html.replace(/<style>[\s\S]*?<\/style>/, ''));
+  const m = re.exec(paraConferir);
   if (m) { console.error(`a captura ia sair com ${oque}: ${JSON.stringify(m[0])}`); process.exit(1); }
 }
 

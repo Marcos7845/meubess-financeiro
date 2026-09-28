@@ -1,8 +1,22 @@
-// TELA 1 — GESTÃO DE CONTAS. Layout de `docs/referencias/tela-1-gestao-de-contas.jpg` (as cores daquela imagem não
-// valem; as da marca ficam em `app/globals.css`).
+// TELA 1 — GESTÃO DE CONTAS.
+//
+// O LAYOUT É O DA SKILL DE VISUALIZAÇÃO DE DADOS que o dono mandou em 28/09/2026 — guardada em
+// `.claude/skills/visualizacao-de-dados/SKILL.md`, com as adaptações deste repositório no topo dela. A história da
+// tela (para quem é, que decisão ajuda a tomar, a frase de 5 segundos, as perguntas que ela responde) e o plano de
+// gráficos, pergunta por pergunta, estão em `docs/layout.md`. Quais BLOCOS a tela tem continua sendo
+// `docs/referencias/tela-1-gestao-de-contas.jpg`; o que mudou foi só como eles são desenhados.
+//
+// A ORDEM DA PÁGINA É A DO "F" da skill, de cima para baixo e da esquerda para a direita:
+//   1. título e a frase de 5 segundos;  2. o recorte (os filtros);  3. a fila de números do topo;
+//   4. o gráfico principal, maior e à esquerda;  5. os gráficos de apoio;  6. a tabela de detalhe.
+//
+// NENHUM NÚMERO, INDICADOR, FILTRO OU REGRA MUDOU nesta reforma: os 11 indicadores continuam vindo inteiros de
+// `lib/indicadores/tela-1.mjs`, e `npm run conferir-telas` e `npm run conferir-filtros` continuam conferindo os
+// mesmos 36 e 19.
 //
 // COMPONENTE DE SERVIDOR: o cálculo roda aqui, no Node, e para o navegador vai só o número já pronto. Nenhuma chave,
-// nenhum caminho de pasta e nenhum arquivo cruzam essa linha.
+// nenhum caminho de pasta e nenhum arquivo cruzam essa linha. Os gráficos são o único pedaço de navegador da tela
+// (`app/graficos.js`), e o que atravessa é só rótulo, valor e código de cliente.
 //
 // OS FILTROS DESTA TELA. Os de `docs/fontes.md` — ano · mês · CENTRO DE CUSTO (seleção múltipla) — mais a EMPRESA e os
 // quatro que o dono aprovou em 27/09/2026. Todos moram na URL, como as pílulas de ano e mês sempre moraram, e é por
@@ -22,12 +36,14 @@
 // `docs/filtros.md`.
 
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
-import { NOMES_DOS_MESES, dois } from '../lib/regras/periodo.mjs';
+import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 import { comoLista, comoTexto } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
 import FiltroDeConta from './conta.js';
+import { emPorcento, emReais } from './dinheiro.js';
 import FiltroDeEmpresa from './empresa.js';
 import Filtrado from './filtrado.js';
+import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './graficos.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
@@ -35,17 +51,12 @@ export const dynamic = 'force-dynamic';
 
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-// O dinheiro é formatado aqui, na hora de desenhar, e só aqui. Nada disso é gravado em arquivo.
-const dinheiro = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-const porcento = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0 });
-const emReais = (centavos) => dinheiro.format((centavos ?? 0) / 100);
-
-function Cartao({ c }) {
-  const valor = c.tipo === 'percentual'
-    ? (c.valor === null ? '—' : porcento.format(c.valor))
-    : emReais(c.valor);
+// O NÚMERO DO TOPO. É o mesmo cartão de sempre; o que mudou é o desenho — sem moldura nem sombra, o rótulo miúdo por
+// cima e a contagem que a conferência publica embaixo, porque é ela que prova de onde o número saiu.
+function Kpi({ c, destaque = false }) {
+  const valor = c.tipo === 'percentual' ? emPorcento(c.valor) : emReais(c.valor);
   return (
-    <div className="cartao">
+    <div className={`kpi${destaque ? ' destaque' : ''}`}>
       <div className="rotulo" title={c.nome}>{c.nome}</div>
       <div className={`numero${c.negativo ? ' neg' : ''}`}>{c.negativo ? `-${valor}` : valor}</div>
       <div className="pe">
@@ -56,25 +67,15 @@ function Cartao({ c }) {
   );
 }
 
-// O NOME DO CLIENTE, sempre com o código ao lado no `data-codigo`: é por ele que `scripts/capturar-tela.mjs` troca o
-// nome antes de a captura entrar no repositório. Igual à Tela 3 — toda aparição de nome de cliente passa por aqui.
-function Cliente({ c }) {
-  return <span className="cliente" data-codigo={c.codigo}>{c.nome ?? `cliente ${c.codigo}`}</span>;
-}
-
-function Barras({ itens, conteudo = (i) => i.nome, titulo = (i) => i.nome }) {
-  const maior = Math.max(1, ...itens.map((i) => Math.abs(i.valor)));
+// O QUADRO DE UM GRÁFICO. O título conta a história ("Para onde foi a despesa"), e não descreve o desenho
+// ("gráfico de barras por classificação"); embaixo dele, numa linha só, de que fonte aquele gráfico é.
+function Quadro({ titulo, fonte, className = '', children }) {
   return (
-    <div className="barras">
-      {itens.length === 0 && <p className="legenda">nenhum lançamento entrou neste mês.</p>}
-      {itens.map((i, n) => (
-        <div className="barra" key={n}>
-          <span className="nome" title={titulo(i)}>{conteudo(i)}</span>
-          <span className="trilho"><span className="preenche" style={{ width: `${(Math.abs(i.valor) / maior) * 100}%` }} /></span>
-          <span className="valor">{emReais(i.valor)}</span>
-        </div>
-      ))}
-    </div>
+    <section className={`quadro ${className}`}>
+      <h2>{titulo}</h2>
+      {fonte && <p className="fonte-do-quadro">{fonte}</p>}
+      {children}
+    </section>
   );
 }
 
@@ -107,9 +108,12 @@ export default async function Pagina({ searchParams }) {
   const bloco = (id) => d.blocos.find((b) => b.id === id);
   const dias = bloco('receita-despesa-por-dia').dados;
   const meses = bloco('receita-despesa-por-mes').dados;
-  const maiorDia = Math.max(1, ...dias.flatMap((x) => [x.entradas, x.gastos]));
-  const maiorMes = Math.max(1, ...meses.flatMap((x) => [x.entradas, x.gastos]));
   const anos = [2026];
+
+  // A FRASE DE 5 SEGUNDOS. Ela não traz número novo nenhum: o saldo é o cartão "Saldo" e a maior saída é a primeira
+  // barra do "Top 10 despesas", os dois logo ali embaixo. É só a mesma coisa dita em português.
+  const saldo = cartao('saldo');
+  const maiorDespesa = bloco('top-10-despesas').dados[0] ?? null;
 
   // A URL da tela com uma troca: é assim que cada pílula sabe para onde levar, e é o único lugar onde o estado do
   // filtro é escrito. `cc` sai da URL quando a escolha fica vazia, para o link do sem-filtro ser o de sempre.
@@ -139,7 +143,7 @@ export default async function Pagina({ searchParams }) {
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
 
   return (
-    <>
+    <div className="pagina-1">
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Gestão de Contas</span>
@@ -151,6 +155,21 @@ export default async function Pagina({ searchParams }) {
           <span>Fluxo de caixa</span>
         </nav>
       </header>
+
+      {/* 1. O TÍTULO E A FRASE DE 5 SEGUNDOS — o que o dono tem de levar daqui se olhar a tela e sair. */}
+      <section className="chamada">
+        <h1>{NOMES_DOS_MESES[mes]} de {ano}, empresas 1 e 2 somadas</h1>
+        <p className="frase">
+          O caixa do mês fechou em <b>{emReais(saldo.valor)}</b>
+          {maiorDespesa
+            ? <> e a maior saída foi <b>{maiorDespesa.nome}</b>, {emReais(maiorDespesa.valor)}.</>
+            : <>, e nenhuma despesa entrou no mês.</>}
+        </p>
+        <p className="para-que">
+          Para decidir o que pagar, o que segurar e onde cortar neste mês. Cada número diz, embaixo, quantos
+          lançamentos entraram nele; onde um filtro não alcança a fonte, o número diz isso ali mesmo.
+        </p>
+      </section>
 
       <AvisoDoOmie leituras={d.leituras} />
 
@@ -177,85 +196,12 @@ export default async function Pagina({ searchParams }) {
         </p>
       )}
 
-      <div className="barra-filtros">
-        <span className="rotulo-filtro">ano</span>
-        <span className="grupo">
-          {anos.map((a) => (
-            <a className={`pilula${a === ano ? ' ativa' : ''}`} href={url({ ano: a })} key={a}>{a}</a>
-          ))}
-        </span>
-        <span className="rotulo-filtro">mês</span>
-        <span className="grupo">
-          {MESES_CURTOS.slice(1).map((m, i) => (
-            <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={url({ mes: i + 1 })} key={m}>{m}</a>
-          ))}
-        </span>
-      </div>
-
-      <div className="barra-filtros">
-        <span className="rotulo-filtro">centro de custo</span>
-        <span className="grupo">
-          <a className={`pilula limpar${fcc.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ cc: [] })}>todos</a>
-          {fcc.opcoes.map((nome) => (
-            <a className={`pilula${fcc.escolhidos.includes(nome) ? ' ativa' : ''}`} href={url({ cc: alternar(nome) })} key={nome}>
-              {nome}
-            </a>
-          ))}
-        </span>
-      </div>
-
-      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e ? [e] : [] })}>
-        Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
-        cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC não:
-        cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
-      </FiltroDeEmpresa>
-
-      <FiltroDeConta f={fconta} href={(l) => url({ conta: l })} alternar={alternarConta}>
-        Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
-        &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas os
-        rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
-        (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas cruzáveis
-        do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e as
-        contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
-      </FiltroDeConta>
-
       {fsit.desconhecidos.length > 0 && (
         <p className="aviso leve">
           <strong>Situação que não existe:</strong> {fsit.desconhecidos.join(', ')}. Foi ignorada — as três são as da
           coluna <code>PAGAMENTO</code> do <code>FLUXO DE CAIXA</code>: pago, recebido e a pagar.
         </p>
       )}
-
-      <div className="barra-filtros">
-        <span className="rotulo-filtro">situação</span>
-        <span className="grupo">
-          <a className={`pilula limpar${fsit.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ situacao: [] })}>todas</a>
-          {fsit.opcoes.map((o) => (
-            <a className={`pilula${fsit.escolhidos.includes(o.chave) ? ' ativa' : ''}`}
-              href={url({ situacao: alternarSituacao(o.chave) })} key={o.chave}
-              title={`${o.nome}: coluna PAGAMENTO = ${o.dfc.join(', ')}`}>{o.nome}</a>
-          ))}
-        </span>
-      </div>
-
-      <p className="aviso leve">
-        {fsit.ativo
-          ? <>
-            <strong>Filtrado por situação:</strong> {fsit.escolhidos.join(', ')}. Este é o único dos filtros novos que
-            alcança o VALOR do DFC: os três rótulos são, letra por letra, os da coluna <code>PAGAMENTO</code> (N) do
-            {' '}<code>FLUXO DE CAIXA</code>. Do lado do Omie o de-para é a natureza do lançamento — a leitura das
-            Telas 1 e 2 é de caixa e tudo nela já está baixado —, e &quot;a pagar&quot; é o cartão
-            {' '}&quot;Desp. Pendentes&quot;, que sai dos títulos a pagar por vencimento sem baixa.
-          </>
-          : <>
-            <strong>Sem filtro de situação:</strong> a tela mostra as três. No DFC do mês há
-            {' '}{fsit.noDfc.pago} linhas <code>PAGO</code>, {fsit.noDfc.recebido} <code>RECEBIDO</code> e
-            {' '}{fsit.noDfc['a-pagar']} <code>A PAGAR</code> — a linha <code>A PAGAR</code> nunca entra nesta tela,
-            que é de caixa, e por isso &quot;a pagar&quot; aqui é só o cartão &quot;Desp. Pendentes&quot;.
-            {fsit.foraDosTres > 0 && <> Outras {fsit.foraDosTres} linhas do mês têm um rótulo de
-              {' '}<code>PAGAMENTO</code> que não é nenhum dos três, e ficam fora de qualquer escolha.</>}
-          </>}
-      </p>
 
       {(fclasse.desconhecidos.length > 0 || fcat.desconhecidos.length > 0) && (
         <p className="aviso leve">
@@ -265,143 +211,229 @@ export default async function Pagina({ searchParams }) {
         </p>
       )}
 
-      <div className="barra-filtros">
-        <form className="filtros-form" method="get" action="/">
-          <input type="hidden" name="ano" value={ano} />
-          <input type="hidden" name="mes" value={mes} />
-          {fcc.escolhidos.length > 0 && <input type="hidden" name="cc" value={fcc.escolhidos.join(',')} />}
-          {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
-          {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
-          {fsit.escolhidos.length > 0 && <input type="hidden" name="situacao" value={fsit.escolhidos.join(',')} />}
-          <label className="campo-filtro">
-            <span>categoria — classificação do DFC ({fclasse.opcoes.length} no mês)</span>
-            <select name="classe" defaultValue={fclasse.escolhidos[0] ?? ''}>
-              <option value="">todas</option>
-              {fclasse.opcoes.map((o) => <option value={o} key={o}>{o}</option>)}
-            </select>
-          </label>
-          <label className="campo-filtro">
-            <span>categoria — a do Omie ({fcat.opcoes.length} no mês)</span>
-            <select name="categoria" defaultValue={fcat.escolhidos[0] ?? ''}>
-              <option value="">todas</option>
-              {fcat.opcoes.map((o) => <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>)}
-            </select>
-          </label>
-          <label className="campo-filtro">
-            <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
-            <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
-              <option value="">todos</option>
-              {ffor.opcoes.map((o) => (
-                <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
-                  {o.nome ?? `cliente ${o.codigo}`}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="botao filtro" type="submit">aplicar</button>
-          <a className="pilula limpar" href={url({ classe: [], categoria: [], fornecedor: null })}>limpar</a>
-        </form>
-      </div>
+      {/* 2. O RECORTE. Os mesmos filtros de sempre, na mesma URL de sempre; o que mudou é que eles agora são uma
+          faixa só, de altura fixa, em vez de quatro blocos disputando o topo da tela com os números. O que cada um
+          alcança continua escrito inteiro — dentro do "o que cada filtro alcança", logo abaixo. */}
+      <section className="recorte">
+        <div className="barra-filtros">
+          <span className="rotulo-filtro">ano</span>
+          <span className="grupo">
+            {anos.map((a) => (
+              <a className={`pilula${a === ano ? ' ativa' : ''}`} href={url({ ano: a })} key={a}>{a}</a>
+            ))}
+          </span>
+          <span className="rotulo-filtro">mês</span>
+          <span className="grupo">
+            {MESES_CURTOS.slice(1).map((m, i) => (
+              <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={url({ mes: i + 1 })} key={m}>{m}</a>
+            ))}
+          </span>
+        </div>
 
-      <p className="aviso leve">
-        <strong>A categoria tem duas pontas, e não é descuido:</strong> a classificação do DFC
-        (<code>CLASS. CONTABIL</code>, a mesma que o &quot;Top 10 despesas&quot; agrupa) recorta o lado do DFC, e a
-        categoria do Omie (<code>cCodCateg</code>) recorta o lado do Omie. As duas fontes não escrevem o de-para entre
-        os dois vocabulários, então escolher uma ponta só não recorta a outra — e cada número diz isso ali mesmo. O
-        cliente/fornecedor é só do lado do Omie: no DFC ele é um nome digitado à mão, sem código, e 76% das linhas
-        cruzáveis de 2026 não acham nome nenhum no cadastro.
-      </p>
+        <div className="barra-filtros">
+          <span className="rotulo-filtro">centro de custo</span>
+          <span className="grupo">
+            <a className={`pilula limpar${fcc.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ cc: [] })}>todos</a>
+            {fcc.opcoes.map((nome) => (
+              <a className={`pilula${fcc.escolhidos.includes(nome) ? ' ativa' : ''}`} href={url({ cc: alternar(nome) })} key={nome}>
+                {nome}
+              </a>
+            ))}
+          </span>
+        </div>
 
-      <p className="aviso leve">
-        {fcc.aplicado
-          ? <>
-            <strong>Filtrado por centro de custo:</strong> {fcc.escolhidos.join(', ')}. O filtro vale sobre o rateio do
-            Omie (<code>departamentos[].nDistrValor</code>), juntando as empresas 1 e 2 pelo nome do departamento
-            (decisão do dono, 25/09/2026). Cartão ou bloco em que ele não alcança o número diz isso ali mesmo.
-          </>
-          : <>
-            <strong>Sem filtro de centro de custo:</strong> a tela mostra {NOMES_DOS_MESES[mes]} de {ano} inteiro. Os
-            {' '}{fcc.opcoes.length} nomes são os de <code>geral/departamentos</code>, os mesmos nas duas empresas, e o
-            filtro junta os dois cadastros pelo nome porque nenhum código coincide (decisão do dono, 25/09/2026).
-            {' '}{fcc.semRateio.empresa1 + fcc.semRateio.empresa2} lançamentos do mês
-            ({fcc.semRateio.empresa1} na empresa 1 e {fcc.semRateio.empresa2} na 2) não têm rateio de departamento
-            nenhum: eles não têm nome para juntar e ficam fora de qualquer escolha de centro de custo.
-          </>}
-      </p>
+        <div className="barra-filtros">
+          <span className="rotulo-filtro">situação</span>
+          <span className="grupo">
+            <a className={`pilula limpar${fsit.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ situacao: [] })}>todas</a>
+            {fsit.opcoes.map((o) => (
+              <a className={`pilula${fsit.escolhidos.includes(o.chave) ? ' ativa' : ''}`}
+                href={url({ situacao: alternarSituacao(o.chave) })} key={o.chave}
+                title={`${o.nome}: coluna PAGAMENTO = ${o.dfc.join(', ')}`}>{o.nome}</a>
+            ))}
+          </span>
+        </div>
 
-      <section className="cartoes">
-        {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
-          .map((id) => <Cartao c={cartao(id)} key={id} />)}
+        <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e ? [e] : [] })}>
+          Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
+          cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC não:
+          cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
+        </FiltroDeEmpresa>
+
+        <FiltroDeConta f={fconta} href={(l) => url({ conta: l })} alternar={alternarConta}>
+          Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
+          &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas os
+          rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
+          (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas cruzáveis
+          do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e as
+          contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
+        </FiltroDeConta>
+
+        <div className="barra-filtros">
+          <form className="filtros-form" method="get" action="/">
+            <input type="hidden" name="ano" value={ano} />
+            <input type="hidden" name="mes" value={mes} />
+            {fcc.escolhidos.length > 0 && <input type="hidden" name="cc" value={fcc.escolhidos.join(',')} />}
+            {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
+            {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
+            {fsit.escolhidos.length > 0 && <input type="hidden" name="situacao" value={fsit.escolhidos.join(',')} />}
+            <label className="campo-filtro">
+              <span>categoria — classificação do DFC ({fclasse.opcoes.length} no mês)</span>
+              <select name="classe" defaultValue={fclasse.escolhidos[0] ?? ''}>
+                <option value="">todas</option>
+                {fclasse.opcoes.map((o) => <option value={o} key={o}>{o}</option>)}
+              </select>
+            </label>
+            <label className="campo-filtro">
+              <span>categoria — a do Omie ({fcat.opcoes.length} no mês)</span>
+              <select name="categoria" defaultValue={fcat.escolhidos[0] ?? ''}>
+                <option value="">todas</option>
+                {fcat.opcoes.map((o) => <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>)}
+              </select>
+            </label>
+            <label className="campo-filtro">
+              <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
+              <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
+                <option value="">todos</option>
+                {ffor.opcoes.map((o) => (
+                  <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
+                    {o.nome ?? `cliente ${o.codigo}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="botao filtro" type="submit">aplicar</button>
+            <a className="pilula limpar" href={url({ classe: [], categoria: [], fornecedor: null })}>limpar</a>
+          </form>
+        </div>
+
+        {/* O QUE CADA FILTRO ALCANÇA. Tudo o que estava escrito continua escrito, palavra por palavra — só deixou de
+            empurrar os números para baixo da dobra. Nada aqui é a frase de "o filtro não vale": aquela é parte do
+            número e continua dentro do cartão, do gráfico e da linha da tabela. */}
+        <details className="explica">
+          <summary>o que cada filtro alcança, e o que ele não alcança</summary>
+
+          <p>
+            {fsit.ativo
+              ? <>
+                <strong>Filtrado por situação:</strong> {fsit.escolhidos.join(', ')}. Este é o único dos filtros novos que
+                alcança o VALOR do DFC: os três rótulos são, letra por letra, os da coluna <code>PAGAMENTO</code> (N) do
+                {' '}<code>FLUXO DE CAIXA</code>. Do lado do Omie o de-para é a natureza do lançamento — a leitura das
+                Telas 1 e 2 é de caixa e tudo nela já está baixado —, e &quot;a pagar&quot; é o cartão
+                {' '}&quot;Desp. Pendentes&quot;, que sai dos títulos a pagar por vencimento sem baixa.
+              </>
+              : <>
+                <strong>Sem filtro de situação:</strong> a tela mostra as três. No DFC do mês há
+                {' '}{fsit.noDfc.pago} linhas <code>PAGO</code>, {fsit.noDfc.recebido} <code>RECEBIDO</code> e
+                {' '}{fsit.noDfc['a-pagar']} <code>A PAGAR</code> — a linha <code>A PAGAR</code> nunca entra nesta tela,
+                que é de caixa, e por isso &quot;a pagar&quot; aqui é só o cartão &quot;Desp. Pendentes&quot;.
+                {fsit.foraDosTres > 0 && <> Outras {fsit.foraDosTres} linhas do mês têm um rótulo de
+                  {' '}<code>PAGAMENTO</code> que não é nenhum dos três, e ficam fora de qualquer escolha.</>}
+              </>}
+          </p>
+
+          <p>
+            <strong>A categoria tem duas pontas, e não é descuido:</strong> a classificação do DFC
+            (<code>CLASS. CONTABIL</code>, a mesma que o &quot;Para onde foi a despesa&quot; agrupa) recorta o lado do
+            DFC, e a categoria do Omie (<code>cCodCateg</code>) recorta o lado do Omie. As duas fontes não escrevem o
+            de-para entre os dois vocabulários, então escolher uma ponta só não recorta a outra — e cada número diz
+            isso ali mesmo. O cliente/fornecedor é só do lado do Omie: no DFC ele é um nome digitado à mão, sem
+            código, e 76% das linhas cruzáveis de 2026 não acham nome nenhum no cadastro.
+          </p>
+
+          <p>
+            {fcc.aplicado
+              ? <>
+                <strong>Filtrado por centro de custo:</strong> {fcc.escolhidos.join(', ')}. O filtro vale sobre o rateio do
+                Omie (<code>departamentos[].nDistrValor</code>), juntando as empresas 1 e 2 pelo nome do departamento
+                (decisão do dono, 25/09/2026). Cartão ou bloco em que ele não alcança o número diz isso ali mesmo.
+              </>
+              : <>
+                <strong>Sem filtro de centro de custo:</strong> a tela mostra {NOMES_DOS_MESES[mes]} de {ano} inteiro. Os
+                {' '}{fcc.opcoes.length} nomes são os de <code>geral/departamentos</code>, os mesmos nas duas empresas, e o
+                filtro junta os dois cadastros pelo nome porque nenhum código coincide (decisão do dono, 25/09/2026).
+                {' '}{fcc.semRateio.empresa1 + fcc.semRateio.empresa2} lançamentos do mês
+                ({fcc.semRateio.empresa1} na empresa 1 e {fcc.semRateio.empresa2} na 2) não têm rateio de departamento
+                nenhum: eles não têm nome para juntar e ficam fora de qualquer escolha de centro de custo.
+              </>}
+          </p>
+        </details>
       </section>
 
-      <div className="grade">
-        <section className="painel">
-          <h2 className="alt">Top 10 despesas</h2>
-          <div className="corpo">
-            <Barras itens={bloco('top-10-despesas').dados} />
-            <Filtrado i={bloco('top-10-despesas')} />
-          </div>
-        </section>
+      {/* 3. A FILA DE NÚMEROS DO TOPO. Os 7 cartões de sempre, na ordem de sempre; o "Saldo" é o primeiro e o maior
+          porque é dele que a frase de 5 segundos fala. */}
+      <section className="kpis">
+        {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
+          .map((id, n) => <Kpi c={cartao(id)} destaque={n === 0} key={id} />)}
+      </section>
 
-        <section className="painel">
-          <h2>Top 10 receitas</h2>
-          <div className="corpo">
-            <Barras itens={bloco('top-10-receitas').dados}
-              conteudo={(i) => <Cliente c={i.cliente} />}
-              titulo={(i) => i.cliente.nome ?? `cliente ${i.cliente.codigo}`} />
-            <Filtrado i={bloco('top-10-receitas')} />
-          </div>
-        </section>
+      {/* 4 e 5. O GRÁFICO PRINCIPAL E OS DE APOIO. */}
+      <div className="grade-g">
+        <Quadro className="principal" titulo={`O ano inteiro, e onde ${NOMES_DOS_MESES[mes].toLowerCase()} cai nele`}
+          fonte={`receita e despesa de cada mês de ${ano}, do bloco pronto de cada arquivo do DFC`}>
+          <AnoInteiro meses={meses} mesEmFoco={mes} />
+          {meses.length === 0 && <p className="legenda">a série do ano não foi lida.</p>}
+          <Filtrado i={bloco('receita-despesa-por-mes')} />
+        </Quadro>
 
-        <section className="painel">
-          <h2>Receita × despesa por dia</h2>
-          <div className="corpo">
-            <p className="legenda">
-              <span className="chave rec" />receita &nbsp; <span className="chave desp" />despesa &nbsp;
-              — {NOMES_DOS_MESES[mes]} de {ano}
-            </p>
-            <div className="dias">
-              {dias.map((x) => (
-                <div className="dia" key={x.dia} title={`dia ${dois(x.dia)}: ${emReais(x.entradas)} / ${emReais(x.gastos)}`}>
-                  <span className="rec" style={{ height: `${(x.entradas / maiorDia) * 55}px` }} />
-                  <span className="desp" style={{ height: `${(x.gastos / maiorDia) * 55}px` }} />
-                  <span className="n">{x.dia}</span>
-                </div>
-              ))}
-              {dias.length === 0 && <p className="legenda">o bloco por dia do arquivo do mês não foi lido.</p>}
-            </div>
-            <Filtrado i={bloco('receita-despesa-por-dia')} />
-          </div>
-        </section>
+        <Quadro titulo="Para onde foi a despesa"
+          fonte="as dez maiores classificações de saída do mês, do DFC">
+          <ParaOndeFoiADespesa itens={bloco('top-10-despesas').dados} />
+          {bloco('top-10-despesas').dados.length === 0 && <p className="legenda">nenhum lançamento entrou neste mês.</p>}
+          <Filtrado i={bloco('top-10-despesas')} />
+        </Quadro>
 
-        <section className="painel larga">
-          <h2>Receita × despesa por mês — {ano}</h2>
-          <div className="corpo">
-            <p className="legenda"><span className="chave rec" />receita &nbsp; <span className="chave desp" />despesa</p>
-            <div className="dias" style={{ height: '150px' }}>
-              {meses.map((x) => (
-                <div className="dia" key={x.mes} title={`${MESES_CURTOS[x.mes]}: ${emReais(x.entradas)} / ${emReais(x.gastos)}`}>
-                  <span className="rec" style={{ height: `${(x.entradas / maiorMes) * 65}px` }} />
-                  <span className="desp" style={{ height: `${(x.gastos / maiorMes) * 65}px` }} />
-                  <span className="n">{MESES_CURTOS[x.mes]}</span>
-                </div>
-              ))}
-              {meses.length === 0 && <p className="legenda">a série do ano não foi lida.</p>}
-            </div>
-            <Filtrado i={bloco('receita-despesa-por-mes')} />
-          </div>
-        </section>
+        <Quadro className="principal" titulo="O mês, dia a dia"
+          fonte={`entradas e gastos de cada dia de ${NOMES_DOS_MESES[mes].toLowerCase()}, do bloco pronto da aba do mês`}>
+          <DiaADia dias={dias} mes={mes} ano={ano} />
+          {dias.length === 0 && <p className="legenda">o bloco por dia do arquivo do mês não foi lido.</p>}
+          <Filtrado i={bloco('receita-despesa-por-dia')} />
+        </Quadro>
+
+        <Quadro titulo="De quem veio a receita"
+          fonte="os dez maiores recebimentos do mês, do Omie recortado da MeuBESS">
+          <DeQuemVeioAReceita itens={bloco('top-10-receitas').dados} />
+          {bloco('top-10-receitas').dados.length === 0 && <p className="legenda">nenhum lançamento entrou neste mês.</p>}
+          <Filtrado i={bloco('top-10-receitas')} />
+        </Quadro>
       </div>
+
+      {/* 6. A TABELA DE DETALHE. Nenhum número novo: é a MESMA contagem que cada cartão e cada gráfico já mostra no
+          pé, reunida numa lista só — a que `docs/conferencia.md` publica e `npm run conferir-telas` compara. Serve
+          para o dono conferir, indicador por indicador, de onde o desenho saiu. */}
+      <section className="quadro detalhe">
+        <h2>Os números exatos, indicador por indicador</h2>
+        <p className="fonte-do-quadro">
+          quantos lançamentos entraram em cada um dos 11 indicadores desta tela — o mesmo que
+          <code> npm run conferir-telas </code> compara com <code>docs/conferencia.md</code>
+        </p>
+        <table className="tabela-detalhe">
+          <thead>
+            <tr><th>indicador</th><th>fonte</th><th className="num">do DFC</th><th className="num">do Omie</th></tr>
+          </thead>
+          <tbody>
+            {[...d.cartoes, ...d.blocos].map((i) => (
+              <tr key={i.id}>
+                <th>{i.nome}</th>
+                <td className="fonte">{i.fonte}</td>
+                <td className="num">{i.contagem.dfc === null ? '—' : i.contagem.dfc}</td>
+                <td className="num">{i.contagem.omie}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
       <footer className="rodape">
         <Atualizar ano={ano} />
         <span>
-          Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta.
+          {NOMES_DOS_MESES[mes]} de {ano} · empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora
+          — o Omie pela API, só consulta.
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo}.` : ''}
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
-    </>
+    </div>
   );
 }

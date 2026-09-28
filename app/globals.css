@@ -327,25 +327,29 @@ a { color: inherit; }
 .cartao .sem-filtro { white-space: normal; }
 .tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
 
-/* ================================================================ TELA 1 — o layout em F
+/* ================================================================ O LAYOUT EM F DAS TRÊS TELAS
  *
  * DE ONDE VEM ESTE DESENHO. Da skill de visualização de dados que o dono mandou em 28/09/2026
- * (`.claude/skills/visualizacao-de-dados/SKILL.md`); o plano de gráficos e a história da tela estão em
+ * (`.claude/skills/visualizacao-de-dados/SKILL.md`); o plano de gráficos e a história de cada tela estão em
  * `docs/layout.md`. Tema escolhido: "clean analytical" — fundo branco, sem moldura nem sombra, régua horizontal
  * clara, e só as cinco cores da marca lá de cima. Nenhuma cor nova nasce aqui.
  *
- * TUDO NESTA SEÇÃO É SÓ DA TELA 1. As classes que as Telas 2 e 3 dividem com ela — `.cartao`, `.painel`, `.barras`,
- * `.grade` — continuam intocadas acima, e por isso nos gráficos, nas tabelas e nos números daquelas duas telas nada
- * mudou. A Tela 1 deixou de usá-las: os números do topo são `.kpi`, os painéis são `.quadro` e o desenho é SVG do
- * Recharts. O que as três telas passaram a dividir em 28/09/2026 está lá em cima, e não aqui: a lista suspensa dos
- * filtros (`.suspensa`) e a frase de 5 segundos (`.chamada`).
+ * ATÉ 28/09/2026 ESTA SEÇÃO ERA SÓ DA TELA 1, e as Telas 2 e 3 usavam `.cartao`, `.painel` e `.grade`, lá em cima.
+ * Na mesma data o dono aprovou o padrão da Tela 1 e pediu as outras duas iguais: agora as três usam as mesmas peças —
+ * `.tela` (o fundo), `.chamada` (o título e a frase de 5 segundos), `.recorte` (os filtros), `.kpi` (os números do
+ * topo), `.quadro` (cada gráfico), `.grafico` (o SVG do Recharts) e a tabela de detalhe que fecha o F. O que muda de
+ * uma tela para outra é só quantos números tem a fila e quantos gráficos tem a grade.
+ *
+ * AS CLASSES ANTIGAS (`.cartao`, `.painel`, `.cartoes.dre`, `.grade.receber`, `.colunas`, `.barras`) continuam
+ * escritas lá em cima, e nenhuma tela as usa mais: as capturas versionadas de antes desta reforma foram gravadas com
+ * o CSS inteiro dentro, e apagá-las agora mudaria o desenho daqueles arquivos, que são o registro de como a tela era.
  *
  * A COR DE CADA SÉRIE MORA AQUI, e não em `app/graficos.js`: lá cada série só recebe uma `className` e pinta com
  * `currentColor`. É esta a razão de `.serie-receita` e `.serie-despesa` serem só uma linha de `color`.
  */
 
-/* O fundo branco do "clean analytical" vale só nesta tela — `body` continua cinza para as Telas 2 e 3. */
-.pagina-1 { background: var(--cartao); min-height: 100vh; }
+/* O fundo branco do "clean analytical". Desde 28/09/2026 as três telas o usam. */
+.tela { background: var(--cartao); min-height: 100vh; }
 
 /* ---------------------------------------------------------------- 2. o recorte (os filtros) */
 .recorte {
@@ -363,10 +367,16 @@ a { color: inherit; }
  * elas são `.aviso leve` — uma caixinha. Dentro do "o que cada filtro alcança" da Tela 1 elas são só mais um
  * parágrafo, e a caixinha sai. */
 .recorte .explica .aviso { padding: 0; margin: 8px 0; border: 0; background: none; }
-.pagina-1 .aviso { margin: 10px 20px; }
+.tela .aviso { margin: 10px 20px; }
 
 /* ---------------------------------------------------------------- 3. a fila de números do topo */
+/* A fila é uma coluna por número, e o destaque é o número de que a frase de 5 segundos fala. Na Tela 1 ele é o
+ * primeiro e por isso a coluna dele é maior; nas Telas 2 e 3 ele fica no lugar que a cascata lhe dá — o DRE se lê de
+ * cima para baixo (receita, custo, EBITDA, lucro, margem) e a carteira também (previsto, recebido, pendente,
+ * vencido) —, e o que o destaca é o corpo do número, não a posição. */
 .kpis { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); padding: 16px 20px 18px; }
+.kpis.de-5 { grid-template-columns: repeat(5, 1fr); }
+.kpis.de-4 { grid-template-columns: repeat(4, 1fr); }
 .kpi { padding: 0 14px; border-left: 1px solid var(--borda); min-width: 0; }
 .kpi:first-child { border-left: 0; padding-left: 0; }
 .kpi .rotulo {
@@ -397,9 +407,18 @@ a { color: inherit; }
 .grafico .recharts-wrapper { width: 100% !important; height: auto !important; }
 .grafico .recharts-surface { width: 100% !important; height: auto !important; display: block; }
 
-/* as duas séries das três telas de gráfico — receita e despesa, e nada mais */
-.serie-receita { color: var(--marca-escura); }
-.serie-despesa { color: var(--destaque); }
+/* A COR DE CADA SÉRIE, e o que ela quer dizer. A mesma cor quer dizer a mesma coisa em todos os gráficos das três
+ * telas — é a regra da skill, e é o que deixa os dois rankings da Tela 1 lado a lado sem legenda. */
+.serie-receita { color: var(--marca-escura); }   /* entrada de dinheiro, Tela 1 */
+.serie-despesa { color: var(--destaque); }       /* saída de dinheiro, Tela 1 */
+/* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
+ * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */
+.serie-margem { color: var(--marca); }
+/* As três faixas da Tela 3. São as MESMAS cores de `.f-pago`, `.f-atrasado` e `.f-aberto` lá em cima, que pintam a
+ * rosca, a legenda e o selo da lista; aqui elas viram `color`, porque o Recharts pinta com `currentColor`. */
+.serie-pago { color: var(--positivo); }
+.serie-atrasado { color: var(--negativo); }
+.serie-aberto { color: var(--destaque); }
 
 /* tinta de dado, e só: régua horizontal clara, sem moldura, sem eixo desenhado */
 .grade-grafico line { stroke: var(--borda); }
@@ -431,4 +450,80 @@ a { color: inherit; }
 .tabela-detalhe .fonte { color: var(--texto-fraco); }
 .tabela-detalhe .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
 
-.pagina-1 .rodape { border-top: 1px solid var(--borda); padding: 12px 20px 26px; }
+.tela .rodape { border-top: 1px solid var(--borda); padding: 12px 20px 26px; }
+
+/* ---------------------------------------------------------------- as peças que só a Tela 2 tem no layout em F */
+
+/* A fita dos doze meses embaixo do número do cartão. Ela é a mesma de antes desta reforma; o que mudou é que o
+ * cartão virou `.kpi`, sem moldura. */
+.kpi .fita { display: block; width: 100%; max-width: 190px; height: 24px; margin: 5px 0 2px; color: var(--marca-clara); }
+.kpi .numero.neg + .fita { color: var(--negativo); }
+
+/* O MAPA DE CALOR DA VARIAÇÃO (a coluna AH da tabela, em intensidade de cor).
+ *
+ * As oito cores abaixo NÃO são cores novas: são a mesma `--positivo` (#1c8f5a) e a mesma `--negativo` (#c4453b) da
+ * paleta lá de cima, em quatro transparências. Ficam escritas em `rgba()` porque uma variável CSS não se deixa
+ * transparentar sem `color-mix()`, e os quatro degraus precisam da mesma cor em quatro forças.
+ *
+ * VERDE é a variação que joga A FAVOR do resultado e VERMELHO a que joga contra — a mesma leitura da seta da coluna
+ * AH da tabela (receita que sobe é bom, despesa que sobe não é), decidida na própria linha do DRE pelo `sinal` dela.
+ * Em cinza impresso os dois viram o mesmo tom, e é por isso que o NÚMERO continua escrito dentro de cada célula. */
+.mapa-ah { border-collapse: collapse; font-size: 11px; white-space: nowrap; min-width: 100%; }
+.mapa-ah th, .mapa-ah td { padding: 4px 8px; text-align: right; font-weight: 400; border: 1px solid var(--cartao); }
+.mapa-ah thead th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  border: 0; border-bottom: 1px solid var(--texto-fraco); text-align: center; padding-bottom: 5px;
+}
+.mapa-ah thead th.escolhido { color: var(--marca); font-weight: 700; }
+.mapa-ah .linha-col {
+  text-align: left; font-weight: 600; white-space: nowrap; border: 0;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+}
+.mapa-ah td { font-variant-numeric: tabular-nums; }
+.mapa-ah .vazio { color: var(--texto-fraco); opacity: .5; }
+.mapa-ah .neutra { color: var(--texto-fraco); }
+.mapa-ah .bom.g1 { background: rgba(28, 143, 90, .10); }
+.mapa-ah .bom.g2 { background: rgba(28, 143, 90, .22); }
+.mapa-ah .bom.g3 { background: rgba(28, 143, 90, .36); }
+.mapa-ah .bom.g4 { background: rgba(28, 143, 90, .52); }
+.mapa-ah .ruim.g1 { background: rgba(196, 69, 59, .10); }
+.mapa-ah .ruim.g2 { background: rgba(196, 69, 59, .22); }
+.mapa-ah .ruim.g3 { background: rgba(196, 69, 59, .36); }
+.mapa-ah .ruim.g4 { background: rgba(196, 69, 59, .52); }
+
+/* A tabela do DRE dentro do quadro de detalhe: a margem que ela tinha sozinha sai, porque quem dá o respiro agora é
+ * o `.quadro.detalhe`. O cabeçalho perde o fundo cinza cheio e fica com a régua embaixo, como a tabela de detalhe da
+ * Tela 1 — só a coluna escolhida e a do total continuam marcadas, que é informação e não enfeite. */
+.quadro.tabela-dre { margin: 0; }
+.quadro .dre-tabela thead th { background: var(--cartao); border-bottom: 1px solid var(--texto-fraco); }
+.quadro .dre-tabela thead .grupo-col { background: var(--cartao); }
+.quadro .dre-tabela thead th.escolhido { background: rgba(0, 121, 203, .14); color: var(--marca); }
+.quadro .dre-tabela thead th.total { background: var(--cartao); color: var(--marca); }
+.quadro .dre-tabela .num.total { background: rgba(20, 58, 99, .04); }
+.quadro .dre-tabela .linha-total th, .quadro .dre-tabela .linha-total td { background: rgba(31, 82, 137, .06); }
+.quadro .dre-tabela .linha-total .grupo-col { background: #eef2f7; }
+.quadro .dre-tabela tfoot .cobertura th, .quadro .dre-tabela tfoot .cobertura td { background: var(--cartao); }
+
+/* ---------------------------------------------------------------- as peças que só a Tela 3 tem no layout em F */
+
+/* O quadradinho da faixa ao lado do rótulo do número: é a MESMA cor que o gráfico e a rosca usam para aquela faixa.
+ * `.legenda .chave` lá em cima é o mesmo desenho dentro da legenda; aqui ele entra no cartão. */
+.kpi .rotulo .chave {
+  display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 5px;
+}
+.kpi .rotulo .chave.marca { background: var(--marca); }
+
+/* A rosca, dentro do quadro: sem o fundo do painel, ela fica um pouco menor e o texto do centro perde peso. */
+.quadro .rosca { margin-top: 4px; }
+.quadro .rosca svg { width: 132px; height: 132px; }
+
+/* A lista de títulos, dentro do quadro de detalhe: o cabeçalho azul cheio e o rodapé escuro saem, e ficam a régua e
+ * o texto miúdo da tabela de detalhe da Tela 1. Os selos de status continuam coloridos — ali a cor é a faixa. */
+.quadro .lista-titulos thead th {
+  background: var(--cartao); color: var(--texto-fraco); border-bottom: 1px solid var(--texto-fraco);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+}
+.quadro .lista-titulos tfoot th, .quadro .lista-titulos tfoot td {
+  background: var(--cartao); color: var(--texto); border-top: 1px solid var(--texto-fraco);
+}
+.quadro .rolagem-lista { max-height: 420px; }

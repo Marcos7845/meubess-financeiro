@@ -12,7 +12,11 @@
 // NENHUM NÚMERO NASCE AQUI: o valor chega pronto de `lib/indicadores/`, em centavos, e daqui sai só o texto.
 
 const DINHEIRO = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-const PORCENTO = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0 });
+// SEM SEPARADOR DE MILHAR NO PERCENTUAL, e não é gosto: uma razão grande — uma análise vertical de 1234% numa linha
+// pequena do DRE, por exemplo — sairia "1.234%", e a trava de `scripts/capturar-tela.mjs` lê "1.234" como número de
+// milhar e recusa a captura. Sem o ponto, sai "1234%". Para as razões menores que 1000%, que são todas as da Tela 1,
+// o texto é exatamente o mesmo de antes.
+const PORCENTO = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0, useGrouping: false });
 
 // Centavos → `R$ 1.634.743`. O valor guardado é sempre inteiro, em centavos; a divisão por 100 é só de apresentação.
 export const emReais = (centavos) => DINHEIRO.format((centavos ?? 0) / 100);

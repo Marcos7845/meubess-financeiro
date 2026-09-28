@@ -40,10 +40,11 @@ import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 import { comoLista, comoTexto } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
 import FiltroDeConta, { ExplicaConta } from './conta.js';
-import { emPorcento, emReais } from './dinheiro.js';
+import { emReais } from './dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from './empresa.js';
 import Filtrado from './filtrado.js';
 import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './graficos.js';
+import { Kpi, Quadro } from './quadro.js';
 import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
@@ -51,34 +52,6 @@ import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 export const dynamic = 'force-dynamic';
 
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-// O NÚMERO DO TOPO. É o mesmo cartão de sempre; o que mudou é o desenho — sem moldura nem sombra, o rótulo miúdo por
-// cima e a contagem que a conferência publica embaixo, porque é ela que prova de onde o número saiu.
-function Kpi({ c, destaque = false }) {
-  const valor = c.tipo === 'percentual' ? emPorcento(c.valor) : emReais(c.valor);
-  return (
-    <div className={`kpi${destaque ? ' destaque' : ''}`}>
-      <div className="rotulo" title={c.nome}>{c.nome}</div>
-      <div className={`numero${c.negativo ? ' neg' : ''}`}>{c.negativo ? `-${valor}` : valor}</div>
-      <div className="pe">
-        {c.contagem.dfc !== null ? `${c.contagem.dfc} do DFC · ` : ''}{c.contagem.omie} do Omie
-      </div>
-      <Filtrado i={c} />
-    </div>
-  );
-}
-
-// O QUADRO DE UM GRÁFICO. O título conta a história ("Para onde foi a despesa"), e não descreve o desenho
-// ("gráfico de barras por classificação"); embaixo dele, numa linha só, de que fonte aquele gráfico é.
-function Quadro({ titulo, fonte, className = '', children }) {
-  return (
-    <section className={`quadro ${className}`}>
-      <h2>{titulo}</h2>
-      {fonte && <p className="fonte-do-quadro">{fonte}</p>}
-      {children}
-    </section>
-  );
-}
 
 export default async function Pagina({ searchParams }) {
   const q = await searchParams;
@@ -127,7 +100,7 @@ export default async function Pagina({ searchParams }) {
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
 
   return (
-    <div className="pagina-1">
+    <div className="tela">
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Gestão de Contas</span>

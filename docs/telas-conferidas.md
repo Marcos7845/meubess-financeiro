@@ -17,10 +17,17 @@ Onde a conferência publica a linha **repartida** — quanto veio de venda de pr
 quantos títulos e quantos avulsos, quanto em cada empresa —, cada pedaço também é comparado, e aparece na linha em
 **Também conferido**. Um total pode bater por acaso com a repartição errada; é o que esses pedaços fecham.
 
+**O cadastro de clientes é conferido pela relação, não pelo tamanho.** A linha "Valor previsto por cliente e status"
+não compara mais quantos clientes cada empresa tem cadastrados — esse número cresce toda vez que a MeuBESS cadastra um
+cliente, e derrubava a linha a cada releitura do Omie, com os títulos intactos; o que é comparado é o que a mesma frase
+da conferência afirma e que a releitura não mexe: **todos os códigos de cliente da janela estão no cadastro com nome**
+(o `semNome` da linha, que é 0 quando nenhum cliente do gráfico ficou sem rótulo). O tamanho continua escrito em
+[`docs/conferencia.md`](conferencia.md), como contexto.
+
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**36 indicadores**: 35 conferidos, 1 divergentes e 0 a conferir.
+**36 indicadores**: 36 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
@@ -71,6 +78,6 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 3 — Valor pendente.** **Na tela:** Omie 10. **Na conferência:** Omie 10. **Também conferido:** empresa1 0, empresa2 10. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor vencido.** **Na tela:** Omie 37. **Na conferência:** Omie 37. **Também conferido:** empresa1 0, empresa2 37. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por mês e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.
-- divergente: **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** clientes 87, cadastro1 3577, cadastro2 3576. **Fonte:** Omie, títulos a receber por vencimento. **Motivo:** em "cadastro1" a tela conta 3577 e a conferência diz 3574; em "cadastro2" a tela conta 3576 e a conferência diz 3573.
+- **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** clientes 87, semNome 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lista de títulos.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** comPedido 128, semPedido 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.

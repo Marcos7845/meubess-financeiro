@@ -157,10 +157,28 @@ const EXTRATORES = {
   'por-cliente-e-status': {
     dfc: null, omie: /^([\d.]+) títulos, em/,
     // A conferência escreve "1 código de cliente distinto" e "87 códigos … distintos": singular e plural.
+    // O TAMANHO DO CADASTRO DE CLIENTES NÃO É COMPARADO, DE PROPÓSITO.
+    //
+    // A frase da conferência traz, entre parênteses, quantos clientes cada empresa tem cadastrados. Esse número não é
+    // título nem indicador: é o tamanho de `geral/clientes`, que cresce toda vez que a MeuBESS cadastra um cliente.
+    // `docs/conferencia.md` foi escrito numa leitura do Omie, e o teste roda noutra — comparar os dois derrubava esta
+    // linha a cada releitura do cadastro, sem nada de errado ter acontecido (foi o que aconteceu em 28/09/2026: 3.574
+    // virou 3.577 e 3.573 virou 3.576, com os 128 títulos intactos). Os dois lados só seriam comparáveis na MESMA
+    // leitura, e é a conferência inteira que teria de ser republicada para isso.
+    //
+    // O QUE É COMPARADO NO LUGAR — e que a mesma frase afirma — é a relação entre a tela e o cadastro, que não se
+    // mexe quando o Omie ganha cliente: todos os códigos de cliente da janela estão no cadastro COM NOME. `semNome`
+    // é 0 quando a conferência escreve "todos vêm com nome preenchido" e N quando ela escreve "N deles vêm sem
+    // nome"; a tela conta o mesmo — quantos clientes do gráfico ficaram sem rótulo. É mais apertado que o tamanho:
+    // cadastro sumido ou truncado tira o nome dos clientes da janela e sai divergente.
     extras: {
       clientes: /em ([\d.]+) códigos? de cliente distintos?/,
-      cadastro1: /no cadastro de clientes \(([\d.]+) na empresa 1/,
-      cadastro2: /no cadastro de clientes \([\d.]+ na empresa 1 e ([\d.]+) na 2\)/,
+      semNome: (entram) => {
+        const m = /e ([\d.]+) deles vêm sem nome/.exec(entram);
+        if (m) return num(m[1]);
+        // Sem a frase do cadastro, a conferência não o leu (ela mesma marca a linha "a conferir:"): nada a comparar.
+        return /e todos vêm com nome preenchido/.test(entram) ? 0 : null;
+      },
     },
   },
   'lista-de-titulos': {
@@ -298,7 +316,14 @@ for (const ind of doConferencia) {
     continue;
   }
   const ex = EXTRATORES[id];
-  const achar = (re) => (re && re.exec(ind.entram) ? num(re.exec(ind.entram)[1]) : null);
+  // Um extrator é uma expressão regular — o primeiro grupo é o número — ou uma função, para o punhado de frases em
+  // que a conferência diz o número por extenso ("todos vêm com nome preenchido" quer dizer zero).
+  const achar = (re) => {
+    if (!re) return null;
+    if (typeof re === 'function') return re(ind.entram);
+    const m = re.exec(ind.entram);
+    return m ? num(m[1]) : null;
+  };
   const esperado = { dfc: achar(ex.dfc), omie: achar(ex.omie) };
   const obtido = naTela.contagem;
 
@@ -376,6 +401,13 @@ navegador recebe** ([\`lib/indicadores/\`](../lib/indicadores/)), que filtra pel
 Onde a conferência publica a linha **repartida** — quanto veio de venda de produtos e quanto de outras receitas,
 quantos títulos e quantos avulsos, quanto em cada empresa —, cada pedaço também é comparado, e aparece na linha em
 **Também conferido**. Um total pode bater por acaso com a repartição errada; é o que esses pedaços fecham.
+
+**O cadastro de clientes é conferido pela relação, não pelo tamanho.** A linha "Valor previsto por cliente e status"
+não compara mais quantos clientes cada empresa tem cadastrados — esse número cresce toda vez que a MeuBESS cadastra um
+cliente, e derrubava a linha a cada releitura do Omie, com os títulos intactos; o que é comparado é o que a mesma frase
+da conferência afirma e que a releitura não mexe: **todos os códigos de cliente da janela estão no cadastro com nome**
+(o \`semNome\` da linha, que é 0 quando nenhum cliente do gráfico ficou sem rótulo). O tamanho continua escrito em
+[\`docs/conferencia.md\`](conferencia.md), como contexto.
 
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.

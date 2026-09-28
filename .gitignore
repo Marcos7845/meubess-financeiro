@@ -7,6 +7,8 @@ __pycache__/
 .venv/
 dist/
 .next/
+# build de prova, gravado fora do `.next` para não derrubar o app que o dono está usando (ver next.config.mjs)
+.next-prova/
 graphify-out/cache/
 mapa-omie*.log
 

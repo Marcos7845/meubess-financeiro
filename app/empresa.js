@@ -1,21 +1,46 @@
-// A PÍLULA DE EMPRESA — o único filtro que as TRÊS telas dividem, desenhado num lugar só.
+// O FILTRO DE EMPRESA — o primeiro dos dois filtros que as TRÊS telas dividem, desenhado num lugar só.
 //
-// DECISÃO DO DONO, 27/09/2026: empresa 1, empresa 2 ou as duas. São três escolhas exclusivas, e não uma seleção
-// múltipla como o centro de custo: escolher as duas é a soma de sempre, e é isso que a pílula "as duas" faz — limpa o
-// `empresa` da URL. Quem lê e normaliza é `lib/regras/filtros.mjs`; quem aplica, cada `lib/indicadores/tela-*.mjs`.
+// DECISÃO DO DONO, 27/09/2026: empresa 1, empresa 2 ou as duas. Quem lê e normaliza é `lib/regras/filtros.mjs`; quem
+// aplica, cada `lib/indicadores/tela-*.mjs`.
 //
-// COMPONENTE DE SERVIDOR, como as três telas: nada aqui calcula número, e o `href` de cada pílula vem da própria
-// página, que é a única que sabe montar a sua URL.
+// DESENHO NOVO (decisão do dono, 28/09/2026): lista suspensa com caixas de marcar, como todos os outros filtros de
+// escolha das três telas — `app/suspensa.js` explica a troca. Aqui são DUAS caixas, uma por empresa, e a conta é a
+// mesma de sempre: nenhuma marcada, ou as duas marcadas, é a soma de sempre e o filtro fica desligado
+// (`filtroDeEmpresa` só liga quando a escolha é MENOR que o total); uma marcada é aquela empresa sozinha.
 //
-// ONDE O FILTRO NÃO VALE é assunto de cada tela, e entra aqui como `children`: o que todas têm em comum é o lado do
-// DFC, que não se recorta por empresa porque o de-para da coluna `EMP.` com as filiais do Omie não fecha
+// COMPONENTE DE SERVIDOR, como as três telas: nada aqui calcula número. E ele mora DENTRO do formulário de filtros de
+// cada tela — é o "aplicar" daquele formulário que escreve a escolha na URL.
+//
+// ONDE O FILTRO NÃO VALE é assunto de cada tela, e entra como `children` de `ExplicaEmpresa`: o que todas têm em comum
+// é o lado do DFC, que não se recorta por empresa porque o de-para da coluna `EMP.` com as filiais do Omie não fecha
 // (`docs/fontes.md`, "A coluna `EMP.` do DFC não é a filial do Omie"). A Tela 3 não tem lado do DFC e não tem essa
 // ressalva nenhuma.
+
+import Suspensa from './suspensa.js';
 
 const NOMES = { 1: 'Empresa 1', 2: 'Empresa 2' };
 const FILIAIS = { 1: '/0001-42, as rotinas administrativas', 2: '/0002-23, compra, venda e logística' };
 
-export default function FiltroDeEmpresa({ f, href, children }) {
+export default function FiltroDeEmpresa({ f }) {
+  return (
+    <Suspensa
+      nome="empresa"
+      campo="empresa"
+      vazio="as duas"
+      opcoes={f.opcoes.map((e) => ({
+        valor: String(e),
+        rotulo: NOMES[e],
+        marcada: f.ativo && f.escolhidas.includes(e),
+        dica: `${NOMES[e]} — ${FILIAIS[e]}`,
+      }))}
+    />
+  );
+}
+
+// A FRASE DO QUE ELE ALCANÇA, separada da caixa: na Tela 1 ela mora dentro do "o que cada filtro alcança", que abre e
+// fecha, e nas Telas 2 e 3 continua onde sempre esteve. O aviso de empresa que não existe vem junto — ele é a resposta
+// a um `?empresa=` escrito errado, e tem de aparecer perto do filtro.
+export function ExplicaEmpresa({ f, children }) {
   return (
     <>
       {f.desconhecidos.length > 0 && (
@@ -26,17 +51,6 @@ export default function FiltroDeEmpresa({ f, href, children }) {
         </p>
       )}
 
-      <div className="barra-filtros">
-        <span className="rotulo-filtro">empresa</span>
-        <span className="grupo">
-          <a className={`pilula limpar${f.ativo ? '' : ' ativa'}`} href={href(null)}>as duas</a>
-          {f.opcoes.map((e) => (
-            <a className={`pilula${f.ativo && f.escolhidas.includes(e) ? ' ativa' : ''}`}
-              href={href(e)} key={e} title={`${NOMES[e]} — ${FILIAIS[e]}`}>{NOMES[e]}</a>
-          ))}
-        </span>
-      </div>
-
       <p className="aviso leve">
         {f.ativo
           ? <>
@@ -46,7 +60,8 @@ export default function FiltroDeEmpresa({ f, href, children }) {
           </>
           : <>
             <strong>As duas empresas:</strong> a tela soma as filiais <code>/0001-42</code> e <code>/0002-23</code> do
-            Omie, como sempre — a terceira fica fora. As pílulas escolhem uma delas.
+            Omie, como sempre — a terceira fica fora. A lista suspensa escolhe uma delas; marcar as duas é a soma de
+            sempre.
           </>}
       </p>
     </>

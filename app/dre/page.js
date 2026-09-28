@@ -6,19 +6,24 @@
 // A TABELA TEM UMA COLUNA POR MÊS, como a referência, e ao lado de cada uma cabem duas leituras:
 //   AH — análise horizontal: quanto a coluna variou contra o mês anterior.
 //   AV — análise vertical: quanto a linha pesa na receita líquida daquele mês.
-// As duas ligam e desligam pelos botões do topo, que são links — o estado mora na URL (`?ah=1&av=1`), não no
-// navegador, então a captura da tela e um link colado no chat mostram exatamente a mesma coisa.
+// As duas ligam e desligam por duas caixas de marcar — o estado mora na URL (`?ah=1&av=1`), não no navegador, então a
+// captura da tela e um link colado no chat mostram exatamente a mesma coisa. Sem `ah` na URL, a AH vem ligada, como
+// sempre veio; é por isso que o formulário manda `ah=0` junto e a caixa marcada acrescenta o `ah=1`.
 //
 // O FILTRO DE EMPRESA (decisão do dono, 27/09/2026) mora na mesma URL — `?empresa=2` —, e o desenho dele está em
 // `app/empresa.js`, que as três telas usam. Ele vale nas linhas e nos cartões de fonte Omie e em toda contagem do Omie;
 // nas linhas de fonte DFC e nas linhas "(=)" que misturam as duas fontes, a própria linha diz que não vale.
 //
-// O FILTRO DESTA TELA é o de `docs/fontes.md`: MÊS, seleção múltipla. Cada pílula de mês acende e apaga, e o que está
-// aceso vai para a URL (`?meses=5,6,7`), no mesmo lugar em que o `ah` e o `av` já moravam. Com meses escolhidos, a
-// tabela mostra só aquelas colunas, os cartões do topo somam os meses escolhidos e a coluna "Total" passa a ser o
-// total deles — o cabeçalho dela diz isso. "Todos" limpa a escolha e a tela volta ao de sempre: todas as colunas de
-// abril em diante, cartões no mês da URL. Onde o filtro não alcança o número, a própria linha diz isso — ver
-// `app/filtrado.js` e `docs/filtros.md`.
+// O FILTRO DESTA TELA é o de `docs/fontes.md`: MÊS, seleção múltipla, na URL como `?meses=5,6,7`. Com meses escolhidos,
+// a tabela mostra só aquelas colunas, os cartões do topo somam os meses escolhidos e a coluna "Total" passa a ser o
+// total deles — o cabeçalho dela diz isso. Sem escolha nenhuma a tela é a de sempre: todas as colunas de abril em
+// diante, cartões no mês da URL. Onde o filtro não alcança o número, a própria linha diz isso — ver `app/filtrado.js`
+// e `docs/filtros.md`.
+//
+// O DESENHO DOS FILTROS É O DE 28/09/2026, pedido do dono ao rever a Tela 1 e valendo para as três: as etiquetas
+// saíram e cada filtro de escolha virou uma LISTA SUSPENSA COM CAIXAS DE MARCAR (`app/suspensa.js`). Os quatro — meses,
+// empresa, conta bancária e as duas leituras da tabela — vão num formulário `GET` só, antes dos cartões, e o "aplicar"
+// escreve todas as escolhas na URL de uma vez. Nenhum número, filtro ou opção mudou com isso.
 
 // `React.Fragment` escrito por extenso: o atalho `<>` não aceita `key`, e aqui cada grupo do DRE precisa de uma.
 import React from 'react';
@@ -27,9 +32,10 @@ import { dadosDaTela2, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
-import FiltroDeConta from '../conta.js';
-import FiltroDeEmpresa from '../empresa.js';
+import FiltroDeConta, { ExplicaConta } from '../conta.js';
+import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
+import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 
 export const dynamic = 'force-dynamic';
@@ -113,8 +119,12 @@ export default async function Pagina({ searchParams }) {
   // A tela só tem coluna de abril em diante (decisão do dono, 27/09/2026; ver a nota abaixo do topo e
   // `lib/indicadores/tela-2.mjs`); um `mes` de janeiro a março na URL cai em abril.
   const mes = Math.max(4, Number(q?.mes ?? corrente.mes));
-  const comAh = q?.ah !== '0';
-  const comAv = q?.av === '1';
+  // AS DUAS LEITURAS DA TABELA, lidas como lista porque agora elas vêm de caixa de marcar: o formulário manda sempre
+  // o `ah=0` e o `av=0`, e a caixa marcada acrescenta o `1`. Sem nada na URL, a AH vem ligada e a AV desligada — é o
+  // que `?ah=1` e `?ah=0` sempre quiseram dizer, e um link antigo continua abrindo a mesma tela.
+  const lidoAh = comoLista(q?.ah);
+  const comAh = lidoAh.length === 0 || lidoAh.includes('1');
+  const comAv = comoLista(q?.av).includes('1');
   // O FILTRO DE MESES vem da URL como lista de números; quem o normaliza é `lib/regras/filtros.mjs`, no cálculo.
   const d = await dadosDaTela2({
     ano,
@@ -125,20 +135,9 @@ export default async function Pagina({ searchParams }) {
   const femp = d.filtros.empresa;
   const fconta = d.filtros.conta;
 
-  const url = (troca) => {
-    const p = new URLSearchParams({ ano: String(ano), mes: String(mes), ah: comAh ? '1' : '0', av: comAv ? '1' : '0' });
-    if (fMeses.escolhidos.length) p.set('meses', fMeses.escolhidos.join(','));
-    if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
-    if (fconta.ativo) p.set('conta', fconta.escolhidas.join(','));
-    for (const [k, v] of Object.entries(troca)) {
-      if (v === null || v === '') p.delete(k); else p.set(k, String(v));
-    }
-    return `/dre?${p}`;
-  };
-  // Clicar num mês acende; clicar de novo apaga. É a mesma pílula de antes, agora com escolha múltipla.
-  const alternar = (m) => (fMeses.escolhidos.includes(m)
-    ? fMeses.escolhidos.filter((x) => x !== m)
-    : [...fMeses.escolhidos, m]).sort((a, b) => a - b);
+  // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar escrevem a escolha na URL
+  // quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês lido e as duas leituras.
+  const semFiltro = `/dre?ano=${ano}&mes=${mes}&ah=${comAh ? '1' : '0'}&av=${comAv ? '1' : '0'}`;
 
   const colunas = d.tabela[0]?.porMes ?? [];
   const porColuna = 1 + (comAh ? 1 : 0) + (comAv ? 1 : 0);
@@ -151,10 +150,6 @@ export default async function Pagina({ searchParams }) {
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
-  // A conta bancária é seleção múltipla, como o centro de custo da Tela 1: clicar acende, clicar de novo apaga.
-  const alternarConta = (nome) => (fconta.escolhidas.includes(nome)
-    ? fconta.escolhidas.filter((x) => x !== nome)
-    : [...fconta.escolhidas, nome]);
 
   return (
     <>
@@ -188,24 +183,50 @@ export default async function Pagina({ searchParams }) {
         nesses três meses (decisão do dono, 27/09/2026).
       </p>
 
-      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e })}>
+      {/* O RECORTE, numa faixa só: os quatro filtros desta tela em listas suspensas com caixas de marcar (decisão do
+          dono, 28/09/2026). Ele subiu para cá, onde as etiquetas de empresa e conta já estavam, porque agora os quatro
+          escrevem a mesma URL de uma vez e têm de viver no mesmo formulário. As opções e o que cada um alcança são as
+          mesmas de antes. */}
+      <form className="barra-filtros filtros-form" method="get" action="/dre">
+        <input type="hidden" name="ano" value={ano} />
+        <input type="hidden" name="mes" value={mes} />
+        {/* Sem estes dois, uma caixa desmarcada não mandaria nada e a AH voltaria a ligar sozinha. */}
+        <input type="hidden" name="ah" value="0" />
+        <input type="hidden" name="av" value="0" />
+
+        <Suspensa nome="meses" campo="meses"
+          opcoes={MESES_CURTOS.slice(4).map((m, i) => ({
+            valor: String(i + 4), rotulo: m, marcada: fMeses.escolhidos.includes(i + 4),
+          }))} />
+
+        <FiltroDeEmpresa f={femp} />
+
+        <FiltroDeConta f={fconta} />
+
+        <Suspensa nome="leituras da tabela" campo="leituras" vazio="nenhuma"
+          opcoes={[
+            { campo: 'ah', valor: '1', rotulo: 'Análise Horizontal', marcada: comAh, dica: 'variação contra o mês anterior' },
+            { campo: 'av', valor: '1', rotulo: 'Análise Vertical', marcada: comAv, dica: 'a linha como fatia da receita líquida do mês' },
+          ]} />
+
+        <button className="botao filtro" type="submit">aplicar</button>
+        <a className="limpar-tudo" href={semFiltro}>limpar</a>
+      </form>
+
+      <ExplicaEmpresa f={femp}>
         Ele vale em &quot;(+) Receitas&quot;, &quot;(=) Receita bruta&quot;, &quot;(−) Despesas gerais&quot;,
         &quot;(+/−) Resultado financeiro&quot; e &quot;(=) sem conta&quot;, e em toda contagem do Omie da tabela. As
         linhas de fonte DFC — deduções, custos de vendas e impostos pagos — e os dois primeiros cartões do topo dizem,
         cada um, que o número é das duas empresas somadas; e as linhas &quot;(=)&quot; que misturam as duas fontes dizem
         que uma das pontas não é filtrada. A última linha da tabela também: o lado do DFC dela é das duas empresas.
-      </FiltroDeEmpresa>
+      </ExplicaEmpresa>
 
-      <FiltroDeConta f={fconta} href={(l) => url({ conta: l.join(',') || null })} alternar={alternarConta}>
+      <ExplicaConta f={fconta}>
         Ele vale nas mesmas linhas e nos mesmos cartões que o de empresa — &quot;(+) Receitas&quot;,
         &quot;(=) Receita bruta&quot;, &quot;(−) Despesas gerais&quot;, &quot;(+/−) Resultado financeiro&quot; e
         &quot;(=) sem conta&quot; — e em toda contagem do Omie da tabela. As linhas de fonte DFC e os dois primeiros
         cartões do topo dizem, cada um, que o número é de todas as contas somadas.
-      </FiltroDeConta>
-
-      <section className="cartoes dre">
-        {d.cartoes.map((c) => <Cartao c={c} key={c.id} />)}
-      </section>
+      </ExplicaConta>
 
       {fMeses.semColuna.length > 0 && (
         <p className="aviso">
@@ -214,21 +235,6 @@ export default async function Pagina({ searchParams }) {
           dos cartões e da coluna Total, e a tela diz isso em vez de somar um mês vazio como se fosse mês cheio.
         </p>
       )}
-
-      <div className="barra-filtros">
-        <span className="rotulo-filtro">meses</span>
-        <span className="grupo">
-          <a className={`pilula limpar${fMeses.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ meses: null })}>todos</a>
-          {MESES_CURTOS.slice(4).map((m, i) => (
-            <a className={`pilula${fMeses.escolhidos.includes(i + 4) || emFoco(i + 4) ? ' ativa' : ''}`}
-              href={url({ meses: alternar(i + 4).join(',') || null })} key={m}>{m}</a>
-          ))}
-        </span>
-        <span className="grupo">
-          <a className={`pilula${comAh ? ' ativa' : ''}`} href={url({ ah: comAh ? 0 : 1 })}>Análise Horizontal</a>
-          <a className={`pilula${comAv ? ' ativa' : ''}`} href={url({ av: comAv ? 0 : 1 })}>Análise Vertical</a>
-        </span>
-      </div>
 
       <p className="aviso leve">
         {fMeses.ativo
@@ -242,9 +248,14 @@ export default async function Pagina({ searchParams }) {
           : <>
             <strong>Sem filtro de mês:</strong> a tabela mostra as {fMeses.opcoes.length} colunas que existem
             ({fMeses.opcoes.map((m) => NOMES_DOS_MESES[m]).join(', ')}), a coluna <strong>Total</strong> é a soma
-            delas, e os cartões do topo são de {NOMES_DOS_MESES[mes]}. As pílulas de mês escolhem vários de uma vez.
+            delas, e os cartões do topo são de {NOMES_DOS_MESES[mes]}. A lista suspensa de meses escolhe vários de uma
+            vez.
           </>}
       </p>
+
+      <section className="cartoes dre">
+        {d.cartoes.map((c) => <Cartao c={c} key={c.id} />)}
+      </section>
 
       <section className="painel larga tabela-dre">
         <h2>

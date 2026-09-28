@@ -101,14 +101,10 @@ a { color: inherit; }
 .barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
 .barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
 
-/* ---------------------------------------------------------------- filtros */
-.filtros { display: flex; flex-wrap: wrap; gap: 5px; }
-.filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
-.pilula {
-  display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11.5px; text-decoration: none;
-  background: var(--fundo); border: 1px solid var(--borda); color: var(--texto-fraco);
-}
-.pilula.ativa { background: var(--marca); border-color: var(--marca); color: var(--texto-claro); font-weight: 600; }
+/* ---------------------------------------------------------------- legenda
+ *
+ * As etiquetas (`.pilula`) que desenhavam os filtros até 27/09/2026 saíram daqui em 28/09/2026, com a decisão do dono
+ * de trocá-las por listas suspensas com caixas de marcar: o desenho dos filtros está lá embaixo, em `.suspensa`. */
 .legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
 .legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
 
@@ -135,13 +131,11 @@ a { color: inherit; }
 .cartao.dre .fita { display: block; width: 100%; height: 24px; margin: 4px 0 2px; color: var(--marca-clara); }
 .cartao.dre .numero.neg + .fita { color: var(--negativo); }
 
-/* ---------------------------------------------------------------- Tela 2: a barra de filtros */
+/* ---------------------------------------------------------------- a barra de filtros (as três telas) */
 .barra-filtros {
   display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
   padding: 0 12px 10px;
 }
-.barra-filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
-.barra-filtros .grupo + .grupo { margin-left: auto; }
 
 /* ---------------------------------------------------------------- Tela 2: a tabela do DRE */
 .tabela-dre { margin: 0 12px 12px; }
@@ -202,14 +196,8 @@ a { color: inherit; }
 .cartao.receber .texto { display: flex; flex-direction: column; min-width: 0; }
 .cartao.receber .numero { font-size: 23px; }
 
-/* ---------------------------------------------------------------- Tela 3: a grade e a barra de filtros
- *
- * São três grupos na barra, e não dois como na Tela 2: o ano e os meses ficam juntos à esquerda, e só a janela de
- * vencimento — que é leitura, não botão — vai para a direita. */
+/* ---------------------------------------------------------------- Tela 3: a grade */
 .grade.receber { grid-template-columns: 1.55fr 1fr; }
-.barra-filtros.receber .grupo + .grupo { margin-left: 0; }
-.barra-filtros.receber .grupo:last-child { margin-left: auto; }
-.pilula.fixa { background: var(--cartao); color: var(--texto-fraco); cursor: default; }
 
 /* ---------------------------------------------------------------- Tela 3: colunas empilhadas por mês */
 .colunas { display: flex; align-items: flex-end; gap: 6px; }
@@ -256,22 +244,69 @@ a { color: inherit; }
 }
 .lista-titulos .selo.f-aberto { color: var(--marca-escura); }
 
+/* ---------------------------------------------------------------- a frase de 5 segundos (Telas 1 e 3)
+ *
+ * A frase que a tela escreve embaixo do título — o que o dono leva daqui se olhar e sair. Ela nunca traz número novo:
+ * é sempre um cartão da própria tela dito em português (o "Saldo" na Tela 1, o "Valor Vencido" na Tela 3). Mora aqui,
+ * e não na seção da Tela 1, porque as duas telas a usam. */
+.chamada { padding: 16px 20px 12px; }
+.chamada h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
+/* O nome do mês vem minúsculo de `NOMES_DOS_MESES`, e aqui ele começa frase. */
+.chamada h1::first-letter { text-transform: uppercase; }
+.chamada .frase { margin: 7px 0 0; font-size: 16.5px; line-height: 1.4; max-width: 74ch; }
+.chamada .frase b { color: var(--marca); font-weight: 700; }
+.chamada .para-que { margin: 6px 0 0; font-size: 11.5px; color: var(--texto-fraco); max-width: 86ch; }
+
 /* ---------------------------------------------------------------- os filtros das três telas
  *
  * Quais filtros existem em cada tela é decisão do dono, registrada em `docs/fontes.md` e construída em
- * `lib/regras/filtros.mjs`; aqui só ficam as formas. Três peças:
+ * `lib/regras/filtros.mjs`; aqui só ficam as formas. Quatro peças:
  *
- *   .pilula.limpar  o "todos", que apaga a escolha e volta a tela ao sem-filtro;
- *   .campo-filtro   o par rótulo + campo (data, lista) dos filtros que não cabem em pílula;
+ *   .suspensa       a lista suspensa com caixas de marcar de `app/suspensa.js` — o desenho de TODO filtro de escolha
+ *                   das três telas desde 28/09/2026, quando o dono pediu as etiquetas fora;
+ *   .limpar-tudo    o link que volta a tela ao sem-filtro, guardando o mês que está sendo lido;
+ *   .campo-filtro   o par rótulo + campo (data, lista longa) dos filtros que não são escolha curta;
  *   .sem-filtro     a frase que a tela escreve JUNTO do número quando o filtro não alcança aquela fonte. Ela é parte
  *                   do número, não nota de rodapé: fica dentro do cartão, do bloco ou da linha.
  */
-.barra-filtros .rotulo-filtro {
-  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
-  align-self: center; margin-right: 2px;
-}
-.pilula.limpar { border-style: dashed; }
 .filtros-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; width: 100%; }
+
+/* A LISTA SUSPENSA. Fechada, ela é do tamanho do que está escolhido; aberta, a lista de opções flutua por cima do
+ * resto da tela (`position: absolute`) para não empurrar os números para baixo — que é exatamente o que as etiquetas
+ * faziam. Quem abre e fecha é o `<details>` do HTML: nenhuma linha de JavaScript, porque a captura joga fora todo
+ * `<script>` e as telas são componentes de servidor. */
+.suspensa { position: relative; }
+.suspensa > summary {
+  display: inline-flex; align-items: baseline; gap: 6px; cursor: pointer; white-space: nowrap;
+  padding: 4px 9px; border: 1px solid var(--borda); border-radius: 4px; background: var(--cartao);
+  list-style: none;
+}
+.suspensa > summary::-webkit-details-marker { display: none; }
+.suspensa > summary::after { content: "▾"; font-size: 10px; color: var(--texto-fraco); }
+.suspensa > summary .nome {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+}
+.suspensa > summary .escolha {
+  font-size: 12px; font-weight: 600; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Com escolha feita, a caixa fica na cor da marca: é o que as etiquetas acesas diziam. */
+.suspensa.escolhida > summary { border-color: var(--marca); }
+.suspensa.escolhida > summary .escolha { color: var(--marca); }
+.suspensa[open] > summary { border-color: var(--marca-clara); }
+.suspensa .opcoes {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; min-width: 100%; max-height: 264px;
+  overflow: auto; padding: 5px; display: flex; flex-direction: column; gap: 1px;
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: 4px;
+  box-shadow: 0 8px 20px rgba(16, 32, 64, .16);
+}
+.suspensa .opcoes label {
+  display: flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer;
+  padding: 3px 7px; border-radius: 3px; font-size: 12px;
+}
+.suspensa .opcoes label:hover { background: var(--fundo); }
+.suspensa .opcoes input { margin: 0; accent-color: var(--marca); }
+
+.limpar-tudo { font-size: 11.5px; color: var(--marca-clara); align-self: center; }
 .campo-filtro { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .campo-filtro > span {
   font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
@@ -299,9 +334,11 @@ a { color: inherit; }
  * `docs/layout.md`. Tema escolhido: "clean analytical" — fundo branco, sem moldura nem sombra, régua horizontal
  * clara, e só as cinco cores da marca lá de cima. Nenhuma cor nova nasce aqui.
  *
- * TUDO NESTA SEÇÃO É NOVO E SÓ DA TELA 1. As classes que as Telas 2 e 3 dividem com ela — `.cartao`, `.painel`,
- * `.barras`, `.grade` — continuam intocadas acima, e por isso aquelas duas telas não mudaram um pixel. A Tela 1
- * deixou de usá-las: os números do topo são `.kpi`, os painéis são `.quadro` e o desenho é SVG do Recharts.
+ * TUDO NESTA SEÇÃO É SÓ DA TELA 1. As classes que as Telas 2 e 3 dividem com ela — `.cartao`, `.painel`, `.barras`,
+ * `.grade` — continuam intocadas acima, e por isso nos gráficos, nas tabelas e nos números daquelas duas telas nada
+ * mudou. A Tela 1 deixou de usá-las: os números do topo são `.kpi`, os painéis são `.quadro` e o desenho é SVG do
+ * Recharts. O que as três telas passaram a dividir em 28/09/2026 está lá em cima, e não aqui: a lista suspensa dos
+ * filtros (`.suspensa`) e a frase de 5 segundos (`.chamada`).
  *
  * A COR DE CADA SÉRIE MORA AQUI, e não em `app/graficos.js`: lá cada série só recebe uma `className` e pinta com
  * `currentColor`. É esta a razão de `.serie-receita` e `.serie-despesa` serem só uma linha de `color`.
@@ -309,15 +346,6 @@ a { color: inherit; }
 
 /* O fundo branco do "clean analytical" vale só nesta tela — `body` continua cinza para as Telas 2 e 3. */
 .pagina-1 { background: var(--cartao); min-height: 100vh; }
-
-/* ---------------------------------------------------------------- 1. o título e a frase de 5 segundos */
-.chamada { padding: 16px 20px 12px; }
-.chamada h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
-/* O nome do mês vem minúsculo de `NOMES_DOS_MESES`, e aqui ele começa frase. */
-.chamada h1::first-letter { text-transform: uppercase; }
-.chamada .frase { margin: 7px 0 0; font-size: 16.5px; line-height: 1.4; max-width: 74ch; }
-.chamada .frase b { color: var(--marca); font-weight: 700; }
-.chamada .para-que { margin: 6px 0 0; font-size: 11.5px; color: var(--texto-fraco); max-width: 86ch; }
 
 /* ---------------------------------------------------------------- 2. o recorte (os filtros) */
 .recorte {
@@ -331,6 +359,10 @@ a { color: inherit; }
   text-transform: uppercase; letter-spacing: .4px; font-weight: 600;
 }
 .recorte .explica p { max-width: 104ch; margin: 8px 0; }
+/* As frases de empresa e de conta bancária vêm de `app/empresa.js` e `app/conta.js`, que as três telas dividem, e lá
+ * elas são `.aviso leve` — uma caixinha. Dentro do "o que cada filtro alcança" da Tela 1 elas são só mais um
+ * parágrafo, e a caixinha sai. */
+.recorte .explica .aviso { padding: 0; margin: 8px 0; border: 0; background: none; }
 .pagina-1 .aviso { margin: 10px 20px; }
 
 /* ---------------------------------------------------------------- 3. a fila de números do topo */

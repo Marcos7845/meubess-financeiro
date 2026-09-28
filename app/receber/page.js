@@ -20,9 +20,21 @@
 // cartões e os 4 blocos são do Omie, lido uma vez por empresa. As duas contagens do cadastro de clientes são a única
 // ressalva, e o bloco delas diz isso.
 //
-// O STATUS É PÍLULA, como o ano e o mês. Os outros três são campos, e vão juntos num formulário `GET`: apertar
-// "aplicar" escreve os três na URL de uma vez, que é o que um campo de data e uma lista longa pedem. Nenhum estado
-// mora no navegador — a captura da tela e um link colado no chat mostram exatamente a mesma coisa.
+// O DESENHO DELES É O DE 28/09/2026, pedido do dono ao rever a Tela 1 e valendo para as três: as etiquetas saíram e
+// cada filtro de escolha — ano, mês, status, empresa e conta bancária — virou uma LISTA SUSPENSA COM CAIXAS DE MARCAR
+// (`app/suspensa.js`). Eles e os quatro campos (as duas datas, o cliente e a categoria) vão num formulário `GET` só:
+// apertar "aplicar" escreve tudo na URL de uma vez. Nenhum estado mora no navegador — a captura da tela e um link
+// colado no chat mostram exatamente a mesma coisa.
+//
+// OS DOIS CAMPOS DE DATA VÊM VAZIOS quando a janela é a do mês, e é o mesmo filtro de sempre: vazio quer dizer "a
+// janela do mês escolhido" (`lib/regras/filtros.mjs` já lia assim). Antes eles vinham preenchidos com as datas do mês,
+// e agora que o mês e as datas estão no MESMO formulário, um campo preenchido venceria a troca de mês.
+//
+// A FRASE DE 5 SEGUNDOS, embaixo do título (decisão do dono, 28/09/2026): "X venceu e ainda não foi recebido". Ela não
+// traz número novo — é o cartão "Valor Vencido", logo abaixo, dito em português. A primeira escrita dela dizia "já
+// venceu e não entrou", e o dono trocou: "não entrou" é vago, porque não diz se o título foi cancelado, renegociado ou
+// só não pago. "Venceu e ainda não foi recebido" é o que o número é: o valor em aberto dos títulos na faixa
+// ATRASADO — vencidos, não cancelados e sem baixa.
 //
 // NENHUM NÚMERO NASCE AQUI: tudo vem de `lib/indicadores/tela-3.mjs`, pela camada de dados. Onde um dos quatro filtros
 // não alcança o número, o bloco diz isso ali mesmo — ver `app/filtrado.js` e `docs/filtros.md`.
@@ -33,9 +45,10 @@ import { dadosDaTela3, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista, comoTexto, paraCampoDeData } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
-import FiltroDeConta from '../conta.js';
-import FiltroDeEmpresa from '../empresa.js';
+import FiltroDeConta, { ExplicaConta } from '../conta.js';
+import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
+import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 
 export const dynamic = 'force-dynamic';
@@ -166,32 +179,17 @@ export default async function Pagina({ searchParams }) {
   const maiorCliente = Math.max(1, ...clientes.map((c) => c.total));
   const anos = [2026];
   const pendente = cartao('valor-pendente');
+  // O NÚMERO DA FRASE DE 5 SEGUNDOS: o cartão "Valor Vencido", que é o valor em aberto dos títulos na faixa ATRASADO.
+  const vencido = cartao('valor-vencido');
 
-  // A URL da tela com uma troca. Os quatro filtros só entram nela quando estão escolhidos: o link do sem-filtro é o
-  // de sempre, e é por isso que "limpar" é só a URL com ano e mês.
-  const url = (troca = {}) => {
-    const p = new URLSearchParams({ ano: String(ano), mes: String(mes) });
-    if (f.vencimento.ativo) { p.set('de', paraCampoDeData(f.vencimento.de)); p.set('ate', paraCampoDeData(f.vencimento.ate)); }
-    if (f.status.escolhidos.length) p.set('status', f.status.escolhidos.join(','));
-    if (f.cliente.escolhido) p.set('cliente', f.cliente.escolhido);
-    if (f.categoria.escolhido) p.set('categoria', f.categoria.escolhido);
-    if (femp.ativo) p.set('empresa', femp.escolhidas.join(','));
-    if (fconta.ativo) p.set('conta', fconta.escolhidas.join(','));
-    for (const [k, v] of Object.entries(troca)) {
-      if (v === null || v === '') p.delete(k); else p.set(k, String(v));
-    }
-    return `/receber?${p}`;
-  };
-  const alternarStatus = (chave) => (f.status.escolhidos.includes(chave)
-    ? f.status.escolhidos.filter((x) => x !== chave)
-    : [...f.status.escolhidos, chave]);
+  // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar e os quatro campos escrevem a
+  // escolha na URL quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês que está sendo
+  // lido — e é por isso que ele é só a URL com ano e mês.
+  const semFiltro = `/receber?ano=${ano}&mes=${mes}`;
   const algumFiltro = f.vencimento.ativo || f.status.ativo || f.cliente.ativo || f.categoria.ativo;
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
-  const alternarConta = (nome) => (fconta.escolhidas.includes(nome)
-    ? fconta.escolhidas.filter((x) => x !== nome)
-    : [...fconta.escolhidas, nome]);
 
   return (
     <>
@@ -209,82 +207,80 @@ export default async function Pagina({ searchParams }) {
 
       <AvisoDoOmie leituras={d.leituras} />
 
-      <div className="barra-filtros receber">
-        <span className="rotulo-filtro">ano</span>
-        <span className="grupo">
-          {anos.map((a) => (
-            <a className={`pilula${a === ano ? ' ativa' : ''}`} href={url({ ano: a, de: null, ate: null })} key={a}>{a}</a>
-          ))}
-        </span>
-        <span className="rotulo-filtro">mês</span>
-        <span className="grupo">
-          {MESES_CURTOS.slice(1).map((m, i) => (
-            <a className={`pilula${i + 1 === mes && !f.vencimento.ativo ? ' ativa' : ''}`}
-              href={url({ mes: i + 1, de: null, ate: null })} key={m}>{m}</a>
-          ))}
-        </span>
-        <span className="rotulo-filtro">status</span>
-        <span className="grupo">
-          <a className={`pilula limpar${f.status.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ status: null })}>todos</a>
-          {f.status.opcoes.map((o) => (
-            <a className={`pilula${f.status.escolhidos.includes(o.chave) ? ' ativa' : ''}`}
-              href={url({ status: alternarStatus(o.chave).join(',') || null })} key={o.chave}
-              title={`${o.nome}: ${o.status.join(', ')}`}>{o.nome}</a>
-          ))}
-        </span>
-      </div>
+      {/* A FRASE DE 5 SEGUNDOS — o que quem cobra tem de levar daqui se olhar a tela e sair. Nenhum número novo: é o
+          cartão "Valor Vencido", logo abaixo, dito em português. */}
+      <section className="chamada">
+        <p className="frase">
+          {vencido.contagem.omie > 0
+            ? <><b>{emReais(vencido.valor)}</b> venceu e ainda não foi recebido ({vencido.contagem.omie}{' '}
+              {vencido.contagem.omie === 1 ? 'título' : 'títulos'} nesta janela).</>
+            : <>Nenhum título desta janela venceu sem ser recebido.</>}
+        </p>
+      </section>
 
-      <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e, cliente: null })}>
+      {/* O RECORTE, numa faixa só: os sete filtros desta tela, os cinco de escolha em listas suspensas com caixas de
+          marcar (decisão do dono, 28/09/2026) e os quatro campos como sempre foram, no mesmo formulário `GET`. As
+          opções e o que cada um alcança são as mesmas de antes. */}
+      <form className="barra-filtros receber filtros-form" method="get" action="/receber">
+        <Suspensa nome="ano" campo="ano" unica
+          opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a), marcada: a === ano }))} />
+
+        <Suspensa nome="mês" campo="mes" unica
+          opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
+
+        <Suspensa nome="status" campo="status"
+          opcoes={f.status.opcoes.map((o) => ({
+            valor: o.chave, rotulo: o.nome, marcada: f.status.escolhidos.includes(o.chave),
+            dica: `${o.nome}: ${o.status.join(', ')}`,
+          }))} />
+
+        <FiltroDeEmpresa f={femp} />
+
+        <FiltroDeConta f={fconta} />
+
+        <label className="campo-filtro">
+          <span>vencimento de</span>
+          <input type="date" name="de" defaultValue={f.vencimento.ativo ? paraCampoDeData(f.vencimento.de) : ''} />
+        </label>
+        <label className="campo-filtro">
+          <span>até</span>
+          <input type="date" name="ate" defaultValue={f.vencimento.ativo ? paraCampoDeData(f.vencimento.ate) : ''} />
+        </label>
+        <label className="campo-filtro">
+          <span>cliente ({f.cliente.opcoes.length} na janela)</span>
+          <select name="cliente" defaultValue={f.cliente.escolhido ?? ''}>
+            <option value="">todos</option>
+            {f.cliente.opcoes.map((o) => (
+              <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
+                {o.nome ?? `cliente ${o.codigo}`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo-filtro">
+          <span>categoria ({f.categoria.opcoes.length} na janela)</span>
+          <select name="categoria" defaultValue={f.categoria.escolhido ?? ''}>
+            <option value="">todas</option>
+            {f.categoria.opcoes.map((o) => (
+              <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>
+            ))}
+          </select>
+        </label>
+        <button className="botao filtro" type="submit">aplicar</button>
+        <a className="limpar-tudo" href={semFiltro}>limpar</a>
+      </form>
+
+      <ExplicaEmpresa f={femp}>
         Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a tela é do Omie inteira. As duas
         contagens do cadastro de clientes continuam as duas, lado a lado, e o bloco delas diz isso. A lista de clientes
         do filtro passa a ser só a desta empresa, porque o <code>nCodCliente</code> é próprio de cada uma.
-      </FiltroDeEmpresa>
+      </ExplicaEmpresa>
 
-      <FiltroDeConta f={fconta} href={(l) => url({ conta: l.join(',') || null, cliente: null })} alternar={alternarConta}>
+      <ExplicaConta f={fconta}>
         Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a conta é o
         {' '}<code>cabecTitulo.nCodCC</code>, o mesmo campo pelo qual a tela já faz o recorte da MeuBESS. Só as duas
         contagens do cadastro de clientes ficam de fora, e o bloco delas diz isso.
-      </FiltroDeConta>
-
-      <div className="barra-filtros receber">
-        <form className="filtros-form" method="get" action="/receber">
-          <input type="hidden" name="ano" value={ano} />
-          <input type="hidden" name="mes" value={mes} />
-          {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
-          {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
-          {f.status.escolhidos.length > 0 && <input type="hidden" name="status" value={f.status.escolhidos.join(',')} />}
-          <label className="campo-filtro">
-            <span>vencimento de</span>
-            <input type="date" name="de" defaultValue={paraCampoDeData(f.vencimento.de)} />
-          </label>
-          <label className="campo-filtro">
-            <span>até</span>
-            <input type="date" name="ate" defaultValue={paraCampoDeData(f.vencimento.ate)} />
-          </label>
-          <label className="campo-filtro">
-            <span>cliente ({f.cliente.opcoes.length} na janela)</span>
-            <select name="cliente" defaultValue={f.cliente.escolhido ?? ''}>
-              <option value="">todos</option>
-              {f.cliente.opcoes.map((o) => (
-                <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
-                  {o.nome ?? `cliente ${o.codigo}`}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="campo-filtro">
-            <span>categoria ({f.categoria.opcoes.length} na janela)</span>
-            <select name="categoria" defaultValue={f.categoria.escolhido ?? ''}>
-              <option value="">todas</option>
-              {f.categoria.opcoes.map((o) => (
-                <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>
-              ))}
-            </select>
-          </label>
-          <button className="botao filtro" type="submit">aplicar</button>
-          <a className="pilula limpar" href={url({ de: null, ate: null, status: null, cliente: null, categoria: null })}>limpar</a>
-        </form>
-      </div>
+      </ExplicaConta>
 
       <p className="aviso leve">
         <strong>Janela de vencimento: {d.janela.de} a {d.janela.ate}</strong> ({d.filtros.naJanela} títulos, fora os

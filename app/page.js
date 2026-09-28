@@ -19,10 +19,10 @@
 // (`app/graficos.js`), e o que atravessa é só rótulo, valor e código de cliente.
 //
 // OS FILTROS DESTA TELA. Os de `docs/fontes.md` — ano · mês · CENTRO DE CUSTO (seleção múltipla) — mais a EMPRESA e os
-// quatro que o dono aprovou em 27/09/2026. Todos moram na URL, como as pílulas de ano e mês sempre moraram, e é por
-// isso que um link colado no chat e a captura da tela mostram exatamente a mesma coisa:
+// quatro que o dono aprovou em 27/09/2026. Todos moram na URL, como o ano e o mês sempre moraram, e é por isso que um
+// link colado no chat e a captura da tela mostram exatamente a mesma coisa:
 //
-//   ?cc=TI,RH                        centro de custo, pílula por nome de departamento (decisão do dono, 25/09/2026)
+//   ?cc=TI,RH                        centro de custo, por nome de departamento (decisão do dono, 25/09/2026)
 //   ?empresa=2                       empresa 1, empresa 2 ou as duas — `app/empresa.js`, as três telas
 //   ?conta=Caixinha,Stone            conta bancária — `app/conta.js`, as três telas
 //   ?situacao=pago,recebido          situação: os três rótulos da coluna `PAGAMENTO` do DFC
@@ -30,20 +30,21 @@
 //   ?categoria=1.01.01               categoria, a ponta do Omie: o `cCodCateg` do lançamento
 //   ?fornecedor=2-1234567            cliente/fornecedor: empresa + `nCodCliente`, como o cliente da Tela 3
 //
-// As pílulas são as escolhas curtas; as três listas longas (classificação, categoria e cliente/fornecedor) vão juntas
-// num formulário `GET`, como na Tela 3 — apertar "aplicar" escreve as três na URL de uma vez. Nenhum estado mora no
-// navegador. Onde um filtro não alcança o número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e
-// `docs/filtros.md`.
+// O DESENHO DELES É O DE 28/09/2026, pedido do dono ao rever esta tela: as etiquetas saíram e cada filtro de escolha
+// virou uma LISTA SUSPENSA COM CAIXAS DE MARCAR (`app/suspensa.js`). Os sete estão num formulário `GET` só, e apertar
+// "aplicar" escreve todas as escolhas na URL de uma vez. Nenhum estado mora no navegador. Onde um filtro não alcança o
+// número, o próprio cartão ou bloco diz isso — ver `app/filtrado.js` e `docs/filtros.md`.
 
 import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 import { comoLista, comoTexto } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
-import FiltroDeConta from './conta.js';
+import FiltroDeConta, { ExplicaConta } from './conta.js';
 import { emPorcento, emReais } from './dinheiro.js';
-import FiltroDeEmpresa from './empresa.js';
+import FiltroDeEmpresa, { ExplicaEmpresa } from './empresa.js';
 import Filtrado from './filtrado.js';
 import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './graficos.js';
+import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
@@ -110,33 +111,16 @@ export default async function Pagina({ searchParams }) {
   const meses = bloco('receita-despesa-por-mes').dados;
   const anos = [2026];
 
-  // A FRASE DE 5 SEGUNDOS. Ela não traz número novo nenhum: o saldo é o cartão "Saldo" e a maior saída é a primeira
-  // barra do "Top 10 despesas", os dois logo ali embaixo. É só a mesma coisa dita em português.
+  // A FRASE DE 5 SEGUNDOS. Ela não traz número novo nenhum: é o cartão "Saldo", logo ali embaixo, dito em português.
+  //
+  // O DONO TIROU A MAIOR SAÍDA DELA em 28/09/2026, revendo esta tela: a frase era "o caixa fechou em X e a maior saída
+  // foi Y". Ficou só o caixa do mês, que é a decisão que ele toma aqui; a maior saída continua na tela, na primeira
+  // barra de "Para onde foi a despesa".
   const saldo = cartao('saldo');
-  const maiorDespesa = bloco('top-10-despesas').dados[0] ?? null;
 
-  // A URL da tela com uma troca: é assim que cada pílula sabe para onde levar, e é o único lugar onde o estado do
-  // filtro é escrito. `cc` sai da URL quando a escolha fica vazia, para o link do sem-filtro ser o de sempre.
-  const url = ({
-    ano: a = ano, mes: m = mes, cc: c = fcc.escolhidos, empresa: e = (femp.ativo ? femp.escolhidas : []),
-    conta: ct = fconta.escolhidas, situacao: st = fsit.escolhidos,
-    classe: cl = fclasse.escolhidos, categoria: ca = fcat.escolhidos, fornecedor: fo = ffor.escolhido,
-  }) => {
-    const p = new URLSearchParams({ ano: String(a), mes: String(m) });
-    if (c.length) p.set('cc', c.join(','));
-    if (e.length) p.set('empresa', e.join(','));
-    if (ct.length) p.set('conta', ct.join(','));
-    if (st.length) p.set('situacao', st.join(','));
-    if (cl.length) p.set('classe', cl.join(','));
-    if (ca.length) p.set('categoria', ca.join(','));
-    if (fo) p.set('fornecedor', fo);
-    return `/?${p}`;
-  };
-  // Clicar acende, clicar de novo apaga — para os três filtros de seleção múltipla desta tela.
-  const alternarEm = (lista) => (nome) => (lista.includes(nome) ? lista.filter((x) => x !== nome) : [...lista, nome]);
-  const alternar = alternarEm(fcc.escolhidos);
-  const alternarConta = alternarEm(fconta.escolhidas);
-  const alternarSituacao = alternarEm(fsit.escolhidos);
+  // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar escrevem a escolha na URL
+  // quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês que está sendo lido.
+  const semFiltro = `/?ano=${ano}&mes=${mes}`;
   // A EMPRESA E A CONTA ESCOLHIDAS ATRAVESSAM AS ABAS: são os dois filtros das três telas, e trocar de tela não pode
   // desfazê-los.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
@@ -160,10 +144,7 @@ export default async function Pagina({ searchParams }) {
       <section className="chamada">
         <h1>{NOMES_DOS_MESES[mes]} de {ano}, empresas 1 e 2 somadas</h1>
         <p className="frase">
-          O caixa do mês fechou em <b>{emReais(saldo.valor)}</b>
-          {maiorDespesa
-            ? <> e a maior saída foi <b>{maiorDespesa.nome}</b>, {emReais(maiorDespesa.valor)}.</>
-            : <>, e nenhuma despesa entrou no mês.</>}
+          O caixa do mês fechou em <b>{emReais(saldo.valor)}</b>.
         </p>
         <p className="para-que">
           Para decidir o que pagar, o que segurar e onde cortar neste mês. Cada número diz, embaixo, quantos
@@ -211,107 +192,81 @@ export default async function Pagina({ searchParams }) {
         </p>
       )}
 
-      {/* 2. O RECORTE. Os mesmos filtros de sempre, na mesma URL de sempre; o que mudou é que eles agora são uma
-          faixa só, de altura fixa, em vez de quatro blocos disputando o topo da tela com os números. O que cada um
-          alcança continua escrito inteiro — dentro do "o que cada filtro alcança", logo abaixo. */}
+      {/* 2. O RECORTE. Os mesmos sete filtros de sempre, com as mesmas opções e na mesma URL de sempre; o que mudou em
+          28/09/2026, a pedido do dono, é que as ETIQUETAS SAÍRAM e cada filtro de escolha virou uma lista suspensa com
+          caixas de marcar (`app/suspensa.js`). Onde eram quatro faixas de etiquetas antes do primeiro número, é uma
+          linha de caixas fechadas. Os sete vão num formulário `GET` só: o "aplicar" escreve todas as escolhas na URL de
+          uma vez. O que cada um alcança continua escrito inteiro — dentro do "o que cada filtro alcança", logo abaixo. */}
       <section className="recorte">
-        <div className="barra-filtros">
-          <span className="rotulo-filtro">ano</span>
-          <span className="grupo">
-            {anos.map((a) => (
-              <a className={`pilula${a === ano ? ' ativa' : ''}`} href={url({ ano: a })} key={a}>{a}</a>
-            ))}
-          </span>
-          <span className="rotulo-filtro">mês</span>
-          <span className="grupo">
-            {MESES_CURTOS.slice(1).map((m, i) => (
-              <a className={`pilula${i + 1 === mes ? ' ativa' : ''}`} href={url({ mes: i + 1 })} key={m}>{m}</a>
-            ))}
-          </span>
-        </div>
+        <form className="barra-filtros filtros-form" method="get" action="/">
+          <Suspensa nome="ano" campo="ano" unica
+            opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a), marcada: a === ano }))} />
 
-        <div className="barra-filtros">
-          <span className="rotulo-filtro">centro de custo</span>
-          <span className="grupo">
-            <a className={`pilula limpar${fcc.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ cc: [] })}>todos</a>
-            {fcc.opcoes.map((nome) => (
-              <a className={`pilula${fcc.escolhidos.includes(nome) ? ' ativa' : ''}`} href={url({ cc: alternar(nome) })} key={nome}>
-                {nome}
-              </a>
-            ))}
-          </span>
-        </div>
+          <Suspensa nome="mês" campo="mes" unica
+            opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
 
-        <div className="barra-filtros">
-          <span className="rotulo-filtro">situação</span>
-          <span className="grupo">
-            <a className={`pilula limpar${fsit.escolhidos.length === 0 ? ' ativa' : ''}`} href={url({ situacao: [] })}>todas</a>
-            {fsit.opcoes.map((o) => (
-              <a className={`pilula${fsit.escolhidos.includes(o.chave) ? ' ativa' : ''}`}
-                href={url({ situacao: alternarSituacao(o.chave) })} key={o.chave}
-                title={`${o.nome}: coluna PAGAMENTO = ${o.dfc.join(', ')}`}>{o.nome}</a>
-            ))}
-          </span>
-        </div>
+          <Suspensa nome="centro de custo" campo="cc"
+            opcoes={fcc.opcoes.map((nome) => ({ valor: nome, rotulo: nome, marcada: fcc.escolhidos.includes(nome) }))} />
 
-        <FiltroDeEmpresa f={femp} href={(e) => url({ empresa: e ? [e] : [] })}>
-          Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
-          cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC não:
-          cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
-        </FiltroDeEmpresa>
+          <FiltroDeEmpresa f={femp} />
 
-        <FiltroDeConta f={fconta} href={(l) => url({ conta: l })} alternar={alternarConta}>
-          Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
-          &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas os
-          rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
-          (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas cruzáveis
-          do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e as
-          contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
-        </FiltroDeConta>
+          <FiltroDeConta f={fconta} />
 
-        <div className="barra-filtros">
-          <form className="filtros-form" method="get" action="/">
-            <input type="hidden" name="ano" value={ano} />
-            <input type="hidden" name="mes" value={mes} />
-            {fcc.escolhidos.length > 0 && <input type="hidden" name="cc" value={fcc.escolhidos.join(',')} />}
-            {femp.ativo && <input type="hidden" name="empresa" value={femp.escolhidas.join(',')} />}
-            {fconta.ativo && <input type="hidden" name="conta" value={fconta.escolhidas.join(',')} />}
-            {fsit.escolhidos.length > 0 && <input type="hidden" name="situacao" value={fsit.escolhidos.join(',')} />}
-            <label className="campo-filtro">
-              <span>categoria — classificação do DFC ({fclasse.opcoes.length} no mês)</span>
-              <select name="classe" defaultValue={fclasse.escolhidos[0] ?? ''}>
-                <option value="">todas</option>
-                {fclasse.opcoes.map((o) => <option value={o} key={o}>{o}</option>)}
-              </select>
-            </label>
-            <label className="campo-filtro">
-              <span>categoria — a do Omie ({fcat.opcoes.length} no mês)</span>
-              <select name="categoria" defaultValue={fcat.escolhidos[0] ?? ''}>
-                <option value="">todas</option>
-                {fcat.opcoes.map((o) => <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>)}
-              </select>
-            </label>
-            <label className="campo-filtro">
-              <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
-              <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
-                <option value="">todos</option>
-                {ffor.opcoes.map((o) => (
-                  <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
-                    {o.nome ?? `cliente ${o.codigo}`}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="botao filtro" type="submit">aplicar</button>
-            <a className="pilula limpar" href={url({ classe: [], categoria: [], fornecedor: null })}>limpar</a>
-          </form>
-        </div>
+          <Suspensa nome="situação" campo="situacao" vazio="todas"
+            opcoes={fsit.opcoes.map((o) => ({
+              valor: o.chave, rotulo: o.nome, marcada: fsit.escolhidos.includes(o.chave),
+              dica: `${o.nome}: coluna PAGAMENTO = ${o.dfc.join(', ')}`,
+            }))} />
+
+          <label className="campo-filtro">
+            <span>categoria — classificação do DFC ({fclasse.opcoes.length} no mês)</span>
+            <select name="classe" defaultValue={fclasse.escolhidos[0] ?? ''}>
+              <option value="">todas</option>
+              {fclasse.opcoes.map((o) => <option value={o} key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="campo-filtro">
+            <span>categoria — a do Omie ({fcat.opcoes.length} no mês)</span>
+            <select name="categoria" defaultValue={fcat.escolhidos[0] ?? ''}>
+              <option value="">todas</option>
+              {fcat.opcoes.map((o) => <option value={o.codigo} key={o.codigo}>{o.codigo} — {o.descricao}</option>)}
+            </select>
+          </label>
+          <label className="campo-filtro">
+            <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
+            <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
+              <option value="">todos</option>
+              {ffor.opcoes.map((o) => (
+                <option value={o.chave} key={o.chave} data-codigo={o.codigo}>
+                  {o.nome ?? `cliente ${o.codigo}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="botao filtro" type="submit">aplicar</button>
+          <a className="limpar-tudo" href={semFiltro}>limpar</a>
+        </form>
 
         {/* O QUE CADA FILTRO ALCANÇA. Tudo o que estava escrito continua escrito, palavra por palavra — só deixou de
             empurrar os números para baixo da dobra. Nada aqui é a frase de "o filtro não vale": aquela é parte do
             número e continua dentro do cartão, do gráfico e da linha da tabela. */}
         <details className="explica">
           <summary>o que cada filtro alcança, e o que ele não alcança</summary>
+
+          <ExplicaEmpresa f={femp}>
+            Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
+            cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC
+            não: cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
+          </ExplicaEmpresa>
+
+          <ExplicaConta f={fconta}>
+            Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
+            &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas
+            os rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
+            (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas
+            cruzáveis do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e
+            as contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
+          </ExplicaConta>
 
           <p>
             {fsit.ativo

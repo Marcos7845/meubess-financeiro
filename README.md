@@ -16,8 +16,8 @@ filtro**, medido fase por fase e antes e depois da base local, está em [`docs/d
 As referências visuais ficam em [`docs/referencias/`](docs/referencias/) — elas dizem **quais blocos** cada tela tem.
 O que cada tela mostra e de onde vem cada número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
 indicador sem fonte escrita não entra na tela. **Como as telas são desenhadas** — a história de cada uma, o plano de
-gráficos e o checklist — fica em [`docs/layout.md`](docs/layout.md), e a página para o dono ler, com a captura dentro,
-em [`docs/layout.html`](docs/layout.html).
+gráficos e o checklist — fica em [`docs/layout.md`](docs/layout.md), e a página para o dono ler, com a captura das três
+telas dentro, em [`docs/layout.html`](docs/layout.html).
 
 ## Regras
 
@@ -98,7 +98,7 @@ Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão 
 As **empresas 1 e 2 entram somadas** — e, desde 27/09/2026, o **filtro de empresa** (`?empresa=1`, `?empresa=2` ou as
 duas) escolhe quais das duas entram na soma, nas três telas. O recorte é o da MeuBESS.
 
-**Os filtros de cada tela moram na URL**, como as pílulas de ano e mês: a Tela 1 filtra por **centro de custo**
+**Os filtros de cada tela moram na URL**, como o ano e o mês: a Tela 1 filtra por **centro de custo**
 (`?cc=FISCAL,TI`, seleção múltipla, juntando as duas empresas pelo nome do departamento), a Tela 2 por **vários meses de
 uma vez** (`?meses=7,8`), a Tela 3 por **vencimento de–até, status, cliente e categoria**
 (`?de=2026-07-01&ate=2026-08-31&status=atrasado&cliente=2-…&categoria=1.01.03`), e as **três** por **empresa**
@@ -202,12 +202,23 @@ plano de cada tela e o checklist de revisão ficam em [`docs/layout.md`](docs/la
 Com o app no ar, a página que o dono lê sai em dois passos:
 
 ```
-node scripts/capturar-tela.mjs --tela 1
+node scripts/capturar-tela.mjs --tela 1     # e --tela 2 e --tela 3
 npm run pagina-de-layout
 ```
 
-O primeiro grava `docs/tela-1-captura.html` — a página de verdade, com **todo valor em dinheiro trocado por "—"** e
-todo nome de cliente trocado pelo código. O segundo grava `docs/layout.html`, com essa captura dentro.
+O primeiro grava `docs/tela-N-captura.html` — a página de verdade, com **todo valor em dinheiro trocado por "—"** e
+todo nome de cliente trocado pelo código. O segundo grava `docs/layout.html`, com as três capturas dentro, cada uma
+embaixo do título da sua tela (é o `<!-- captura N -->` de `docs/layout.md` que diz onde).
+
+**Sem derrubar o app que está no ar.** `next build` reescreve o `.next` inteiro, e fazer isso com o app servindo da
+mesma pasta quebra a tela de quem está com ela aberta. Para construir e subir o código novo ao lado, numa porta e numa
+pasta só dele:
+
+```
+MEUBESS_DIST=.next-prova NODE_ENV=production node node_modules/next/dist/bin/next build
+MEUBESS_DIST=.next-prova NODE_ENV=production node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 4782
+node scripts/capturar-tela.mjs --tela 1 --url http://127.0.0.1:4782
+```
 
 ### O que trava, e o que só é publicado
 
@@ -266,13 +277,14 @@ como na captura sem filtro e as do Omie caem, com a frase do "não vale" ao lado
 | `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |
 | `lib/regras/filtros.mjs` | **os filtros das três telas, num lugar só:** como cada um é lido da URL e normalizado, a junção dos dois cadastros de departamento pelo nome e o filtro de empresa, que as três telas dividem. Só os filtros que `docs/fontes.md` registra. |
 | `app/filtrado.js` | a frase que a tela escreve **junto do número** quando o filtro escolhido não alcança aquela fonte. |
-| `app/empresa.js` | a pílula de empresa, num lugar só para as três telas. |
+| `app/empresa.js` | o filtro de empresa, num lugar só para as três telas. |
+| `app/suspensa.js` | a **lista suspensa com caixas de marcar**: o desenho de todo filtro de escolha das três telas, sem uma linha de JavaScript (decisão do dono, 28/09/2026). |
 | `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis — inclusive a cor de cada série de gráfico. |
 | `app/graficos.js` | os gráficos da Tela 1 (Recharts), desenhados no servidor. Sem cor e sem regra: chega o número pronto e sai o desenho. |
 | `app/dinheiro.js` | o formato do dinheiro e do percentual, num lugar só — é a forma que a trava da captura sabe apagar. |
-| `scripts/pagina-de-layout.mjs` | escreve `docs/layout.html` a partir de `docs/layout.md` e da captura da Tela 1. |
+| `scripts/pagina-de-layout.mjs` | escreve `docs/layout.html` a partir de `docs/layout.md` e das capturas das três telas. |
 | `scripts/` | as leituras do Omie, a conferência e os testes. |
 
 **A leitura do DFC está atrás de uma interface** (`lib/regras/dfc-fonte.mjs`): hoje, neste computador, os arquivos

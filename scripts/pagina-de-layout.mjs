@@ -1,16 +1,21 @@
 // ESCREVE `docs/layout.html` — a página que o dono lê para decidir se aprova o layout novo.
 //
 // PARA QUE SERVE. `docs/layout.md` é a fonte: a história de cada tela, o plano de gráficos e o checklist. Mas o dono
-// não lê markdown num editor — ele abre uma página. Esta página é a mesma coisa, formatada, com a CAPTURA DA TELA 1
-// DENTRO dela, para o plano e o resultado ficarem lado a lado.
+// não lê markdown num editor — ele abre uma página. Esta página é a mesma coisa, formatada, com a CAPTURA DAS TRÊS
+// TELAS DENTRO dela, para o plano e o resultado ficarem lado a lado.
 //
-// A PÁGINA SE BASTA: o CSS é dela mesma, não chama API nenhuma e não busca nada de fora. A captura entra num
+// ONDE CADA CAPTURA ENTRA quem diz é o próprio `.md`, com uma linha `<!-- captura N -->` embaixo do título da tela.
+// Assim a ordem da página é a ordem do documento, e acrescentar uma tela não mexe neste script.
+//
+// A PÁGINA SE BASTA: o CSS é dela mesma, não chama API nenhuma e não busca nada de fora. Cada captura entra num
 // `<iframe srcdoc>` — é a única forma de mostrar a tela inteira sem o CSS dela escapar e desmontar esta página.
 //
-// NENHUM NÚMERO NOVO. A captura já entra sem dinheiro e sem nome de cliente (é `scripts/capturar-tela.mjs` que
-// garante isso, com a trava dele); aqui ela só é embrulhada.
+// NENHUM NÚMERO NOVO. As capturas já entram sem dinheiro e sem nome de cliente (é `scripts/capturar-tela.mjs` que
+// garante isso, com a trava dele); aqui elas só são embrulhadas.
 //
-//   node scripts/capturar-tela.mjs --tela 1     # primeiro a captura
+//   node scripts/capturar-tela.mjs --tela 1     # primeiro as três capturas
+//   node scripts/capturar-tela.mjs --tela 2
+//   node scripts/capturar-tela.mjs --tela 3
 //   node scripts/pagina-de-layout.mjs           # depois a página
 
 import fs from 'node:fs';
@@ -19,10 +24,45 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FONTE = path.join(RAIZ, 'docs', 'layout.md');
-const CAPTURA = path.join(RAIZ, 'docs', 'tela-1-captura.html');
 const SAIDA = path.join(RAIZ, 'docs', 'layout.html');
 
+// AS TRÊS TELAS, e a altura do quadro de cada uma. A altura é fixa porque a captura é uma página inteira dentro do
+// iframe, e um iframe não cresce sozinho com o conteúdo — medi-lo pediria JavaScript, e esta página não roda nenhum.
+// Os números são a altura de cada captura na largura desta coluna, com uma folga pequena; captura mais alta do que
+// isso rola dentro do próprio quadro, e não se perde.
+const TELAS = {
+  1: { arquivo: 'tela-1-captura.html', titulo: 'Tela 1 — Gestão de Contas', altura: 2120 },
+  2: { arquivo: 'tela-2-captura.html', titulo: 'Tela 2 — DRE, Demonstrativo de Resultados', altura: 1500 },
+  3: { arquivo: 'tela-3-captura.html', titulo: 'Tela 3 — Contas a Receber', altura: 1700 },
+};
+
 const escapar = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// O QUADRO DE UMA CAPTURA, com a trava junto: esta página não pode sair com dinheiro nem com nome de cliente. Como o
+// único pedaço dela que vem de fora são as capturas — que já passaram pela trava de `scripts/capturar-tela.mjs` —,
+// aqui basta reconferir as duas marcas em cada uma.
+function quadroDaCaptura(n) {
+  const tela = TELAS[n];
+  if (!tela) { console.error(`o .md pede a captura da tela ${n}, que não existe`); process.exit(1); }
+  const caminho = path.join(RAIZ, 'docs', tela.arquivo);
+  if (!fs.existsSync(caminho)) {
+    console.error(`falta docs/${tela.arquivo} — rode antes: node scripts/capturar-tela.mjs --tela ${n}`);
+    process.exit(1);
+  }
+  const captura = fs.readFileSync(caminho, 'utf8');
+  if (/data-codigo=/.test(captura) || /R\$/.test(captura.replace(/<style>[\s\S]*?<\/style>/, ''))) {
+    console.error(`docs/${tela.arquivo} ainda tem dinheiro ou nome de cliente; a página não foi gravada`);
+    process.exit(1);
+  }
+  const naIframe = captura.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return `<p class="legenda-captura">
+  A página que o app serve, de 08/2026, com todo valor em dinheiro trocado por “—” e todo nome de cliente trocado
+  pelo código — é assim que ela pode entrar no repositório. O que ficou de número é a contagem de lançamentos de cada
+  indicador.
+</p>
+<div class="captura" style="--altura: ${tela.altura}px">`
+    + `<iframe title="${tela.titulo} (captura sem valores)" srcdoc="${naIframe}"></iframe></div>`;
+}
 
 // O PEDAÇO DE MARKDOWN QUE ESTE DOCUMENTO USA, e nada além: negrito, itálico, `código` e link. É escrito depois do
 // escape, para um `<` do texto continuar virando `&lt;` e não uma tag.
@@ -72,6 +112,10 @@ function paraHtml(md) {
 
     if (/^---+$/.test(linha.trim())) { fechar(); saida.push('<hr>'); i += 1; continue; }
 
+    // A CAPTURA DA TELA, onde o `.md` a pede.
+    const pedeCaptura = /^<!--\s*captura\s+(\d)\s*-->$/.exec(linha.trim());
+    if (pedeCaptura) { fechar(); saida.push(quadroDaCaptura(Number(pedeCaptura[1]))); i += 1; continue; }
+
     // TABELA: começa numa linha com canos e a linha seguinte é o separador.
     if (linha.trim().startsWith('|') && eSeparador(linhas[i + 1] ?? '')) {
       fechar();
@@ -111,20 +155,7 @@ function paraHtml(md) {
 }
 
 const md = fs.readFileSync(FONTE, 'utf8');
-if (!fs.existsSync(CAPTURA)) {
-  console.error(`falta ${path.relative(RAIZ, CAPTURA)} — rode antes: node scripts/capturar-tela.mjs --tela 1`);
-  process.exit(1);
-}
-const captura = fs.readFileSync(CAPTURA, 'utf8');
-
-// A TRAVA, a mesma ideia da da captura: esta página não pode sair com dinheiro nem com nome de cliente. Como o único
-// pedaço dela que vem de fora é a captura — que já passou pela trava dela —, aqui basta reconferir as duas marcas.
-if (/data-codigo=/.test(captura) || /R\$/.test(captura.replace(/<style>[\s\S]*?<\/style>/, ''))) {
-  console.error('a captura embutida ainda tem dinheiro ou nome de cliente; a página não foi gravada');
-  process.exit(1);
-}
-
-const naIframe = captura.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+const corpo = paraHtml(md);
 
 const html = `<!doctype html>
 <html lang="pt-BR">
@@ -164,33 +195,26 @@ thead th {
   font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
   border-bottom: 1px solid var(--texto-fraco); white-space: nowrap;
 }
+/* A altura de cada quadro vem da variável que o próprio quadro traz (ver TELAS, no topo do script): um iframe não
+ * cresce sozinho com o conteúdo, e medi-lo pediria JavaScript, que esta página não roda. Sem acento grave nesta
+ * linha: ela mora dentro de um template literal, e um acento grave aqui fecharia a página no meio. */
 .captura { margin: 18px 0 8px; border: 1px solid var(--borda); border-radius: 8px; overflow: hidden; }
-/* A altura é fixa porque a captura é uma página inteira dentro do iframe, e um iframe não cresce
- * sozinho com o conteúdo — medi-lo pediria JavaScript, e esta página não roda nenhum. 2120px é a altura da
- * captura da Tela 1 na largura desta coluna, com uma folga pequena. */
-.captura iframe { display: block; width: 100%; height: 2120px; border: 0; background: #fff; }
-.legenda-captura { margin: 0 0 30px; font-size: 12.5px; color: var(--texto-fraco); }
+.captura iframe { display: block; width: 100%; height: var(--altura, 1800px); border: 0; background: #fff; }
+.legenda-captura { margin: 0 0 22px; font-size: 12.5px; color: var(--texto-fraco); }
 </style>
 </head>
 <body>
 <header class="faixa">
   <h1>MeuBESS · o layout das três telas</h1>
   <p>
-    Como as três telas passam a ser desenhadas, e por quê — uma pergunta por gráfico. A Tela 1 já está refeita e a
-    captura dela está aqui dentro; as Telas 2 e 3 têm o plano escrito e esperam a sua aprovação. Nenhum número,
-    indicador, filtro ou regra mudou.
+    Como as três telas passam a ser desenhadas, e por quê — uma pergunta por gráfico. A captura de cada uma está aqui
+    dentro, embaixo do título dela. A Tela 1 está refeita; nas Telas 2 e 3, o que já mudou foram os filtros e a frase
+    de 5 segundos da Tela 3, e o resto do desenho delas espera a sua aprovação. Nenhum número, indicador, filtro ou
+    regra mudou.
   </p>
 </header>
 <main>
-<h1>A Tela 1 refeita</h1>
-<p class="legenda-captura">
-  A página que o app serve, de 08/2026, com todo valor em dinheiro trocado por “—” e todo nome de cliente trocado
-  pelo código — é assim que ela pode entrar no repositório. O que ficou de número é a contagem de lançamentos de cada
-  indicador.
-</p>
-<div class="captura"><iframe title="Tela 1 — Gestão de Contas (captura sem valores)" srcdoc="${naIframe}"></iframe></div>
-
-${paraHtml(md)}
+${corpo}
 </main>
 </body>
 </html>

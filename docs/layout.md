@@ -6,8 +6,60 @@ Ela manda não começar pelo gráfico: primeiro a história (para quem é, que d
 em 5 segundos, que perguntas a tela responde), depois os dados, depois a escolha de cada gráfico por uma árvore de
 decisão, depois o desenho num layout em "F", e no fim um checklist de revisão.
 
-**A página para o dono ler é [`layout.html`](layout.html)**, com a captura da Tela 1 dentro. Este arquivo é a fonte
-dela: quem escreve o HTML é `node scripts/pagina-de-layout.mjs`, lendo este `.md` e a captura.
+**A página para o dono ler é [`layout.html`](layout.html)**, com a captura das três telas dentro. Este arquivo é a
+fonte dela: quem escreve o HTML é `node scripts/pagina-de-layout.mjs`, lendo este `.md` e as três capturas.
+
+## O que o dono respondeu, 28/09/2026
+
+Ele viu a Tela 1 refeita e respondeu quatro coisas. Elas já estão feitas, e cada uma está escrita de novo no lugar
+onde manda:
+
+1. **Os filtros em etiquetas estão feios e ocupam espaço — troque por lista suspensa com caixas de marcar (escolher um
+   ou vários), nas três telas.** Feito, com os mesmos filtros, as mesmas opções e a mesma URL: só o desenho mudou. A
+   seção abaixo conta como.
+2. **A frase de 5 segundos da Tela 1 fica só com o caixa do mês, sem a maior saída.** Feito: a frase é *"o caixa do mês
+   fechou em X"*. A maior saída continua na tela, na primeira barra de "Para onde foi a despesa".
+3. **Na Tela 3, "não entrou" é vago — use "venceu e ainda não foi recebido".** Feito, e é o termo dele, letra por
+   letra. "Não entrou" não dizia se o título tinha sido cancelado, renegociado ou só não pago; "venceu e ainda não foi
+   recebido" é exatamente o que o número é — o valor em aberto dos títulos na faixa ATRASADO, que são os vencidos, não
+   cancelados e sem baixa.
+4. **O tema está aprovado, e a frase da Tela 2 está aprovada.** O tema fica como está ("clean analytical", abaixo). A
+   frase da Tela 2 — *"o lucro líquido do ano até aqui é X, e a margem é Y%"* — está aprovada mas **ainda não está na
+   tela**, e de propósito: "o ano até aqui" não é nenhum dos 12 indicadores que a Tela 2 tem hoje (os cartões dela são
+   do mês, ou dos meses escolhidos), e escrevê-la agora seria criar número novo — o que esta reforma não pode fazer.
+   Ela entra quando a Tela 2 for refeita, junto com o cartão de onde o número sai.
+
+## Os filtros das três telas: lista suspensa com caixas de marcar
+
+Antes, cada opção de filtro era uma etiqueta acesa ou apagada, e todas ficavam na tela o tempo todo: dezesseis centros
+de custo, doze meses, as contas, as situações. Na Tela 1 isso eram quatro faixas de etiquetas antes do primeiro número.
+Agora cada filtro é **uma caixa fechada que diz o que está escolhido**, e as opções aparecem só quando ela abre —
+`app/suspensa.js`, que as três telas usam.
+
+**Nenhum filtro mudou**: as opções são as mesmas, na mesma ordem, com os mesmos valores na mesma URL, e o que cada um
+alcança continua sendo decisão de `lib/regras/filtros.mjs`. É por isso que `npm run conferir-filtros` continua dando 19
+conferidos e `npm run conferir-telas` 36, com os mesmos números. Quatro coisas valem a pena ficarem escritas:
+
+- **Caixa de marcar onde o filtro aceita vários; bolinha onde ele aceita um.** Centro de custo, situação, conta
+  bancária, empresa, os meses da Tela 2 e o status da Tela 3 aceitam vários e são caixas de marcar. O **ano** e o
+  **mês** são um valor só na URL (`?mes=8`) e são bolinhas: uma caixa de marcar ali prometeria uma escolha múltipla
+  que o filtro não tem.
+- **A empresa continua sendo "1, 2 ou as duas"**, agora como duas caixas: nenhuma marcada, ou as duas marcadas, é a
+  soma de sempre (o filtro fica desligado); uma marcada é aquela empresa sozinha.
+- **Existe um botão "aplicar", e ele não é enfeite.** Quem abre e fecha a caixa é o `<details>` do próprio HTML, sem
+  uma linha de JavaScript — as telas são componentes de servidor e `scripts/capturar-tela.mjs` joga fora todo
+  `<script>`. Sem JavaScript, marcar uma caixa não recarrega a tela sozinho: é o "aplicar" que escreve todas as
+  escolhas na URL de uma vez. Em troca, dá para mexer em vários filtros e recarregar a tela uma vez só.
+- **As listas longas continuam campos, e não viraram caixas de marcar:** a classificação do DFC, a categoria e o
+  cliente/fornecedor da Tela 1, o cliente e a categoria da Tela 3, e as duas datas de vencimento. Elas nunca foram
+  etiquetas — já eram listas suspensas —, e são listas de centenas de nomes: caixa de marcar ali só aumentaria a
+  rolagem. Na Tela 3, os dois campos de data passaram a vir **vazios** quando a janela é a do mês, que é como
+  `lib/regras/filtros.mjs` sempre leu o vazio: agora que o mês e as datas estão no mesmo formulário, um campo
+  preenchido venceria a troca de mês.
+
+Nas Telas 2 e 3 os filtros também se juntaram numa faixa só, antes dos números, porque agora os quatro (ou sete)
+escrevem a mesma URL de uma vez e têm de viver no mesmo formulário. **Fora isso, e fora a frase da Tela 3, nada nas
+Telas 2 e 3 mudou**: nenhum gráfico, nenhuma tabela, nenhum número.
 
 ## As adaptações que valem mais que a skill (pedido do dono, 28/09/2026)
 
@@ -49,13 +101,16 @@ quatro gráficos da Tela 1**, e é essa a razão de `app/graficos.js` não ter c
 
 # Tela 1 — Gestão de Contas
 
-## A história (escrita por mim; o dono corrige)
+<!-- captura 1 -->
+
+## A história (escrita por mim; corrigida pelo dono em 28/09/2026)
 
 - **Para quem é:** o dono da MeuBESS, sozinho, neste computador. Não é um analista — é quem assina o pagamento.
 - **Que decisão ela ajuda a tomar:** *o que pagar, o que segurar e onde cortar neste mês.*
-- **A mensagem de 5 segundos:** *"o caixa de <mês> fechou em X, e a maior saída foi <classificação>, Y."* É
-  exatamente a frase que a tela escreve embaixo do título, e ela não traz número novo nenhum: X é o cartão "Saldo" e Y
-  é a primeira barra de "Para onde foi a despesa", os dois logo abaixo.
+- **A mensagem de 5 segundos:** *"o caixa do mês fechou em X."* É exatamente a frase que a tela escreve embaixo do
+  título, e ela não traz número novo nenhum: X é o cartão "Saldo", logo abaixo. **O dono tirou a maior saída dela em
+  28/09/2026** — a frase dizia "e a maior saída foi Y" e ficou só o caixa, que é a decisão que ele toma aqui. A maior
+  saída continua na tela, na primeira barra de "Para onde foi a despesa".
 - **As perguntas que a tela responde:**
   1. O caixa do mês fechou positivo ou negativo, e quanto entrou e saiu?
   2. Para onde foi a despesa — que classificações pesam mais?
@@ -82,34 +137,37 @@ gráfico principal, o maior, no canto de cima à esquerda; os três de apoio; a 
 fonte, o período e a hora da leitura.
 
 Os filtros viraram **uma faixa só**, entre o título e os números, e o que cada um alcança — que antes empurrava os
-números para baixo da dobra — ficou num `o que cada filtro alcança` que abre e fecha. **A frase de "o filtro não
-vale" NÃO entrou lá:** ela é parte do número, e continua dentro do cartão, do gráfico e da linha da tabela, como
-`docs/filtros.md` manda.
+números para baixo da dobra — ficou num `o que cada filtro alcança` que abre e fecha. Desde 28/09/2026 essa faixa é
+**uma linha só**: as etiquetas saíram e cada filtro é uma lista suspensa com caixas de marcar (a seção lá em cima
+conta). **A frase de "o filtro não vale" NÃO entrou no que abre e fecha:** ela é parte do número, e continua dentro do
+cartão, do gráfico e da linha da tabela, como `docs/filtros.md` manda.
 
 ## O que fica igual
 
 - **Os 11 indicadores**, um por um, com o mesmo valor e a mesma contagem: eles continuam vindo inteiros de
   `lib/indicadores/tela-1.mjs`, que não foi tocado.
 - **Os 7 filtros** (ano, mês, centro de custo, empresa, conta bancária, situação, categoria nas duas pontas e
-  cliente/fornecedor), na mesma URL de sempre — um link colado no chat continua abrindo a mesma tela.
+  cliente/fornecedor), com as mesmas opções e na mesma URL de sempre — um link colado no chat continua abrindo a mesma
+  tela. O que mudou em 28/09/2026 foi só o desenho deles.
 - **Onde cada filtro não alcança**, com a frase ao lado do número (`app/filtrado.js`).
 - **As fontes e as regras**: `lib/regras/` e `lib/dados.mjs` não mudaram uma linha.
 - **A trava de agosto de 2026** e as três conferências.
-- **As Telas 2 e 3**: elas dividem classes de CSS com a Tela 1, e por isso nenhuma regra compartilhada foi tocada —
-  a Tela 1 deixou de usá-las e ganhou as suas (`.kpi`, `.quadro`, `.grafico`). As duas continuam pixel por pixel como
-  estavam, até o dono aprovar esta.
+- **Os gráficos, as tabelas e os números das Telas 2 e 3.** Nelas mudaram três coisas, e só estas: os filtros, que
+  viraram listas suspensas como os desta tela; o lugar da faixa de filtros, que subiu para antes dos cartões porque
+  agora todos escrevem a mesma URL de uma vez; e a frase de 5 segundos da Tela 3. Nenhum gráfico, nenhuma linha de
+  tabela e nenhum indicador foi tocado.
 
 ## O checklist da fase 5 da skill, respondido
 
 - [x] **Dá para entender a mensagem principal em 5 segundos?** Sim: a frase está escrita em português embaixo do
-  título, em corpo maior que o resto — *"o caixa do mês fechou em X e a maior saída foi Y"* — e o número dela é o
-  primeiro e o maior da fila logo abaixo.
+  título, em corpo maior que o resto — *"o caixa do mês fechou em X"* — e o número dela é o primeiro e o maior da fila
+  logo abaixo. Ela tinha uma segunda metade (a maior saída), e o dono a tirou em 28/09/2026.
 - [x] **Cada gráfico responde a uma pergunta específica?** Sim, e o título de cada um é a pergunta respondida, não a
   descrição do desenho: "O ano inteiro, e onde agosto cai nele", "Para onde foi a despesa", "O mês, dia a dia", "De
   quem veio a receita". A tabela de amarração está acima.
 - [x] **Há hierarquia visual clara?** Sim: frase > número do "Saldo" (28px) > os outros seis (20px) > gráfico
   principal (duas colunas de três) > os de apoio > tabela de detalhe (11,5px). Os filtros, que antes ocupavam o
-  primeiro terço da tela, viraram uma faixa de altura fixa.
+  primeiro terço da tela, viraram uma linha de caixas fechadas.
 - [x] **Funcionaria impresso em cinza?** Sim para as séries: receita `#102040` e despesa `#0079cb` estão nos dois
   extremos de claridade da marca (relação de luminância de cerca de 3,5 para 1), e nos dois rankings a cor nem é
   necessária — cada gráfico tem uma série só e o valor está escrito na ponta da barra. O único lugar que perde
@@ -126,18 +184,24 @@ vale" NÃO entrou lá:** ela é parte do número, e continua dentro do cartão, 
   dentro do ano) → o que explica (para onde foi a despesa, de quem veio a receita, em que dias) → prova (a tabela de
   detalhe, indicador por indicador).
 
-**A captura:** [`tela-1-captura.html`](tela-1-captura.html), gerada por `node scripts/capturar-tela.mjs --tela 1`, de
-08/2026, com todo valor em dinheiro trocado por "—" e todo nome de cliente trocado pelo código.
+**A captura** está lá em cima, logo abaixo do título desta tela: [`tela-1-captura.html`](tela-1-captura.html), gerada
+por `node scripts/capturar-tela.mjs --tela 1`, de 08/2026, com todo valor em dinheiro trocado por "—" e todo nome de
+cliente trocado pelo código.
 
 ---
 
-# Tela 2 — DRE (a fazer, depois de o dono aprovar a Tela 1)
+# Tela 2 — DRE (o desenho, a fazer; os filtros, feitos em 28/09/2026)
 
-## A história (escrita por mim; o dono corrige)
+<!-- captura 2 -->
+
+## A história (escrita por mim; o dono aprovou a frase em 28/09/2026)
 
 - **Para quem é:** o dono e quem conversa com a contabilidade.
 - **Que decisão ela ajuda a tomar:** *em que linha do resultado o dinheiro está escapando, e desde quando.*
-- **A mensagem de 5 segundos:** *"o lucro líquido do ano até aqui é X, e a margem é Y%."*
+- **A mensagem de 5 segundos:** *"o lucro líquido do ano até aqui é X, e a margem é Y%."* **Aprovada pelo dono em
+  28/09/2026, e ainda não escrita na tela:** "o ano até aqui" não é nenhum dos 12 indicadores que esta tela tem hoje —
+  os cartões dela são do mês, ou dos meses escolhidos —, e escrevê-la agora seria criar número novo. Ela entra quando
+  esta tela for refeita, junto com o cartão de onde o número sai.
 - **As perguntas que a tela responde:**
   1. Em que mês a margem caiu (ou subiu)?
   2. Qual linha do DRE explica a variação — é receita que caiu ou custo que subiu?
@@ -156,20 +220,28 @@ vale" NÃO entrou lá:** ela é parte do número, e continua dentro do cartão, 
 
 ## O que fica igual
 
-Os 12 indicadores da tela, a tabela do DRE linha por linha, os botões de análise horizontal e vertical, os filtros de
-mês (seleção múltipla), empresa e conta bancária, as frases de "o filtro não vale" e a conferência.
+Os 12 indicadores da tela, a tabela do DRE linha por linha, as duas leituras (análise horizontal e vertical), os
+filtros de mês (seleção múltipla), empresa e conta bancária, as frases de "o filtro não vale" e a conferência. O que já
+mudou em 28/09/2026 foi só o desenho dos filtros — as etiquetas viraram listas suspensas com caixas de marcar, e as
+duas leituras viraram duas caixas de marcar na mesma faixa.
 
 ---
 
-# Tela 3 — Contas a Receber (a fazer, depois de o dono aprovar a Tela 1)
+# Tela 3 — Contas a Receber (o desenho, a fazer; os filtros e a frase, feitos em 28/09/2026)
 
-## A história (escrita por mim; o dono corrige)
+<!-- captura 3 -->
+
+## A história (escrita por mim; corrigida pelo dono em 28/09/2026)
 
 - **Para quem é:** quem cobra — hoje o próprio dono.
 - **Que decisão ela ajuda a tomar:** *para quem eu ligo hoje.*
-- **A mensagem de 5 segundos:** *"X já venceu e não entrou."*
+- **A mensagem de 5 segundos:** *"X venceu e ainda não foi recebido."* Já está escrita na tela, embaixo do título, e
+  não traz número novo: X é o cartão "Valor Vencido", logo abaixo. **A primeira escrita dizia "X já venceu e não
+  entrou", e o dono trocou em 28/09/2026:** "não entrou" é vago — não diz se o título foi cancelado, renegociado ou só
+  não pago. "Venceu e ainda não foi recebido" é exatamente o que o número é: o valor em aberto dos títulos na faixa
+  ATRASADO, que são os vencidos, não cancelados e sem baixa.
 - **As perguntas que a tela responde:**
-  1. Quanto já venceu e não entrou?
+  1. Quanto já venceu e ainda não foi recebido?
   2. De quem — quais clientes concentram o vencido?
   3. O que vence nos próximos meses?
   4. Como está a divisão entre pago, em aberto e atrasado?
@@ -188,6 +260,9 @@ mês (seleção múltipla), empresa e conta bancária, as frases de "o filtro n�
 
 Os 8 indicadores da tela, o de-para dos `cStatus` do Omie para pago / atrasado / em aberto, a janela de vencimento,
 os filtros de status, cliente, categoria, empresa e conta bancária, as frases de "o filtro não vale" e a conferência.
+O que já mudou em 28/09/2026 foram duas coisas: o desenho dos filtros (as etiquetas viraram listas suspensas com
+caixas de marcar, e os dois campos de data passaram a vir vazios quando a janela é a do mês) e a frase de 5 segundos,
+que passou a existir — nenhum número entrou na tela por causa dela.
 
 ---
 
@@ -200,8 +275,10 @@ os filtros de status, cliente, categoria, empresa e conta bancária, as frases d
 3. **A Fase 2 (inspecionar a tabela com DuckDB) não roda.** A fonte deste projeto não é uma tabela: é o cache do
    Omie mais as planilhas do DFC, e o que elas têm está levantado, coluna por coluna, em `docs/fontes.md` —
    documento mais completo do que um `DESCRIBE` devolveria. A "forma dos dados" que a fase pede já estava pronta.
-4. **Não perguntei "este plano de gráficos faz sentido?" antes de construir.** A tarefa pedia a Tela 1 refeita nesta
-   passagem; o plano está escrito aqui para o dono responder essa pergunta agora, com a tela na frente.
+4. **Não perguntei "este plano de gráficos faz sentido?" antes de construir.** A tarefa pedia a Tela 1 refeita naquela
+   passagem; o plano ficou escrito aqui para o dono responder com a tela na frente, e **em 28/09/2026 ele respondeu** —
+   as quatro respostas estão lá em cima, e as quatro estão feitas. O plano das Telas 2 e 3 continua esperando a
+   passagem em que elas forem refeitas.
 5. **Nenhuma linha de referência de média, meta ou benchmark.** A skill pede "thresholds, benchmarks ou guias onde
    couber". Média do ano ou meta de despesa seriam números novos, e esta reforma não pode criar número. Só entraram
    as referências que não inventam nada: o mês em foco e a linha do zero.

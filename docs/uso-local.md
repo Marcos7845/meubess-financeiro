@@ -21,7 +21,8 @@ As três telas:
 | DRE | <http://127.0.0.1:4781/dre> |
 | Contas a Receber | <http://127.0.0.1:4781/receber> |
 
-O mês e o ano entram pela barra de pílulas, ou direto no endereço: `?ano=2026&mes=8`.
+O mês e o ano entram pelas listas suspensas da barra de filtros — escolha e aperte "aplicar" —, ou direto no
+endereço: `?ano=2026&mes=8`.
 
 **Por que `127.0.0.1` e não `localhost` ou o IP da máquina.** `127.0.0.1` é a placa de rede que só existe dentro
 deste computador. O servidor atende **ali e em mais lugar nenhum**: quem estiver no mesmo wi-fi, no mesmo escritório

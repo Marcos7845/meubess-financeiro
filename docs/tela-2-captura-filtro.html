@@ -106,28 +106,14 @@ a { color: inherit; }
 .barra { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; font-size: 11.5px; }
 .barra .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto-fraco); }
 .barra .trilho { background: var(--fundo); border-radius: 3px; height: 15px; overflow: hidden; }
-.barra .preenche { background: var(--marca-clara); height: 100%; border-radius: 3px; }
 .barra .valor { font-variant-numeric: tabular-nums; font-weight: 600; }
 
-/* ---------------------------------------------------------------- filtros */
-.filtros { display: flex; flex-wrap: wrap; gap: 5px; }
-.filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
-.pilula {
-  display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11.5px; text-decoration: none;
-  background: var(--fundo); border: 1px solid var(--borda); color: var(--texto-fraco);
-}
-.pilula.ativa { background: var(--marca); border-color: var(--marca); color: var(--texto-claro); font-weight: 600; }
+/* ---------------------------------------------------------------- legenda
+ *
+ * As etiquetas (`.pilula`) que desenhavam os filtros até 27/09/2026 saíram daqui em 28/09/2026, com a decisão do dono
+ * de trocá-las por listas suspensas com caixas de marcar: o desenho dos filtros está lá embaixo, em `.suspensa`. */
 .legenda { font-size: 11px; color: var(--texto-fraco); margin: 0 0 7px; }
 .legenda .chave { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
-.chave.rec { background: var(--marca-clara); }
-.chave.desp { background: var(--destaque); }
-
-/* ---------------------------------------------------------------- colunas por dia */
-.dias { display: flex; align-items: flex-end; gap: 2px; height: 130px; }
-.dia { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; min-width: 0; }
-.dia .rec { background: var(--marca-clara); border-radius: 1px 1px 0 0; }
-.dia .desp { background: var(--destaque); border-radius: 0 0 1px 1px; }
-.dia .n { font-size: 8px; text-align: center; color: var(--texto-fraco); }
 
 /* ---------------------------------------------------------------- rodapé */
 .rodape {
@@ -152,13 +138,11 @@ a { color: inherit; }
 .cartao.dre .fita { display: block; width: 100%; height: 24px; margin: 4px 0 2px; color: var(--marca-clara); }
 .cartao.dre .numero.neg + .fita { color: var(--negativo); }
 
-/* ---------------------------------------------------------------- Tela 2: a barra de filtros */
+/* ---------------------------------------------------------------- a barra de filtros (as três telas) */
 .barra-filtros {
   display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
   padding: 0 12px 10px;
 }
-.barra-filtros .grupo { display: flex; flex-wrap: wrap; gap: 4px; }
-.barra-filtros .grupo + .grupo { margin-left: auto; }
 
 /* ---------------------------------------------------------------- Tela 2: a tabela do DRE */
 .tabela-dre { margin: 0 12px 12px; }
@@ -219,14 +203,8 @@ a { color: inherit; }
 .cartao.receber .texto { display: flex; flex-direction: column; min-width: 0; }
 .cartao.receber .numero { font-size: 23px; }
 
-/* ---------------------------------------------------------------- Tela 3: a grade e a barra de filtros
- *
- * São três grupos na barra, e não dois como na Tela 2: o ano e os meses ficam juntos à esquerda, e só a janela de
- * vencimento — que é leitura, não botão — vai para a direita. */
+/* ---------------------------------------------------------------- Tela 3: a grade */
 .grade.receber { grid-template-columns: 1.55fr 1fr; }
-.barra-filtros.receber .grupo + .grupo { margin-left: 0; }
-.barra-filtros.receber .grupo:last-child { margin-left: auto; }
-.pilula.fixa { background: var(--cartao); color: var(--texto-fraco); cursor: default; }
 
 /* ---------------------------------------------------------------- Tela 3: colunas empilhadas por mês */
 .colunas { display: flex; align-items: flex-end; gap: 6px; }
@@ -273,22 +251,69 @@ a { color: inherit; }
 }
 .lista-titulos .selo.f-aberto { color: var(--marca-escura); }
 
+/* ---------------------------------------------------------------- a frase de 5 segundos (Telas 1 e 3)
+ *
+ * A frase que a tela escreve embaixo do título — o que o dono leva daqui se olhar e sair. Ela nunca traz número novo:
+ * é sempre um cartão da própria tela dito em português (o "Saldo" na Tela 1, o "Valor Vencido" na Tela 3). Mora aqui,
+ * e não na seção da Tela 1, porque as duas telas a usam. */
+.chamada { padding: 16px 20px 12px; }
+.chamada h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.2px; }
+/* O nome do mês vem minúsculo de `NOMES_DOS_MESES`, e aqui ele começa frase. */
+.chamada h1::first-letter { text-transform: uppercase; }
+.chamada .frase { margin: 7px 0 0; font-size: 16.5px; line-height: 1.4; max-width: 74ch; }
+.chamada .frase b { color: var(--marca); font-weight: 700; }
+.chamada .para-que { margin: 6px 0 0; font-size: 11.5px; color: var(--texto-fraco); max-width: 86ch; }
+
 /* ---------------------------------------------------------------- os filtros das três telas
  *
  * Quais filtros existem em cada tela é decisão do dono, registrada em `docs/fontes.md` e construída em
- * `lib/regras/filtros.mjs`; aqui só ficam as formas. Três peças:
+ * `lib/regras/filtros.mjs`; aqui só ficam as formas. Quatro peças:
  *
- *   .pilula.limpar  o "todos", que apaga a escolha e volta a tela ao sem-filtro;
- *   .campo-filtro   o par rótulo + campo (data, lista) dos filtros que não cabem em pílula;
+ *   .suspensa       a lista suspensa com caixas de marcar de `app/suspensa.js` — o desenho de TODO filtro de escolha
+ *                   das três telas desde 28/09/2026, quando o dono pediu as etiquetas fora;
+ *   .limpar-tudo    o link que volta a tela ao sem-filtro, guardando o mês que está sendo lido;
+ *   .campo-filtro   o par rótulo + campo (data, lista longa) dos filtros que não são escolha curta;
  *   .sem-filtro     a frase que a tela escreve JUNTO do número quando o filtro não alcança aquela fonte. Ela é parte
  *                   do número, não nota de rodapé: fica dentro do cartão, do bloco ou da linha.
  */
-.barra-filtros .rotulo-filtro {
-  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
-  align-self: center; margin-right: 2px;
-}
-.pilula.limpar { border-style: dashed; }
 .filtros-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; width: 100%; }
+
+/* A LISTA SUSPENSA. Fechada, ela é do tamanho do que está escolhido; aberta, a lista de opções flutua por cima do
+ * resto da tela (`position: absolute`) para não empurrar os números para baixo — que é exatamente o que as etiquetas
+ * faziam. Quem abre e fecha é o `<details>` do HTML: nenhuma linha de JavaScript, porque a captura joga fora todo
+ * `<script>` e as telas são componentes de servidor. */
+.suspensa { position: relative; }
+.suspensa > summary {
+  display: inline-flex; align-items: baseline; gap: 6px; cursor: pointer; white-space: nowrap;
+  padding: 4px 9px; border: 1px solid var(--borda); border-radius: 4px; background: var(--cartao);
+  list-style: none;
+}
+.suspensa > summary::-webkit-details-marker { display: none; }
+.suspensa > summary::after { content: "▾"; font-size: 10px; color: var(--texto-fraco); }
+.suspensa > summary .nome {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+}
+.suspensa > summary .escolha {
+  font-size: 12px; font-weight: 600; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Com escolha feita, a caixa fica na cor da marca: é o que as etiquetas acesas diziam. */
+.suspensa.escolhida > summary { border-color: var(--marca); }
+.suspensa.escolhida > summary .escolha { color: var(--marca); }
+.suspensa[open] > summary { border-color: var(--marca-clara); }
+.suspensa .opcoes {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; min-width: 100%; max-height: 264px;
+  overflow: auto; padding: 5px; display: flex; flex-direction: column; gap: 1px;
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: 4px;
+  box-shadow: 0 8px 20px rgba(16, 32, 64, .16);
+}
+.suspensa .opcoes label {
+  display: flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer;
+  padding: 3px 7px; border-radius: 3px; font-size: 12px;
+}
+.suspensa .opcoes label:hover { background: var(--fundo); }
+.suspensa .opcoes input { margin: 0; accent-color: var(--marca); }
+
+.limpar-tudo { font-size: 11.5px; color: var(--marca-clara); align-self: center; }
 .campo-filtro { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .campo-filtro > span {
   font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
@@ -309,6 +334,112 @@ a { color: inherit; }
 .cartao .sem-filtro { white-space: normal; }
 .tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
 
+/* ================================================================ TELA 1 — o layout em F
+ *
+ * DE ONDE VEM ESTE DESENHO. Da skill de visualização de dados que o dono mandou em 28/09/2026
+ * (`.claude/skills/visualizacao-de-dados/SKILL.md`); o plano de gráficos e a história da tela estão em
+ * `docs/layout.md`. Tema escolhido: "clean analytical" — fundo branco, sem moldura nem sombra, régua horizontal
+ * clara, e só as cinco cores da marca lá de cima. Nenhuma cor nova nasce aqui.
+ *
+ * TUDO NESTA SEÇÃO É SÓ DA TELA 1. As classes que as Telas 2 e 3 dividem com ela — `.cartao`, `.painel`, `.barras`,
+ * `.grade` — continuam intocadas acima, e por isso nos gráficos, nas tabelas e nos números daquelas duas telas nada
+ * mudou. A Tela 1 deixou de usá-las: os números do topo são `.kpi`, os painéis são `.quadro` e o desenho é SVG do
+ * Recharts. O que as três telas passaram a dividir em 28/09/2026 está lá em cima, e não aqui: a lista suspensa dos
+ * filtros (`.suspensa`) e a frase de 5 segundos (`.chamada`).
+ *
+ * A COR DE CADA SÉRIE MORA AQUI, e não em `app/graficos.js`: lá cada série só recebe uma `className` e pinta com
+ * `currentColor`. É esta a razão de `.serie-receita` e `.serie-despesa` serem só uma linha de `color`.
+ */
+
+/* O fundo branco do "clean analytical" vale só nesta tela — `body` continua cinza para as Telas 2 e 3. */
+.pagina-1 { background: var(--cartao); min-height: 100vh; }
+
+/* ---------------------------------------------------------------- 2. o recorte (os filtros) */
+.recorte {
+  padding: 8px 20px 6px; margin-top: 4px;
+  border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda);
+}
+.recorte .barra-filtros { padding: 4px 0; }
+.recorte .explica { margin: 4px 0 8px; font-size: 11.5px; color: var(--texto-fraco); }
+.recorte .explica > summary {
+  cursor: pointer; color: var(--marca); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .4px; font-weight: 600;
+}
+.recorte .explica p { max-width: 104ch; margin: 8px 0; }
+/* As frases de empresa e de conta bancária vêm de `app/empresa.js` e `app/conta.js`, que as três telas dividem, e lá
+ * elas são `.aviso leve` — uma caixinha. Dentro do "o que cada filtro alcança" da Tela 1 elas são só mais um
+ * parágrafo, e a caixinha sai. */
+.recorte .explica .aviso { padding: 0; margin: 8px 0; border: 0; background: none; }
+.pagina-1 .aviso { margin: 10px 20px; }
+
+/* ---------------------------------------------------------------- 3. a fila de números do topo */
+.kpis { display: grid; grid-template-columns: 1.45fr repeat(6, 1fr); padding: 16px 20px 18px; }
+.kpi { padding: 0 14px; border-left: 1px solid var(--borda); min-width: 0; }
+.kpi:first-child { border-left: 0; padding-left: 0; }
+.kpi .rotulo {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kpi .numero { font-size: 20px; font-weight: 700; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kpi .numero.neg { color: var(--negativo); }
+.kpi .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+.kpi .sem-filtro { white-space: normal; }
+/* O "Saldo" é o primeiro e o maior porque é dele que a frase de 5 segundos fala. */
+.kpi.destaque .rotulo { color: var(--marca); }
+.kpi.destaque .numero { font-size: 28px; color: var(--marca); }
+
+/* ---------------------------------------------------------------- 4 e 5. a grade dos gráficos
+ *
+ * Duas colunas, e o gráfico principal ocupa a larga: é o "F" da skill — o olho entra pelo canto de cima à esquerda,
+ * onde está o maior, e sai pelos dois rankings da direita. */
+.grade-g { display: grid; grid-template-columns: 2fr 1fr; gap: 26px 30px; padding: 4px 20px 20px; align-items: start; }
+.quadro { min-width: 0; }
+.quadro > h2 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.quadro .fonte-do-quadro { margin: 2px 0 10px; font-size: 11px; color: var(--texto-fraco); }
+.quadro .legenda { margin-top: 6px; }
+
+/* O SVG do Recharts sai do servidor com largura fixa (ver o cabeçalho de `app/graficos.js`); estas três linhas o
+ * fazem acompanhar a largura do painel, pelo `viewBox`, sem precisar medir nada no navegador. */
+.grafico { width: 100%; }
+.grafico .recharts-wrapper { width: 100% !important; height: auto !important; }
+.grafico .recharts-surface { width: 100% !important; height: auto !important; display: block; }
+
+/* as duas séries das três telas de gráfico — receita e despesa, e nada mais */
+.serie-receita { color: var(--marca-escura); }
+.serie-despesa { color: var(--destaque); }
+
+/* tinta de dado, e só: régua horizontal clara, sem moldura, sem eixo desenhado */
+.grade-grafico line { stroke: var(--borda); }
+/* O `font-size` dos rótulos que ESTA tela desenha à mão (o do eixo dos dois rankings) tem de vir daqui: sem ele
+ * o `<text>` herda os 14px do `body` e o nome comprido sai cortado na borda do SVG. */
+.eixo text { fill: var(--texto-fraco); }
+.rotulo-eixo { fill: var(--texto-fraco); font-size: 10.5px; }
+.rotulo-valor { fill: var(--texto); font-size: 10.5px; font-weight: 600; }
+.ponta-da-linha { fill: currentColor; font-size: 11.5px; font-weight: 600; }
+.linha-zero line { stroke: var(--texto-fraco); }
+.marca-do-mes line { stroke: var(--marca-clara); stroke-dasharray: 3 3; }
+.marca-do-mes-texto { fill: var(--marca-clara); font-size: 10.5px; font-weight: 600; }
+.dica-grafico .recharts-default-tooltip {
+  border: 1px solid var(--borda) !important; border-radius: var(--raio); box-shadow: var(--sombra); font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- 6. a tabela de detalhe */
+.quadro.detalhe { padding: 0 20px 24px; }
+.quadro.detalhe > h2 { margin-bottom: 0; }
+.tabela-detalhe { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+.tabela-detalhe th, .tabela-detalhe td {
+  padding: 5px 10px 5px 0; border-bottom: 1px solid var(--borda); text-align: left; font-weight: 400;
+}
+.tabela-detalhe thead th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
+  border-bottom: 1px solid var(--texto-fraco);
+}
+.tabela-detalhe tbody th { font-weight: 600; white-space: nowrap; }
+.tabela-detalhe .fonte { color: var(--texto-fraco); }
+.tabela-detalhe .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+
+.pagina-1 .rodape { border-top: 1px solid var(--borda); padding: 12px 20px 26px; }
+
 .nota {
   margin: 0; padding: 11px 14px; background: var(--marca-escura); color: var(--texto-claro); font-size: 12.5px;
 }
@@ -321,9 +452,10 @@ a { color: inherit; }
   <strong>todo valor em dinheiro trocado por “—”</strong>. O que ficou de número é a
   <strong>contagem de lançamentos</strong> que entrou em cada indicador, que é o que
   <code>docs/conferencia.md</code> confere, e os percentuais, que são razão e não dinheiro.
-  O layout é o de <code>docs/referencias/tela-2-dre.jpg</code>;
-  as cores são as variáveis de <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
+  Quais blocos a tela tem é <code>docs/referencias/tela-2-dre.jpg</code>; como eles são desenhados é
+  <code>docs/layout.md</code>, que segue a skill de visualização de dados do dono. As cores são as variáveis de
+  <code>app/globals.css</code> (a marca da MeuBESS não está no repositório).
 </p>
-<div hidden=""></div><header class="topo"><img class="logo" src="/marca/logo-meubess.png" alt="MeuBESS"/><span class="titulo">DRE — Demonstrativo de Resultados</span><nav class="abas"><span class="">Gestão de Contas</span><span class="ativa">DRE</span><span class="">Contas a Receber</span></nav></header><p class="aviso"><strong>A releitura do Omie está em curso</strong> — começou 27/09, 20:34 e leva alguns minutos. Os números abaixo são os da última leitura guardada (27/09, 16:33); recarregue a página daqui a pouco para ver os que chegaram.</p><p class="aviso leve"><strong>Sem depreciação e sem amortização:</strong> o Omie não tem categoria para elas, então o EBITDA e o lucro líquido desta tela não as descontam (decisão do dono, 25/09/2026).</p><p class="aviso leve"><strong>Janeiro a março de 2026 ficam fora desta tela:</strong> o Omie tem poucos lançamentos da MeuBESS nesses três meses (decisão do dono, 27/09/2026).</p><div class="barra-filtros"><span class="rotulo-filtro">empresa</span><span class="grupo"><span class="pilula limpar ativa">as duas</span><span class="pilula">Empresa 1</span><span class="pilula">Empresa 2</span></span></div><p class="aviso leve"><strong>As duas empresas:</strong> a tela soma as filiais <code>/0001-42</code> e <code>/0002-23</code> do Omie, como sempre — a terceira fica fora. As pílulas escolhem uma delas.</p><div class="barra-filtros"><span class="rotulo-filtro">conta bancária</span><span class="grupo"><span class="pilula limpar ativa">todas</span><span class="pilula">Adiantamento ao Fornecedor</span><span class="pilula">Adiantamento de Cliente</span><span class="pilula">Banco do Brasil (empresas 1 e 2)</span><span class="pilula">Banco Implementação</span><span class="pilula">Caixinha</span><span class="pilula">cartão Itaú 1106</span><span class="pilula">Cora</span><span class="pilula">Itaú (empresas 1 e 2)</span><span class="pilula">Stone</span></span></div><p class="aviso leve"><strong>Todas as contas da MeuBESS:</strong> a tela soma as 9 contas com <code>negocio = &quot;MeuBESS&quot;</code>, como sempre — conta de outro negócio continua fora. As pílulas escolhem uma ou mais delas.</p><section class="cartoes dre"><div class="cartao dre"><div class="rotulo">Receita total</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 22.0 L100.0 2.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">415 do DFC · 432 do Omie</div></div><div class="cartao dre"><div class="rotulo">Custos e despesas</div><div class="numero neg">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 22.0 L100.0 2.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">632 do DFC · 623 do Omie</div></div><div class="cartao dre"><div class="rotulo">EBITDA</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div><div class="cartao dre"><div class="rotulo">Lucro líquido</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div><div class="cartao dre"><div class="rotulo">Margem de lucro</div><div class="numero">12,9%</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div></section><div class="barra-filtros"><span class="rotulo-filtro">meses</span><span class="grupo"><span class="pilula limpar">todos</span><span class="pilula">Abr</span><span class="pilula">Mai</span><span class="pilula">Jun</span><span class="pilula ativa">Jul</span><span class="pilula ativa">Ago</span><span class="pilula">Set</span><span class="pilula">Out</span><span class="pilula">Nov</span><span class="pilula">Dez</span></span><span class="grupo"><span class="pilula ativa">Análise Horizontal</span><span class="pilula ativa">Análise Vertical</span></span></div><p class="aviso leve"><strong>Filtrado por mês:</strong> julho, agosto. A tabela mostra só essas colunas, os cartões do topo somam esses meses e a coluna <strong>Total</strong> é o total deles — não do ano. A margem de lucro é refeita da soma (lucro líquido dos meses sobre a receita bruta dos meses), e nunca a média das margens de cada mês. A <strong>AH</strong> da primeira coluna escolhida não tem mês anterior dentro da escolha, e sai “—”.</p><section class="painel larga tabela-dre"><h2>julho + agosto de 2026 — as colunas escolhidas, e o total delas</h2><div class="rolagem"><table class="dre-tabela"><thead><tr><th class="grupo-col" rowSpan="2">Grupo</th><th class="mes-col" colSpan="3">Jul | 2026</th><th class="mes-col" colSpan="3">Ago | 2026</th><th class="mes-col total" colSpan="2">Total dos 2 meses</th></tr><tr><th class="sub">Realizado</th><th class="sub ah-col">AH</th><th class="sub av-col">AV</th><th class="sub">Realizado</th><th class="sub ah-col">AH</th><th class="sub av-col">AV</th><th class="sub total">Realizado</th><th class="sub av-col total">AV</th></tr></thead><tbody><tr class="cabeca-grupo"><td colSpan="9">Descrição da Receita</td></tr><tr class="linha-total"><th class="grupo-col">(+) Receitas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,2%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100,1%</td></tr><tr class="linha-detalhe"><th class="grupo-col">Vendas de produtos</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">99,9%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,9%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100%</td></tr><tr class="linha-detalhe"><th class="grupo-col">Outras receitas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,3%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -99,7%</span></td><td class="num av-col">0%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Receita bruta<div class="sem-filtro"><span><strong>o filtro de meses não vale as duas contagens de cadastro ao lado desta linha (contas do DRE e quantas totalizam)</strong> — elas saem de <code>geral/dre</code> → <code>ListarCadastroDRE</code>, que é cadastro e não tem mês: valem para o ano inteiro, e continuam como estão em qualquer escolha de meses.</span></div></th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,2%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100,1%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Deduções da Receita</td></tr><tr class="linha-total"><th class="grupo-col">(−) Deduções</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▼ -80,8%</span></td><td class="num av-col">0%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Receita líquida</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,6%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Custos de Vendas</td></tr><tr class="linha-total"><th class="grupo-col">(−) Custos de vendas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">36,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 215,7%</span></td><td class="num av-col">49,7%</td><td class="num total">—</td><td class="num av-col total">45,7%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Lucro bruto</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">63,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 83,3%</span></td><td class="num av-col">50,3%</td><td class="num total">—</td><td class="num av-col total">54,3%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Despesas Gerais</td></tr><tr class="linha-total"><th class="grupo-col">(−) Despesas gerais</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">37,8%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 158,7%</span></td><td class="num av-col">42,2%</td><td class="num total">—</td><td class="num av-col total">40,9%</td></tr><tr class="linha-total"><th class="grupo-col">(=) EBITDA</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">25,8%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -27,3%</span></td><td class="num av-col">8,1%</td><td class="num total">—</td><td class="num av-col total">13,4%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Resultado Financeiro</td></tr><tr class="linha-total"><th class="grupo-col">(+/−) Resultado financeiro</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">-0,1%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -1977,8%</span></td><td class="num av-col">-0,6%</td><td class="num total">—</td><td class="num av-col total">-0,4%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Impostos</td></tr><tr class="linha-total"><th class="grupo-col">(−) Impostos pagos (guias)</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 0,1%</span></td><td class="num av-col">0,1%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Lucro líquido</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">25,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -32,8%</span></td><td class="num av-col">7,4%</td><td class="num total">—</td><td class="num av-col total">12,9%</td></tr><tr class="linha-total"><th class="grupo-col">(=) sem conta</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">-2,7%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -220,8%</span></td><td class="num av-col">-3,8%</td><td class="num total">—</td><td class="num av-col total">-3,4%</td></tr></tbody><tfoot><tr class="cobertura"><th class="grupo-col">De quanta leitura a coluna saiu</th><td class="num" colSpan="3">701 do DFC · 636 do Omie</td><td class="num" colSpan="3">388 do DFC · 419 do Omie</td><td class="num total" colSpan="2">1089 · 1055</td></tr></tfoot></table></div><p class="legenda rodape-tabela"><strong>AH</strong> = variação contra o mês anterior. <strong>AV</strong> = a linha como fatia da receita líquida do próprio mês. As duas são leitura desta tela, não regra de <code>docs/fontes.md</code>: saem dos valores que as regras já calcularam. A linha <strong>(=) sem conta</strong> fica fora dos totalizadores, de propósito — é o alarme de lançamento em categoria sem conta do DRE.</p><p class="legenda rodape-tabela"><strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números estiverem muito distantes, os totalizadores daquele mês misturam um lado cheio com outro quase vazio, e a coluna não se lê como DRE — é por isso que <strong>janeiro a março</strong> não têm coluna aqui (nota acima). A leitura do Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não tem coluna.</p></section><footer class="rodape"><span class="botao" style="opacity:.55">atualizar agora</span><span>Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta. DFC: pasta sincronizada, 08 - DFC AGOSTO 2026.xlsx (12 dos 12 meses do ano lidos).</span><span class="ultima-leitura"><strong>Última leitura</strong> — Omie: 27/09, 16:33 (releitura em curso desde 27/09, 20:34). DFC: 27/09, 20:37 (pasta sincronizada).</span><span>números lidos agora das fontes</span></footer>
+<div hidden=""></div><header class="topo"><img class="logo" src="/marca/logo-meubess.png" alt="MeuBESS"/><span class="titulo">DRE — Demonstrativo de Resultados</span><nav class="abas"><span class="">Gestão de Contas</span><span class="ativa">DRE</span><span class="">Contas a Receber</span></nav></header><p class="aviso leve"><strong>Sem depreciação e sem amortização:</strong> o Omie não tem categoria para elas, então o EBITDA e o lucro líquido desta tela não as descontam (decisão do dono, 25/09/2026).</p><p class="aviso leve"><strong>Janeiro a março de 2026 ficam fora desta tela:</strong> o Omie tem poucos lançamentos da MeuBESS nesses três meses (decisão do dono, 27/09/2026).</p><form class="barra-filtros filtros-form" action="/dre" method="get"><input type="hidden" name="ano" value="2026"/><input type="hidden" name="mes" value="8"/><input type="hidden" name="ah" value="0"/><input type="hidden" name="av" value="0"/><details class="suspensa escolhida"><summary><span class="nome">meses</span><span class="escolha">Jul, Ago</span></summary><div class="opcoes"><label><input type="checkbox" name="meses" value="4"/><span>Abr</span></label><label><input type="checkbox" name="meses" value="5"/><span>Mai</span></label><label><input type="checkbox" name="meses" value="6"/><span>Jun</span></label><label><input type="checkbox" name="meses" checked="" value="7"/><span>Jul</span></label><label><input type="checkbox" name="meses" checked="" value="8"/><span>Ago</span></label><label><input type="checkbox" name="meses" value="9"/><span>Set</span></label><label><input type="checkbox" name="meses" value="10"/><span>Out</span></label><label><input type="checkbox" name="meses" value="11"/><span>Nov</span></label><label><input type="checkbox" name="meses" value="12"/><span>Dez</span></label></div></details><details class="suspensa"><summary><span class="nome">empresa</span><span class="escolha">as duas</span></summary><div class="opcoes"><label><input type="checkbox" name="empresa" value="1"/><span>Empresa 1</span></label><label><input type="checkbox" name="empresa" value="2"/><span>Empresa 2</span></label></div></details><details class="suspensa"><summary><span class="nome">conta bancária</span><span class="escolha">todas</span></summary><div class="opcoes"><label><input type="checkbox" name="conta" value="Adiantamento ao Fornecedor"/><span>Adiantamento ao Fornecedor</span></label><label><input type="checkbox" name="conta" value="Adiantamento de Cliente"/><span>Adiantamento de Cliente</span></label><label><input type="checkbox" name="conta" value="Banco do Brasil (empresas 1 e 2)"/><span>Banco do Brasil (empresas 1 e 2)</span></label><label><input type="checkbox" name="conta" value="Banco Implementação"/><span>Banco Implementação</span></label><label><input type="checkbox" name="conta" value="Caixinha"/><span>Caixinha</span></label><label><input type="checkbox" name="conta" value="cartão Itaú 1106"/><span>cartão Itaú 1106</span></label><label><input type="checkbox" name="conta" value="Cora"/><span>Cora</span></label><label><input type="checkbox" name="conta" value="Itaú (empresas 1 e 2)"/><span>Itaú (empresas 1 e 2)</span></label><label><input type="checkbox" name="conta" value="Stone"/><span>Stone</span></label></div></details><details class="suspensa escolhida"><summary><span class="nome">leituras da tabela</span><span class="escolha">Análise Horizontal, Análise Vertical</span></summary><div class="opcoes"><label><input type="checkbox" name="ah" checked="" value="1"/><span>Análise Horizontal</span></label><label><input type="checkbox" name="av" checked="" value="1"/><span>Análise Vertical</span></label></div></details><button class="botao filtro" type="submit">aplicar</button><span class="limpar-tudo">limpar</span></form><p class="aviso leve"><strong>As duas empresas:</strong> a tela soma as filiais <code>/0001-42</code> e <code>/0002-23</code> do Omie, como sempre — a terceira fica fora. A lista suspensa escolhe uma delas; marcar as duas é a soma de sempre.</p><p class="aviso leve"><strong>Todas as contas da MeuBESS:</strong> a tela soma as 9 contas com <code>negocio = &quot;MeuBESS&quot;</code>, como sempre — conta de outro negócio continua fora. A lista suspensa escolhe uma ou mais delas.</p><p class="aviso leve"><strong>Filtrado por mês:</strong> julho, agosto. A tabela mostra só essas colunas, os cartões do topo somam esses meses e a coluna <strong>Total</strong> é o total deles — não do ano. A margem de lucro é refeita da soma (lucro líquido dos meses sobre a receita bruta dos meses), e nunca a média das margens de cada mês. A <strong>AH</strong> da primeira coluna escolhida não tem mês anterior dentro da escolha, e sai “—”.</p><section class="cartoes dre"><div class="cartao dre"><div class="rotulo">Receita total</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 22.0 L100.0 2.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">415 do DFC · 432 do Omie</div></div><div class="cartao dre"><div class="rotulo">Custos e despesas</div><div class="numero neg">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 22.0 L100.0 2.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">632 do DFC · 623 do Omie</div></div><div class="cartao dre"><div class="rotulo">EBITDA</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div><div class="cartao dre"><div class="rotulo">Lucro líquido</div><div class="numero">—</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div><div class="cartao dre"><div class="rotulo">Margem de lucro</div><div class="numero">12,9%</div><svg class="fita" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 2.0 L100.0 22.0" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><div class="pe">1055 do Omie</div></div></section><section class="painel larga tabela-dre"><h2>julho + agosto de 2026 — as colunas escolhidas, e o total delas</h2><div class="rolagem"><table class="dre-tabela"><thead><tr><th class="grupo-col" rowSpan="2">Grupo</th><th class="mes-col" colSpan="3">Jul | 2026</th><th class="mes-col" colSpan="3">Ago | 2026</th><th class="mes-col total" colSpan="2">Total dos 2 meses</th></tr><tr><th class="sub">Realizado</th><th class="sub ah-col">AH</th><th class="sub av-col">AV</th><th class="sub">Realizado</th><th class="sub ah-col">AH</th><th class="sub av-col">AV</th><th class="sub total">Realizado</th><th class="sub av-col total">AV</th></tr></thead><tbody><tr class="cabeca-grupo"><td colSpan="9">Descrição da Receita</td></tr><tr class="linha-total"><th class="grupo-col">(+) Receitas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,2%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100,1%</td></tr><tr class="linha-detalhe"><th class="grupo-col">Vendas de produtos</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">99,9%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,9%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100%</td></tr><tr class="linha-detalhe"><th class="grupo-col">Outras receitas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,3%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -99,7%</span></td><td class="num av-col">0%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Receita bruta<div class="sem-filtro"><span><strong>o filtro de meses não vale as duas contagens de cadastro ao lado desta linha (contas do DRE e quantas totalizam)</strong> — elas saem de <code>geral/dre</code> → <code>ListarCadastroDRE</code>, que é cadastro e não tem mês: valem para o ano inteiro, e continuam como estão em qualquer escolha de meses.</span></div></th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,2%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100,1%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Deduções da Receita</td></tr><tr class="linha-total"><th class="grupo-col">(−) Deduções</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▼ -80,8%</span></td><td class="num av-col">0%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Receita líquida</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">100%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 131,6%</span></td><td class="num av-col">100%</td><td class="num total">—</td><td class="num av-col total">100%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Custos de Vendas</td></tr><tr class="linha-total"><th class="grupo-col">(−) Custos de vendas</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">36,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 215,7%</span></td><td class="num av-col">49,7%</td><td class="num total">—</td><td class="num av-col total">45,7%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Lucro bruto</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">63,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah up">▲ 83,3%</span></td><td class="num av-col">50,3%</td><td class="num total">—</td><td class="num av-col total">54,3%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Despesas Gerais</td></tr><tr class="linha-total"><th class="grupo-col">(−) Despesas gerais</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">37,8%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 158,7%</span></td><td class="num av-col">42,2%</td><td class="num total">—</td><td class="num av-col total">40,9%</td></tr><tr class="linha-total"><th class="grupo-col">(=) EBITDA</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">25,8%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -27,3%</span></td><td class="num av-col">8,1%</td><td class="num total">—</td><td class="num av-col total">13,4%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Resultado Financeiro</td></tr><tr class="linha-total"><th class="grupo-col">(+/−) Resultado financeiro</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">-0,1%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -1977,8%</span></td><td class="num av-col">-0,6%</td><td class="num total">—</td><td class="num av-col total">-0,4%</td></tr><tr class="cabeca-grupo"><td colSpan="9">Impostos</td></tr><tr class="linha-total"><th class="grupo-col">(−) Impostos pagos (guias)</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">0,2%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▲ 0,1%</span></td><td class="num av-col">0,1%</td><td class="num total">—</td><td class="num av-col total">0,1%</td></tr><tr class="linha-total"><th class="grupo-col">(=) Lucro líquido</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">25,5%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -32,8%</span></td><td class="num av-col">7,4%</td><td class="num total">—</td><td class="num av-col total">12,9%</td></tr><tr class="linha-total"><th class="grupo-col">(=) sem conta</th><td class="num">—</td><td class="num ah-col"><span class="ah vazio">—</span></td><td class="num av-col">-2,7%</td><td class="num">—</td><td class="num ah-col"><span class="ah down">▼ -220,8%</span></td><td class="num av-col">-3,8%</td><td class="num total">—</td><td class="num av-col total">-3,4%</td></tr></tbody><tfoot><tr class="cobertura"><th class="grupo-col">De quanta leitura a coluna saiu</th><td class="num" colSpan="3">701 do DFC · 636 do Omie</td><td class="num" colSpan="3">388 do DFC · 419 do Omie</td><td class="num total" colSpan="2">1089 · 1055</td></tr></tfoot></table></div><p class="legenda rodape-tabela"><strong>AH</strong> = variação contra o mês anterior. <strong>AV</strong> = a linha como fatia da receita líquida do próprio mês. As duas são leitura desta tela, não regra de <code>docs/fontes.md</code>: saem dos valores que as regras já calcularam. A linha <strong>(=) sem conta</strong> fica fora dos totalizadores, de propósito — é o alarme de lançamento em categoria sem conta do DRE.</p><p class="legenda rodape-tabela"><strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números estiverem muito distantes, os totalizadores daquele mês misturam um lado cheio com outro quase vazio, e a coluna não se lê como DRE — é por isso que <strong>janeiro a março</strong> não têm coluna aqui (nota acima). A leitura do Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não tem coluna.</p></section><footer class="rodape"><span class="botao" style="opacity:.55">atualizar agora</span><span>Empresas 1 e 2 somadas, recorte da MeuBESS. Fontes relidas de hora em hora — o Omie pela API, só consulta. DFC: pasta sincronizada, 08 - DFC AGOSTO 2026.xlsx (12 dos 12 meses do ano lidos).</span><span class="ultima-leitura"><strong>Última leitura</strong> — Omie: 28/09, 13:55 (287 páginas nas 22 leituras). DFC: 28/09, 13:59 (pasta sincronizada).</span><span>números lidos agora das fontes</span></footer>
 </body>
 </html>

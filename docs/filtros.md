@@ -24,7 +24,7 @@ alcançam é a mesma coisa nas três, e porque o "não alcança" dos dois tem um
 mesmo; foi medido, não deu, e por isso todo número de fonte DFC mostra **todas as contas somadas** e escreve isso ao
 lado do valor. A medida inteira está em "O filtro de conta bancária", no fim.
 
-**Onde o filtro mora: na URL.** É o mesmo lugar em que as pílulas de ano e mês sempre moraram. A tela é componente de
+**Onde o filtro mora: na URL.** É o mesmo lugar em que o ano e o mês sempre moraram. A tela é componente de
 servidor, então o estado do filtro chega pela query — e assim um link colado no chat, a página que o navegador mostra e
 a captura versionada mostram exatamente a mesma coisa.
 
@@ -48,13 +48,16 @@ roda sempre com filtro vazio, contra [`docs/conferencia.md`](conferencia.md).
 **situação** — e mais os dois das três telas, empresa e conta bancária. Ano, mês e centro de custo já existiam; os três
 do meio são os que o dono aprovou em 27/09/2026.
 
-Os de escolha curta são pílulas (centro de custo, situação, empresa, conta bancária); as três listas longas —
-classificação do DFC, categoria do Omie e cliente/fornecedor — vão juntas num formulário `GET`, como na Tela 3:
-apertar "aplicar" escreve as três na URL de uma vez.
+Os de escolha curta são **listas suspensas com caixas de marcar** (ano, mês, centro de custo, situação, empresa, conta
+bancária — decisão do dono de 28/09/2026, que tirou as etiquetas das três telas); as três listas longas —
+classificação do DFC, categoria do Omie e cliente/fornecedor — continuam campos de lista. Os sete vão juntos num
+formulário `GET`: apertar "aplicar" escreve todas as escolhas na URL de uma vez. Onde o filtro aceita vários valores a
+caixa é de marcar; no ano e no mês, que são um valor só na URL, ela é bolinha.
 
 ### centro de custo
 
-Na URL: `?ano=2026&mes=8&cc=FISCAL,TI` — uma pílula por nome, clicar acende, clicar de novo apaga, "todos" limpa.
+Na URL: `?ano=2026&mes=8&cc=FISCAL,TI` — uma caixa de marcar por nome, na lista suspensa "centro de custo"; nenhuma
+marcada são todos.
 
 **As opções são os 16 NOMES de departamento**, juntando as empresas 1 e 2 pelo nome (decisão do dono, 25/09/2026): o
 `cCodDepartamento` é próprio de cada empresa e **nenhum** código coincide entre as duas, então o nome é a única chave
@@ -179,7 +182,8 @@ pares em agosto de 2026).
 
 ### situação — pago · recebido · a pagar
 
-Na URL: `?situacao=pago,recebido` — pílulas, seleção múltipla, "todas" limpa.
+Na URL: `?situacao=pago,recebido` — caixas de marcar na lista suspensa "situação", seleção múltipla; nenhuma marcada
+são todas.
 
 **Os três rótulos não foram inventados:** eles são, letra por letra, os valores da coluna `PAGAMENTO` (N) do
 `FLUXO DE CAIXA` que `docs/fontes.md` registra — `PAGO`, `RECEBIDO` e `A PAGAR`. Por isso **este é o único dos quatro
@@ -219,8 +223,9 @@ título ainda não pago.
 ## Tela 2 — DRE
 
 **Filtros:** **mês, seleção múltipla** — vários meses de uma vez. Na URL: `?meses=7,8`, ao lado do `ah` e do `av` que já
-moravam lá. Cada pílula de mês acende e apaga; "todos" limpa e a tela volta ao de sempre. E mais os dois filtros das
-três telas, **empresa** e **conta bancária**, cada um com a sua seção no fim deste documento.
+moravam lá. Uma caixa de marcar por mês, na lista suspensa "meses"; nenhuma marcada são todos, e a tela volta ao de
+sempre. E mais os dois filtros das três telas, **empresa** e **conta bancária**, cada um com a sua seção no fim deste
+documento.
 
 **Este filtro não muda regra nenhuma.** Os doze meses continuam sendo calculados pelas mesmas regras; o filtro escolhe
 **quais** aparecem. O que ele muda, e a tela diz:
@@ -264,7 +269,7 @@ mesmo campo pelo qual a tela já faz o recorte da MeuBESS:
 
 | filtro | na URL | o que é |
 |---|---|---|
-| vencimento de–até | `?de=2026-07-01&ate=2026-08-31` | a janela da consulta, `dDtVencDe` / `dDtVencAte`. Sem ela, é o mês das pílulas |
+| vencimento de–até | `?de=2026-07-01&ate=2026-08-31` | a janela da consulta, `dDtVencDe` / `dDtVencAte`. Sem ela, é o mês escolhido |
 | status | `?status=pago,atrasado` | as três faixas do de-para do dono (25/09/2026). `CANCELADO` nunca é opção |
 | cliente | `?cliente=2-5199865257` | empresa + `nCodCliente`, porque o código é próprio de cada empresa |
 | categoria | `?categoria=1.01.03` | o `cCodCateg` do título |
@@ -322,8 +327,8 @@ venda e logística) do Omie, e a terceira (`/0003-04`) sempre ficou fora. O filt
 soma**.
 
 Na URL: `?empresa=1` ou `?empresa=2`. São **três escolhas exclusivas**, e não seleção múltipla: `?empresa=1,2` é o mesmo
-que sem filtro, e a pílula "as duas" limpa a escolha. Um `?empresa=` que não seja 1 nem 2 é ignorado, com aviso na tela.
-A escolha **atravessa as abas**: os links do topo levam a empresa escolhida para a outra tela. O desenho da pílula está
+que sem filtro. Na lista suspensa "empresa" são duas caixas de marcar: nenhuma, ou as duas, é a soma de sempre. Um `?empresa=` que não seja 1 nem 2 é ignorado, com aviso na tela.
+A escolha **atravessa as abas**: os links do topo levam a empresa escolhida para a outra tela. O desenho da lista está
 em [`app/empresa.js`](../app/empresa.js), um lugar só para as três telas; a leitura e a normalização, em
 [`lib/regras/filtros.mjs`](../lib/regras/filtros.mjs) (`filtroDeEmpresa`).
 
@@ -401,8 +406,8 @@ não é da MeuBESS continua fora), nem o regime de caixa, nem a trava de agosto,
 ## O filtro de conta bancária — nas três telas
 
 **Filtro das três telas** (decisão do dono, 27/09/2026): as **contas bancárias da MeuBESS**, "onde a fonte disser o
-banco". Na URL: `?conta=Caixinha,Stone` — seleção múltipla, como o centro de custo: clicar acende, clicar de novo
-apaga, "todas" limpa. A escolha **atravessa as abas**, como a de empresa. O desenho da pílula está em
+banco". Na URL: `?conta=Caixinha,Stone` — seleção múltipla, como o centro de custo: uma caixa de marcar por conta,
+nenhuma marcada são todas. A escolha **atravessa as abas**, como a de empresa. O desenho da lista está em
 [`app/conta.js`](../app/conta.js), um lugar só para as três telas; a leitura e a normalização, em
 [`lib/regras/filtros.mjs`](../lib/regras/filtros.mjs) (`contasBancarias` e `filtroDeConta`).
 
@@ -522,7 +527,7 @@ O que é "a fonte" em cada tela:
 <!-- Escrito por scripts/conferir-filtros.mjs. Não edite à mão: rode `npm run conferir-filtros`. -->
 
 **19 filtros conferidos**: 19 conferidos e 0 divergentes. Leitura do Omie:
-`f5a399a50663` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
+`9538b18ec99f` — 357 arquivos no cache local. Mês do caso: agosto de 2026.
 
 Cada linha é um filtro real aplicado pela **mesma camada de dados que o navegador recebe**, e reencontrado na **fonte** —
 os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem passar pela montagem de
@@ -531,7 +536,7 @@ os arquivos crus do cache do Omie, abertos aqui com `fs` e `JSON.parse`, sem pas
 
 - **Tela 1 — centro de custo = FISCAL.** **Vale em:** os 7 cartões (a contagem do Omie de cada um), o "Top 10 despesas" e os dois gráficos de receita × despesa (a contagem do Omie) e o "Top 10 receitas" inteiro, que é do Omie. **Na tela:** 78. **Na fonte:** 78 — contados um a um na base do mês pelo `departamentos[]` que está nos arquivos crus de `financas/mf` com `cExibirDepartamentos: "S"`, casando o `cCodDepartamento` de cada empresa com o nome FISCAL pelo cadastro cru `geral/departamentos`. **Caso real:** o lançamento do grupo `CONTA_A_RECEBER` da empresa 2, título `5276599584`, categoria `1.01.01`: no arquivo cru do cache ele tem `cCodDepartamento` `5191334709`, que o cadastro `geral/departamentos` da empresa 2 chama de FISCAL, com `nDistrPercentual` 50 em 2 linhas de rateio.
 - **Tela 1 — centro de custo = os 16 nomes de uma vez.** **Vale em:** os mesmos cartões e blocos; é a conferência do conjunto, e não de um nome. **Na tela:** 154. **Na fonte:** 154 — a base do mês menos os lançamentos cujo `departamentos[]` vem vazio no arquivo cru — contados aqui, um a um. **Caso real:** a base do mês tem 419 lançamentos e 265 deles não têm nenhuma linha de rateio nos arquivos crus: escolhendo os 16 nomes, sobram 154.
-- **Tela 1 — empresa = 2.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro (que é do Omie) e o cartão "Desp. Pendentes" inteiro, que sai dos títulos a pagar por vencimento. **Na tela:** 242. **Na fonte:** 242 — os lançamentos da base do mês que só aparecem em arquivo `2-financas-mf-ListarMovimentos…` do cache, contados aqui um a um pela identidade `nCodMovCC` + `nCodTitulo` + `cGrupo`. **Caso real:** a base do mês tem 419 lançamentos, e nos arquivos crus do cache 177 deles só aparecem em arquivo da empresa 1 e 242 só em arquivo da empresa 2 — 0 das 7.736 identidades lidas aparecem nos arquivos das duas, então o arquivo diz a empresa sem ambiguidade. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o de-para de `EMP.` não fecha.
+- **Tela 1 — empresa = 2.** **Vale em:** a contagem do Omie dos 7 cartões e dos 4 blocos, o "Top 10 receitas" inteiro (que é do Omie) e o cartão "Desp. Pendentes" inteiro, que sai dos títulos a pagar por vencimento. **Na tela:** 242. **Na fonte:** 242 — os lançamentos da base do mês que só aparecem em arquivo `2-financas-mf-ListarMovimentos…` do cache, contados aqui um a um pela identidade `nCodMovCC` + `nCodTitulo` + `cGrupo`. **Caso real:** a base do mês tem 419 lançamentos, e nos arquivos crus do cache 177 deles só aparecem em arquivo da empresa 1 e 242 só em arquivo da empresa 2 — 0 das 7.765 identidades lidas aparecem nos arquivos das duas, então o arquivo diz a empresa sem ambiguidade. Os números do DFC não são recortados por este filtro, e cada cartão de fonte DFC diz isso na tela: o de-para de `EMP.` não fecha.
 - **Tela 2 — meses = só agosto.** **Vale em:** os 5 cartões do topo, as 12 linhas da tabela e a coluna Total — a tela inteira é por mês. **Na tela:** 17. **Na fonte:** 17 — a tela sem filtro em agosto, que é a que `docs/conferencia.md` confere indicador por indicador. **Caso real:** os 17 indicadores da tela com o filtro em agosto sozinho batem, um a um, com os mesmos 17 da tela sem filtro no mesmo mês — que são os que `docs/conferencia.md` publica e `scripts/conferir-telas.mjs` confere contra o arquivo.
 - **Tela 2 — meses = julho e agosto.** **Vale em:** os mesmos cartões, linhas e a coluna Total, que passa a ser o total dos dois meses. **Na tela:** 17. **Na fonte:** 17 — cada mês calculado sozinho, sem filtro, e somado aqui — agosto é o mês que `docs/conferencia.md` publica. **Caso real:** a coluna de julho tem 636 lançamentos do Omie e a de agosto, 419; com os dois meses escolhidos a tela mostra 1.055, e os 17 indicadores somam os dois meses um a um. As duas contagens de cadastro do DRE não somam, de propósito, e a linha "(=) Receita bruta" diz isso na tela.
 - **Tela 2 — empresa = 1 e empresa = 2, somadas.** **Vale em:** as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela. **Na tela:** 17. **Na fonte:** 17 — cada empresa calculada sozinha e somada aqui, indicador por indicador, contra a tela sem filtro — e a contagem do DFC conferida parada nas três. **Caso real:** a coluna de agosto tem 419 lançamentos do Omie sem filtro, 177 com a empresa 1 e 242 com a empresa 2; os 17 indicadores somam as duas empresas um a um, e a contagem do DFC de cada um fica igual nas três telas — é o filtro não alcançando o DFC, como `docs/filtros.md` diz.

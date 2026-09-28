@@ -39,6 +39,7 @@ import { dadosDaTela1, mesCorrente } from '../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 import { comoLista, comoTexto } from '../lib/regras/filtros.mjs';
 import Atualizar from './atualizar.js';
+import ChaveDoOmie, { AvisoSemOmie } from './chave-omie.js';
 import FiltroDeConta, { ExplicaConta } from './conta.js';
 import { emReais } from './dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from './empresa.js';
@@ -69,7 +70,10 @@ export default async function Pagina({ searchParams }) {
   const classe = comoLista(q?.classe);
   const categoria = comoLista(q?.categoria);
   const fornecedor = comoTexto(q?.fornecedor);
-  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa, conta, situacao, classe, categoria, fornecedor } });
+  // A CHAVE "INCLUIR DADOS DO OMIE" (decisão do dono, 28/09/2026). Vai crua, como os filtros: quem a lê é
+  // `lib/regras/filtros.mjs`, e sem nada na URL ela está LIGADA — a tela é a de sempre.
+  const omie = comoLista(q?.omie);
+  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa, conta, situacao, classe, categoria, fornecedor, omie } });
   const fcc = d.filtros.cc;
   const femp = d.filtros.empresa;
   const fconta = d.filtros.conta;
@@ -77,6 +81,7 @@ export default async function Pagina({ searchParams }) {
   const fclasse = d.filtros.classe;
   const fcat = d.filtros.categoria;
   const ffor = d.filtros.fornecedor;
+  const comOmie = d.filtros.omie.ligado;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -93,11 +98,15 @@ export default async function Pagina({ searchParams }) {
 
   // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar escrevem a escolha na URL
   // quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês que está sendo lido.
-  const semFiltro = `/?ano=${ano}&mes=${mes}`;
+  // A CHAVE ATRAVESSA O "limpar", como as duas leituras da tabela da Tela 2 atravessam o dela: ela não é filtro, é
+  // uma forma de ver, e quem limpou o recorte não pediu para o Omie voltar.
+  const semFiltro = `/?ano=${ano}&mes=${mes}${comOmie ? '' : '&omie=0'}`;
   // A EMPRESA E A CONTA ESCOLHIDAS ATRAVESSAM AS ABAS: são os dois filtros das três telas, e trocar de tela não pode
   // desfazê-los.
+  // E A CHAVE DO OMIE TAMBÉM ATRAVESSA AS ABAS: ela vale nas três telas, e trocar de tela não pode religá-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
-    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
+    + `${comOmie ? '' : '&omie=0'}`;
 
   return (
     <div className="tela">
@@ -125,7 +134,21 @@ export default async function Pagina({ searchParams }) {
         </p>
       </section>
 
-      <AvisoDoOmie leituras={d.leituras} />
+      {/* O aviso da releitura do Omie só faz sentido com o Omie na conta: com a chave desligada, de que hora foi a
+          última leitura dele não muda número nenhum desta tela. */}
+      {comOmie && <AvisoDoOmie leituras={d.leituras} />}
+
+      <AvisoSemOmie ligado={comOmie}>
+        <strong>O que sobra desta tela:</strong> 9 dos 11 indicadores, que são do DFC — os cartões
+        &quot;Saldo&quot;, &quot;Receitas&quot;, &quot;Despesas&quot;, &quot;Desp. Pagas&quot;,
+        &quot;Desp. Funcionários&quot; e &quot;% D. Func. / Rec. Líquida&quot;, o &quot;Para onde foi a despesa&quot; e
+        os dois gráficos de receita × despesa. A frase de 5 segundos lá em cima é o cartão &quot;Saldo&quot;, e por
+        isso continua inteira. <strong>O que sai:</strong> o cartão &quot;Desp. Pendentes&quot; e o bloco
+        &quot;De quem veio a receita&quot; (o Top 10 receitas), que são do Omie, e a contagem
+        &quot;do Omie&quot; embaixo de cada número e na tabela do fim. <strong>E os filtros</strong> de centro de
+        custo, de categoria do Omie e de cliente/fornecedor continuam na tela, mas só recortam o lado do Omie:
+        enquanto a chave está desligada, eles não alcançam número nenhum.
+      </AvisoSemOmie>
 
       {!d.dfc.ok && (
         <p className="aviso">
@@ -185,6 +208,8 @@ export default async function Pagina({ searchParams }) {
 
           <FiltroDeConta f={fconta} />
 
+          <ChaveDoOmie ligado={comOmie} />
+
           <Suspensa nome="situação" campo="situacao" vazio="todas"
             opcoes={fsit.opcoes.map((o) => ({
               valor: o.chave, rotulo: o.nome, marcada: fsit.escolhidos.includes(o.chave),
@@ -206,7 +231,9 @@ export default async function Pagina({ searchParams }) {
             </select>
           </label>
           <label className="campo-filtro">
-            <span>cliente/fornecedor ({ffor.opcoes.length} no mês, {ffor.semCliente} sem código)</span>
+            <span>
+              cliente/fornecedor ({ffor.opcoes.length} no mês{comOmie ? `, ${ffor.semCliente} sem código` : ''})
+            </span>
             <select name="fornecedor" defaultValue={ffor.escolhido ?? ''}>
               <option value="">todos</option>
               {ffor.opcoes.map((o) => (
@@ -226,19 +253,45 @@ export default async function Pagina({ searchParams }) {
         <details className="explica">
           <summary>o que cada filtro alcança, e o que ele não alcança</summary>
 
+          {/* A CHAVE DO OMIE NÃO É FILTRO, mas é aqui que o dono vem perguntar o que ela faz — e, desligada, ela muda
+              a resposta de três dos sete filtros desta tela. */}
+          <p>
+            <strong>A chave &quot;incluir dados do Omie&quot;</strong>{' '}
+            {comOmie
+              ? <>está ligada, que é o padrão: os 11 indicadores são os de sempre, com o lado do DFC e o lado do Omie
+                lado a lado. Desligá-la tira da conta todo número cuja fonte é o Omie — o cartão
+                {' '}&quot;Desp. Pendentes&quot;, o bloco &quot;De quem veio a receita&quot; e a contagem
+                {' '}&quot;do Omie&quot; de cada indicador —, e deixa os 9 que são do DFC intactos. Ela não é filtro:
+                não recorta lançamento nenhum, tira uma FONTE inteira.</>
+              : <>está desligada. Os filtros de <strong>centro de custo</strong>, de <strong>categoria do Omie</strong>{' '}
+                e de <strong>cliente/fornecedor</strong> só recortam o lado do Omie, e por isso não alcançam número
+                nenhum enquanto ela estiver assim — eles continuam na tela, com as mesmas opções, para a escolha não se
+                perder quando a chave voltar. Os de <strong>situação</strong> e de{' '}
+                <strong>categoria pela classificação do DFC</strong> continuam valendo inteiros, porque alcançam o
+                valor da planilha; os de <strong>empresa</strong> e de <strong>conta bancária</strong>, que só
+                alcançavam o lado do Omie desta tela, também ficam sem número para recortar.</>}
+          </p>
+
           <ExplicaEmpresa f={femp}>
-            Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie — e no
-            cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem do DFC
-            não: cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas somadas.
+            {comOmie
+              ? <>Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro — que é do Omie —
+                e no cartão &quot;Desp. Pendentes&quot; inteiro, que sai dos títulos a pagar por vencimento. O que vem
+                do DFC não: cada cartão e cada bloco de fonte DFC diz, ali mesmo, que o número é das duas empresas
+                somadas.</>
+              : <>Com a chave &quot;incluir dados do Omie&quot; desligada ele não alcança número nenhum desta tela: o
+                que ele alcançava era o lado do Omie, e o lado do DFC nunca se recortou por empresa.</>}
           </ExplicaEmpresa>
 
           <ExplicaConta f={fconta}>
-            Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
-            &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>, mas
-            os rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
-            (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas
-            cruzáveis do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali mesmo, e
-            as contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.
+            {comOmie
+              ? <>Ele vale em toda contagem do Omie desta tela, no &quot;Top 10 receitas&quot; inteiro e no cartão
+                &quot;Desp. Pendentes&quot; inteiro. O que vem do DFC não: a planilha tem uma coluna <code>BANCO</code>,
+                mas os rótulos dela não são as contas do Omie — o cruzamento de 27/09/2026
+                (<code>scripts/de-para-conta-dfc.mjs</code>) casou o rótulo <code>ITAU</code>, que é 95% das linhas
+                cruzáveis do ano, com quatro contas diferentes. Cada cartão e cada bloco de fonte DFC diz isso ali
+                mesmo, e as contagens inteiras do cruzamento estão em <code>docs/filtros.md</code>.</>
+              : <>Com a chave &quot;incluir dados do Omie&quot; desligada ele não alcança número nenhum desta tela,
+                pelo mesmo motivo do de empresa: o que ele alcançava era o lado do Omie.</>}
           </ExplicaConta>
 
           <p>
@@ -270,7 +323,15 @@ export default async function Pagina({ searchParams }) {
           </p>
 
           <p>
-            {fcc.aplicado
+            {!comOmie
+              ? <>
+                <strong>O centro de custo sai da conta com o Omie:</strong> o rateio por departamento
+                (<code>departamentos[].nDistrValor</code>) é do Omie, e o DFC não tem coluna de centro de custo
+                nenhuma — a aba <code>FLUXO DE CAIXA</code> classifica cada linha por <code>CLASS. CONTABIL</code> e
+                {' '}<code>SUB 2</code>. Por isso os números que este filtro mostrava ao lado — quantos lançamentos do
+                mês não têm rateio nenhum — também saem: eles são contagem do Omie.
+              </>
+              : fcc.aplicado
               ? <>
                 <strong>Filtrado por centro de custo:</strong> {fcc.escolhidos.join(', ')}. O filtro vale sobre o rateio do
                 Omie (<code>departamentos[].nDistrValor</code>), juntando as empresas 1 e 2 pelo nome do departamento
@@ -345,7 +406,7 @@ export default async function Pagina({ searchParams }) {
                 <th>{i.nome}</th>
                 <td className="fonte">{i.fonte}</td>
                 <td className="num">{i.contagem.dfc === null ? '—' : i.contagem.dfc}</td>
-                <td className="num">{i.contagem.omie}</td>
+                <td className="num">{i.contagem.omie === null ? 'sem o Omie' : i.contagem.omie}</td>
               </tr>
             ))}
           </tbody>

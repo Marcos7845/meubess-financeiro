@@ -65,6 +65,7 @@ import { dadosDaTela3, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista, comoTexto, paraCampoDeData } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import FiltroDeConta, { ExplicaConta } from '../conta.js';
 import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
@@ -161,11 +162,14 @@ export default async function Pagina({ searchParams }) {
       de: comoTexto(q?.de), ate: comoTexto(q?.ate),
       status: comoLista(q?.status), cliente: comoTexto(q?.cliente), categoria: comoTexto(q?.categoria),
       empresa: comoLista(q?.empresa), conta: comoLista(q?.conta),
+      // A CHAVE "INCLUIR DADOS DO OMIE" (decisão do dono, 28/09/2026). Sem nada na URL ela está LIGADA.
+      omie: comoLista(q?.omie),
     },
   });
   const f = d.filtros;
   const femp = f.empresa;
   const fconta = f.conta;
+  const comOmie = f.omie.ligado;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const bloco = (id) => d.blocos.find((b) => b.id === id);
@@ -188,11 +192,13 @@ export default async function Pagina({ searchParams }) {
   // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar e os quatro campos escrevem a
   // escolha na URL quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês que está sendo
   // lido — e é por isso que ele é só a URL com ano e mês.
-  const semFiltro = `/receber?ano=${ano}&mes=${mes}`;
+  const semFiltro = `/receber?ano=${ano}&mes=${mes}${comOmie ? '' : '&omie=0'}`;
   const algumFiltro = f.vencimento.ativo || f.status.ativo || f.cliente.ativo || f.categoria.ativo;
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
+  // E A CHAVE DO OMIE TAMBÉM ATRAVESSA AS ABAS: ela vale nas três telas, e trocar de tela não pode religá-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
-    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
+    + `${comOmie ? '' : '&omie=0'}`;
 
   return (
     <div className="tela">
@@ -213,7 +219,10 @@ export default async function Pagina({ searchParams }) {
       <section className="chamada">
         <h1>Vencendo de {d.janela.de} a {d.janela.ate}, empresas 1 e 2 somadas</h1>
         <p className="frase">
-          {vencido.contagem.omie > 0
+          {!comOmie
+            ? <>Sem o Omie esta tela não tem número nenhum: os 4 cartões e os 4 blocos saem todos de uma consulta só
+              ao Omie, e o DFC não tem carteira a receber.</>
+            : vencido.contagem.omie > 0
             ? <><b>{emReais(vencido.valor)}</b> venceu e ainda não foi recebido ({vencido.contagem.omie}{' '}
               {vencido.contagem.omie === 1 ? 'título' : 'títulos'} nesta janela).</>
             : <>Nenhum título desta janela venceu sem ser recebido.</>}
@@ -225,7 +234,18 @@ export default async function Pagina({ searchParams }) {
         </p>
       </section>
 
-      <AvisoDoOmie leituras={d.leituras} />
+      {/* O aviso da releitura do Omie só faz sentido com o Omie na conta. */}
+      {comOmie && <AvisoDoOmie leituras={d.leituras} />}
+
+      <AvisoSemOmie ligado={comOmie}>
+        <strong>Esta tela é do Omie inteira</strong>, e por isso sem ele não sobra número nenhum: os 4 cartões e os 4
+        blocos saem todos de uma consulta só — <code>financas/pesquisartitulos</code>, os títulos a receber por
+        vencimento — e não há lado do DFC para pôr no lugar, porque a planilha é de <strong>caixa</strong> e não tem
+        carteira a receber nem cadastro de cliente. <strong>O que sobra:</strong> a janela de vencimento escolhida
+        (que é a pergunta, e vem da URL, não do Omie), os sete filtros, esta chave e a hora da última leitura no
+        rodapé. Os sete filtros continuam na tela, com as mesmas opções, mas nenhum deles alcança número nenhum
+        enquanto a chave estiver assim.
+      </AvisoSemOmie>
 
       {/* 2. O RECORTE: os sete filtros desta tela, os cinco de escolha em listas suspensas com caixas de marcar
           (decisão do dono, 28/09/2026) e os quatro campos como sempre foram, no mesmo formulário `GET`. O que cada um
@@ -247,6 +267,8 @@ export default async function Pagina({ searchParams }) {
           <FiltroDeEmpresa f={femp} />
 
           <FiltroDeConta f={fconta} />
+
+          <ChaveDoOmie ligado={comOmie} />
 
           <label className="campo-filtro">
             <span>vencimento de</span>
@@ -283,15 +305,33 @@ export default async function Pagina({ searchParams }) {
         <details className="explica">
           <summary>o que cada filtro alcança, e o que ele não alcança</summary>
 
+          {/* A CHAVE DO OMIE NÃO É FILTRO, mas é aqui que o dono vem perguntar o que ela faz — e nesta tela ela é a
+              diferença entre ter tela e não ter. */}
+          <p>
+            <strong>A chave &quot;incluir dados do Omie&quot;</strong>{' '}
+            {comOmie
+              ? <>está ligada, que é o padrão: os 8 indicadores são os de sempre. Desligá-la deixa esta tela sem número
+                nenhum, porque ela é do Omie inteira — não é filtro, é a FONTE saindo da conta.</>
+              : <>está desligada, e nesta tela isso não deixa número nenhum de pé. Os sete filtros continuam aqui, com
+                as mesmas opções, para a escolha não se perder quando a chave voltar — mas nenhum deles tem o que
+                recortar.</>}
+          </p>
+
           <ExplicaEmpresa f={femp}>
-            Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a tela é do Omie inteira. A lista
-            de clientes do filtro passa a ser só a desta empresa, porque o <code>nCodCliente</code> é próprio de cada
-            uma.
+            {comOmie
+              ? <>Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a tela é do Omie inteira. A
+                lista de clientes do filtro passa a ser só a desta empresa, porque o <code>nCodCliente</code> é próprio
+                de cada uma.</>
+              : <>Com a chave &quot;incluir dados do Omie&quot; desligada ele não alcança número nenhum: esta tela é do
+                Omie inteira, e sem o Omie não há título para escolher por empresa.</>}
           </ExplicaEmpresa>
 
           <ExplicaConta f={fconta}>
-            Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a conta é o
-            {' '}<code>cabecTitulo.nCodCC</code>, o mesmo campo pelo qual a tela já faz o recorte da MeuBESS.
+            {comOmie
+              ? <>Nesta tela ele vale nos 4 cartões e nos 4 blocos, no valor e na contagem: a conta é o
+                {' '}<code>cabecTitulo.nCodCC</code>, o mesmo campo pelo qual a tela já faz o recorte da MeuBESS.</>
+              : <>Com a chave &quot;incluir dados do Omie&quot; desligada ele não alcança número nenhum, pelo mesmo
+                motivo do de empresa.</>}
           </ExplicaConta>
 
           <p>
@@ -324,12 +364,14 @@ export default async function Pagina({ searchParams }) {
           const c = cartao(id);
           return (
             <Kpi c={c} tom={TOM[id]} destaque={id === 'valor-vencido'} key={id}
-              pe={`${c.contagem.omie} ${c.contagem.omie === 1 ? 'título' : 'títulos'} do Omie`} />
+              pe={c.contagem.omie === null
+                ? 'sem o Omie'
+                : `${c.contagem.omie} ${c.contagem.omie === 1 ? 'título' : 'títulos'} do Omie`} />
           );
         })}
       </section>
 
-      {pendente.contagem.omie === 0 && !f.status.ativo && (
+      {comOmie && pendente.contagem.omie === 0 && !f.status.ativo && (
         <p className="aviso leve">
           <strong>Nenhum título em aberto vencendo de {d.janela.de} a {d.janela.ate}.</strong> Numa janela já fechada
           essa faixa é sempre vazia: todo título que venceu está pago ou atrasado, e os quatro status da faixa
@@ -340,24 +382,33 @@ export default async function Pagina({ searchParams }) {
 
       {/* 4 e 5. O GRÁFICO PRINCIPAL E OS DE APOIO. */}
       <div className="grade-g">
+        {/* OS TRÊS GRÁFICOS SÓ SÃO DESENHADOS COM O OMIE NA CONTA. Sem ele não há dado nenhum para desenhar, e um
+            eixo vazio ou uma rosca de raio zero seriam um desenho fingindo número: o que fica no lugar é a frase de
+            `semOmie[]`, que o `Filtrado` de cada quadro escreve. */}
         <Quadro className="principal" titulo="De quem é o vencido"
-          fonte={`os 10 maiores dos ${porCliente.contagem.extras.clientes} clientes da janela, cada um repartido pelas três faixas de status`}>
-          <Legenda />
-          <PorClienteEStatus clientes={clientes} />
-          {clientes.length === 0 && <p className="legenda">nenhum título vence nesta janela.</p>}
+          fonte={comOmie
+            ? `os 10 maiores dos ${porCliente.contagem.extras.clientes} clientes da janela, cada um repartido pelas três faixas de status`
+            : 'os 10 maiores clientes da janela — os títulos e o nome de cada cliente são do Omie'}>
+          {comOmie && <>
+            <Legenda />
+            <PorClienteEStatus clientes={clientes} />
+            {clientes.length === 0 && <p className="legenda">nenhum título vence nesta janela.</p>}
+          </>}
           <Filtrado i={porCliente} />
         </Quadro>
 
         <Quadro titulo="Como está a carteira desta janela"
           fonte="quantos títulos em cada faixa, e o total no centro">
-          <Rosca dados={porStatus.dados} />
+          {comOmie && <Rosca dados={porStatus.dados} />}
           <Filtrado i={porStatus} />
         </Quadro>
 
         <Quadro className="larga" titulo="O que vence quando"
           fonte={`quantos títulos vencem em cada mês de ${ano}, repartidos pelas três faixas de status`}>
-          <Legenda />
-          <PorMesEStatus porMes={porMes.dados} mesEmFoco={d.mesDaJanela} />
+          {comOmie && <>
+            <Legenda />
+            <PorMesEStatus porMes={porMes.dados} mesEmFoco={d.mesDaJanela} />
+          </>}
           <Filtrado i={porMes} />
         </Quadro>
       </div>
@@ -366,9 +417,11 @@ export default async function Pagina({ searchParams }) {
       <section className="quadro detalhe">
         <h2>Os títulos, um a um</h2>
         <p className="fonte-do-quadro">
-          os {listaBloco.contagem.omie} títulos da janela, fora os <code>CANCELADO</code> — a descrição vem dos
-          produtos do pedido de venda ligado ao título, ou da categoria quando ele nasceu à mão
+          {comOmie ? `os ${listaBloco.contagem.omie} títulos da janela` : 'os títulos da janela'}, fora os
+          {' '}<code>CANCELADO</code> — a descrição vem dos produtos do pedido de venda ligado ao título, ou da
+          categoria quando ele nasceu à mão
         </p>
+        <Filtrado i={listaBloco} />
         <div className="rolagem-lista">
           <table className="lista-titulos">
             <thead>
@@ -390,11 +443,13 @@ export default async function Pagina({ searchParams }) {
                 </tr>
               ))}
               {listaBloco.dados.length === 0 && (
-                <tr><td colSpan={7} className="legenda">nenhum título passa pelos filtros escolhidos.</td></tr>
+                <tr><td colSpan={7} className="legenda">
+                  {comOmie ? 'nenhum título passa pelos filtros escolhidos.' : 'sem o Omie não há título para listar.'}
+                </td></tr>
               )}
             </tbody>
             <tfoot>
-              <tr><th colSpan={4}>Total — {listaBloco.contagem.omie} títulos</th>
+              <tr><th colSpan={4}>Total — {comOmie ? `${listaBloco.contagem.omie} títulos` : 'sem o Omie'}</th>
                 <td className="num">{emReais(listaBloco.total)}</td><td colSpan={2} /></tr>
             </tfoot>
           </table>

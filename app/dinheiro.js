@@ -19,7 +19,13 @@ const DINHEIRO = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: '
 const PORCENTO = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0, useGrouping: false });
 
 // Centavos → `R$ 1.634.743`. O valor guardado é sempre inteiro, em centavos; a divisão por 100 é só de apresentação.
-export const emReais = (centavos) => DINHEIRO.format((centavos ?? 0) / 100);
+//
+// `null` É UM TRAVESSÃO, E NÃO `R$ 0` (decisão do dono, 28/09/2026, a chave "incluir dados do Omie"). Com a chave
+// desligada, o valor de todo indicador cuja fonte principal é o Omie vem `null` — não há número, e `R$ 0` seria dado:
+// diria "a despesa pendente do mês é zero". É a mesma leitura que `emPorcento` já fazia do `null` aqui embaixo.
+// Nenhum número deixou de sair como saía: até esta chave existir, nenhum indicador das três telas devolvia `null` em
+// valor de dinheiro.
+export const emReais = (centavos) => (centavos === null || centavos === undefined ? '—' : DINHEIRO.format(centavos / 100));
 
 // Razão (0,24) → `24%`. `null` é "não dá para calcular", e vira um travessão.
 export const emPorcento = (razao) => (razao === null || razao === undefined ? '—' : PORCENTO.format(razao));

@@ -55,6 +55,7 @@ import { dadosDaTela2, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
 import { comoLista } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
+import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import FiltroDeConta, { ExplicaConta } from '../conta.js';
 import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
@@ -191,15 +192,23 @@ export default async function Pagina({ searchParams }) {
   const d = await dadosDaTela2({
     ano,
     mes,
-    filtro: { meses: comoLista(q?.meses), empresa: comoLista(q?.empresa), conta: comoLista(q?.conta) },
+    // A CHAVE "INCLUIR DADOS DO OMIE" (decisão do dono, 28/09/2026) vai crua, como os filtros: quem a lê é
+    // `lib/regras/filtros.mjs`, e sem nada na URL ela está LIGADA — a tela é a de sempre.
+    filtro: {
+      meses: comoLista(q?.meses), empresa: comoLista(q?.empresa), conta: comoLista(q?.conta),
+      omie: comoLista(q?.omie),
+    },
   });
   const fMeses = d.filtros.meses;
   const femp = d.filtros.empresa;
   const fconta = d.filtros.conta;
+  const comOmie = d.filtros.omie.ligado;
 
   // O ÚNICO LINK DE FILTRO QUE SOBROU. Todo o resto é o formulário: as caixas de marcar escrevem a escolha na URL
   // quando o "aplicar" é apertado. "limpar" volta a tela ao sem-filtro, guardando o mês lido e as duas leituras.
-  const semFiltro = `/dre?ano=${ano}&mes=${mes}&ah=${comAh ? '1' : '0'}&av=${comAv ? '1' : '0'}`;
+  // A CHAVE DO OMIE ATRAVESSA O "limpar", como as duas leituras da tabela: ela não é filtro, é uma forma de ver.
+  const semFiltro = `/dre?ano=${ano}&mes=${mes}&ah=${comAh ? '1' : '0'}&av=${comAv ? '1' : '0'}`
+    + `${comOmie ? '' : '&omie=0'}`;
 
   const colunas = d.tabela[0]?.porMes ?? [];
   const porColuna = 1 + (comAh ? 1 : 0) + (comAv ? 1 : 0);
@@ -210,8 +219,10 @@ export default async function Pagina({ searchParams }) {
   // "(+) Receitas" sobe é bom; "(−) alguma coisa" sobe é ruim. As linhas "(=)" seguem o resultado.
   const bomSubir = (linha) => linha.sinal !== '−';
   // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
+  // E A CHAVE DO OMIE TAMBÉM: ela vale nas três telas, e trocar de tela não pode religá-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
-    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`;
+    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
+    + `${comOmie ? '' : '&omie=0'}`;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   // A SÉRIE DO GRÁFICO PRINCIPAL é a do cartão "Margem de lucro": a mesma que a fita dele desenha, mês a mês.
@@ -245,9 +256,12 @@ export default async function Pagina({ searchParams }) {
             : `${ano} até aqui, empresas 1 e 2 somadas`}
         </h1>
         <p className="frase">
-          O lucro líquido {fMeses.ativo ? 'dos meses escolhidos' : 'do ano até aqui'} é
-          {' '}<b>{emReais(d.totalDoAno.lucroLiquido)}</b>, e a margem é
-          {' '}<b>{emPorcento(d.totalDoAno.margem)}</b>.
+          {comOmie
+            ? <>O lucro líquido {fMeses.ativo ? 'dos meses escolhidos' : 'do ano até aqui'} é
+              {' '}<b>{emReais(d.totalDoAno.lucroLiquido)}</b>, e a margem é
+              {' '}<b>{emPorcento(d.totalDoAno.margem)}</b>.</>
+            : <>Sem o Omie não há lucro líquido nem margem: as duas descem de
+              {' '}<b>&quot;(+) Receitas&quot;</b> e <b>&quot;(−) Despesas gerais&quot;</b>, que são do Omie.</>}
         </p>
         <p className="para-que">
           Para ver em que linha do resultado o dinheiro está escapando, e desde quando. Os dois números da frase são a
@@ -258,7 +272,20 @@ export default async function Pagina({ searchParams }) {
         </p>
       </section>
 
-      <AvisoDoOmie leituras={d.leituras} />
+      {/* O aviso da releitura do Omie só faz sentido com o Omie na conta. */}
+      {comOmie && <AvisoDoOmie leituras={d.leituras} />}
+
+      <AvisoSemOmie ligado={comOmie}>
+        <strong>O que sobra desta tela:</strong> os dois primeiros cartões do topo —
+        &quot;Receita total&quot; e &quot;Custos e despesas&quot; — e três linhas da tabela,
+        &quot;(−) Deduções&quot;, &quot;(−) Custos de vendas&quot; e &quot;(−) Impostos pagos (guias)&quot;, com o
+        valor de cada mês e a coluna <strong>Total</strong> inteiros: as cinco são do DFC.
+        {' '}<strong>O que sai:</strong> as outras nove linhas, os três últimos cartões, os três gráficos, a coluna
+        <strong> AV</strong> de todas as linhas — ela é a linha sobre a receita líquida, e a receita líquida mistura as
+        duas fontes — e a contagem &quot;do Omie&quot; de cada indicador e de cada coluna. As linhas
+        &quot;(=)&quot; saem porque somam as DUAS fontes: escrever só a metade do DFC daria um EBITDA que não é o
+        EBITDA.
+      </AvisoSemOmie>
 
       {!d.dfc.ok && (
         <p className="aviso">
@@ -295,6 +322,8 @@ export default async function Pagina({ searchParams }) {
 
           <FiltroDeConta f={fconta} />
 
+          <ChaveDoOmie ligado={comOmie} />
+
           <Suspensa nome="leituras da tabela" campo="leituras" vazio="nenhuma"
             opcoes={[
               { campo: 'ah', valor: '1', rotulo: 'Análise Horizontal', marcada: comAh, dica: 'variação contra o mês anterior' },
@@ -307,6 +336,20 @@ export default async function Pagina({ searchParams }) {
 
         <details className="explica">
           <summary>o que cada filtro alcança, e o que ele não alcança</summary>
+
+          {/* A CHAVE DO OMIE NÃO É FILTRO, mas é aqui que o dono vem perguntar o que ela faz. */}
+          <p>
+            <strong>A chave &quot;incluir dados do Omie&quot;</strong>{' '}
+            {comOmie
+              ? <>está ligada, que é o padrão: os 17 indicadores são os de sempre. Desligá-la tira da conta todo número
+                cuja fonte é o Omie e deixa as cinco de fonte DFC — dois cartões e três linhas — intactas. Ela não é
+                filtro: não recorta lançamento nenhum, tira uma FONTE inteira.</>
+              : <>está desligada. Os filtros de <strong>empresa</strong> e de <strong>conta bancária</strong> só
+                alcançavam o lado do Omie desta tela, e por isso não alcançam número nenhum enquanto ela estiver assim;
+                o de <strong>meses</strong> continua valendo, porque escolhe QUAIS colunas a tabela mostra, e as três
+                linhas do DFC seguem essa escolha. Eles continuam na tela, com as mesmas opções, para a escolha não se
+                perder quando a chave voltar.</>}
+          </p>
 
           <ExplicaEmpresa f={femp}>
             Ele vale em &quot;(+) Receitas&quot;, &quot;(=) Receita bruta&quot;, &quot;(−) Despesas gerais&quot;,
@@ -464,10 +507,14 @@ export default async function Pagina({ searchParams }) {
               <tr className="cobertura">
                 <th className="grupo-col">De quanta leitura a coluna saiu</th>
                 {d.cobertura.map((c) => (
-                  <td className="num" colSpan={porColuna} key={c.mes}>{c.dfc} do DFC · {c.omie} do Omie</td>
+                  <td className="num" colSpan={porColuna} key={c.mes}>
+                    {c.dfc} do DFC · {c.omie === null ? 'sem o Omie' : `${c.omie} do Omie`}
+                  </td>
                 ))}
                 <td className="num total" colSpan={1 + (comAv ? 1 : 0)}>
-                  {d.cobertura.reduce((s, c) => s + c.dfc, 0)} · {d.cobertura.reduce((s, c) => s + c.omie, 0)}
+                  {d.cobertura.reduce((s, c) => s + c.dfc, 0)}
+                  {' · '}
+                  {comOmie ? d.cobertura.reduce((s, c) => s + c.omie, 0) : 'sem o Omie'}
                 </td>
               </tr>
             </tfoot>

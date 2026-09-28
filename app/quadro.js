@@ -34,7 +34,13 @@ export function Kpi({ c, destaque = false, tom = null, pe = null, texto = null, 
       <div className={`numero${c.negativo ? ' neg' : ''}`}>{c.negativo ? `-${valor}` : valor}</div>
       {children}
       <div className="pe">
-        {pe ?? <>{c.contagem.dfc !== null ? `${c.contagem.dfc} do DFC · ` : ''}{c.contagem.omie} do Omie</>}
+        {/* A CONTAGEM "do Omie" SOME COM A CHAVE DESLIGADA (decisão do dono, 28/09/2026): `contagem.omie === null` é
+            o que `lib/regras/filtros.mjs` escreve quando o Omie está fora, e aqui isso vira "sem o Omie" em vez de um
+            zero. A contagem do DFC, ao lado, segue como sempre. */}
+        {pe ?? <>
+          {c.contagem.dfc !== null ? `${c.contagem.dfc} do DFC · ` : ''}
+          {c.contagem.omie === null ? 'sem o Omie' : `${c.contagem.omie} do Omie`}
+        </>}
       </div>
       <Filtrado i={c} />
     </div>

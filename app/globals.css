@@ -324,6 +324,12 @@ a { color: inherit; }
 }
 .sem-filtro strong { color: var(--texto); }
 .sem-filtro code { font-size: 10px; }
+
+/* A FRASE DA CHAVE "INCLUIR DADOS DO OMIE" DESLIGADA (decisão do dono, 28/09/2026). Ela mora na mesma caixa que as
+ * frases de "o filtro não vale", porque também é parte do número — mas é mais forte que elas: ali não há número
+ * nenhum, e não um número que o filtro não alcançou. Por isso vem primeiro e sai mais escura, na cor do texto. */
+.sem-filtro .sem-omie { color: var(--texto); }
+.sem-filtro .sem-omie strong { color: var(--destaque); }
 .cartao .sem-filtro { white-space: normal; }
 .tabela-dre .sem-filtro { margin: 0; white-space: normal; max-width: 460px; }
 

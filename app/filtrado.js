@@ -6,6 +6,11 @@
 // mais fraco: o filtro VALE ali, e a frase só explica o que o dono está vendo (um cartão de faixa que ficou vazio
 // porque o filtro de status não escolheu a faixa dele, por exemplo).
 //
+// E `semOmie[]`, O TERCEIRO (decisão do dono, 28/09/2026, a chave "incluir dados do Omie"). Ele é mais forte que os
+// dois: ali não há número nenhum para mostrar, porque a fonte daquele número é o Omie e a chave está desligada. Vem
+// primeiro, por isso, e é o único que fala de FONTE e não de filtro. A regra é a mesma das outras duas frases — nada
+// é decidido aqui: a frase chega pronta de `lib/indicadores/`, em `semOmie[]`.
+//
 // Onde cada frase aparece, e por quê, está em `docs/filtros.md`. Nada é decidido aqui.
 //
 // COMPONENTE DE SERVIDOR, como as três telas: só desenha o que o cálculo já disse.
@@ -18,9 +23,15 @@ function comCodigo(s) {
 export default function Filtrado({ i }) {
   const naoVale = i?.naoVale ?? [];
   const avisos = i?.avisos ?? [];
-  if (!naoVale.length && !avisos.length) return null;
+  const semOmie = i?.semOmie ?? [];
+  if (!naoVale.length && !avisos.length && !semOmie.length) return null;
   return (
     <div className="sem-filtro">
+      {semOmie.map((x, n) => (
+        <span className="sem-omie" key={`o${n}`}>
+          <strong>sem o Omie, {comCodigo(x.oQue)}</strong> — {comCodigo(x.porque)}.
+        </span>
+      ))}
       {naoVale.map((x, n) => (
         <span key={`n${n}`}>
           <strong>o filtro de {x.filtro} não vale {comCodigo(x.onde)}</strong> — {comCodigo(x.porque)}.

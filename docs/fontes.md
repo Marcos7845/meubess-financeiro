@@ -927,7 +927,7 @@ para cá). Cálculo: `lib/indicadores/fluxo-de-caixa.mjs`.
 empresa só alcança o lado do Omie; os números de fonte DFC dizem isso ao lado, pelo mesmo motivo da Tela 1 ("A coluna
 `EMP.` não é a filial do Omie").
 
-**Quase nenhum número nasce nesta tela.** Seis dos oito cartões são cartões que já existiam, pelo mesmo cálculo e o
+**Quase nenhum número nasce nesta tela.** Cinco dos oito cartões são cartões que já existiam, pelo mesmo cálculo e o
 mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão:
 
 | cartão | é o mesmo que | fonte |
@@ -937,7 +937,6 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 | Saldo do caixa no mês | Tela 1, "Saldo" | DFC, `ENTRADA` menos `SAIDA`, todas as linhas baixadas do mês. Difere de "entrou − saiu" pelas transferências entre contas que entraram, que o "Entrou" não conta como receita; a tela diz quantas |
 | Ainda a pagar no mês | Tela 1, "Desp. Pendentes" | Omie, títulos a pagar com vencimento no mês e sem baixa |
 | Ainda a receber no mês | antiga Tela 3, "Valor Pendente" | Omie, títulos a receber com vencimento no mês, faixa EM ABERTO |
-| a série do ano | Tela 1, "Receita × despesa por mês" | DFC, o bloco `Entradas` / `Gastos` da aba do mês de cada arquivo |
 
 **Os quatro números que nascem aqui — todos contas simples dos de cima:**
 
@@ -946,7 +945,10 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 | Despesas fixas pagas | soma da `SAIDA` (L) das linhas baixadas do mês cujo `SUB 2` (J) está na lista de fixas | DFC, pela lista `dados/despesas-fixas.json` |
 | Fixas / receita líquida | despesas fixas ÷ receita líquida do mês | DFC nas duas pontas. A receita líquida é **a mesma conta** do cartão "% D. Func. / Rec. Líquida" da Tela 1: linhas de `SUB 2` em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, menos as de dedução (`SUB 2` `DEVOLUCÃO` ou `CLASS. CONTABIL` `ESTORNO`) |
 | Projeção do mês | saldo do caixa no mês + ainda a receber no mês − ainda a pagar no mês | DFC + Omie. **É projeção de caixa, não lucro contábil** (esse é a Tela 2): diz se, recebendo e pagando o que vence no mês, o caixa fecha positivo ou negativo. O que já venceu e não foi recebido **não entra** — a tela o mostra à parte. **A confirmar pelo dono:** incluir ou não o vencido, e se "lucro/prejuízo" na frase deve ser esta projeção |
+| A série do ano | de janeiro ao mês da tela, cada mês pela **mesma conta dos cartões** (entrou, saiu e saldo), das linhas baixadas do `FLUXO DE CAIXA` do arquivo daquele mês | DFC. **Corrigido em 28/09/2026:** a primeira versão desenhava o bloco pronto `Entradas` / `Gastos` da aba do mês (o do gráfico da Tela 1), que é outra conta da planilha — a coluna do mês não batia com os cartões, e o gráfico mostrava o ano inteiro, sem mudar com o mês escolhido |
 | Fora da curva | o mês se afasta da média dos meses anteriores do mesmo ano mais que um desvio-padrão deles; só com 3 meses anteriores ou mais | a série do ano, acima. **A confirmar pelo dono:** a régua de um desvio-padrão |
+
+**A lista de fixas foi respondida pela gestora em 28/09/2026:** 33 contas fixas e 21 variáveis. A resposta veio na coluna C, com o vocabulário dela ("DESPESA FIXAS" / "DESPESA VARIAVEL"), e está guardada em `docs/despesas-fixas-respondida-2026-09-28.xlsx`. Três contas não voltaram na resposta e ficam fora das fixas até ela dizer: `COMPRA PROVISÃO`, `COMPRAS - PROVISÃO` e `CRÉDITO REPASSE - CUSTO` (`ausentesDaResposta` em `dados/despesas-fixas.json`). Em relação à sugestão que mandamos, ela pôs como fixas também impostos (INSS, ISS, IRPJ / CSLL), juros, cartão de crédito, armazenagem, mantimentos, máquinas e materiais, e deixou o seguro como variável.
 
 **A despesa fixa não existe nas fontes.** Nem o DFC nem o Omie marcam uma despesa como fixa. Quem decide é a
 gestora do financeiro (pedido do dono, 28/09/2026), respondendo `docs/despesas-fixas-para-classificar.xlsx` conta por

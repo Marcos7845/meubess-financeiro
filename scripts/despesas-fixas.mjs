@@ -23,26 +23,55 @@ const zip = lerZip(fs.readFileSync(ENTRADA));
 const ss = sharedStrings(zip);
 const abas = abasDo(zip);
 
-const RESPOSTAS = { FIXA: 'fixas', VARIAVEL: 'variaveis', 'NAO E DESPESA': 'naoEDespesa' };
+// A RESPOSTA, COMO A GESTORA A ESCREVEU. O combinado era a coluna D ("Fixa", "Variável", "Não é despesa"). Na primeira
+// resposta (28/09/2026) ela escreveu na coluna C, trocando o cabeçalho "Sugestão" por "CAT DESP." e usando o
+// vocabulário dela — "DESPESA FIXAS" e "DESPESA VARIAVEL". Vale a D quando preenchida; senão a C, mas SÓ se o cabeçalho
+// da C não for mais "Sugestão" (a sugestão nunca vale como resposta).
+const qualResposta = (texto) => {
+  const t = norm(texto);
+  if (!t) return null;
+  if (t === 'NAO E DESPESA') return 'naoEDespesa';
+  if (/^(DESPESAS? )?FIXAS?$/.test(t)) return 'fixas';
+  if (/^(DESPESAS? )?VARIAVE(L|IS)$/.test(t)) return 'variaveis';
+  return undefined;
+};
 const saida = { fixas: [], variaveis: [], naoEDespesa: [], semResposta: [] };
 const invalidas = [];
 for (const nome of ['Classificar', 'Fora da classificação']) {
   const aba = abas.find((a) => a.nome === nome);
   if (!aba) { console.error(`a planilha não tem a aba "${nome}"`); process.exit(1); }
-  for (const l of lerAba(zip, aba.parte, ss)) {
+  const linhas = lerAba(zip, aba.parte, ss);
+  const cabecalhoC = norm(linhas.find((l) => l.n === 1)?.cel.get('C')?.t);
+  const cValeComoResposta = cabecalhoC !== '' && cabecalhoC !== 'SUGESTAO';
+  for (const l of linhas) {
     if (l.n === 1) continue;
-    const conta = l.cel.get('B')?.t;
+    const conta = l.cel.get('B')?.t?.trim();
     if (!conta) continue;
-    const resposta = l.cel.get('D')?.t ?? '';
-    const onde = RESPOSTAS[norm(resposta)];
+    const resposta = l.cel.get('D')?.t || (cValeComoResposta ? l.cel.get('C')?.t : '') || '';
+    const onde = qualResposta(resposta);
     if (onde) saida[onde].push(conta);
-    else if (resposta) invalidas.push(`${nome}, linha ${l.n}: "${resposta}" (${conta})`);
+    else if (onde === undefined) invalidas.push(`${nome}, linha ${l.n}: "${resposta}" (${conta})`);
     else saida.semResposta.push(conta);
   }
 }
 if (invalidas.length) {
-  console.error(`resposta que não é Fixa, Variável nem Não é despesa — nada foi gravado:\n  ${invalidas.join('\n  ')}`);
+  console.error(`resposta que não é Fixa, Variável nem Não é despesa (nem DESPESA FIXAS / DESPESA VARIAVEL) — nada foi gravado:\n  ${invalidas.join('\n  ')}`);
   process.exit(1);
+}
+
+// AS CONTAS QUE SUMIRAM DA RESPOSTA: as da planilha que mandamos e que não voltaram em linha nenhuma (a gestora pode
+// apagar linhas). Não entram como fixas; ficam anotadas, para alguém perguntar a ela.
+const MODELO = path.join(RAIZ, 'docs', 'despesas-fixas-para-classificar.xlsx');
+const ausentes = [];
+if (path.resolve(ENTRADA) !== MODELO && fs.existsSync(MODELO)) {
+  const zm = lerZip(fs.readFileSync(MODELO));
+  const ssm = sharedStrings(zm);
+  const voltaram = new Set(Object.values(saida).flat().map(norm));
+  for (const a of abasDo(zm).filter((x) => x.nome === 'Classificar'))
+    for (const l of lerAba(zm, a.parte, ssm)) {
+      const conta = l.n > 1 ? l.cel.get('B')?.t?.trim() : null;
+      if (conta && !voltaram.has(norm(conta))) ausentes.push(conta);
+    }
 }
 
 const respondido = saida.fixas.length > 0;
@@ -51,5 +80,6 @@ fs.writeFileSync(SAIDA, `${JSON.stringify({
   respondido,
   respondidoEm: respondido ? new Date().toISOString().slice(0, 10) : null,
   ...saida,
+  ausentesDaResposta: ausentes,
 }, null, 2)}\n`);
-console.log(`${saida.fixas.length} fixas · ${saida.variaveis.length} variáveis · ${saida.naoEDespesa.length} não são despesa · ${saida.semResposta.length} sem resposta → ${path.relative(RAIZ, SAIDA)}`);
+console.log(`${saida.fixas.length} fixas · ${saida.variaveis.length} variáveis · ${saida.naoEDespesa.length} não são despesa · ${saida.semResposta.length} sem resposta · ${ausentes.length} ausentes da resposta${ausentes.length ? ` (${ausentes.join(', ')})` : ''} → ${path.relative(RAIZ, SAIDA)}`);

@@ -203,6 +203,11 @@ export default async function Pagina({ searchParams }) {
               {d.serie.comparacao.fixas && <Curva nome="Despesas fixas" c={d.serie.comparacao.fixas} />}
             </ul>
           )}
+          {d.serie.semPlanilha.length > 0 && (
+            <p className="legenda">
+              Sem coluna: {d.serie.semPlanilha.map((m) => `${MESES_CURTOS[m.mes]} (${m.motivo})`).join('; ')}.
+            </p>
+          )}
           {d.mesEmAndamento && (
             <p className="legenda">O mês está em andamento: o que ainda vai entrar e sair não está nas colunas dele.</p>
           )}

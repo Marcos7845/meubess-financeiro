@@ -167,14 +167,17 @@ Cada item é uma pergunta ao dono ou à gestora, com a recomendação de quem es
       **Recomendação: conferir dez deles, os de maior valor, antes de usar a projeção numa decisão.** Se a maioria já
       estiver paga, o número não é dívida e sim um vazio de baixa no Omie, e aí a projeção da tela está pessimista por
       um motivo que não é do negócio. O valor em reais sai no terminal, nunca em arquivo.
-- [ ] **Reescrever o histórico da branch antes do merge.** Quatro mensagens de commit desta branch (as de 28/09/2026)
+- [x] **Reescrever o histórico da branch antes do merge.** Resolvido em 29/09/2026 com o *squash* recomendado: a branch
+      entrou na `master` num commit só, com a mensagem escrita do zero e sem valor em dinheiro.
+      (O texto original da pergunta segue abaixo.) Quatro mensagens de commit desta branch (as de 28/09/2026)
       trazem valores em reais, contra a regra do projeto de que dinheiro não entra em mensagem de commit.
       **Pergunta ao dono:** reescrevo o histórico da `claude/fluxo-de-caixa` para tirar os valores das mensagens antes
       do merge, ou o senhor prefere um *squash* na hora do merge?
       **Recomendação: squash no merge.** Um `git rebase` interativo reescreve todos os commits da branch e é mais
       trabalho e mais risco; um squash resolve o mesmo problema com uma mensagem só, escrita do zero e sem dinheiro. Em
       qualquer dos dois casos, a decisão é do dono e nada foi feito: **o histórico está como estava**.
-- [ ] **Merge com a `master`.** Nada foi para a `master` e não há pull request aberto.
+- [x] **Merge com a `master`.** Feito em 29/09/2026, por *squash*, sem pull request e sem push; a conferência foi refeita
+      na `master` depois dele (40 de 40 nas telas, 19 de 19 nos filtros). (O texto original segue abaixo.)
       **Pergunta ao dono:** posso abrir o pull request?
       **Recomendação: abrir depois de o senhor ver a tela.** A conferência e os testes passam, mas o veredito de "a tela
       responde a pergunta que eu faço" é do dono, e a tela só roda neste computador.

@@ -2,11 +2,15 @@
   "name": "meubess-financeiro",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 4781",
     "build": "node scripts/subir-local.mjs --so-build",
     "start": "node scripts/subir-local.mjs --sem-build",
     "local": "node scripts/subir-local.mjs",
+    "servidor": "node scripts/subir-servidor.mjs",
     "criar-admin": "node scripts/criar-admin.mjs",
     "financeiro-enviar-dfc": "node scripts/financeiro-enviar-dfc.mjs",
     "testar-login": "node scripts/testar-login.mjs",

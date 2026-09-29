@@ -71,6 +71,14 @@ gravar a captura. Quatro desenhos continuam sendo CSS ou SVG escrito à mão, po
 biblioteca: a fita dos doze meses do cartão da Tela 2, a rosca por status da Tela 3 e as barras do "o que cada filtro
 alcança".
 
+### No Railway, com login (desde 29/09/2026)
+
+O app está pronto para rodar no Railway — e **não foi publicado**. Lá ele sobe por `npm run servidor`, em `0.0.0.0` e
+na porta `$PORT`, e **tudo exige login** por e-mail e senha (as três telas, a tela de administrador `/admin` e toda
+rota de API, inclusive o `POST /api/atualizar`). O DFC chega do PC do dono por `npm run financeiro-enviar-dfc`. As
+variáveis de ambiente (só os nomes), o volume, o primeiro administrador e o envio do DFC estão em
+[`docs/deploy-railway.md`](docs/deploy-railway.md). A prova do login é `npm run testar-login`.
+
 ### Subir o app neste computador
 
 ```
@@ -304,6 +312,11 @@ cada bloco de cada tela mostra sem o Omie está em [`docs/filtros.md`](docs/filt
 | `scripts/conferir-chave-omie.mjs` | confere a chave "incluir dados do Omie": ligada não muda nada, desligada o lado do DFC não se move e o do Omie sai como ausência (`null`), nunca como zero. |
 | `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
+| `scripts/subir-servidor.mjs` | sobe o app no Railway: 0.0.0.0, `$PORT`, com login, e o `.cache/` no volume. |
+| `lib/acesso/` | o login: o cadastro de quem entra (`usuarios.mjs`, senha só em scrypt), a sessão por cookie assinado (`sessao.mjs`) e onde o servidor guarda o que sobrevive a um redeploy (`armazenamento.mjs`). |
+| `proxy.js` | a porta de todo pedido: sem login, tela vai para `/entrar` e API dá 401; `/admin` só para administrador. |
+| `lib/regras/dfc-guardado.mjs` | o DFC que o PC mandou, guardado no servidor, com a hora do envio. |
+| `scripts/financeiro-enviar-dfc.mjs` | lê as planilhas do DFC neste PC e manda para o servidor (endereço em `MEUBESS_SERVIDOR_URL`). |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis — inclusive a cor de cada série de gráfico. |
 | `app/graficos.js` | os gráficos da Tela 1 (Recharts), desenhados no servidor. Sem cor e sem regra: chega o número pronto e sai o desenho. |
 | `app/dinheiro.js` | o formato do dinheiro e do percentual, num lugar só — é a forma que a trava da captura sabe apagar. |
@@ -317,8 +330,9 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 
 ### O que ainda não existe
 
-Login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o login não
-existe, **o app roda só local**. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **fornecedor, conta
+O deploy: o app está pronto para o Railway, com login por e-mail e senha ([`docs/deploy-railway.md`](docs/deploy-railway.md)),
+mas nada foi publicado, e o envio do DFC pelo PC não está agendado. O login com a conta Microsoft e a leitura do DFC
+pelo Microsoft Graph, do plano da Vercel, não foram feitos. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **fornecedor, conta
 corrente, categoria e situação nas Telas 1 e 2** e outros esperam decisão do dono (o de **empresa** existe desde
 27/09/2026, nas três telas). Também não existe o seletor **"ver por centro de custo
 (Omie)"** que `docs/fontes.md` descreve na linha do "Top 10 despesas" — ele trocaria as barras do DFC por barras do Omie

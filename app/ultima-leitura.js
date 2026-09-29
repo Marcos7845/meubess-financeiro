@@ -34,8 +34,12 @@ export default function UltimaLeitura({ leituras, dfc = null, usaDfc = true }) {
       <strong>Última leitura</strong> — Omie: {quando(omie.okEm)} ({situacaoDoOmie(omie)}).{' '}
       {usaDfc
         ? (dfc?.ok
-          ? `DFC: ${quando(leituras.dfc.em)} (${dfc.fonte}).`
-          : 'DFC: não lido nesta rodada.')
+          ? (leituras.dfc.enviadoEm
+            ? `DFC: enviado pelo PC em ${quando(leituras.dfc.enviadoEm)}, aberto aqui em ${quando(leituras.dfc.em)}.`
+            : `DFC: ${quando(leituras.dfc.em)} (${dfc.fonte}).`)
+          : (leituras.dfc?.enviadoEm
+            ? `DFC: último envio do PC em ${quando(leituras.dfc.enviadoEm)}, mas não abriu nesta rodada.`
+            : 'DFC: não lido nesta rodada.'))
         : 'DFC: esta tela não lê o DFC.'}
     </span>
   );

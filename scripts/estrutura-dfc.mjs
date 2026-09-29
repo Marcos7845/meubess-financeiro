@@ -25,6 +25,8 @@ import os from 'node:os'
 import path from 'node:path'
 import zlib from 'node:zlib'
 
+import { linhasCruas } from '../lib/regras/xlsx.mjs'
+
 // ---------------------------------------------------------------- zip (xlsx é um zip)
 
 function lerZip(buf) {
@@ -114,26 +116,22 @@ const colDeRef = (r) => (/^([A-Z]+)/.exec(r)?.[1] ?? '')
 const numDeCol = (c) => [...c].reduce((a, ch) => a * 26 + (ch.charCodeAt(0) - 64), 0)
 
 // Devolve as linhas de uma aba: só texto e contagem de números — nunca o número.
-function lerAba(zip, parte, ss) {
+function inventariarAba(zip, parte, ss) {
   const b = zip.ler(parte)
   if (!b) return null
   const xml = b.toString('utf8')
   const dim = /<dimension[^>]*ref="([^"]+)"/.exec(xml)?.[1] ?? ''
   const mescladas = [...xml.matchAll(/<mergeCell[^>]*ref="([^"]+)"/g)].map((m) => m[1])
   const linhas = []
-  for (const mr of xml.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>|<row\b([^>]*)\/>/g)) {
-    const attrs = mr[1] ?? mr[3] ?? ''
-    const corpo = mr[2] ?? ''
-    const n = +(/r="(\d+)"/.exec(attrs)?.[1] ?? 0)
+  // As linhas e as células saem de `linhasCruas`, o mesmo corte de XML da leitura das telas: a célula vazia fechada
+  // em si mesma sai vazia, e não com o conteúdo da vizinha.
+  for (const { n, celulas } of linhasCruas(xml)) {
     const textos = []   // [coluna, texto]
     const nums = []     // colunas com número
     const serie = []    // [coluna, número] — só o modo --meses olha isto, e só para achar o ano-mês
     let numsNaoZero = 0
     let formulas = 0
-    for (const mc of corpo.matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>|<c\b([^>]*)\/>/g)) {
-      const ca = mc[1] ?? mc[3] ?? ''
-      const cc = mc[2] ?? ''
-      const ref = /r="([A-Z]+\d+)"/.exec(ca)?.[1] ?? ''
+    for (const { ref, attrs: ca, corpo: cc } of celulas) {
       const tipo = /t="([^"]*)"/.exec(ca)?.[1] ?? 'n'
       if (/<f[\s>]/.test(cc) || /<f\/>/.test(cc)) formulas++
       const v = /<v>([\s\S]*?)<\/v>/.exec(cc)?.[1]
@@ -213,7 +211,7 @@ for (const arq of arquivos) {
   console.log(`abas (${lista.length}): ${lista.map((a) => a.nome + (a.estado !== 'visible' ? ` [${a.estado}]` : '')).join(' | ')}`)
   for (const aba of lista) {
     if (filtroAba && !aba.nome.trim().toLowerCase().startsWith(filtroAba.trim().toLowerCase())) continue
-    const s = lerAba(zip, aba.parte, ss)
+    const s = inventariarAba(zip, aba.parte, ss)
     if (!s) { console.log(`  - ${aba.nome}: (parte não encontrada)`); continue }
     const totNums = s.linhas.reduce((a, l) => a + l.nums.length, 0)
     const totNaoZero = s.linhas.reduce((a, l) => a + l.numsNaoZero, 0)

@@ -68,7 +68,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — (=) Receita bruta.** **Na tela:** Omie 120. **Na conferência:** Omie 120. **Também conferido:** contasDoDre 28, totalizadoras 9. **Fonte:** Omie recortado, calculado.
 - **Tela 2 — (−) Deduções: devoluções, taxas de serviço.** **Na tela:** DFC 2 e Omie 0. **Na conferência:** DFC 2 e Omie 0. **Também conferido:** oper13 0. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Receita líquida.** **Na tela:** Omie 120. **Na conferência:** Omie 120. **Fonte:** mistura as duas, calculado.
-- **Tela 2 — (−) Custos de vendas: custo do produto, outros custos.** **Na tela:** DFC 62 e Omie 82. **Na conferência:** DFC 62 e Omie 82. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 2 — (−) Custos de vendas: custo do produto, outros custos.** **Na tela:** DFC 68 e Omie 82. **Na conferência:** DFC 68 e Omie 82. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Lucro bruto.** **Na tela:** Omie 120. **Na conferência:** Omie 120. **Também conferido:** despesa 299. **Fonte:** mistura as duas, calculado.
 - **Tela 2 — (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI.** **Na tela:** Omie 198. **Na conferência:** Omie 198. **Também conferido:** titulos1 94, baixas1 2, avulsos1 42, titulos2 4, baixas2 0, avulsos2 56. **Fonte:** Omie recortado (principal) / DFC por `SUB 2` (confronto).
 - **Tela 2 — (=) EBITDA.** **Na tela:** Omie 419. **Na conferência:** Omie 419. **Fonte:** Omie recortado, calculado.
@@ -92,4 +92,45 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 119. **Na conferência:** DFC 119. **Também conferido:** contasFixasNoMes 27, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
 - **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 119. **Na conferência:** DFC 119. **Também conferido:** receita 101, deducoes 2. **Fonte:** DFC nas duas pontas.
 - **Tela 3 — Projeção do mês.** **Na tela:** DFC 382. **Na conferência:** DFC 382. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 388. **Na conferência:** DFC 388. **Também conferido:** diasComMovimento 21, bancos 5, bancosQueFecham 5, linhasNaoBaixadasNoSaldo 1, bancosComLancamentoDepoisDoSaldo 2, ponteFecha true. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 388. **Na conferência:** DFC 388. **Também conferido:** diasComMovimento 21, bancos 5, bancosQueFecham 5, linhasNaoBaixadasNoSaldo 4, bancosComLancamentoDepoisDoSaldo 1, ponteFecha true. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+
+## Antes e depois da correção do leitor
+
+Medido em 29/09/2026, com as planilhas do DFC de 2026 e o mesmo cache do Omie nas duas rodadas: primeiro com o leitor
+antigo, depois com o corrigido (`lerAba`, o único leitor de planilha do repositório — ver `linhasCruas` em
+[`lib/regras/xlsx.mjs`](../lib/regras/xlsx.mjs)). "Linha" é a linha da planilha, na aba `FLUXO DE CAIXA` do arquivo
+do mês. Nenhuma regra de indicador mudou; mudou o que a leitura entrega às regras.
+
+| tela | indicador | o que mudou | linha da planilha que causou | motivo |
+|---|---|---|---|---|
+| Tela 2 | (−) Custos de vendas | agosto: **62 → 68** linhas do DFC; e as colunas de maio (+9 linhas), junho (+1) e setembro (+6) | agosto: 117, 197, 221, 257, 260 e 262; maio: 242 e 245 a 252; junho: 261; setembro: 46, 47, 48, 137, 226 e 234 | a `CLASS. CONTABIL` (`FORNECEDORES COGS`, e na 226 de setembro `COMPRA DE MERCADORIA`) era engolida pela célula vazia de `TITULO`, ao lado. A regra do custo pede a classe **e** a `SUB 2`, e a linha ficava fora |
+| Tela 2 | (=) Lucro bruto, (=) EBITDA e (=) Lucro líquido | as mesmas colunas (maio, junho, agosto e setembro) e o total; contagem do Omie igual | as mesmas do custo de vendas | são subtotais abaixo do custo de vendas |
+| Tela 2 | cartões EBITDA, Lucro líquido e Margem de lucro | o número de agosto e a série; contagens iguais | as 6 de agosto do custo de vendas | idem |
+| Tela 2 | Resultado sem dinheiro de terceiros (Compromissos) | o número de agosto; contagens iguais | as 6 de agosto do custo de vendas | parte do lucro líquido do mês |
+| Tela 2 | cartão Receita total | a coluna de abril da série; contagem de agosto igual | abril: 544 | a `SUB 2` (`RECEITA COM VENDAS`) se perdia, e a linha não entrava na receita |
+| Tela 2 | cartão Custos e despesas | a coluna de julho da série (+8 linhas); contagem de agosto igual | julho: 678, 680, 683, 688, 691, 697, 711 e 713 | no cabeçalho do bloco da STONE de julho (linha 671), a célula vazia `J` engolia o rótulo `ENTRADA`, ao lado; sem ele, a leitura tomava a `SAIDA` como movimento — e a `SAIDA` vazia, pelo mesmo defeito, trazia o `SALDO`. As 8 saídas (transferências) sumiam |
+| Tela 2 | Dívida líquida (Compromissos) | o saldo dos bancos que o item mostra; o número do item segue vazio (não há contrato), e a contagem, 5 blocos, é a mesma | agosto, bloco da STONE: 401, 404, 408 e 409 | a `SAIDA` das 3 primeiras era engolida, e o último saldo escrito parecia ser o da 400; lida certa, a STONE escreve o saldo até a 409 |
+| Tela 3 | O mês dia a dia | linhas que o saldo desconta e não estão baixadas: **1 → 4**; bancos que lançam depois do último saldo: **2 → 1**; linhas do consolidado (388), dias com movimento (21) e bancos que fecham (5) iguais, e a ponte com os bancos continua fechando | agosto: 401, 404, 408 e 409 | as mesmas da dívida líquida: as 3 saídas sem `PAGAMENTO` passaram a ser lidas |
+| Tela 3 | Agosto contra a média dos meses anteriores | a média e a variação típica de Entrou, Saiu, Resultado e Despesas fixas; o veredito de cada uma (fora da curva ou não) é o mesmo | abril: 396; julho: 674 a 710 (22 entradas) e as 8 saídas do cartão Custos e despesas | a 396 perdia a `SUB 2` (`TARIFAS BANCARIAS`, uma fixa); as 22 de julho saíam com o saldo corrido no lugar do valor, pelo cabeçalho da linha 671 |
+| Tela 1 | Top 10 despesas | **22 → 24** classes distintas nas mesmas 281 linhas; a barra "(vazio)" sai, e as classes voltam para as suas barras (a lista do filtro de classe também perde o "(vazio)") | as 39 linhas de agosto que perdiam a classe (entre elas as 6 de custo e as 2 de pessoal, 3 e 309) | classe engolida pela célula vazia de `TITULO` |
+| Tela 1 | filtro por classe (`docs/filtros.md`) | agosto, classe `RECEITA DE CLIENTE`: **90 → 91** linhas; as 388 linhas do mês passam de 22 a 26 classes distintas | agosto: 409 | idem; o filtro confere igual dos dois lados (19 de 19) |
+
+**As 8 linhas de agosto numa classe de custo ou de pessoal:** as 6 de custo (117, 197, 221, 257, 260 e 262) mudaram o
+custo de vendas; as 2 de pessoal (3 e 309, `FOLHA, IMPOSTOS E ADIANTAMENTOS`) **não mudaram número nenhum** — elas já
+entravam pela `SUB 2` `DESPESAS CLT`, que a regra de pessoal aceita sozinha.
+
+**O que não mudou:** Saldo, Receitas, Despesas, Despesas pagas, Despesas pendentes, Despesas com funcionários, o
+percentual de funcionários, Top 10 receitas e os dois gráficos de receita × despesa da Tela 1; na Tela 2, (+) Receitas,
+Receita bruta, Deduções, Receita líquida, Despesas gerais, Resultado financeiro, Impostos, "sem conta", Capital de giro
+tomado, Obrigações com clientes e Provisões por projeto (esta já usava o leitor certo); na Tela 3, todos os indicadores
+do Omie e os cartões Entrou, Saiu, Despesas fixas pagas, Fixas / receita líquida e Projeção do mês.
+
+**As duas compensações do defeito saíram.** A data de uma linha era procurada também em `TIPO`, que só tinha data
+porque a célula vazia dele engolia a de `VENCIMENTO` (8 linhas de abril); lida certa, `TIPO` não tem data em linha
+nenhuma dos doze arquivos, e a data é `DIA PG` ou `VENCIMENTO`. E o saldo corrido era aceito em `SAIDA` (L) ou em
+`SALDO` (M); lido certo, `ENTRADA` só traz número positivo, `SAIDA` só negativo, nunca os dois na mesma linha, e o
+saldo é sempre `SALDO`.
+
+**A linha vazia `<row …/>` existe de fato** nas planilhas (68 na primeira aba dos arquivos de abril a julho, 287 na `BASE` de abril, e outras nas
+abas de cartão, comissão e vendas PJ), mas em nenhuma aba que as telas leem ela mudou um número: o `FLUXO DE CAIXA` não
+tem nenhuma, e o quadro `Inicial` / `Entradas` / `Gastos` / `Final` da primeira aba saiu igual nos doze meses.

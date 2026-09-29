@@ -33,7 +33,7 @@ const SAIDA = path.join(RAIZ, 'docs', 'layout.html');
 const TELAS = {
   1: { arquivo: 'tela-1-captura.html', titulo: 'Tela 1 — Gestão de Contas', altura: 2120 },
   // As alturas das Telas 2 e 3 cresceram em 28/09/2026, quando elas foram refeitas no padrão da Tela 1: onde havia
-  // painéis apertados agora há gráficos com a proporção da Tela 1, mais o mapa de calor na 2.
+  // painéis apertados agora há gráficos com a proporção da Tela 1 (o mapa de calor da 2 saiu em 29/09/2026).
   2: { arquivo: 'tela-2-captura.html', titulo: 'Tela 2 — DRE, Demonstrativo de Resultados', altura: 1960 },
   3: { arquivo: 'tela-3-captura.html', titulo: 'Tela 3 — Contas a Receber', altura: 1900 },
 };

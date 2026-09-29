@@ -516,38 +516,6 @@ a { color: inherit; }
 .kpi .fita { display: block; width: 100%; max-width: 190px; height: 24px; margin: 5px 0 2px; color: var(--marca-clara); }
 .kpi .numero.neg + .fita { color: var(--negativo); }
 
-/* O MAPA DE CALOR DA VARIAÇÃO (a coluna AH da tabela, em intensidade de cor).
- *
- * As oito cores abaixo NÃO são cores novas: são a mesma `--positivo` (#1c8f5a) e a mesma `--negativo` (#c4453b) da
- * paleta lá de cima, em quatro transparências. Ficam escritas em `rgba()` porque uma variável CSS não se deixa
- * transparentar sem `color-mix()`, e os quatro degraus precisam da mesma cor em quatro forças.
- *
- * VERDE é a variação que joga A FAVOR do resultado e VERMELHO a que joga contra — a mesma leitura da seta da coluna
- * AH da tabela (receita que sobe é bom, despesa que sobe não é), decidida na própria linha do DRE pelo `sinal` dela.
- * Em cinza impresso os dois viram o mesmo tom, e é por isso que o NÚMERO continua escrito dentro de cada célula. */
-.mapa-ah { border-collapse: collapse; font-size: 11px; white-space: nowrap; min-width: 100%; }
-.mapa-ah th, .mapa-ah td { padding: 4px 8px; text-align: right; font-weight: 400; border: 1px solid var(--cartao); }
-.mapa-ah thead th {
-  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--texto-fraco);
-  border: 0; border-bottom: 1px solid var(--texto-fraco); text-align: center; padding-bottom: 5px;
-}
-.mapa-ah thead th.escolhido { color: var(--marca); font-weight: 700; }
-.mapa-ah .linha-col {
-  text-align: left; font-weight: 600; white-space: nowrap; border: 0;
-  max-width: 220px; overflow: hidden; text-overflow: ellipsis;
-}
-.mapa-ah td { font-variant-numeric: tabular-nums; }
-.mapa-ah .vazio { color: var(--texto-fraco); opacity: .5; }
-.mapa-ah .neutra { color: var(--texto-fraco); }
-.mapa-ah .bom.g1 { background: rgba(28, 143, 90, .10); }
-.mapa-ah .bom.g2 { background: rgba(28, 143, 90, .22); }
-.mapa-ah .bom.g3 { background: rgba(28, 143, 90, .36); }
-.mapa-ah .bom.g4 { background: rgba(28, 143, 90, .52); }
-.mapa-ah .ruim.g1 { background: rgba(196, 69, 59, .10); }
-.mapa-ah .ruim.g2 { background: rgba(196, 69, 59, .22); }
-.mapa-ah .ruim.g3 { background: rgba(196, 69, 59, .36); }
-.mapa-ah .ruim.g4 { background: rgba(196, 69, 59, .52); }
-
 /* A tabela do DRE dentro do quadro de detalhe: a margem que ela tinha sozinha sai, porque quem dá o respiro agora é
  * o `.quadro.detalhe`. O cabeçalho perde o fundo cinza cheio e fica com a régua embaixo, como a tabela de detalhe da
  * Tela 1 — só a coluna escolhida e a do total continuam marcadas, que é informação e não enfeite. */

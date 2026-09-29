@@ -364,7 +364,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `3bf5bc36138d` — 359 arquivos no cache local, o mais novo gravado em 29/09/2026 às 13h26; a última releitura do app que trouxe dado do Omie foi em 29/09/2026 às 13h26 (ok, 287 páginas).
+**De que leitura são as contagens desta tabela:** leitura `1dae7442257d` — 359 arquivos no cache local, o mais novo gravado em 29/09/2026 às 15h21; a última releitura do app que trouxe dado do Omie foi em 29/09/2026 às 15h21 (ok, 287 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -374,7 +374,7 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`3bf5bc36138d`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`1dae7442257d`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 812, 9, 282 | 809, 9, 276 | **não** — a releitura mexeu |
@@ -863,7 +863,8 @@ O efeito em **agosto de 2026**, medido na tela antes e depois da mudança (só a
 gerais" −1,2%, "(=) EBITDA" +6,2%, "(=) Lucro líquido" +6,7% (e os três cartões calculados do topo, na mesma medida);
 todas as outras linhas, 0%.
 
-**O bloco "Compromissos"**, abaixo da tabela do DRE, está na tabela própria dele, no fim desta seção.
+**O bloco "Compromissos"**, abaixo da tabela do DRE, está na tabela própria dele, no fim desta seção. O quinto número
+dele, as **provisões por projeto**, sai da aba `PROVISÃO` do DFC, lida no fim do mesmo dia (seção abaixo).
 
 ### A segunda decisão de 29/09/2026: três regras do bloco "Compromissos" (decisão do dono)
 
@@ -886,6 +887,93 @@ lucro líquido (419 lançamentos do mês) − (sinais recebidos de pedidos sem N
 variação é positiva — em valor, entraram mais sinais do que saíram com a NF —, e o resultado sem dinheiro de terceiros
 fica **abaixo** do lucro líquido; a amortização do mês não entra. Pela fórmula de antes, o mesmo mês ficava acima da
 conta nova exatamente pela amortização.
+
+### A aba PROVISÃO do DFC (lida em 29/09/2026, só leitura)
+
+O dono mandou a captura da aba em 29/09/2026 e pediu que ela fosse interpretada antes de entrar na tela. Ela foi lida
+inteira, nos arquivos de abril a dezembro de 2026, pela mesma fonte do DFC que as telas usam (a pasta sincronizada),
+sem escrever nada. A regra de leitura mora em [`lib/regras/provisao.mjs`](../lib/regras/provisao.mjs).
+
+**Só o arquivo de setembro de 2026 tem o quadro por projeto.** De abril a agosto (e nos modelos de outubro a dezembro)
+a aba `PROVISÃO` é outra coisa: um razão com as colunas `VER.`, `BANCO`, `DIA`, `FORNECEDOR / CLIENTE`, `TIPO`, `PO`,
+`PROJETO`, `SUB 2`, `ENTRADA`, `SAIDA`, `SALDO` e `PAGAMENTO`, e as linhas `SALDO INICIAL PROVISÃO` e
+`SALDO FINAL PROVISÃO`. Em julho e em agosto ele tem 4 linhas de `RECEBIMENTO CLIENTE - PROVISÃO` e 4 de
+`COMPRAS - PROVISÃO` (com "MARGEM DE 5%" escrito ao lado), e nos outros meses só as duas linhas de saldo. Esse razão
+**não entra na tela**: ele não tem projeto, e o saldo corrido dele para no meio da aba. Por isso a leitura acha o
+quadro pelo **cabeçalho**, e não pelo mês: o mês sem o quadro sai sem número, e a tela diz por quê.
+
+**O quadro de setembro** (`09 - DFC SETEMBRO 2026.xlsx`, aba `PROVISÃO`): o cabeçalho está na linha 1, os 21 projetos
+nas linhas 3 a 23, e as colunas de Q em diante estão ocultas e vazias. Uma linha é um projeto vendido.
+
+| col | rótulo | o que é | como a planilha preenche |
+|---|---|---|---|
+| A | (sem rótulo) | "FOR" em toda linha, inclusive nas vazias | sobra do modelo antigo; não é lida |
+| B | `data` | a data da provisão: o último dia do mês | digitada: 30/09/2026 nas 21 linhas. Não é a data da venda |
+| C | `PROJETO` | o código do projeto: oito dígitos de data, hífen e número. A data vai de 24/08/2026 a 28/09/2026 | é o mesmo código que o Omie escreve no item do pedido de venda (`det[].produto.codigo`, "Kit Gerador Fotovoltaico … - código"). 8 dos 21 códigos estão num pedido da empresa 2 no cache desta leitura; os outros 13 não estão nas páginas de pedido do cache |
+| D | `CLIENTE` | o cliente do projeto | texto |
+| E | `CONSULTOR` | o consultor (vendedor) do projeto | texto |
+| F | `VALOR PROJETO` | o valor do projeto para a MeuBESS, **sem o repasse** | digitado. Nos 8 projetos achados no Omie, `VALOR PROJETO` (mais o `VALOR REPASSE`, quando há) é o total de um pedido de venda do projeto; nos pedidos 825 e 844 a conta só fecha somando o repasse |
+| G | `VALOR RECEBIDO` | quanto o cliente já pagou do projeto | digitado em 4 das 21 linhas (os projetos de 24/08 a 02/09); vazio nas outras 17 |
+| H | `VALIR A RECEBER` (assim escrito) | o que falta receber | fórmula `F − G` nas 21 linhas |
+| I | `VALOR DE COMPRA` | o custo do equipamento | **vazia nas 21 linhas** |
+| J | `VALOR FRETE` | o frete provisionado do projeto | digitado: maior que zero em 19 linhas, zero em 1 e vazio em 1 (o projeto sem valor da linha 15) |
+| K | `VALOR REPASSE` | a parte do pedido que a MeuBESS recebe e passa a um terceiro | digitado: maior que zero em 6 linhas, zero nas outras. A quem vai, a aba não diz |
+| L | `VALOR COMISSÃO` | a comissão do consultor | digitada, e é 0,25% de `F − J` (valor do projeto menos o frete) nas 20 linhas com valor |
+| M | `VALOR COMISSÃO HEAD` | a comissão do "head" (quem lidera o consultor) | digitada, e é 0,10% de `F − J` nas mesmas 20 linhas |
+| N | `IMPOSTO` | o imposto provisionado, a 9,25% | fórmula: 9,25% de `H` (a receber) em 20 linhas e 9,25% de `F` (valor do projeto) na linha 4 |
+| O | `VALOR FINAL` | o que sobra do projeto | fórmula `F − I − J − L − M − N` (não desconta o repasse), **só nas linhas 3 e 4** |
+| P | (sem rótulo) | a margem, `O / F` | só na linha 4; e nas linhas 56 a 58, uma soma corrida que dá zero |
+
+As linhas 56 a 58 são **sobra do razão antigo**: "FOR" em A, a data de 30/05/2026 em C, "SALDO FINAL PROVISÃO" em K e a
+soma corrida zerada em P. Nenhuma tem código de projeto, e nenhuma entra.
+
+**A leitura precisa de `lerAbaExata`, e não de `lerAba`.** Nesta aba a célula vazia de `VALOR DE COMPRA` vem gravada
+como `<c r="I7" s="634"/>`, e `lerAba` (de `lib/regras/xlsx.mjs`) deixa essa célula engolir a vizinha: o frete saía na
+coluna da compra, e a coluna do frete saía vazia. A captura do dono mostra o frete em `VALOR FRETE`, e é assim que
+`lerAbaExata` lê. O mesmo defeito existe no `FLUXO DE CAIXA` que as três telas leem (ver a pergunta 1 da lista
+abaixo); `lerAba` não foi mexida, porque corrigi-la muda números das três telas.
+
+#### O que a aba cobre do bloco "Compromissos"
+
+| compromisso | a aba cobre? | por quê |
+|---|---|---|
+| obrigações com clientes (sinal sem NF) | **não** | `VALOR RECEBIDO` é o que o cliente pagou do projeto, mas a aba não diz se a NF saiu, e está preenchido em só 4 dos 21 projetos. O bloco já conta os sinais pelo Omie (os títulos `ADVR`, com a NF do pedido); a aba não entra nessa conta |
+| provisões de frete, repasse ou comissão a pagar | **sim, é o que a aba é** | `VALOR FRETE`, `VALOR REPASSE`, `VALOR COMISSÃO` e `VALOR COMISSÃO HEAD`, por projeto, na data da provisão. **Entra no bloco** como "Provisões por projeto" (tabela do bloco, abaixo) |
+| saldo de contratos de empréstimo | **não** | a aba não tem banco, contrato, taxa, prazo nem parcela. Ela **não dispensa** a planilha de contratos do financeiro |
+
+**O que ficou fora da tela, e por quê** (cada um está na lista de perguntas abaixo): `VALOR DE COMPRA` (vazia em toda linha); `IMPOSTO` (a base muda de uma linha para
+outra, e não está dito que imposto é); `VALOR FINAL` e a margem (só em duas linhas, e sem descontar o repasse);
+`VALOR PROJETO`, `VALOR RECEBIDO` e `VALIR A RECEBER` (o recebido é o sinal do cliente, que o bloco já conta pelo Omie);
+e se o que está provisionado **já foi pago** — a aba não tem coluna de pagamento, e por isso a tela diz
+"provisionado", não "a pagar".
+
+#### As perguntas abertas ao dono (29/09/2026), cada uma com a recomendação
+
+1. **O leitor de planilha do app (`lerAba`) deixa a célula vazia engolir a vizinha, também no `FLUXO DE CAIXA`.** Na
+   linha 3 de agosto, `TIPO` fica com a data de `VENCIMENTO`, `TITULO` engole a `CLASS. CONTABIL` (que some) e `ENTRADA`
+   fica com a `SAIDA`. As telas contornam parte disso: a data também é procurada em `TIPO`, e o movimento é aceito em
+   `K` ou em `L`. Mas a `CLASS. CONTABIL` se perde: em agosto, 39 das 457 linhas da aba ficam sem ela, e 8 dessas
+   estão numa classe que as regras de custo de vendas ou de pessoal usam. Se elas entram assim mesmo pela `SUB 2`, não
+   foi medido nesta tarefa. **Recomendação:** corrigir
+   numa tarefa própria, medindo antes e depois cada indicador das três telas, com a trava de agosto refeita de
+   propósito.
+2. **O que já foi pago sai da aba?** A aba não tem coluna de pagamento. **Recomendação:** o financeiro tira a linha
+   (ou zera a coluna) quando paga, ou acrescenta uma coluna "pago em". Até lá a tela diz "provisionado", não "a pagar".
+3. **A quem vai o repasse, e quando é pago?** Em 2 de 2 pedidos conferidos, projeto + repasse é o total do pedido.
+   **Recomendação:** confirmar que é dinheiro de terceiro que passa pela MeuBESS. Se for, decidir depois se ele entra
+   no "resultado sem dinheiro de terceiros", o que hoje não acontece.
+4. **O imposto de 9,25% é sobre o valor do projeto ou sobre o a receber?** A linha 4 usa o valor do projeto e as
+   outras 20 usam o a receber. **Recomendação:** sobre o valor do projeto (é o valor da NF). Corrigir a fórmula na
+   planilha antes de o imposto entrar na tela.
+5. **O valor de compra vai ser preenchido?** Hoje ele está vazio nas 21 linhas. **Recomendação:** sim, com o valor do
+   pedido de compra; então a compra entra no bloco como a quinta provisão.
+6. **O valor recebido é o sinal do cliente?** **Recomendação:** não usar a aba para as obrigações com clientes; elas
+   continuam pelo Omie, que tem a NF. Se a coluna for mantida, ela serve só de confronto.
+7. **A aba vai ter o quadro em todo arquivo de mês daqui para a frente, com a data do fim do mês?** **Recomendação:**
+   sim; a tela lê o quadro do mês escolhido e, no mês sem ele, diz que não há.
+8. **13 dos 21 projetos não têm pedido de venda nas páginas de pedido do cache desta leitura.** **Recomendação:** o
+   financeiro confirma se o pedido desses projetos já foi lançado no Omie; enquanto não estiver, a aba é a única
+   fonte do frete e da comissão deles.
 
 
 **Filtros:** mês (seleção múltipla) · **empresa**. **Botões:** análise horizontal (AH, variação contra o mês
@@ -955,9 +1043,10 @@ cada um ficar de fora, está no parágrafo igual a este, na Tela 1.
 O agrupamento real sai do **plano de contas do ERP** — no Omie, o `codigo_dre` de cada categoria (`ListarCategorias`)
 contra o cadastro de contas do DRE (`ListarCadastroDRE`); a lista acima é a da referência e muda com ele.
 
-**Compromissos (abaixo da tabela, desde 29/09/2026 — decisão do dono):** quatro números do **mês da URL**, das duas
-empresas inteiras (com filtro de empresa ou de conta, ou com a chave do Omie desligada, o bloco diz por que não tem
-número), cada um abrindo na tela os lançamentos de que saiu. Regras em `lib/regras/passivo.mjs`; listas em
+**Compromissos (abaixo da tabela, desde 29/09/2026 — decisão do dono):** cinco números do **mês da URL**, das duas
+empresas inteiras (com filtro de empresa ou de conta o bloco diz por que não tem número; com a chave do Omie
+desligada, só as provisões por projeto continuam, porque são só do DFC), cada um abrindo na tela as linhas de que
+saiu. Regras em `lib/regras/passivo.mjs` e, para as provisões, em `lib/regras/provisao.mjs`; listas em
 `lib/regras/listas.mjs`.
 
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
@@ -966,6 +1055,7 @@ número), cada um abrindo na tela os lançamentos de que saiu. Regras em `lib/re
 | Obrigações com clientes | **Omie** | `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"` por vencimento em 2026 (a leitura da carteira), recorte da MeuBESS por `cabecTitulo.nCodCC`, guardando os **sinais**: `cabecTitulo.cOrigem = "ADVR"` com `cStatus` na faixa pago (`RECEBIDO` / `LIQUIDADO`). Ligação com o pedido: `cabecTitulo.nCodOS` = `cabecalho.codigo_pedido` de `produtos/pedido` → `ListarPedidos`. **Com NF** = o pedido tem `infoCadastro.faturado = "S"` **e** o sinal traz `cabecTitulo.cNumDocFiscal` (quando a NF sai, o Omie escreve o número dela no sinal, o mesmo dos títulos `VENR` do pedido — medido em 29/09/2026). **Data da NF** = a `dDtEmissao` do primeiro título `VENR` do pedido com o mesmo `cNumDocFiscal` (recurso: `infoCadastro.dFat`, que só a empresa 1 traz) | **saldo** no fim do mês = soma de `nValorTitulo` (valor nominal) dos sinais recebidos até o último dia do mês cuja NF não tinha saído até ele. **Movimento do mês:** sinais novos = recebidos no mês; baixados com a NF = os que estavam em aberto no começo do mês ou entraram nele e não estão no fim (saldo do fim = começo + novos − baixados, sempre). **Pedido cancelado não tira o sinal da conta** (decisão do dono, 29/09/2026): sem NF nem devolução registrada no Omie, o dinheiro continua devido e o sinal **fica no saldo até o financeiro confirmar a devolução**; a tela mostra quantos são, à parte, embaixo do quadro | agosto de 2026: 78 sinais em aberto no fim do mês (37 de pedido cancelado), 58 no fim de julho, 45 novos e 25 baixados com a NF; casos: o sinal do pedido 124 (recebido em abril, pedido vivo e ainda sem NF) e o do pedido 176, baixado com a NF de 05/08/2026 ([`docs/conferencia.md`](conferencia.md)) |
 | Dívida líquida | **planilha de contratos** − **DFC** | o saldo devedor do "Capital de giro tomado" menos **o saldo dos bancos da Tela 3**: o último saldo escrito de cada bloco de banco da aba `FLUXO DE CAIXA` do mês (`saldosPorBanco` de `lib/regras/dfc.mjs`, o mesmo que o Fluxo de Caixa soma) | capital de giro tomado − saldo dos bancos. **Sem a planilha de contratos não há número**, e a tela escreve "falta a planilha de contratos" no lugar dele | agosto de 2026: 5 blocos de banco, 0 contratos (a planilha ainda não está na pasta); caso: o bloco do Itaú, último saldo na linha 379 ([`docs/conferencia.md`](conferencia.md)) |
 | Resultado sem dinheiro de terceiros | **mistura** (calculado) | não tem leitura própria: as duas linhas de que sai | **lucro líquido** (a linha "(=) Lucro líquido" do mês) − **variação dos sinais em aberto no mês** (sinais recebidos de pedidos sem NF − sinais baixados com a NF). **Empréstimo, captação e amortização não entram**: já estão fora do DRE (segunda decisão do dono, 29/09/2026; a fórmula de antes ainda tirava a captação líquida, captado − amortizado, e assim somava a amortização de volta) | agosto de 2026: os 419 lançamentos do lucro e os 70 sinais que mexeram nas obrigações (45 recebidos e 25 baixados); a conta aberta está em "A segunda decisão de 29/09/2026", no topo desta tela, e o caso em [`docs/conferencia.md`](conferencia.md) |
+| Provisões por projeto | **DFC** | aba `PROVISÃO` do arquivo do mês (a mesma fonte das outras abas do DFC), lida por `lerAbaExata`. O quadro é achado pelo **cabeçalho** (`PROJETO`, `CLIENTE`, `CONSULTOR`, `VALOR FRETE`, `VALOR REPASSE`, `VALOR COMISSÃO`, `VALOR COMISSÃO HEAD`); **entra** toda linha abaixo dele cuja célula de `PROJETO` é um código de projeto (oito dígitos, hífen, número). Mês sem o quadro (abril a agosto de 2026, em que a aba é um razão) sai sem número, e a tela diz por quê. Não se reparte por empresa nem por conta; não depende do Omie | **soma** de cada uma das quatro colunas `VALOR FRETE`, `VALOR REPASSE`, `VALOR COMISSÃO` e `VALOR COMISSÃO HEAD` nas linhas de projeto (célula vazia conta zero); o cartão é a soma das quatro, "provisionado" na data da coluna `data`. Compra, imposto, valor final, recebido e a receber **não entram** (ver "A aba PROVISÃO do DFC", acima) | **setembro de 2026** — o quadro só existe a partir do arquivo de setembro: 21 projetos, frete em 19, repasse em 6, comissão em 20 e comissão head em 20; caso: a linha 7, projeto `20260910-19348817`, relida célula por célula no XML ([`docs/conferencia.md`](conferencia.md)) |
 
 ---
 

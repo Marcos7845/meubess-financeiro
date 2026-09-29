@@ -207,9 +207,12 @@ cliente trocado pelo código.
   aqui" vira "os meses escolhidos", que é exatamente o que a coluna Total passa a ser.
 - **As perguntas que a tela responde:**
   1. Em que mês a margem caiu (ou subiu)?
-  2. Qual linha do DRE explica a variação — é receita que caiu ou custo que subiu?
-  3. Quanto cada linha pesa sobre a receita do mês (a análise vertical)?
-  4. O ano está melhorando ou piorando?
+  2. Quanto cada linha pesa sobre a receita do mês (a análise vertical)?
+  3. O ano está melhorando ou piorando?
+
+  **Saiu em 29/09/2026, a pedido do dono:** a pergunta "qual linha do DRE explica a variação?" e o mapa de calor que
+  a respondia ("Qual linha explica a variação de cada mês"). O dono o achou confuso e sem utilidade. A variação contra
+  o mês anterior continua na coluna **AH** da tabela, que é de onde o mapa tirava os números.
 
 ## O plano de gráficos
 
@@ -217,7 +220,6 @@ cliente trocado pelo código.
 |---|---|---|---|
 | "Quanto é a receita, o custo, o EBITDA, o lucro e a margem?" | não passa pela árvore: é um número por vez | fila de 5 números, cada um com a fita dos 12 meses embaixo | é o que a tela já tem; a fita é um gráfico de linha miúdo, e a skill aceita isso como contexto do número. O "Lucro líquido" sai maior porque é dele que a frase de 5 segundos fala |
 | "Em que mês a margem caiu?" | TIME SERIES → 1 série → **Linha** | linha da margem nos meses do ano, com a linha do zero como referência e a tracejada no mês dos cartões | a margem já é calculada mês a mês (é o que a fita do cartão "Margem de lucro" desenha); promovê-la a gráfico próprio responde a pergunta sem criar número. É o gráfico **principal**: o maior e no canto de cima à esquerda |
-| "Qual linha do DRE explica a variação?" | CATEGÓRICO 2+ → subgrupo (linha do DRE × mês) → **Heatmap** | a análise horizontal vira um mapa de calor: uma célula por linha do DRE e por mês | são doze colunas de variação percentual; em número, o olho não acha o pior mês. A mesma variação em intensidade de cor, sim. O número continua escrito na célula, e a coluna AH continua na tabela — o mapa é outra leitura dos mesmos números, não a troca deles |
 | "Quanto cada linha pesa sobre a receita?" | NUMÉRICO + CATEGÓRICO → uma observação por grupo → 1 numérico → **Barra** | barra deitada da análise vertical do mês escolhido (ou da coluna Total, quando há meses escolhidos) | AV é uma proporção sobre a receita líquida; barra deitada a partir do zero é a leitura mais direta disso. A ordem é a do DRE e não a do tamanho: aqui a cascata é o sentido |
 | "Quero o número exato de cada linha e de cada mês" | não é gráfico: é a "tabela de detalhe" que fecha o F | a tabela do DRE de hoje, inteira | ela já é a tabela de detalhe: fica igual, e só perde a moldura |
 
@@ -225,7 +227,7 @@ cliente trocado pelo código.
 
 De cima para baixo: o título e a frase de 5 segundos; o recorte (os quatro filtros, numa faixa só, com o que cada um
 alcança num bloco que abre e fecha); a fila de 5 números; o gráfico principal, o maior, no canto de cima à esquerda;
-o de apoio à direita; o mapa de calor na largura inteira; a tabela do DRE; e o rodapé com a fonte, o período e a hora
+o de apoio à direita; a tabela do DRE; e o rodapé com a fonte, o período e a hora
 da leitura. É a mesma ordem da Tela 1, com as mesmas peças (`app/quadro.js`, `app/graficos.js`, `app/globals.css`).
 
 **A frase de "o filtro não vale" NÃO entrou no bloco que abre e fecha:** ela é parte do número, e continua dentro do
@@ -250,17 +252,15 @@ notas que ficavam soltas no topo (a da depreciação e a de janeiro a março) e 
   título, em corpo maior que o resto — *"o lucro líquido do ano até aqui é X, e a margem é Y%"* —, e a linha logo
   abaixo dela diz de quantos meses é essa soma e que ela é a coluna Total da tabela.
 - [x] **Cada gráfico responde a uma pergunta específica?** Sim, e o título de cada um é a pergunta respondida, não a
-  descrição do desenho: "Em que mês a margem caiu", "Quanto cada linha pesa sobre a receita em agosto", "Qual linha
-  explica a variação de cada mês". A tabela de amarração está acima.
+  descrição do desenho: "Em que mês a margem caiu" e "Quanto cada linha pesa sobre a receita em agosto". A tabela de
+  amarração está acima.
 - [x] **Há hierarquia visual clara?** Sim: frase > número do "Lucro líquido" (28px) > os outros quatro (20px) >
-  gráfico principal (duas colunas de três) > o de apoio > mapa de calor > tabela do DRE (11,5px). **O destaque não é o
+  gráfico principal (duas colunas de três) > o de apoio > tabela do DRE (11,5px). **O destaque não é o
   primeiro número da fila, e é de propósito:** a ordem dos cinco é a cascata do DRE — receita, custo, EBITDA, lucro,
   margem —, e é dela que vem o sentido da leitura; trocar a ordem para pôr o lucro na frente desmontaria a conta. O
   que destaca é o corpo do número.
 - [x] **Funcionaria impresso em cinza?** Em parte, e o que não funcionaria tem o número escrito junto. A linha da
-  margem é uma série só — não há cor para confundir. No mapa de calor, verde e vermelho viram o mesmo tom em cinza, e
-  é exatamente por isso que **o número continua escrito dentro de cada célula**: a cor acelera a leitura, não a
-  carrega sozinha. O vermelho do número negativo continua tendo o sinal "−" na frente.
+  margem é uma série só — não há cor para confundir. O vermelho do número negativo continua tendo o sinal "−" na frente.
 - [x] **Há linha de referência e a fonte dos dados?** Linha de referência: a **linha do zero** no gráfico da margem
   (abaixo dela o mês deu prejuízo) e a **tracejada no mês dos cartões**. **Não pus média, meta nem benchmark**, pelo
   mesmo motivo da Tela 1: seriam números novos. Fonte: cada gráfico diz a sua numa linha embaixo do título, a tabela
@@ -268,17 +268,16 @@ notas que ficavam soltas no topo (a da depreciação e a de janeiro a março) e 
   duas leituras.
 - [x] **A paleta é consistente e tem significado?** Sim, e a regra é a mesma das três telas: a margem e a análise
   vertical não são entrada nem saída de dinheiro — são razão —, e levam a cor do número de destaque da marca
-  (`--marca`), a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. O mapa de calor usa as duas cores de leitura de
-  número que já existiam (`--positivo` e `--negativo`) em quatro transparências, e verde quer dizer sempre "joga a
-  favor do resultado", que é a mesma leitura da seta da coluna AH. Nenhuma cor está escrita em `app/graficos.js` nem
+  (`--marca`), a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. Nenhuma cor está escrita em `app/graficos.js` nem
   em `app/dre/page.js`.
 - [x] **A narrativa desce de contexto para ação?** Sim: contexto (quanto sobrou no ano e qual a margem) → tensão (em
-  que mês a margem caiu) → o que explica (o peso de cada linha sobre a receita, e qual linha variou em que mês) →
+  que mês a margem caiu) → o que explica (o peso de cada linha sobre a receita; a variação de cada linha está na coluna AH) →
   prova (o DRE inteiro, linha por linha e mês a mês).
 
 **A captura** está lá em cima, logo abaixo do título desta tela: [`tela-2-captura.html`](tela-2-captura.html), gerada
 por `node scripts/capturar-tela.mjs --tela 2`, de 08/2026 e com a análise vertical ligada, com todo valor em dinheiro
-trocado por "—".
+trocado por "—". O bloco "Compromissos" de setembro, o primeiro mês com as provisões por projeto da aba `PROVISÃO`,
+está em [`tela-2-captura-setembro.html`](tela-2-captura-setembro.html) (`--mes 9 --nome setembro`).
 
 ---
 

@@ -27,18 +27,21 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**44 indicadores**: 44 conferidos, 0 divergentes e 0 a conferir.
+**45 indicadores**: 45 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
 A **Tela 3 fica no Omie inteira** (`docs/fontes.md`): ela é a carteira de títulos a receber, e o DFC, que é caixa,
 não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas dela trazem só o lado do Omie.
 
-**Um indicador não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+**Dois indicadores não são de agosto, e a regra de cada um explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado — os quatro `cStatus` dela são os de um título que ainda
 não venceu, e num mês fechado todo título já venceu. `docs/conferencia.md` mede essa faixa noutra janela de
 vencimento, 01/10/2026 a 31/10/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
+E as **provisões por projeto** da Tela 2 são de setembro de 2026: o quadro por
+projeto da aba `PROVISÃO` do DFC começa no arquivo desse mês (antes dele a aba é um razão, sem projeto), e a
+conferência diz na própria linha de que mês leu; este teste lê o mês **do arquivo** e pede a mesma Tela 2 nele.
 Os outros 43 indicadores são de agosto de 2026.
 
 O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 leu `08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 12 dos 12 arquivos do ano.
@@ -77,6 +80,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — Obrigações com clientes.** **Na tela:** Omie 78. **Na conferência:** Omie 78. **Também conferido:** pedidoCancelado 37, noInicio 58, novos 45, baixados 25. **Fonte:** Omie, sinais `ADVR` recebidos de pedidos ainda sem NF, pelo valor nominal.
 - **Tela 2 — Dívida líquida.** **Na tela:** DFC 5. **Na conferência:** DFC 5. **Também conferido:** contratos 0. **Fonte:** capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
 - **Tela 2 — Resultado sem dinheiro de terceiros.** **Na tela:** Omie 419. **Na conferência:** Omie 419. **Também conferido:** sinais 70. **Fonte:** lucro líquido do DRE do mês − variação dos sinais em aberto (sinais recebidos de pedidos sem NF − sinais baixados).
+- **Tela 2 — Provisões por projeto.** **Na tela:** DFC 21. **Na conferência:** DFC 21. **Também conferido:** frete 19, repasse 6, comissao 20, comissaoHead 20. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, repasse, comissão e comissão head de cada projeto vendido, como o financeiro provisionou.
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** empresa1 0, empresa2 128, cancelados 15. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor recebido.** **Na tela:** Omie 91. **Na conferência:** Omie 91. **Também conferido:** empresa1 0, empresa2 91. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor pendente.** **Na tela:** Omie 10. **Na conferência:** Omie 10. **Também conferido:** empresa1 0, empresa2 10. **Fonte:** Omie, títulos a receber por vencimento.

@@ -154,6 +154,15 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
     extras: { sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
   },
+  // As provisões por projeto (aba `PROVISÃO` do DFC, 29/09/2026). A contagem é de LINHAS DE PROJETO, e os extras são
+  // quantos projetos têm cada uma das quatro provisões maior que zero.
+  'provisoes-projetos': {
+    dfc: /^([\d.]+) projetos? na aba `PROVISÃO`/, omie: null,
+    extras: {
+      frete: /— frete em ([\d.]+)/, repasse: /, repasse em ([\d.]+)/,
+      comissao: /, comissão em ([\d.]+)/, comissaoHead: /comissão head em ([\d.]+)/,
+    },
+  },
 
   // ---------------------------------------------------------------- Tela 3
   // Nenhum indicador desta tela tem lado do DFC: ela fica no Omie inteira (`docs/fontes.md`).
@@ -308,6 +317,24 @@ if (!linhaPendente) {
   }
 }
 
+// A SEGUNDA JANELA QUE NÃO É A DO MÊS: as provisões por projeto da Tela 2. O quadro por projeto da aba `PROVISÃO`
+// começa no arquivo de setembro de 2026 — de abril a agosto a aba é um razão, sem projeto —, e a conferência diz na
+// própria linha de que mês leu ("na aba `PROVISÃO` do mês MM/AAAA"). O teste lê esse mês DO ARQUIVO e pede à mesma
+// camada de dados a Tela 2 nele: a regra é a mesma, muda o mês.
+const linhaProvisao = doConferencia.find((i) => i.tela === 'Tela 2' && i.nome === 'Provisões por projeto');
+const mesDaProvisao = linhaProvisao && /na aba `PROVISÃO` do mês (\d{2})\/(\d{4})/.exec(linhaProvisao.entram);
+let provisao = null, motivoProvisao = null, janelaProvisao = null;
+if (linhaProvisao && !mesDaProvisao) {
+  motivoProvisao = 'não achei na linha da conferência de que mês ela leu a aba PROVISÃO';
+} else if (mesDaProvisao) {
+  janelaProvisao = { mes: Number(mesDaProvisao[1]), ano: Number(mesDaProvisao[2]) };
+  const t2 = janelaProvisao.mes === MES && janelaProvisao.ano === ANO
+    ? tela2
+    : await calcularTela2({ raiz: RAIZ, ano: janelaProvisao.ano, mes: janelaProvisao.mes, fonte: fonteDoDfc() });
+  provisao = t2.compromissos.itens.find((i) => i.id === 'provisoes-projetos') ?? null;
+  if (!provisao) motivoProvisao = 'a Tela 2 não devolveu o item das provisões por projeto';
+}
+
 const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela, ...tela2.compromissos.itens,
   ...tela3.cartoes, ...tela3.blocos,
   // Só os quatro que nasceram no Fluxo de Caixa: os outros seis cartões dele são cartões das Telas 1 e 3 pelo mesmo
@@ -315,6 +342,7 @@ const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...
   ...telaFluxo.cartoes.filter((c) => ['fixas', 'peso-fixas', 'projecao'].includes(c.id)), ...telaFluxo.blocos,
 ].map((i) => [i.id, i]));
 if (pendente) daTela.set('valor-pendente', pendente);
+if (provisao) daTela.set('provisoes-projetos', provisao);
 
 // Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa. Uma tabela por tela: o mesmo
 // nome pode voltar noutra tela querendo dizer outra coisa.
@@ -355,6 +383,7 @@ const NOME_NA_CONFERENCIA = {
     'obrigacoes-clientes': 'Obrigações com clientes',
     'divida-liquida': 'Dívida líquida',
     'resultado-sem-terceiros': 'Resultado sem dinheiro de terceiros',
+    'provisoes-projetos': 'Provisões por projeto',
   },
   'Tela 3': {
     'valor-previsto': 'Valor previsto',
@@ -386,6 +415,10 @@ for (const ind of doConferencia) {
   // A faixa "em aberto" do "Valor pendente" só pode ser comparada se a janela que a conferência usou foi lida.
   if (id === 'valor-pendente' && motivoPendente) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** ${motivoPendente}.`);
+    continue;
+  }
+  if (id === 'provisoes-projetos' && motivoProvisao) {
+    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** ${motivoProvisao}.`);
     continue;
   }
   const naTela = id ? daTela.get(id) : null;
@@ -499,12 +532,19 @@ ${nAConferir === 0
 A **Tela 3 fica no Omie inteira** (\`docs/fontes.md\`): ela é a carteira de títulos a receber, e o DFC, que é caixa,
 não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas dela trazem só o lado do Omie.
 
-**Um indicador não é de ${NOMES_DOS_MESES[MES]}, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+${(() => {
+    const provFora = janelaProvisao && (janelaProvisao.mes !== MES || janelaProvisao.ano !== ANO);
+    const nFora = 1 + (provFora ? 1 : 0);
+    return `**${nFora === 1 ? 'Um indicador não é' : 'Dois indicadores não são'} de ${NOMES_DOS_MESES[MES]}, e a regra de cada um explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado — os quatro \`cStatus\` dela são os de um título que ainda
 não venceu, e num mês fechado todo título já venceu. \`docs/conferencia.md\` mede essa faixa noutra janela de
 vencimento${janelaPendente ? `, ${janelaPendente[0]} a ${janelaPendente[1]}` : ''}, e diz na própria linha qual foi;
-este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
-Os outros ${doConferencia.length - 1} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.
+este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.${provFora ? `
+E as **provisões por projeto** da Tela 2 são de ${NOMES_DOS_MESES[janelaProvisao.mes]} de ${janelaProvisao.ano}: o quadro por
+projeto da aba \`PROVISÃO\` do DFC começa no arquivo desse mês (antes dele a aba é um razão, sem projeto), e a
+conferência diz na própria linha de que mês leu; este teste lê o mês **do arquivo** e pede a mesma Tela 2 nele.` : ''}
+Os outros ${doConferencia.length - nFora} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.`;
+  })()}
 
 ${tela1.dfc.ok
     ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`

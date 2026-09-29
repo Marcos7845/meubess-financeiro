@@ -125,60 +125,8 @@ function Celulas({ ponto, bom, comAh, comAv }) {
   );
 }
 
-// O MAPA DE CALOR DA VARIAÇÃO — uma célula por linha do DRE e por mês, com a MESMA análise horizontal que a tabela
-// mostra na coluna AH (plano em `docs/layout.md`: CATEGÓRICO com subgrupo → Heatmap).
-//
-// POR QUE ELE EXISTE. São doze colunas de variação percentual: em número, o olho não acha o pior mês. A mesma
-// variação em intensidade de cor, sim — e o número continua escrito na célula, então nada se perde no caminho.
-//
-// A COR NÃO NASCE AQUI. Cada célula recebe duas classes — o sentido (`bom` / `ruim`, que é a mesma leitura da seta da
-// coluna AH: subir receita é bom, subir despesa não é) e o degrau de intensidade (`g1` a `g4`) —, e quem diz que cor
-// é cada uma é `app/globals.css`. Os quatro degraus são de tamanho da variação, não de valor: até 10%, até 50%, até
-// 200% e acima disso.
-const degrauDa = (x) => {
-  const t = Math.abs(x);
-  if (t < 0.1) return 1;
-  if (t < 0.5) return 2;
-  if (t < 2) return 3;
-  return 4;
-};
-
-function MapaDaVariacao({ linhas, colunas, emFoco, bomSubir }) {
-  return (
-    <div className="rolagem">
-      <table className="mapa-ah">
-        <thead>
-          <tr>
-            <th className="linha-col">linha do DRE</th>
-            {colunas.map((c) => (
-              <th className={emFoco(c.mes) ? 'escolhido' : ''} key={c.mes}>{MESES_CURTOS[c.mes]}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((l) => (
-            <tr key={l.id}>
-              <th className="linha-col" title={l.rotulo}>{l.rotulo}</th>
-              {l.porMes.map((p) => {
-                if (p.ah === null || p.ah === undefined || !Number.isFinite(p.ah)) {
-                  return <td className="vazio" key={p.mes}>—</td>;
-                }
-                if (p.ah === 0) return <td className="neutra" key={p.mes}>{emPorcento(0)}</td>;
-                const bom = (p.ah > 0) === bomSubir(l);
-                return (
-                  <td className={`${bom ? 'bom' : 'ruim'} g${degrauDa(p.ah)}`} key={p.mes}>{emPorcento(p.ah)}</td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// O BLOCO "COMPROMISSOS" (decisão do dono, 29/09/2026) — o passivo, abaixo da tabela do DRE. Quatro números do mês da
-// URL, e cada um abre os lançamentos de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
+// O BLOCO "COMPROMISSOS" (decisão do dono, 29/09/2026) — o passivo, abaixo da tabela do DRE. Cinco números do mês da
+// URL — o quinto, as provisões por projeto da aba `PROVISÃO` do DFC, desde o fim do mesmo dia —, e cada um abre as linhas de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
 // `lib/indicadores/tela-2.mjs`, que usa as regras de `lib/regras/passivo.mjs`.
 const COLUNAS_DA_DIVIDA = [
   { rotulo: 'dia', chave: 'dia', tipo: 'num' }, { rotulo: 'fonte', chave: 'fonte' }, { rotulo: 'empresa', chave: 'empresa' },
@@ -197,11 +145,52 @@ const COLUNAS_DOS_CONTRATOS = [
   { rotulo: '3 a 12 meses', chave: 'de3a12', tipo: 'reais' }, { rotulo: 'mais de 12', chave: 'mais12', tipo: 'reais' },
 ];
 const COLUNAS_DOS_BANCOS = [{ rotulo: 'banco', chave: 'banco' }, { rotulo: 'último saldo do mês', chave: 'valor', tipo: 'reais' }];
+const COLUNAS_DAS_PROVISOES = [
+  { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'consultor', chave: 'consultor' },
+  { rotulo: 'frete', chave: 'frete', tipo: 'reais' }, { rotulo: 'repasse', chave: 'repasse', tipo: 'reais' },
+  { rotulo: 'comissão', chave: 'comissao', tipo: 'reais' }, { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' },
+  { rotulo: 'soma', chave: 'total', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
+];
+
+// AS PROVISÕES POR PROJETO, o quadro que abre embaixo do bloco. Ele aparece também com a chave do Omie desligada: a aba
+// `PROVISÃO` é só do DFC (`livre`, de `lib/indicadores/tela-2.mjs`).
+function ProvisoesPorProjeto({ p }) {
+  return (
+    <div className="compromisso">
+      <h3>Provisões por projeto</h3>
+      <p className="fonte-do-quadro">{p.fonte}</p>
+      {p.valor === null
+        ? <p className="legenda"><strong>{p.semValor}</strong> — {p.porque}.</p>
+        : (
+          <>
+            <table className="conta-do-compromisso">
+              <tbody>
+                {p.porProvisao.map((x) => (
+                  <tr key={x.id}><th>{x.rotulo}</th><td className="num">{emReais(x.valor)}</td><td>{x.projetos} projetos</td></tr>
+                ))}
+                <tr className="total">
+                  <th>= provisionado{p.data ? ` em ${p.data}` : ''}</th>
+                  <td className="num">{emReais(p.valor)}</td>
+                  <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DAS_PROVISOES} linhas={p.projetos} /></td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="legenda">
+              o que o financeiro provisionou para pagar a terceiros por projeto já vendido: frete, repasse, comissão e
+              comissão head. A aba não diz o que já foi pago, e a compra, o imposto e o valor final dela ficam fora
+              daqui (ver <code>docs/fontes.md</code>).
+            </p>
+          </>
+        )}
+    </div>
+  );
+}
 
 function Compromissos({ c }) {
   const item = (id) => c.itens.find((i) => i.id === id);
   const giro = item('capital-de-giro'), obrig = item('obrigacoes-clientes');
   const liquida = item('divida-liquida'), semTerceiros = item('resultado-sem-terceiros');
+  const prov = item('provisoes-projetos');
   const pe = (i) => `${i.contagem.dfc !== null ? `${i.contagem.dfc} do DFC · ` : ''}${i.contagem.omie !== null ? `${i.contagem.omie} do Omie` : ''}`.replace(/ · $/, '');
   return (
     <section className="quadro detalhe compromissos">
@@ -211,7 +200,7 @@ function Compromissos({ c }) {
         cliente já contou como receita no mês em que entrou. Cada número abre os lançamentos de que saiu.
       </p>
       {c.bloqueado && <p className="aviso leve"><strong>Sem números neste recorte:</strong> {c.bloqueado}.</p>}
-      <div className="kpis de-4">
+      <div className="kpis de-5">
         <div className="kpi">
           <div className="rotulo">{giro.nome}</div>
           <div className="numero">{giro.valor === null ? '—' : emReais(giro.valor)}</div>
@@ -233,6 +222,12 @@ function Compromissos({ c }) {
           <div className="rotulo">{semTerceiros.nome}</div>
           <div className="numero">{emReais(semTerceiros.valor)}</div>
           <div className="pe">{pe(semTerceiros)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{prov.nome}</div>
+          <div className="numero">{prov.valor === null ? '—' : emReais(prov.valor)}</div>
+          {prov.livre && prov.semValor && <div className="pe"><strong>{prov.semValor}</strong></div>}
+          <div className="pe">{prov.contagem.dfc === null ? 'da aba PROVISÃO do DFC' : `${prov.contagem.dfc} projetos, da aba PROVISÃO do DFC`}</div>
         </div>
       </div>
 
@@ -318,6 +313,15 @@ function Compromissos({ c }) {
               </tbody>
             </table>
           </div>
+
+          <ProvisoesPorProjeto p={prov} />
+        </div>
+      )}
+
+      {/* Com a chave do Omie desligada, só as provisões ficam: elas são do DFC. */}
+      {c.bloqueado && prov.livre && (
+        <div className="compromissos-detalhe">
+          <ProvisoesPorProjeto p={prov} />
         </div>
       )}
     </section>
@@ -430,7 +434,7 @@ export default async function Pagina({ searchParams }) {
         &quot;Receita total&quot; e &quot;Custos e despesas&quot; — e três linhas da tabela,
         &quot;(−) Deduções&quot;, &quot;(−) Custos de vendas&quot; e &quot;(−) Impostos pagos (guias)&quot;, com o
         valor de cada mês e a coluna <strong>Total</strong> inteiros: as cinco são do DFC.
-        {' '}<strong>O que sai:</strong> as outras nove linhas, os três últimos cartões, os três gráficos, a coluna
+        {' '}<strong>O que sai:</strong> as outras nove linhas, os três últimos cartões, os dois gráficos, a coluna
         <strong> AV</strong> de todas as linhas — ela é a linha sobre a receita líquida, e a receita líquida mistura as
         duas fontes — e a contagem &quot;do Omie&quot; de cada indicador e de cada coluna. As linhas
         &quot;(=)&quot; saem porque somam as DUAS fontes: escrever só a metade do DFC daria um EBITDA que não é o
@@ -572,15 +576,6 @@ export default async function Pagina({ searchParams }) {
           {pesos.length === 0 && <p className="legenda">não há receita líquida nesta coluna para repartir.</p>}
         </Quadro>
 
-        <Quadro className="larga" titulo="Qual linha explica a variação de cada mês"
-          fonte="a mesma análise horizontal da coluna AH da tabela — quanto cada linha variou contra o mês anterior —, com a intensidade da cor no lugar do tamanho do número">
-          <MapaDaVariacao linhas={d.tabela} colunas={colunas} emFoco={emFoco} bomSubir={bomSubir} />
-          <p className="legenda">
-            verde é a variação que joga a favor do resultado e vermelho a que joga contra — a mesma leitura da seta da
-            coluna AH: receita que sobe é bom, despesa que sobe não é. A primeira coluna não tem mês anterior dentro do
-            recorte, e sai “—”.
-          </p>
-        </Quadro>
       </div>
 
       {/* 6. A TABELA DE DETALHE: o DRE inteiro, linha por linha e mês a mês. É a mesma tabela de sempre; o que mudou

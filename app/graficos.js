@@ -400,7 +400,8 @@ export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
 export function DiaADiaDoFluxo({ dias, hoje }) {
   const medida = useLargura(1100);
   const dados = dias.map((d) => ({
-    rotulo: String(d.dia),
+    // Um mês: o dia ("12"). Vários meses (o período do dono, 29/09/2026): dia e mês ("12/05"), para cada ponto ser único.
+    rotulo: d.rotulo ?? String(d.dia),
     // Zero vira `null`: a dica do mouse mostra só o que aconteceu naquele dia, e não quatro linhas de "R$ 0".
     entrou: d.entrou || null, aReceber: d.aReceber || null, saiu: d.saiu ? -d.saiu : null, aPagar: d.aPagar ? -d.aPagar : null,
     // A posição em duas séries: a consolidada (cheia, na cor da marca) até hoje e a prevista (cinza, tracejada) de hoje
@@ -431,7 +432,12 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
           </linearGradient>
         </defs>
         <CartesianGrid {...GRADE} />
-        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
+        {/* Num período de vários meses são mais de cem dias: o eixo escreve o mês no dia 1 e o dia de cinco em cinco. */}
+        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }}
+          tickFormatter={dados.length > 31 ? (v) => {
+            const [dd, mm] = String(v).split('/');
+            return dd === '1' ? MESES_CURTOS[Number(mm)] : Number(dd) % 5 === 0 ? dd : '';
+          } : undefined} />
         {/* UM EIXO SÓ, para colunas e linha (correção de 28/09/2026). Com dois, o zero de um ficava noutra altura que o
             do outro, e o dono leu uma posição positiva, desenhada no eixo da direita, como negativa no da
             esquerda. Com o caixa partindo da abertura dos bancos, linha e colunas são da mesma ordem de grandeza. */}

@@ -83,7 +83,10 @@ export default async function Pagina({ searchParams }) {
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
   const mes = Number(q?.mes ?? corrente.mes);
-  const d = await dadosDoFluxoDeCaixa({ ano, mes, filtro: { empresa: comoLista(q?.empresa), omie: comoLista(q?.omie) } });
+  // OS MESES DO GRÁFICO DIA A DIA (pedido do dono, 29/09/2026: "abril a agosto"): `?meses=4,5,6,7,8`. Sem nada, ou com um
+  // mês só, o gráfico é o do mês escolhido. Os cartões de cima são sempre do mês escolhido.
+  const mesesDoDia = comoLista(q?.meses).map(Number).filter((m) => m >= 1 && m <= 12);
+  const d = await dadosDoFluxoDeCaixa({ ano, mes, filtro: { empresa: comoLista(q?.empresa), omie: comoLista(q?.omie), mesesDoDia } });
   const femp = d.filtros.empresa;
   const comOmie = d.filtros.omie.ligado;
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
@@ -98,6 +101,8 @@ export default async function Pagina({ searchParams }) {
   const doResultado = veredito(resultado.valor);
   const daProjecao = veredito(projecao.valor);
   const maior = Math.max(1, ...d.fixas.porConta.map((g) => g.valor));
+  // A legenda da previsão segue o que o gráfico desenha: o período inteiro, quando há um, e não só o mês dos cartões.
+  const temPrevisao = d.periodo ? d.periodo.dias.some((x) => x.fase !== 'consolidado') && comOmie : d.diaADia.comPrevisao;
   // A LINHA CONFERIDA COM OS BANCOS: no último dia consolidado, a posição que a tela calculou contra a soma do último
   // `SALDO` de cada banco no `FLUXO DE CAIXA`. Batendo, a linha é o caixa das contas; não batendo, a tela diz quanto.
   const ultimoConsolidado = [...d.diaADia.dias].reverse().find((x) => x.fase !== 'previsao');
@@ -165,6 +170,8 @@ export default async function Pagina({ searchParams }) {
         <form className="barra-filtros filtros-form" method="get" action="/fluxo-de-caixa">
           <Suspensa nome="ano" campo="ano" unica
             opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a), marcada: a === ano }))} />
+          <Suspensa nome="dia a dia" campo="meses" vazio="o mês escolhido"
+            opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: mesesDoDia.includes(i + 1) }))} />
           <Suspensa nome="mês" campo="mes" unica
             opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
           <FiltroDeEmpresa f={femp} />
@@ -207,17 +214,32 @@ export default async function Pagina({ searchParams }) {
 
       {/* 4. O MÊS DIA A DIA (pedido do dono, 28/09/2026): o que já foi e o que ainda vem, num gráfico só. */}
       <div className="grade-g">
-        <Quadro className="larga" titulo={`${nomeDoMes} dia a dia: o que já foi e o que ainda vem`} fonte={comCodigo(d.diaADia.fonte)}>
+        <Quadro className="larga" titulo={d.periodo
+            ? `De ${NOMES_DOS_MESES[d.periodo.meses[0]]} a ${NOMES_DOS_MESES[d.periodo.meses.at(-1)]} dia a dia: o que já foi e o que ainda vem`
+            : `${nomeDoMes} dia a dia: o que já foi e o que ainda vem`} fonte={comCodigo(d.diaADia.fonte)}>
           <p className="legenda">
             <span className="chave serie-receita" />entrou &nbsp;
-            {d.diaADia.comPrevisao && <><span className="chave previsao" />a receber e a pagar (previsão, em cinza) &nbsp;</>}
+            {temPrevisao && <><span className="chave previsao" />a receber e a pagar (previsão, em cinza) &nbsp;</>}
             <span className="chave serie-despesa" />saiu &nbsp;
 
             <span className="chave serie-saldo" />posição de caixa
-            {d.diaADia.comPrevisao && <> &nbsp;<span className="chave previsao-linha" />posição prevista</>}
-            {d.diaADia.hoje ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
+            {temPrevisao && <> &nbsp;<span className="chave previsao-linha" />posição prevista</>}
+            {(d.periodo ? d.periodo.hoje : d.diaADia.hoje) ? ' — à esquerda da marca "hoje", consolidado; à direita, previsão.' : ''}
           </p>
-          <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje} />
+          {d.periodo
+            ? <>
+              <DiaADiaDoFluxo dias={d.periodo.dias} hoje={d.periodo.hoje} />
+              <p className="legenda">
+                De {NOMES_DOS_MESES[d.periodo.meses[0]]} a {NOMES_DOS_MESES[d.periodo.meses.at(-1)]}: entrou
+                {' '}<b>{emReais(d.periodo.entrou)}</b> e saiu <b>{emReais(d.periodo.saiu)}</b>. A linha começa, em cada
+                mês, na abertura dos bancos daquele mês (coluna <code>SALDO</code> do <code>FLUXO DE CAIXA</code>) e soma
+                os lançamentos do dia; se a planilha não fecha de um mês para o outro, aparece um degrau na virada.
+                {d.periodo.atrasadoAPagar > 0 && <> Fora do gráfico: <b>{emReais(d.periodo.atrasadoAPagar)}</b> a pagar
+                  vencido e não baixado no Omie.</>}
+              </p>
+            </>
+            : <DiaADiaDoFluxo dias={d.diaADia.dias} hoje={d.diaADia.hoje ? String(d.diaADia.hoje) : null} />}
+          {!d.periodo && <>
           <p className="legenda">
             {d.diaADia.aberturaDosBancos !== null
               ? <>A linha parte de <b>{emReais(d.diaADia.aberturaDosBancos)}</b>, o caixa das contas antes do primeiro
@@ -279,6 +301,7 @@ export default async function Pagina({ searchParams }) {
             <p>Entre parênteses, quantas linhas do <code>FLUXO DE CAIXA</code> entraram no dia. Linha marcada: a tela e o
               quadro da planilha não batem naquele dia.</p>
           </details>
+          </>}
         </Quadro>
       </div>
 

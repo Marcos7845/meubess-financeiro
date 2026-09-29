@@ -284,6 +284,8 @@ trocado por "—".
 
 # Tela 3 — Fluxo de Caixa (desde 28/09/2026)
 
+<!-- captura 3 -->
+
 ## A história (escrita pelo dono, 28/09/2026)
 
 A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
@@ -324,8 +326,6 @@ A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
 ---
 
 # Tela 3 — Contas a Receber (até 28/09/2026; substituída pelo Fluxo de Caixa)
-
-<!-- captura 3 -->
 
 ## A história (escrita por mim; corrigida pelo dono em 28/09/2026)
 

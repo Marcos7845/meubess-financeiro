@@ -364,7 +364,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `04b01bfcb247` — 357 arquivos no cache local, o mais novo gravado em 27/09/2026 às 22h00; a última releitura do app que trouxe dado do Omie foi em 27/09/2026 às 22h00 (ok, 287 páginas).
+**De que leitura são as contagens desta tabela:** leitura `f650b50ab90b` — 359 arquivos no cache local, o mais novo gravado em 29/09/2026 às 02h12; a última releitura do app que trouxe dado do Omie foi em 29/09/2026 às 02h12 (ok, 287 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -374,15 +374,15 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`04b01bfcb247`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`f650b50ab90b`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 162 | 9, 0, 162 | sim |
-| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 809, 9, 276 | 809, 9, 276 | sim |
-| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 536, 25, 611 | 536, 25, 611 | sim |
-| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 556, 3, 547 | 556, 3, 547 | sim |
-| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 66, 1, 20, 447, 3, 137 | 66, 1, 20, 447, 3, 137 | sim |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 812, 9, 282 | 809, 9, 276 | **não** — a releitura mexeu |
+| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 540, 25, 620 | 536, 25, 611 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 558, 3, 564 | 556, 3, 547 | **não** — a releitura mexeu |
+| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 66, 1, 20, 449, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
 | resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2) | 55, 11, 98, 33 | 55, 11, 98, 33 | sim |
-| pessoal pago, jan–set (empresa 1, empresa 2) | 253, 322 | 253, 322 | sim |
+| pessoal pago, jan–set (empresa 1, empresa 2) | 255, 325 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
 | códigos de outra receita no cadastro (empresa 1, empresa 2) | 26, 28 | 26, 28 | sim |
 | títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
@@ -932,10 +932,29 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 
 | cartão | é o mesmo que | fonte |
 |---|---|---|
-| Entrou | Tela 1, "Receitas" | DFC, `FLUXO DE CAIXA`, `ENTRADA` (K) pelo mês de `DIA PG` (F), fora `SUB 2` = `TRANSFERENCIAS BANCARIAS - RECEITA` |
-| Saiu | Tela 1, "Despesas" | DFC, `FLUXO DE CAIXA`, `SAIDA` (L) pelo mês de `DIA PG` (F) |
+| Entrou | Tela 1, "Receitas" | DFC, `FLUXO DE CAIXA`, o valor com sinal positivo pelo mês de `DIA PG` (F), fora `SUB 2` = `TRANSFERENCIAS BANCARIAS - RECEITA` |
+| Saiu | Tela 1, "Despesas" | DFC, `FLUXO DE CAIXA`, o valor com sinal negativo pelo mês de `DIA PG` (F) |
 | Ainda a pagar no mês | Tela 1, "Desp. Pendentes" | Omie, títulos a pagar com vencimento no mês e sem baixa |
 | Ainda a receber no mês | antiga Tela 3, "Valor Pendente" | Omie, títulos a receber com vencimento no mês, faixa EM ABERTO |
+
+**As três colunas de dinheiro do `FLUXO DE CAIXA` não são "entrada, saída e saldo" — medido neste computador em
+29/09/2026.** `ENTRADA` (K), `SAIDA` (L) e `SALDO` (M) foram lidas assim até 28/09/2026, e a planilha não é isso:
+
+- no arquivo de **setembro**, `ENTRADA` (K) traz o **valor com sinal de toda linha** — positivo na entrada, negativo na
+  saída — e `L` e `M` são a **mesma coluna de saldo corrido**, partida pelo sinal: o saldo depois da linha vai em `L`
+  quando o movimento é positivo e em `M` quando é negativo (linha 10: `K` = uma entrada, `L` = o saldo já com ela;
+  linha 3: `K` = uma saída, `M` = o saldo);
+- em **abril** é ao contrário: `K` vem vazio, `L` traz a saída (negativa) e `M`, o saldo;
+- em **julho** não há saldo nenhum e `L` traz a entrada.
+
+**Não há uma convenção só, e por isso nenhuma regra aqui confia numa coluna pelo nome.** O valor da linha é
+`ENTRADA` (K) quando ela não é zero e `SAIDA` (L) quando é — que é o que o código sempre fez, e é o que os cartões
+Entrou, Saiu e as Telas 1 e 2 usam; nada disso mudou (conferido em 29/09/2026: as 4.694 linhas dos doze arquivos de
+2026 saem idênticas antes e depois). O que mudou é a leitura do **saldo corrido** (`saldosPorBanco` em `lerMesDoDfc`):
+ela só aceita um número como saldo quando ele é o **saldo anterior mais o movimento da linha**, e conta quantas vezes
+isso não aconteceu (`desvios`). Em 2026, nos seis meses em que não houve nenhum desvio (jan, fev, ago, set, nov, dez) a
+conferência da posição de caixa com os bancos fecha **sem um centavo de sobra**; nos seis em que houve (mar, abr, mai,
+jun, jul, out) ela não fecha, e a tela diz isso em vez de dar um veredito.
 
 **Os números que nascem aqui — todos contas simples dos de cima:**
 
@@ -946,7 +965,11 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 | Fixas / receita líquida | despesas fixas ÷ receita líquida do mês | DFC nas duas pontas. A receita líquida é **a mesma conta** do cartão "% D. Func. / Rec. Líquida" da Tela 1: linhas de `SUB 2` em `RECEITA COM VENDAS`, `RECEITA COM SERVIÇOS`, `OUTRAS RECEITAS`, `REEMBOLSO RECEITA`, `RENDIMENTO FINANCEIRO`, menos as de dedução (`SUB 2` `DEVOLUCÃO` ou `CLASS. CONTABIL` `ESTORNO`) |
 | Projeção do mês | resultado do mês + ainda a receber no mês − ainda a pagar no mês, **só com o mês em andamento**; num mês fechado o cartão diz "mês fechado", e o "a pagar" vira "venceu no mês e não foi pago" | DFC + Omie. **É projeção de caixa, não lucro contábil** (esse é a Tela 2): diz se, recebendo e pagando o que vence no mês, o caixa fecha positivo ou negativo. O que já venceu e não foi recebido **não entra** — a tela o mostra à parte. **A confirmar pelo dono:** incluir ou não o vencido, e se "lucro/prejuízo" na frase deve ser esta projeção |
 | A série do ano | de janeiro ao mês da tela, cada mês pela **mesma conta dos cartões** (entrou, saiu e saldo), das linhas baixadas do `FLUXO DE CAIXA` do arquivo daquele mês | DFC. **Corrigido em 28/09/2026:** a primeira versão desenhava o bloco pronto `Entradas` / `Gastos` da aba do mês (o do gráfico da Tela 1), que é outra conta da planilha — a coluna do mês não batia com os cartões, e o gráfico mostrava o ano inteiro, sem mudar com o mês escolhido |
-| O mês dia a dia (pedido do dono, 28/09/2026) | um gráfico com o mês inteiro. **Consolidado** (até hoje no mês corrente; o mês inteiro num mês fechado): as linhas baixadas do `FLUXO DE CAIXA` pelo dia de `DIA PG`, a mesma conta dos cartões Entrou e Saiu. **Previsão** (de hoje ao fim do mês corrente; o mês inteiro num mês à frente; nenhuma num mês fechado): os títulos dos cartões "Ainda a receber" e "Ainda a pagar" pelo dia de vencimento (`cabecTitulo.dDtVenc` / `detalhes.dDtVenc`). A linha é a **posição de caixa**, e soma **todas** as linhas do dia (a transferência que entra compensa a que sai). Ela começa na **abertura dos bancos**: em cada bloco de banco do `FLUXO DE CAIXA`, o valor da coluna `SALDO` na primeira linha do mês menos o movimento dessa linha (`saldosPorBanco` em `lerMesDoDfc`), somado entre os bancos. No último dia consolidado a tela compara a linha com a soma do último `SALDO` de cada banco e diz a diferença. **Por que não o quadro do caixa da aba do mês** (a primeira escolha, de 28/09/2026): o diagnóstico no computador do dono (`scripts/diagnostico-dia-a-dia.mjs`) mostrou que ele não é mantido — `Entradas` e `Gastos` quase sempre zero, o `Final` parado e o `Inicial` do dia 1 igual em agosto e setembro —, e a linha partia de um caixa que não existia. Sem a coluna `SALDO`, o quadro fica como reserva. Título a pagar que venceu antes de hoje sem baixa não tem dia previsto: fica fora do gráfico, e a tela diz quanto é — somado a ele, o fim da linha dá a "Projeção do mês" | DFC (consolidado) + Omie (previsão). A lista título a título sai dos mesmos cálculos dos dois cartões (`porVencimento` em `tela-1.mjs` e `tela-3.mjs`), que não mudaram de valor |
+| O mês dia a dia (pedido do dono, 28/09/2026) | um gráfico com o mês inteiro. **Consolidado** (até hoje no mês corrente; o mês inteiro num mês fechado): as linhas baixadas do `FLUXO DE CAIXA` pelo dia de `DIA PG`, a mesma conta dos cartões Entrou e Saiu. **Previsão** (de hoje ao fim do mês corrente; o mês inteiro num mês à frente; nenhuma num mês fechado): os títulos dos cartões "Ainda a receber" e "Ainda a pagar" pelo dia de vencimento (`cabecTitulo.dDtVenc` / `detalhes.dDtVenc`). A linha é a **posição de caixa**, e soma **todas** as linhas do dia (a transferência que entra compensa a que sai). Ela começa na **abertura dos bancos**: em cada bloco de banco do `FLUXO DE CAIXA`, o **saldo corrido escrito na primeira linha do bloco** — a linha de abertura, que não tem `PAGAMENTO` e por isso nunca entra no fluxo —, somado entre os bancos (`saldosPorBanco` em `lerMesDoDfc`). **A CONFERÊNCIA COM OS BANCOS É UMA PONTE, e é ela que a tela escreve embaixo do gráfico** (medida em 29/09/2026): a posição do último dia consolidado NÃO é o último `SALDO` dos bancos, e não deve ser — o saldo corrido da planilha corre até a **última linha digitada** do mês, e essas linhas finais incluem lançamentos que ainda não foram baixados, que o caixa consolidado com razão deixa de fora. A conta que fecha é:
+
+> posição no último dia consolidado **+** o que o saldo já desconta e não está baixado **+** o baixado depois do corte **−** o que a planilha lançou depois de parar de escrever o saldo **=** o último saldo escrito, somado entre os bancos
+
+Os dois últimos termos existem porque a planilha faz as duas coisas: em setembro de 2026 há 14 linhas ainda `A PAGAR` (ou sem `PAGAMENTO`) que o saldo já desconta, e em agosto de 2026 dois dos cinco blocos **param de escrever o saldo no meio** e seguem lançando (a STONE na linha 400, com mais de vinte lançamentos depois dela). Nos dois meses a ponte fecha em **R$ 0,00**. A tela só dá o veredito quando o saldo corrido da planilha andou exatamente com o movimento em todos os blocos; onde ele pula, ela diz que a conferência não pode ser feita naquele mês. O valor em reais dos dois lados sai só no terminal, em `node scripts/diagnostico-dia-a-dia.mjs --mes N --saldos`. **Por que não o quadro do caixa da aba do mês** (a primeira escolha, de 28/09/2026): o diagnóstico no computador do dono (`scripts/diagnostico-dia-a-dia.mjs`) mostrou que ele não é mantido — `Entradas` e `Gastos` quase sempre zero, o `Final` parado e o `Inicial` do dia 1 igual em agosto e setembro —, e a linha partia de um caixa que não existia. Sem saldo corrido na planilha, o quadro fica como reserva. Título a pagar que venceu antes de hoje sem baixa não tem dia previsto: fica fora do gráfico, e a tela diz quanto é — somado a ele, o fim da linha dá a "Projeção do mês" | DFC (consolidado) + Omie (previsão). A lista título a título sai dos mesmos cálculos dos dois cartões (`porVencimento` em `tela-1.mjs` e `tela-3.mjs`), que não mudaram de valor |
 | Fora da curva | o mês se afasta da média dos meses anteriores do mesmo ano mais que um desvio-padrão deles; só com 3 meses anteriores ou mais | a série do ano, acima. **A confirmar pelo dono:** a régua de um desvio-padrão |
 
 **A lista de fixas foi respondida pela gestora em 28/09/2026:** 33 contas fixas e 21 variáveis. A resposta veio na coluna C, com o vocabulário dela ("DESPESA FIXAS" / "DESPESA VARIAVEL"), e está guardada em `docs/despesas-fixas-respondida-2026-09-28.xlsx`. Três contas não voltaram na resposta e ficam fora das fixas até ela dizer: `COMPRA PROVISÃO`, `COMPRAS - PROVISÃO` e `CRÉDITO REPASSE - CUSTO` (`ausentesDaResposta` em `dados/despesas-fixas.json`). Em relação à sugestão que mandamos, ela pôs como fixas também impostos (INSS, ISS, IRPJ / CSLL), juros, cartão de crédito, armazenagem, mantimentos, máquinas e materiais, e deixou o seguro como variável.
@@ -962,9 +985,14 @@ respondida, a tela não mostra número de despesa fixa**, e diz que a classifica
 de linhas do DFC, as linhas uma a uma — o número da linha na aba `FLUXO DE CAIXA` do arquivo do mês, o dia, a
 `CLASS. CONTABIL`, o `SUB 2` e o valor —, para achar cada uma de volta na planilha.
 
-**Ainda não conferido com a fonte.** A tela foi construída numa sessão sem acesso às fontes (o cache do Omie e as
-planilhas do DFC só existem no computador do dono) e testada com dados de mentira. Seis cartões são os mesmos números
-já conferidos das Telas 1 e 3; os quatro novos precisam da conferência de um mês real, como os outros tiveram.
+**Conferido com a fonte em 29/09/2026.** A tela foi construída numa sessão sem acesso às fontes (o cache do Omie e as
+planilhas do DFC só existem no computador do dono) e testada com dados de mentira; a conferência com dado real foi feita
+no computador do dono. Seis cartões são os mesmos números já conferidos das Telas 1 e 3. Os **quatro que nasceram aqui**
+— "Despesas fixas pagas", "Fixas / receita líquida", "Projeção do mês" e "O mês dia a dia" — entraram em
+[`docs/conferencia.md`](conferencia.md) com agosto de 2026, o mês fechado das outras, cada um com a contagem de linhas,
+o filtro e a linha da planilha achada de volta numa segunda leitura crua da aba: a conferência passou a ter **40
+indicadores**, e `npm run conferir-telas` compara os 40 com o que a tela mostra. A linha de "O mês dia a dia" traz também
+a ponte com os bancos, banco por banco, e o veredito dela — nunca o valor.
 
 ---
 

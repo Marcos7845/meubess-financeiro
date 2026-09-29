@@ -289,7 +289,8 @@ function Compromissos({ c }) {
             </table>
             <p className="legenda">
               {obrig.contagem.extras.pedidoCancelado} dos {obrig.contagem.omie} sinais em aberto são de pedido que o Omie
-              marca como cancelado, sem NF — o dinheiro entrou e nenhuma devolução está registrada.
+              marca como cancelado, sem NF — o dinheiro entrou e nenhuma devolução está registrada, e eles continuam no
+              saldo até o financeiro confirmar a devolução.
             </p>
           </div>
 
@@ -311,8 +312,8 @@ function Compromissos({ c }) {
             <table className="conta-do-compromisso">
               <tbody>
                 <tr><th>lucro líquido do DRE (caixa)</th><td className="num">{emReais(semTerceiros.partes.lucro)}</td><td>a linha &quot;(=) Lucro líquido&quot;, acima</td></tr>
-                <tr><th>− variação das obrigações com clientes</th><td className="num">{emReais(semTerceiros.partes.variacaoObrigacoes)}</td><td>sinais novos − baixados com a NF</td></tr>
-                <tr><th>− captação líquida de empréstimos</th><td className="num">{emReais(semTerceiros.partes.captacaoLiquida)}</td><td>captado {emReais(semTerceiros.partes.captado)} − amortizado {emReais(semTerceiros.partes.amortizado)}</td></tr>
+                <tr><th>− variação dos sinais em aberto</th><td className="num">{emReais(semTerceiros.partes.variacaoObrigacoes)}</td><td>sinais recebidos de pedidos sem NF {emReais(semTerceiros.partes.novos)} − sinais baixados {emReais(semTerceiros.partes.baixados)}</td></tr>
+                <tr><td colSpan={3} className="legenda">empréstimo, captação e amortização não entram: já estão fora do DRE</td></tr>
                 <tr className="total"><th>= resultado sem dinheiro de terceiros</th><td className="num">{emReais(semTerceiros.valor)}</td><td /></tr>
               </tbody>
             </table>

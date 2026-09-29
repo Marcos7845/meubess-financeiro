@@ -315,8 +315,10 @@ for (const emp of EMPRESAS) jsFin[emp] = {
   R: contar(emp, janSet, 'R', { categoria: naLista(RESULTADO_FINANCEIRO[emp]) }),
   P: contar(emp, janSet, 'P', { categoria: naLista(RESULTADO_FINANCEIRO[emp]) }),
 };
-registrar('financeiro', 'resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2)',
-  [jsFin[1].R.total, jsFin[2].R.total, jsFin[1].P.total, jsFin[2].P.total], [55, 11, 98, 33]);
+// A despesa da empresa 2 era 33 até 29/09/2026: os 2 lançamentos do `2.04.91` Emprestimo em jan–set saíram do
+// resultado financeiro para a amortização de dívida (decisão do dono), e a referência passou a 31.
+registrar('financeiro', 'resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2), sem o `2.04.91` da empresa 2 desde 29/09/2026',
+  [jsFin[1].R.total, jsFin[2].R.total, jsFin[1].P.total, jsFin[2].P.total], [55, 11, 98, 31]);
 
 const jsPessoal = {};
 for (const emp of EMPRESAS) jsPessoal[emp] = contar(emp, janSet, 'P', { categoria: naLista(PESSOAL[emp]), comTransferencia: false });
@@ -328,16 +330,16 @@ for (const emp of EMPRESAS) jsGuias[emp] = contar(emp, janSet, 'P', { categoria:
 registrar('guias', 'impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas)',
   [jsGuias[1].titulos.size + jsGuias[2].titulos.size, jsGuias[1].baixas.size + jsGuias[2].baixas.size, jsGuias[1].avulsos.size + jsGuias[2].avulsos.size], [14, 0, 10]);
 
-// A divisão da linha "(+) Receitas": docs/fontes.md diz 3 códigos de venda e 25 / 27 de outras receitas — eram 26 / 28
-// até 29/09/2026, quando o Recebimento de Empréstimo Intercompany (`1.04.99`, nas duas empresas) saiu da receita, como
-// a regra de intercompany já mandava (FORA_DO_DRE).
+// A divisão da linha "(+) Receitas": docs/fontes.md diz 3 códigos de venda e 24 / 26 de outras receitas — eram 26 / 28
+// até 29/09/2026, quando o Recebimento de Empréstimo Intercompany (`1.04.99`, como a regra de intercompany já mandava) e
+// o Recebimento de Empréstimos Bancários (`1.04.03`, a captação), nas duas empresas, saíram da receita (FORA_DO_DRE).
 const outrasReceitasDe = (emp) => [...categorias[emp].values()]
   .filter((c) => c.conta_receita === 'S' && c.totalizadora === 'N' && !eTransferencia(emp, c.codigo) && !VENDA_DE_PRODUTOS.includes(String(c.codigo))
     && !FORA_DO_DRE[emp].includes(String(c.codigo)))
   .map((c) => String(c.codigo));
 const OUTRAS_RECEITAS = { 1: outrasReceitasDe('1'), 2: outrasReceitasDe('2') };
-registrar('grupos-receita', 'códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` desde 29/09/2026',
-  [OUTRAS_RECEITAS[1].length, OUTRAS_RECEITAS[2].length], [25, 27]);
+registrar('grupos-receita', 'códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` e o `1.04.03` desde 29/09/2026',
+  [OUTRAS_RECEITAS[1].length, OUTRAS_RECEITAS[2].length], [24, 26]);
 
 // O par do adiantamento ao fornecedor: docs/fontes.md diz 53 títulos `ADCP` em 2026, 1 deles em agosto.
 const adcpPorMes = {};
@@ -774,7 +776,7 @@ for (const c of [
     : 'nenhum lançamento de receita entrou neste mês';
   add({
     tela: 'Tela 2', nome: '(+) Receitas: outras receitas, vendas de produtos', fonte: 'Omie recortado (principal) / DFC (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\`; a linha se divide pela CATEGORIA do lançamento (decisão do dono, 25/09/2026): venda de produtos são \`1.01.01\`, \`1.01.03\` e \`1.04.01\` nas duas empresas, e outras receitas é todo o resto com \`conta_receita = "S"\` e \`totalizadora = "N"\` em \`geral/categorias\` fora as de transferência e fora as que ficam fora do DRE — o Recebimento de Empréstimo Intercompany \`1.04.99\` saiu daqui em 29/09/2026, como a regra de intercompany já mandava (${OUTRAS_RECEITAS[1].length} códigos na empresa 1 e ${OUTRAS_RECEITAS[2].length} na 2); o sinal do cliente (título \`ADVR\`) continua receita no mês em que foi pago; as quatro totalizadoras \`1.01\` a \`1.04\` ficam fora dos dois grupos`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\`; a linha se divide pela CATEGORIA do lançamento (decisão do dono, 25/09/2026): venda de produtos são \`1.01.01\`, \`1.01.03\` e \`1.04.01\` nas duas empresas, e outras receitas é todo o resto com \`conta_receita = "S"\` e \`totalizadora = "N"\` em \`geral/categorias\` fora as de transferência e fora as que ficam fora do DRE — o Recebimento de Empréstimo Intercompany \`1.04.99\` saiu daqui em 29/09/2026, como a regra de intercompany já mandava, e o Recebimento de Empréstimos Bancários \`1.04.03\` saiu no mesmo dia, porque é captação de empréstimo e fica fora do DRE (decisão do dono) (${OUTRAS_RECEITAS[1].length} códigos na empresa 1 e ${OUTRAS_RECEITAS[2].length} na 2); o sinal do cliente (título \`ADVR\`) continua receita no mês em que foi pago; as quatro totalizadoras \`1.01\` a \`1.04\` ficam fora dos dois grupos`,
     contagem: `${total} lançamentos — ${venda[1].total + venda[2].total} em vendas de produtos (${venda[1].total} na empresa 1 e ${venda[2].total} na 2) e ${outras[1].total + outras[2].total} em outras receitas (${outras[1].total} e ${outras[2].total})`,
     estado: ok ? 'conferido' : 'divergente',
     motivo: ok ? null : [
@@ -876,7 +878,7 @@ add({
   const cat = caso ? categorias[caso.emp].get(String(caso.d.cCodCateg)) : null;
   add({
     tela: 'Tela 2', nome: '(−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e a amortização de dívida — \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, da empresa 1 (${AMORTIZACAO_DE_DIVIDA[1].length + AMORTIZACAO_DE_DIVIDA[2].length} códigos), que saíram desta linha em 29/09/2026 (decisão do dono: parcela de empréstimo não é despesa; vão para o bloco "Compromissos", fora do lucro); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e a amortização de dívida — \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, da empresa 1, que saíram desta linha em 29/09/2026, e \`2.04.91\` Emprestimo, da empresa 2, que saiu do resultado financeiro no mesmo dia (${AMORTIZACAO_DE_DIVIDA[1].length + AMORTIZACAO_DE_DIVIDA[2].length} códigos; decisão do dono: parcela de empréstimo não é despesa; vão para o bloco "Compromissos", fora do lucro); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
     contagem: `${dg[1].total + dg[2].total} lançamentos — ${dg[1].titulos.size} títulos + ${dg[1].baixas.size} baixas de parcial + ${dg[1].avulsos.size} avulsos na empresa 1 e ${dg[2].titulos.size} + ${dg[2].baixas.size} + ${dg[2].avulsos.size} na 2`,
     estado: caso && caso.r.ok ? 'conferido' : 'divergente',
     motivo: caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento de despesa geral entrou neste mês'),
@@ -910,7 +912,7 @@ add({
   const ok = Boolean(caso) && caso.r.ok;
   add({
     tela: 'Tela 2', nome: '(+/−) Resultado financeiro: receitas e despesas financeiras', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
-    filtro: `${FILTRO_CAIXA}, separando por \`detalhes.cNatureza\` o que é \`R\` (rendimentos) do que é \`P\` (juros, tarifas, IOF, empréstimo), pelas 15 categorias que o dono decidiu em 25/09/2026 (7 na empresa 1 e 8 na 2), **pelo código da categoria e não pela conta do DRE**; cartão de crédito, aluguel de veículo e os empréstimos e transferências Intercompany não entram aqui. Confronto no DFC por \`SUB 2\` (J) em \`JUROS\`, \`RENDIMENTO FINANCEIRO\`, \`EMPRESTIMO\`, \`TARIFAS BANCÁRIAS\``,
+    filtro: `${FILTRO_CAIXA}, separando por \`detalhes.cNatureza\` o que é \`R\` (rendimentos) do que é \`P\` (juros, tarifas, IOF), pelas ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} categorias que o dono decidiu em 25/09/2026 (${RESULTADO_FINANCEIRO[1].length} na empresa 1 e ${RESULTADO_FINANCEIRO[2].length} na 2), **pelo código da categoria e não pela conta do DRE**; cartão de crédito, aluguel de veículo e os empréstimos e transferências Intercompany não entram aqui, e o \`2.04.91\` Emprestimo da empresa 2 saiu daqui em 29/09/2026 para a amortização de dívida, fora do lucro (decisão do dono; eram 16 categorias, 8 na empresa 2). Confronto no DFC por \`SUB 2\` (J) em \`JUROS\`, \`RENDIMENTO FINANCEIRO\`, \`EMPRESTIMO\`, \`TARIFAS BANCÁRIAS\``,
     contagem: `${fin[1].R.total + fin[2].R.total + fin[1].P.total + fin[2].P.total} lançamentos — na receita financeira, ${fin[1].R.total} na empresa 1 e ${fin[2].R.total} na 2; na despesa financeira, ${fin[1].P.total} e ${fin[2].P.total}`,
     estado: ok ? 'conferido' : 'divergente',
     motivo: ok ? null : [
@@ -1068,7 +1070,7 @@ const CASO_DA_DIVIDA = (() => {
 add({
   tela: 'Tela 2', nome: 'Capital de giro tomado',
   fonte: 'fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos',
-  filtro: `**fluxo do mês** — Omie: ${FILTRO_CAIXA}, pela categoria (decisão do dono, 29/09/2026): captado = \`1.04.03\` Recebimento de Empréstimos Bancários (\`cNatureza = "R"\`); amortizado = \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, só na empresa 1 (\`cNatureza = "P"\`), que saíram de "(−) Despesas gerais"; juros = \`2.05.01\` Juros sobre Empréstimos; IOF = \`2.06.95\` (juros e IOF continuam no resultado financeiro do DRE, e aqui só aparecem). DFC: \`FLUXO DE CAIXA\` do mês, \`SUB 2\` (J) = \`EMPRESTIMO\` (entrada é captação, saída é parcela) e toda linha com "ANTECIPA" em \`SUB 2\` ou \`CLASS. CONTABIL\` (antecipação de recebíveis conta como dívida). **Sem contar duas vezes:** um lançamento do Omie e uma linha do DFC são o mesmo pagamento quando têm o mesmo sentido, o mesmo dia do mês e o mesmo valor em centavos, casados um a um. **Saldo devedor** — a planilha de contratos do financeiro na pasta do DFC (um \`.xlsx\` com "contrato" no nome, modelo em \`docs/modelo-contratos.xlsx\`), a custo amortizado no último dia do mês: principal mais os juros já corridos pela taxa ao mês, sem juros futuros, com as parcelas vencidas até o corte contando como pagas; vencimentos em 0–3, 3–12 e mais de 12 meses pelo valor nominal das parcelas que faltam`,
+  filtro: `**fluxo do mês** — Omie: ${FILTRO_CAIXA}, pela categoria (decisão do dono, 29/09/2026): captado = \`1.04.03\` Recebimento de Empréstimos Bancários (\`cNatureza = "R"\`); amortizado = \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, na empresa 1, que saíram de "(−) Despesas gerais", e \`2.04.91\` Emprestimo, na empresa 2, que saiu do resultado financeiro (\`cNatureza = "P"\`); a captação e a amortização ficam fora do DRE; juros = \`2.05.01\` Juros sobre Empréstimos; IOF = \`2.06.95\` (juros e IOF continuam no resultado financeiro do DRE, e aqui só aparecem). DFC: \`FLUXO DE CAIXA\` do mês, \`SUB 2\` (J) = \`EMPRESTIMO\` (entrada é captação, saída é parcela) e toda linha com "ANTECIPA" em \`SUB 2\` ou \`CLASS. CONTABIL\` (antecipação de recebíveis conta como dívida). **Sem contar duas vezes:** um lançamento do Omie e uma linha do DFC são o mesmo pagamento quando têm o mesmo sentido, o mesmo dia do mês e o mesmo valor em centavos, casados um a um. **Saldo devedor** — a planilha de contratos do financeiro na pasta do DFC (um \`.xlsx\` com "contrato" no nome, modelo em \`docs/modelo-contratos.xlsx\`), a custo amortizado no último dia do mês: principal mais os juros já corridos pela taxa ao mês, sem juros futuros, com as parcelas vencidas até o corte contando como pagas; vencimentos em 0–3, 3–12 e mais de 12 meses pelo valor nominal das parcelas que faltam`,
   contagem: `${pl(nDoFluxo('omie'), 'lançamento', 'lançamentos')} do Omie e ${pl(nDoFluxo('dfc'), 'linha', 'linhas')} do DFC no fluxo do mês, ${Object.values(FLUXO_DO_MES).reduce((s, g) => s + g.pares.length, 0)} deles o mesmo pagamento nas duas fontes, que conta uma vez — ${pl(LANC_DO_FLUXO, 'pagamento', 'pagamentos')}: captado ${nGrupo('captado')}, amortizado ${nGrupo('amortizado')}, juros ${nGrupo('juros')}, IOF ${nGrupo('iof')}; ${pl(N_CONTRATOS, 'contrato', 'contratos')} na planilha de contratos (${TEXTO_CONTRATOS})`,
   estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DA_DIVIDA && CASO_DA_DIVIDA.ok ? 'conferido' : 'divergente'),
   motivo: MOTIVO_DFC ? `metade do fluxo é o DFC — ${MOTIVO_DFC}` : (CASO_DA_DIVIDA ? CASO_DA_DIVIDA.motivo : 'nenhum pagamento de dívida entrou neste mês, então não há caso real'),
@@ -1122,13 +1124,28 @@ add({
   ].filter(Boolean).join('; '),
 });
 
+// RESULTADO SEM DINHEIRO DE TERCEIROS (decisão do dono, 29/09/2026, a segunda do dia): o lucro líquido menos a variação
+// dos sinais em aberto no mês. Empréstimo, captação e amortização não entram — já estão fora do DRE. O caso abre a
+// conta: o lucro, um sinal recebido de pedido sem NF no mês e um sinal baixado, cada um relido na fonte crua. Os
+// valores ficam na tela; aqui vão as contagens, os títulos e o sentido da variação, nunca o dinheiro.
+const utcDe = (d) => (d ? Date.UTC(d.a, d.m - 1, d.d) : Infinity);
+const SINAL_NOVO = menorSinal(OBRIG.lancamentos.novos.filter((s) => !s.comNf || utcDe(s.dataDaNf) > utcDe(s.pago)))
+  ?? menorSinal(OBRIG.lancamentos.novos);
+const R_NOVO = SINAL_NOVO ? conferirSinal(SINAL_NOVO) : null;
+const CASO_DO_LUCRO = conferirPrimeiro(porEmp(MES_P));
+const OK_SEM_TERCEIROS = calc(porEmp(MES_P)).ok && (!R_NOVO || R_NOVO.ok) && (!R_BAIXADO || R_BAIXADO.ok);
+const SENTIDO_DA_VARIACAO = OBRIG.variacao > 0
+  ? 'positiva — em valor, entraram mais sinais de pedido sem NF do que saíram com a NF —, e por isso o resultado sem dinheiro de terceiros fica ABAIXO do lucro líquido'
+  : (OBRIG.variacao < 0
+    ? 'negativa — em valor, saíram mais sinais com a NF do que entraram —, e por isso o resultado sem dinheiro de terceiros fica ACIMA do lucro líquido, só pelos sinais'
+    : 'zero, e o resultado sem dinheiro de terceiros é o próprio lucro líquido');
 add({
-  tela: 'Tela 2', nome: 'Resultado sem dinheiro de terceiros', fonte: 'lucro líquido do DRE do mês − variação das obrigações com clientes − captação líquida de empréstimos',
-  filtro: 'não tem leitura própria (decisão do dono, 29/09/2026): o lucro de caixa — a linha "(=) Lucro líquido" do mês, com a amortização de dívida já fora dela — menos a variação das obrigações com clientes (sinais novos − baixados com a NF, linha acima) menos a captação líquida de empréstimos (captado − amortizado, do fluxo do "Capital de giro tomado")',
-  contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês do lucro líquido, ${pl(LANC_DO_FLUXO, 'pagamento', 'pagamentos')} do fluxo da dívida e ${pl(OBRIG.contagem.novos + OBRIG.contagem.baixados, 'sinal', 'sinais')} que mexeram nas obrigações com clientes`,
-  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok && CASO_DA_DIVIDA?.ok !== false && R_ABERTO?.ok ? 'conferido' : 'divergente'),
-  motivo: MOTIVO_DFC ? `o lucro líquido consome linhas de fonte DFC — ${MOTIVO_DFC}` : (calc(porEmp(MES_P)).ok && CASO_DA_DIVIDA?.ok !== false && R_ABERTO?.ok ? null : 'um dos casos das três partes não conferiu'),
-  caso: `é aritmética de três números desta página, cada um conferido na linha dele: o lucro líquido (${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}), o sinal em aberto nº ${SINAL_ABERTO?.nCodTitulo ?? '—'} das obrigações com clientes e o pagamento da dívida da linha "Capital de giro tomado"`,
+  tela: 'Tela 2', nome: 'Resultado sem dinheiro de terceiros', fonte: 'lucro líquido do DRE do mês − variação dos sinais em aberto (sinais recebidos de pedidos sem NF − sinais baixados)',
+  filtro: 'não tem leitura própria (decisão do dono, 29/09/2026): o lucro de caixa — a linha "(=) Lucro líquido" do mês — menos a variação dos sinais em aberto no mês, que é o movimento das obrigações com clientes (linha acima): sinais recebidos no mês de pedidos sem NF menos sinais baixados com a NF. **Empréstimo, captação e amortização não entram**: já estão fora do DRE (`2.04.89`, `2.11.95` e `2.04.91` como amortização, `1.04.03` como captação). Até a segunda decisão de 29/09/2026 a conta ainda tirava a captação líquida (captado − amortizado), o que somava a amortização de volta ao lucro',
+  contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês do lucro líquido e ${pl(OBRIG.contagem.novos + OBRIG.contagem.baixados, 'sinal', 'sinais')} que mexeram nas obrigações com clientes (${pl(OBRIG.contagem.novos, 'recebido', 'recebidos')} e ${OBRIG.contagem.baixados} baixados)`,
+  estado: MOTIVO_DFC ? 'a-conferir' : (OK_SEM_TERCEIROS ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC ? `o lucro líquido consome linhas de fonte DFC — ${MOTIVO_DFC}` : (OK_SEM_TERCEIROS ? null : 'um dos casos da conta não conferiu'),
+  caso: `a conta aberta de ${NOME_DO_MES}: **lucro líquido** (os ${soma(MES_R) + soma(MES_P)} lançamentos do mês; ${textoDoCaso(CASO_DO_LUCRO, 'no lado do Omie: ')}) **− (sinais recebidos de pedidos sem NF** — ${pl(OBRIG.contagem.novos, 'sinal', 'sinais')} no mês; ${SINAL_NOVO ? `caso: ${textoDoSinal(SINAL_NOVO, R_NOVO)}, recebido em ${dataTexto(SINAL_NOVO.pago)}${SINAL_NOVO.comNf ? ` e com a NF só em ${dataTexto(SINAL_NOVO.dataDaNf)}` : ' e ainda sem NF'}` : 'nenhum'} **− sinais baixados** — ${OBRIG.contagem.baixados} no mês; ${SINAL_BAIXADO ? `caso: ${textoDoSinal(SINAL_BAIXADO, R_BAIXADO)}, com a NF de ${nfDoBaixado ?? '(sem data)'}` : 'nenhum'}**)**. A variação do mês é ${SENTIDO_DA_VARIACAO}. A amortização do mês (${pl(FLUXO_DO_MES.amortizado.omie.length, 'lançamento', 'lançamentos')} do Omie) e a captação (${FLUXO_DO_MES.captado.omie.length}) não entram na conta`,
 });
 
 // ---------------------------------------------------------------- Tela 3

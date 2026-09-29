@@ -152,7 +152,7 @@ const EXTRATORES = {
   },
   'resultado-sem-terceiros': {
     dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
-    extras: { divida: /, ([\d.]+) pagamentos? do fluxo da dívida/, sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
+    extras: { sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
   },
 
   // ---------------------------------------------------------------- Tela 3

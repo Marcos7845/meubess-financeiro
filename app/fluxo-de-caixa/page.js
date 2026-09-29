@@ -25,7 +25,8 @@ import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import { emPorcento, emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import { comCodigo } from '../filtrado.js';
-import { DiaADiaDoFluxo, FluxoNoAno } from '../graficos.js';
+import ContaExplodivel from '../conta-explodivel.js';
+import { DiaADiaDoFluxo } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
@@ -36,6 +37,11 @@ export const metadata = {
   title: 'MeuBESS · Financeiro — Fluxo de Caixa',
   description: 'Quanto entrou, quanto saiu e como o mês vai fechar, com as despesas fixas e a origem de cada número.',
 };
+
+// O PESO DE UMA FIXA NA RECEITA LÍQUIDA, com uma casa decimal: com duas casas a menos, quase toda linha da tabela saía
+// "0%" (29/09/2026). Sem separador de milhar, pelo mesmo motivo de `app/dinheiro.js` (a trava da captura).
+const PCT1 = new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+const pct1 = (r) => (r === null || r === undefined ? '—' : PCT1.format(r));
 
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -173,7 +179,7 @@ export default async function Pagina({ searchParams }) {
         <form className="barra-filtros filtros-form" method="get" action="/fluxo-de-caixa">
           <Suspensa nome="ano" campo="ano" unica
             opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a), marcada: a === ano }))} />
-          <Suspensa nome="dia a dia" campo="meses" vazio="o mês escolhido"
+          <Suspensa nome="período (dia a dia e fixas)" campo="meses" vazio="o mês escolhido"
             opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: mesesDoDia.includes(i + 1) }))} />
           <Suspensa nome="mês" campo="mes" unica
             opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
@@ -310,38 +316,67 @@ export default async function Pagina({ searchParams }) {
 
       {/* 5. O MÊS CONTRA OS ANTERIORES: este mês foi típico dentro do ano ou ficou fora da curva? */}
       <div className="grade-g">
-        <Quadro className="larga" titulo="Este mês foi típico ou ficou fora da curva?" fonte={comCodigo(d.serie.fonte)}>
-          <p className="legenda">
-            <span className="chave serie-receita" />entrou &nbsp;<span className="chave serie-despesa" />saiu &nbsp;
-            <span className="chave serie-saldo" />resultado do mês (entrou − saiu) &nbsp;— a linha tracejada é a média do
-            resultado dos meses anteriores a {MESES_CURTOS[mes]}.
-          </p>
-          <FluxoNoAno meses={d.serie.meses} mesEmFoco={mes} mediaDoSaldo={d.serie.comparacao?.saldo?.media ?? null} />
-          {d.serie.comparacao && (
-            <ul className="curva">
+        {/* O MÊS CONTRA A MÉDIA DOS ANTERIORES — só as frases. O gráfico do ano que ficava aqui saiu em 29/09/2026: o dono
+            o achou "meio sem propósito", e a comparação no tempo agora é o dia a dia de vários meses, lá em cima. A
+            conta continua a mesma (`d.serie.comparacao`), e a conferência ainda a lê. */}
+        <Quadro className="larga" titulo={`${nomeDoMes.charAt(0).toUpperCase()}${nomeDoMes.slice(1)} contra a média dos meses anteriores`}
+          fonte="cada mês pela conta dos cartões; fora da curva é afastar-se da média mais que a variação típica dos meses anteriores">
+          {d.serie.comparacao
+            ? <ul className="curva">
               <Curva nome="Entrou" c={d.serie.comparacao.entradas} />
               <Curva nome="Saiu" c={d.serie.comparacao.gastos} />
               <Curva nome="Resultado" c={d.serie.comparacao.saldo} />
               {d.serie.comparacao.fixas && <Curva nome="Despesas fixas" c={d.serie.comparacao.fixas} />}
             </ul>
-          )}
-          {d.serie.semPlanilha.length > 0 && (
-            <p className="legenda">
-              Sem coluna: {d.serie.semPlanilha.map((m) => `${MESES_CURTOS[m.mes]} (${m.motivo})`).join('; ')}.
-            </p>
-          )}
-          {d.mesEmAndamento && (
-            <p className="legenda">O mês está em andamento: o que ainda vai entrar e sair não está nas colunas dele.</p>
-          )}
+            : <p className="legenda">Sem a planilha deste mês não há o que comparar.</p>}
+          {d.mesEmAndamento && <p className="legenda">O mês está em andamento: a comparação é com o que já aconteceu nele.</p>}
         </Quadro>
 
         {/* 5. PARA ONDE FOI A DESPESA FIXA: todas as contas fixas, numa tabela só, com uma barra em cada linha. Era um
             gráfico de barras do Recharts ao lado de uma tabela; com as 33 contas da gestora ele ficou gigante e ilegível
             (o SVG é desenhado pequeno e esticado até a largura do quadro). Uma barra de CSS dentro da linha não estica
             o texto, e o nome, a barra, o valor e o peso ficam lado a lado. */}
+        {d.periodo?.fixas ? (
+          /* AS FIXAS DE VÁRIOS MESES (pedido do dono, 29/09/2026): a mesma escolha "período" do dia a dia. Uma coluna por
+             mês, o total do período, o peso sobre a receita líquida do período e quantas linhas do DFC. */
+          <Quadro className="larga" titulo={`Para onde foi a despesa fixa — ${NOMES_DOS_MESES[d.periodo.meses[0]]} a ${NOMES_DOS_MESES[d.periodo.meses.at(-1)]}`}
+            fonte={`as ${d.periodo.fixas.porConta.length} contas fixas com pagamento no período, da maior para a menor pelo total — clique numa conta para ver os lançamentos`}>
+            <div className="rolagem-lista">
+              <table className="tabela-fixas">
+                <thead><tr>
+                  <th>Conta</th>
+                  {d.periodo.fixas.meses.map((x) => <th className="num" key={x.mes}>{MESES_CURTOS[x.mes]}</th>)}
+                  <th className="barra-col" /><th className="num">Total</th><th className="num">% rec. líq.</th><th className="num">Linhas</th>
+                </tr></thead>
+                <tbody>
+                  {d.periodo.fixas.porConta.map((g) => (
+                    <ContaExplodivel key={g.conta} colunas={d.periodo.fixas.meses.length + 5} lancamentos={g.lancamentos}>
+                      <td><span className="seta" aria-hidden="true">▸</span>{g.conta}</td>
+                      {d.periodo.fixas.meses.map((x) => <td className="num" key={x.mes}>{g.porMes[x.mes] ? emReais(g.porMes[x.mes]) : '—'}</td>)}
+                      <td className="barra-col"><span className="barrinha" style={{ width: `${Math.max(1, Math.round((g.total / Math.max(1, d.periodo.fixas.porConta[0].total)) * 100))}%` }} /></td>
+                      <td className="num">{emReais(g.total)}</td>
+                      <td className="num">{d.periodo.fixas.receitaLiquida ? pct1(g.total / d.periodo.fixas.receitaLiquida) : '—'}</td>
+                      <td className="num">{g.n}</td>
+                    </ContaExplodivel>
+                  ))}
+                </tbody>
+                <tfoot><tr>
+                  <th>Total</th>
+                  {d.periodo.fixas.meses.map((x) => <td className="num" key={x.mes}>{emReais(x.total)}</td>)}
+                  <td /><td className="num">{emReais(d.periodo.fixas.total)}</td>
+                  <td className="num">{d.periodo.fixas.peso === null ? '—' : pct1(d.periodo.fixas.peso)}</td>
+                  <td className="num">{d.periodo.fixas.porConta.reduce((n, g) => n + g.n, 0)}</td>
+                </tr></tfoot>
+              </table>
+            </div>
+            <p className="legenda">
+              % da receita líquida de cada mês: {d.periodo.fixas.meses.map((x) => `${MESES_CURTOS[x.mes]} ${x.receitaLiquida ? pct1(x.total / x.receitaLiquida) : '—'}`).join(' · ')}.
+            </p>
+          </Quadro>
+        ) : (
         <Quadro className="larga" titulo="Para onde foi a despesa fixa"
           fonte={d.fixas.respondido
-            ? `as ${d.fixas.porConta.length} contas fixas com pagamento no mês (a gestora marcou ${d.fixas.contas} contas como fixas), da maior para a menor`
+            ? `as ${d.fixas.porConta.length} contas fixas com pagamento no mês (a gestora marcou ${d.fixas.contas} contas como fixas), da maior para a menor — clique numa conta para ver os lançamentos`
             : 'as contas do DFC que a gestora marcar como fixas'}>
           {!d.fixas.respondido
             ? <p className="aviso leve">
@@ -355,18 +390,19 @@ export default async function Pagina({ searchParams }) {
               <thead><tr><th>Conta</th><th className="barra-col" /><th className="num">Pago</th><th className="num">% rec. líq.</th><th className="num">Linhas</th></tr></thead>
               <tbody>
                 {d.fixas.porConta.map((g) => (
-                  <tr key={g.conta}>
-                    <td>{g.conta}</td>
+                  <ContaExplodivel key={g.conta} colunas={5} lancamentos={g.lancamentos}>
+                    <td><span className="seta" aria-hidden="true">▸</span>{g.conta}</td>
                     <td className="barra-col"><span className="barrinha" style={{ width: `${Math.max(1, Math.round((g.valor / maior) * 100))}%` }} /></td>
                     <td className="num">{emReais(g.valor)}</td>
-                    <td className="num">{peso.extras.receitaLiquida ? emPorcento(g.valor / peso.extras.receitaLiquida) : '—'}</td>
+                    <td className="num">{peso.extras.receitaLiquida ? pct1(g.valor / peso.extras.receitaLiquida) : '—'}</td>
                     <td className="num">{g.n}</td>
-                  </tr>
+                  </ContaExplodivel>
                 ))}
               </tbody>
-              <tfoot><tr><th>Total</th><td /><td className="num">{emReais(d.fixas.total)}</td><td className="num">{emPorcento(peso.valor)}</td><td className="num">{d.fixas.porConta.reduce((n, g) => n + g.n, 0)}</td></tr></tfoot>
+              <tfoot><tr><th>Total</th><td /><td className="num">{emReais(d.fixas.total)}</td><td className="num">{peso.valor === null ? '—' : pct1(peso.valor)}</td><td className="num">{d.fixas.porConta.reduce((n, g) => n + g.n, 0)}</td></tr></tfoot>
             </table>}
         </Quadro>
+        )}
       </div>
 
       <footer className="rodape">

@@ -84,6 +84,8 @@ código anterior: as **4.694 linhas** dos doze arquivos de 2026 saem idênticas,
 | diagnóstico do dia a dia e a ponte, só no terminal (traz valor em dinheiro) | `scripts/diagnostico-dia-a-dia.mjs --mes 9 [--dias 1,31] [--saldos]` |
 | os quatro números novos na conferência de um mês fechado | `scripts/numeros-das-telas.mjs`, seção "Tela 3, os números que o Fluxo de Caixa trouxe" |
 | vários meses no dia a dia (`?meses=4,5,6,7,8`, a lista "dia a dia" do recorte; pedido de 29/09) | `periodo` em `lib/indicadores/fluxo-de-caixa.mjs`; cada mês recomeça na abertura dos bancos dele (`saldosPorBanco`) |
+| as fixas de um período e "explodir" cada conta nos lançamentos (29/09) | `fixas` em `periodo` e `lancamentos` em cada conta (`lib/indicadores/fluxo-de-caixa.mjs`); o clique é `app/conta-explodivel.js`; `quem`/`titulo` em `lerMesDoDfc` |
+| o gráfico do ano saiu da tela (29/09: "meio sem propósito"); ficaram as frases de fora da curva | `d.serie` continua calculado, e a conferência o lê |
 | os cinzas da previsão | `--previsao-escuro` / `--previsao-claro` em `app/globals.css` |
 
 ## Decisões e achados que não se adivinham

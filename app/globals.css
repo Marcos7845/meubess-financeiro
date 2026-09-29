@@ -449,6 +449,15 @@ a { color: inherit; }
 .tabela-fixas tfoot th, .tabela-fixas tfoot td { font-weight: 700; border-top: 1px solid var(--texto-fraco); border-bottom: 0; }
 .tabela-fixas .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tabela-fixas .barra-col { width: 40%; }
+.tabela-fixas tr.explodivel { cursor: pointer; }
+.tabela-fixas tr.explodivel:hover td { background: var(--fundo); }
+.tabela-fixas .seta { display: inline-block; width: 12px; color: var(--texto-fraco); transition: transform .15s; }
+.tabela-fixas tr.aberta .seta { transform: rotate(90deg); }
+.tabela-fixas tr.explodida > td { padding: 4px 8px 10px 22px; background: var(--fundo); }
+.tabela-fixas tr.explodida table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.tabela-fixas tr.explodida th { color: var(--texto-fraco); font-weight: 600; text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.tabela-fixas tr.explodida td { padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.tabela-fixas tr.explodida .num { text-align: right; }
 .tabela-fixas .barrinha { display: block; height: 10px; border-radius: 2px; background: var(--destaque); }
 /* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
  * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */

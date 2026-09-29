@@ -1,12 +1,12 @@
 # O tempo de um clique de filtro nas 3 telas
 
-Medido por `scripts/medir-filtros.mjs` neste computador, em 27/09/2026, 23:20, sobre
+Medido por `scripts/medir-filtros.mjs` neste computador, em 29/09/2026, 02:21, sobre
 agosto de 2026. As duas colunas — antes e depois — foram medidas na MESMA rodada, com o mesmo
 relógio: o script sabe fazer as duas coisas, e por isso a comparação não depende de ninguém ter anotado um número
-ontem. A leitura do Omie desta rodada é a `04b01bfcb247`, com 357 arquivos no cache.
+ontem. A leitura do Omie desta rodada é a `f650b50ab90b`, com 359 arquivos no cache.
 
 **O que era.** Cada combinação de filtro era um balde novo em `lib/dados.mjs`, e o balde novo refazia o cálculo
-inteiro. Refazer o cálculo inteiro queria dizer reabrir as fontes: os 357 arquivos do cache do Omie e as
+inteiro. Refazer o cálculo inteiro queria dizer reabrir as fontes: os 359 arquivos do cache do Omie e as
 planilhas `.xlsx` da pasta que o OneDrive espelha — treze arquivos na Tela 1 (o mês, mais os doze da série do ano) e
 doze na Tela 2. E, se a leitura do Omie tinha passado de uma hora, o clique ainda esperava até 8 s por ela antes de
 começar a contar.
@@ -19,9 +19,9 @@ recorte do filtro é aplicado depois.
 
 | tela | o pior clique | antes | depois | |
 | --- | --- | --- | --- | --- |
-| Tela 1 | situação recebido | 15,5 s | 39 ms | dentro de 2 s |
-| Tela 2 | mês 8 só | 16,0 s | 629 ms | dentro de 2 s |
-| Tela 3 | status atrasado | 8,2 s | 3 ms | dentro de 2 s |
+| Tela 1 | empresa 2 | 7,9 s | 38 ms | dentro de 2 s |
+| Tela 2 | mês 8 só | 8,4 s | 613 ms | dentro de 2 s |
+| Tela 3 | empresa 1 | 7,8 s | 32 ms | dentro de 2 s |
 
 ## As fases, clique por clique
 
@@ -41,31 +41,30 @@ de antes abria treze — o antes que o dono viveu era um pouco pior que este.
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 8027 ms | 7474 ms | 151 ms | 61 ms | **15,7 s** |
-| empresa 2 | 8012 ms | 7176 ms | 135 ms | 53 ms | **15,4 s** |
-| centro de custo TI | 8003 ms | 7143 ms | 136 ms | 47 ms | **15,3 s** |
-| situação recebido | 8014 ms | 7323 ms | 120 ms | 44 ms | **15,5 s** |
-| conta Caixinha | 8011 ms | 7257 ms | 135 ms | 57 ms | **15,5 s** |
+| abertura, sem filtro | 1 ms | 7046 ms | 176 ms | 41 ms | **7,3 s** |
+| empresa 2 | 1 ms | 7724 ms | 170 ms | 23 ms | **7,9 s** |
+| centro de custo TI | 1 ms | 7333 ms | 159 ms | 37 ms | **7,5 s** |
+| situação recebido | 2 ms | 7513 ms | 153 ms | 49 ms | **7,7 s** |
+| conta Caixinha | 2 ms | 7464 ms | 157 ms | 43 ms | **7,7 s** |
 
 #### Tela 2 — DRE
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 8016 ms | 7165 ms | 123 ms | 533 ms | **15,8 s** |
-| meses 7 e 8 | 8003 ms | 6951 ms | 147 ms | 563 ms | **15,7 s** |
-| empresa 1 | 8004 ms | 7234 ms | 116 ms | 198 ms | **15,6 s** |
-| conta Caixinha | 8005 ms | 7044 ms | 117 ms | 587 ms | **15,8 s** |
-| mês 8 só | 8015 ms | 7246 ms | 131 ms | 569 ms | **16,0 s** |
+| abertura, sem filtro | 1 ms | 7694 ms | 166 ms | 480 ms | **8,3 s** |
+| meses 7 e 8 | 1 ms | 7513 ms | 154 ms | 562 ms | **8,2 s** |
+| empresa 1 | 2 ms | 7551 ms | 160 ms | 249 ms | **8,0 s** |
+| conta Caixinha | 2 ms | 7197 ms | 151 ms | 548 ms | **7,9 s** |
+| mês 8 só | 2 ms | 7730 ms | 161 ms | 503 ms | **8,4 s** |
 
-#### Tela 3 — Contas a receber
+#### Tela 3 — Fluxo de Caixa
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 8015 ms | 0 ms | 133 ms | 9 ms | **8,2 s** |
-| status atrasado | 8013 ms | 0 ms | 138 ms | 6 ms | **8,2 s** |
-| empresa 2 | 8012 ms | 0 ms | 131 ms | 4 ms | **8,1 s** |
-| conta Caixinha | 8005 ms | 0 ms | 125 ms | 3 ms | **8,1 s** |
-| status pago | 8015 ms | 0 ms | 129 ms | 4 ms | **8,1 s** |
+| abertura, sem filtro | 2 ms | 7430 ms | 157 ms | 80 ms | **7,7 s** |
+| empresa 2 | 1 ms | 7594 ms | 149 ms | 32 ms | **7,8 s** |
+| empresa 1 | 1 ms | 7638 ms | 156 ms | 49 ms | **7,8 s** |
+| as duas | 2 ms | 7202 ms | 158 ms | 53 ms | **7,4 s** |
 
 ### Depois: a base local, e o clique só calculando
 
@@ -77,38 +76,44 @@ node scripts/medir-filtros.mjs --modo depois
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 0 ms | 7089 ms | 120 ms | 44 ms | **7,3 s** |
-| empresa 2 | 0 ms | 0 ms | 0 ms | 37 ms | **38 ms** |
-| centro de custo TI | 0 ms | 0 ms | 0 ms | 33 ms | **34 ms** |
-| situação recebido | 0 ms | 0 ms | 0 ms | 38 ms | **39 ms** |
-| conta Caixinha | 0 ms | 0 ms | 0 ms | 37 ms | **38 ms** |
+| abertura, sem filtro | 4 ms | 7188 ms | 157 ms | 52 ms | **7,4 s** |
+| empresa 2 | 1 ms | 0 ms | 0 ms | 22 ms | **23 ms** |
+| centro de custo TI | 1 ms | 0 ms | 0 ms | 37 ms | **38 ms** |
+| situação recebido | 0 ms | 0 ms | 0 ms | 25 ms | **26 ms** |
+| conta Caixinha | 0 ms | 0 ms | 0 ms | 30 ms | **31 ms** |
 
 #### Tela 2 — DRE
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 0 ms | 0 ms | 0 ms | 575 ms | **575 ms** |
-| meses 7 e 8 | 0 ms | 0 ms | 0 ms | 601 ms | **601 ms** |
-| empresa 1 | 0 ms | 0 ms | 0 ms | 225 ms | **225 ms** |
-| conta Caixinha | 0 ms | 0 ms | 0 ms | 511 ms | **512 ms** |
-| mês 8 só | 0 ms | 0 ms | 0 ms | 628 ms | **629 ms** |
+| abertura, sem filtro | 0 ms | 0 ms | 0 ms | 427 ms | **429 ms** |
+| meses 7 e 8 | 0 ms | 0 ms | 0 ms | 611 ms | **613 ms** |
+| empresa 1 | 0 ms | 0 ms | 0 ms | 225 ms | **227 ms** |
+| conta Caixinha | 0 ms | 0 ms | 0 ms | 481 ms | **483 ms** |
+| mês 8 só | 1 ms | 0 ms | 0 ms | 579 ms | **581 ms** |
 
-#### Tela 3 — Contas a receber
+#### Tela 3 — Fluxo de Caixa
 
 | clique | espera do Omie | planilhas do DFC | cache do Omie | cálculo | total |
 | --- | --- | --- | --- | --- | --- |
-| abertura, sem filtro | 0 ms | 0 ms | 0 ms | 4 ms | **4 ms** |
-| status atrasado | 0 ms | 0 ms | 0 ms | 2 ms | **2 ms** |
-| empresa 2 | 0 ms | 0 ms | 0 ms | 3 ms | **3 ms** |
-| conta Caixinha | 0 ms | 0 ms | 0 ms | 0 ms | **1 ms** |
-| status pago | 0 ms | 0 ms | 0 ms | 2 ms | **2 ms** |
+| abertura, sem filtro | 1 ms | 0 ms | 0 ms | 34 ms | **36 ms** |
+| empresa 2 | 1 ms | 0 ms | 0 ms | 30 ms | **32 ms** |
+| empresa 1 | 0 ms | 0 ms | 0 ms | 20 ms | **21 ms** |
+| as duas | 0 ms | 0 ms | 0 ms | 0 ms | **1 ms** |
 
-**A espera do Omie apareceu nesta rodada, e é a fase que a base local tirou do caminho por inteiro.** A releitura
-de hora em hora estava em curso enquanto o modo antes rodava, e cada clique dele ficou parado esperando por ela — o
-maior foi 8015 ms, contra o teto de 8 s de `ESPERA_PADRAO_MS` (`lib/regras/omie-releitura.mjs`). No modo
-depois a MESMA releitura continuou em curso, pela mesma regra do mesmo arquivo, e a coluna mediu 0 ms em
-todos os cliques: o clique não passa mais por ela. A releitura não foi encurtada nem adiada — ela só deixou de segurar
-a tela.
+**A espera do Omie mediu zero nas duas colunas desta rodada, e isso tem explicação.** Ela só existe quando a última
+releitura do Omie passou de uma hora, ou está em curso: nessa hora, a camada de dados de antes parava cada clique por
+até 8 s (`ESPERA_PADRAO_MS`, em `lib/regras/omie-releitura.mjs`) antes de começar a calcular. Nesta rodada a última
+leitura tinha menos de uma hora, então nem o modo antes esperou — e por isso esta coluna não mede, aqui, o pior caso
+que o dono vivia. Para medi-la com a releitura em curso **sem tocar no cache de verdade**, é só mandar a releitura
+gravar numa cópia:
+
+```
+cp -rp .cache/omie .cache/omie-copia
+OMIE_CACHE_DIR=.cache/omie-copia node scripts/medir-filtros.mjs --omie forcar --modo os-dois
+```
+
+A cópia com `-p` guarda as datas dos arquivos, e por isso o carimbo da leitura continua sendo o mesmo.
 
 A linha da **abertura** é a única que ainda lê as fontes, e é a leitura que o dono aceita esperar. Na Tela 1 ela abre os
 doze meses de planilha (a tela desenha a série do ano), e é por isso que a abertura das Telas 2 e 3, logo depois, já não
@@ -120,7 +125,7 @@ abre planilha nenhuma: os doze meses que a Tela 2 precisa estão prontos.
 | --- | --- | --- | --- | --- |
 | Tela 1 | `/` | 8,5 s | 75 ms | 27 ms |
 | Tela 2 | `/dre` | 8,2 s | 676 ms | 91 ms |
-| Tela 3 | `/receber` | 140 ms | 29 ms | 26 ms |
+| Tela 3 | `/fluxo-de-caixa` | 140 ms | 29 ms | 26 ms |
 
 O **desenho** é a diferença entre a página inteira e os dados: é o React montando a marcação e o Next respondendo.
 Nenhuma linha de `app/` mudou nesta tarefa, então ele é o mesmo antes e depois — e é por isso que a coluna aparece uma

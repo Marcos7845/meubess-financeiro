@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
+import { calcularFluxoDeCaixa } from '../lib/indicadores/fluxo-de-caixa.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 
@@ -189,9 +190,43 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) títulos na rosca/,
     extras: { pago: /— pago ([\d.]+),/, atrasado: /, atrasado ([\d.]+),/, aberto: /, em aberto ([\d.]+)/ },
   },
+
+  // ---------------------------------------------------------------- Tela 3, os números do Fluxo de Caixa
+  // Estes quatro são de fonte DFC (a projeção soma o Omie por cima, e num mês fechado não há projeção: o lado do Omie
+  // é 0 e a própria frase da conferência diz por quê).
+  fixas: {
+    dfc: /^([\d.]+) linhas? de saída fixas? no mês/, omie: null,
+    extras: {
+      contasFixasNoMes: /em ([\d.]+) contas? fixas? distintas?/,
+      contasDaGestora: /distintas? das ([\d.]+) que a gestora marcou/,
+      ausentesDaResposta: /; ([\d.]+) contas? de despesa não voltar(?:am|ou) na resposta dela/,
+    },
+  },
+  'peso-fixas': {
+    // O numerador é a contagem que o cartão publica; o denominador e as deduções são a repartição, e entram como extras.
+    dfc: /^([\d.]+) linhas? fixas? no numerador/, omie: null,
+    extras: { receita: /e ([\d.]+) linhas? de receita no denominador/, deducoes: /menos ([\d.]+) linhas? de dedução/ },
+  },
+  // O extrator do Omie só casa quando a conferência publica um NÚMERO. Num mês fechado ela escreve "sem título do
+  // Omie", porque a tela também não mostra contagem ali — e uma ausência não se compara com zero.
+  projecao: { dfc: /^([\d.]+) linhas? do `FLUXO DE CAIXA` no mês do lado do DFC/, omie: /; ([\d.]+) títulos do Omie/ },
+  'dia-a-dia': {
+    dfc: /^([\d.]+) linhas? do `FLUXO DE CAIXA` no mês no consolidado/, omie: /; ([\d.]+) títulos de previsão/,
+    extras: {
+      diasComMovimento: /em ([\d.]+) dias? com movimento/,
+      bancos: /; ([\d.]+) blocos? de banco,/,
+      bancosQueFecham: /, ([\d.]+) em que o saldo corrido anda exatamente com o movimento,/,
+      linhasNaoBaixadasNoSaldo: /, ([\d.]+) linhas? que o saldo já desconta e não est(?:á|ão) baixada/,
+      bancosComLancamentoDepoisDoSaldo: /e ([\d.]+) bancos? em que a planilha lançou depois de parar de escrever o saldo/,
+      // A PONTE COM OS BANCOS, como veredito e não como valor: a conferência escreve "fecha sem sobra" ou "não fecha",
+      // e a tela calcula a mesma ponte. `true` dos dois lados é o que o dono pediu para conferir.
+      ponteFecha: (entram) => (/a ponte com os bancos fecha sem sobra/.test(entram) ? true
+        : /a ponte com os bancos não fecha/.test(entram) ? false : null),
+    },
+  },
 };
 
-// Lê `docs/conferencia.md`: a ordem dos 36 indicadores e, de cada um, o trecho "**Entram:** …".
+// Lê `docs/conferencia.md`: a ordem dos indicadores e, de cada um, o trecho "**Entram:** …".
 function lerConferencia() {
   if (!fs.existsSync(CONFERENCIA)) {
     console.error(`não achei ${CONFERENCIA}.\nRode antes: node scripts/numeros-das-telas.mjs`);
@@ -219,6 +254,10 @@ if (doConferencia.length === 0) {
 const tela1 = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const tela2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const tela3 = await calcularTela3({ raiz: RAIZ, ano: ANO, mes: MES });
+// A TELA 3 SÃO DOIS CÁLCULOS DESDE 28/09/2026. `calcularTela3` é a carteira de contas a receber, que virou o cálculo de
+// onde sai o "ainda a receber"; `calcularFluxoDeCaixa` é a tela de verdade, e é dela que vêm os quatro números que
+// nasceram no Fluxo de Caixa. Os dois entram em `daTela`, e nenhum id se repete entre eles.
+const telaFluxo = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const TELAS = { 'Tela 1': tela1, 'Tela 2': tela2, 'Tela 3': tela3 };
 
 // A ÚNICA JANELA QUE NÃO É A DO MÊS: a faixa "em aberto" do cartão "Valor pendente" da Tela 3.
@@ -245,7 +284,11 @@ if (!linhaPendente) {
 }
 
 const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela,
-  ...tela3.cartoes, ...tela3.blocos].map((i) => [i.id, i]));
+  ...tela3.cartoes, ...tela3.blocos,
+  // Só os quatro que nasceram no Fluxo de Caixa: os outros seis cartões dele são cartões das Telas 1 e 3 pelo mesmo
+  // cálculo, e já estão comparados pelo id de lá.
+  ...telaFluxo.cartoes.filter((c) => ['fixas', 'peso-fixas', 'projecao'].includes(c.id)), ...telaFluxo.blocos,
+].map((i) => [i.id, i]));
 if (pendente) daTela.set('valor-pendente', pendente);
 
 // Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa. Uma tabela por tela: o mesmo
@@ -292,6 +335,11 @@ const NOME_NA_CONFERENCIA = {
     'por-cliente-e-status': 'Valor previsto por cliente e status',
     'lista-de-titulos': 'Lista de títulos',
     'por-status': 'Lançamentos por status',
+    // Os quatro que nasceram no Fluxo de Caixa (28/09/2026).
+    fixas: 'Despesas fixas pagas',
+    'peso-fixas': 'Fixas / receita líquida',
+    projecao: 'Projeção do mês',
+    'dia-a-dia': 'O mês dia a dia',
   },
 };
 const idPorNome = new Map(Object.entries(NOME_NA_CONFERENCIA).flatMap(([tela, mapa]) =>

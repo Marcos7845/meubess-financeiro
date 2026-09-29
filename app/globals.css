@@ -22,6 +22,10 @@
   --destaque-escuro: #002242;
 
   /* leitura de números */
+  /* A previsão do fluxo diário (pedido do dono, 28/09/2026: "um degradê cinza"): o que ainda não aconteceu não usa
+   * as cores da marca, que são o que já entrou e saiu. */
+  --previsao-escuro: #8a929c;
+  --previsao-claro: #d9dde2;
   --positivo: #1c8f5a;
   --negativo: #c4453b;
 
@@ -417,6 +421,44 @@ a { color: inherit; }
  * telas — é a regra da skill, e é o que deixa os dois rankings da Tela 1 lado a lado sem legenda. */
 .serie-receita { color: var(--marca-escura); }   /* entrada de dinheiro, Tela 1 */
 .serie-despesa { color: var(--destaque); }       /* saída de dinheiro, Tela 1 */
+.serie-saldo { color: var(--marca); }            /* o saldo de cada mês, Tela 3 — Fluxo de Caixa */
+.media-do-saldo line { stroke: var(--texto-fraco); stroke-dasharray: 5 4; }
+.media-do-saldo-texto { fill: var(--texto-fraco); font-size: 10.5px; }
+.fluxo-veredito { font-weight: 700; }
+.fluxo-veredito.lucro { color: var(--positivo); }
+.fluxo-veredito.prejuizo { color: var(--negativo); }
+.origem { margin-top: 6px; font-size: 11px; color: var(--texto-fraco); }
+.origem summary { cursor: pointer; }
+.origem table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.origem th, .origem td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.origem td.num, .origem th.num { text-align: right; }
+.rolagem-origem { max-height: 260px; overflow: auto; }
+.origem tr.difere td { background: #fdecea; }
+.curva { margin: 0; padding-left: 18px; }
+.curva li { margin: 4px 0; }
+.chave.serie-receita, .chave.serie-despesa, .chave.serie-saldo { background: currentColor; }
+.previsao-escuro { stop-color: var(--previsao-escuro); }
+.previsao-claro { stop-color: var(--previsao-claro); }
+.serie-previsao-linha { color: var(--previsao-escuro); }  /* a posição prevista do fluxo diário: cinza, tracejada */
+/* A chave da legenda da previsão: o mesmo degradê cinza das barras. */
+.chave.previsao { background: linear-gradient(to top, var(--previsao-escuro), var(--previsao-claro)) !important; }
+.chave.previsao-linha { background: repeating-linear-gradient(to right, var(--previsao-escuro) 0 4px, transparent 4px 7px) !important; height: 3px !important; vertical-align: 2px !important; }
+.tabela-fixas { border-collapse: collapse; width: 100%; font-size: 11px; }
+.tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }
+.tabela-fixas thead th { color: var(--texto-fraco); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--texto-fraco); }
+.tabela-fixas tfoot th, .tabela-fixas tfoot td { font-weight: 700; border-top: 1px solid var(--texto-fraco); border-bottom: 0; }
+.tabela-fixas .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela-fixas .barra-col { width: 40%; }
+.tabela-fixas tr.explodivel { cursor: pointer; }
+.tabela-fixas tr.explodivel:hover td { background: var(--fundo); }
+.tabela-fixas .seta { display: inline-block; width: 12px; color: var(--texto-fraco); transition: transform .15s; }
+.tabela-fixas tr.aberta .seta { transform: rotate(90deg); }
+.tabela-fixas tr.explodida > td { padding: 4px 8px 10px 22px; background: var(--fundo); }
+.tabela-fixas tr.explodida table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.tabela-fixas tr.explodida th { color: var(--texto-fraco); font-weight: 600; text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.tabela-fixas tr.explodida td { padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.tabela-fixas tr.explodida .num { text-align: right; }
+.tabela-fixas .barrinha { display: block; height: 10px; border-radius: 2px; background: var(--destaque); }
 /* A margem e a análise vertical da Tela 2 não são entrada nem saída: são razão, e levam a cor do número de destaque
  * da marca — a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. */
 .serie-margem { color: var(--marca); }

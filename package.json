@@ -8,6 +8,7 @@
     "start": "node scripts/subir-local.mjs --sem-build",
     "local": "node scripts/subir-local.mjs",
     "criar-admin": "node scripts/criar-admin.mjs",
+    "financeiro-enviar-dfc": "node scripts/financeiro-enviar-dfc.mjs",
     "testar-login": "node scripts/testar-login.mjs",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",

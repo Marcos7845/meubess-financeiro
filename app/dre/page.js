@@ -60,6 +60,7 @@ import FiltroDeConta, { ExplicaConta } from '../conta.js';
 import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
+import Lancamentos from '../lancamentos.js';
 import { MargemNoAno, PesoNaReceita } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
@@ -69,7 +70,7 @@ import Sessao, { exigirLogin } from '../sessao.js';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'MeuBESS · Financeiro — DRE',
+  title: 'MeuBESS · Financeiro — DRE gerencial (regime de caixa)',
   description: 'Demonstrativo de resultados por mês, com análise horizontal e vertical.',
 };
 
@@ -176,6 +177,152 @@ function MapaDaVariacao({ linhas, colunas, emFoco, bomSubir }) {
   );
 }
 
+// O BLOCO "COMPROMISSOS" (decisão do dono, 29/09/2026) — o passivo, abaixo da tabela do DRE. Quatro números do mês da
+// URL, e cada um abre os lançamentos de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
+// `lib/indicadores/tela-2.mjs`, que usa as regras de `lib/regras/passivo.mjs`.
+const COLUNAS_DA_DIVIDA = [
+  { rotulo: 'dia', chave: 'dia', tipo: 'num' }, { rotulo: 'fonte', chave: 'fonte' }, { rotulo: 'empresa', chave: 'empresa' },
+  { rotulo: 'categoria / SUB 2', chave: 'categoria' }, { rotulo: 'descrição', chave: 'descricao' },
+  { rotulo: 'título no DFC', chave: 'titulo' }, { rotulo: 'linha da planilha', chave: 'linhaDfc', tipo: 'num' },
+  { rotulo: 'valor', chave: 'valor', tipo: 'reais' },
+];
+const COLUNAS_DOS_SINAIS = [
+  { rotulo: 'pedido', chave: 'pedido' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'pago em', chave: 'pago' },
+  { rotulo: 'NF', chave: 'nf' }, { rotulo: '', chave: 'cancelado' }, { rotulo: 'valor', chave: 'valor', tipo: 'reais' },
+];
+const COLUNAS_DOS_CONTRATOS = [
+  { rotulo: 'banco', chave: 'banco' }, { rotulo: 'contrato', chave: 'contrato' }, { rotulo: 'tipo', chave: 'tipo' },
+  { rotulo: 'parcelas pagas', chave: 'pagas', tipo: 'num' }, { rotulo: 'de', chave: 'parcelas', tipo: 'num' },
+  { rotulo: 'saldo', chave: 'saldo', tipo: 'reais' }, { rotulo: 'vence em até 3 meses', chave: 'ate3', tipo: 'reais' },
+  { rotulo: '3 a 12 meses', chave: 'de3a12', tipo: 'reais' }, { rotulo: 'mais de 12', chave: 'mais12', tipo: 'reais' },
+];
+const COLUNAS_DOS_BANCOS = [{ rotulo: 'banco', chave: 'banco' }, { rotulo: 'último saldo do mês', chave: 'valor', tipo: 'reais' }];
+
+function Compromissos({ c }) {
+  const item = (id) => c.itens.find((i) => i.id === id);
+  const giro = item('capital-de-giro'), obrig = item('obrigacoes-clientes');
+  const liquida = item('divida-liquida'), semTerceiros = item('resultado-sem-terceiros');
+  const pe = (i) => `${i.contagem.dfc !== null ? `${i.contagem.dfc} do DFC · ` : ''}${i.contagem.omie !== null ? `${i.contagem.omie} do Omie` : ''}`.replace(/ · $/, '');
+  return (
+    <section className="quadro detalhe compromissos">
+      <h2>Compromissos — {c.nomeDoMes} de {c.ano}</h2>
+      <p className="fonte-do-quadro">
+        o que a empresa deve e a quem, no fim do mês — fora do DRE: a parcela de empréstimo não é despesa e o sinal do
+        cliente já contou como receita no mês em que entrou. Cada número abre os lançamentos de que saiu.
+      </p>
+      {c.bloqueado && <p className="aviso leve"><strong>Sem números neste recorte:</strong> {c.bloqueado}.</p>}
+      <div className="kpis de-4">
+        <div className="kpi">
+          <div className="rotulo">{giro.nome}</div>
+          <div className="numero">{giro.valor === null ? '—' : emReais(giro.valor)}</div>
+          {!c.bloqueado && giro.semValor && <div className="pe"><strong>{giro.semValor}</strong></div>}
+          <div className="pe">{pe(giro)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{obrig.nome}</div>
+          <div className="numero">{emReais(obrig.valor)}</div>
+          <div className="pe">{obrig.contagem.omie} sinais em aberto, do Omie</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{liquida.nome}</div>
+          <div className="numero">{liquida.valor === null ? '—' : emReais(liquida.valor)}</div>
+          {!c.bloqueado && liquida.semValor && <div className="pe"><strong>{liquida.semValor}</strong></div>}
+          <div className="pe">{pe(liquida)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{semTerceiros.nome}</div>
+          <div className="numero">{emReais(semTerceiros.valor)}</div>
+          <div className="pe">{pe(semTerceiros)}</div>
+        </div>
+      </div>
+
+      {!c.bloqueado && (
+        <div className="compromissos-detalhe">
+          <div className="compromisso">
+            <h3>Capital de giro tomado</h3>
+            <p className="fonte-do-quadro">{giro.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                {giro.fluxo.map((g) => (
+                  <tr key={g.id}>
+                    <th>{g.rotulo} no mês</th>
+                    <td className="num">{emReais(g.valor)}</td>
+                    <td><Lancamentos colunas={COLUNAS_DA_DIVIDA} linhas={g.lancamentos} /></td>
+                  </tr>
+                ))}
+                <tr className="total">
+                  <th>saldo devedor no fim do mês</th>
+                  <td className="num">{giro.valor === null ? '—' : emReais(giro.valor)}</td>
+                  <td>{giro.valor === null
+                    ? <span className="legenda">{giro.semValor} — {giro.porque}</span>
+                    : <Lancamentos rotulo="contratos" um="contrato" colunas={COLUNAS_DOS_CONTRATOS} linhas={giro.contratos} />}</td>
+                </tr>
+                {giro.faixas && (
+                  <tr>
+                    <th>vencimentos, pelo valor das parcelas</th>
+                    <td colSpan="2">
+                      até 3 meses <b>{emReais(giro.faixas.ate3)}</b> · 3 a 12 meses <b>{emReais(giro.faixas.de3a12)}</b>
+                      {' '}· mais de 12 meses <b>{emReais(giro.faixas.mais12)}</b>
+                      {giro.antecipacao ? <> · antecipação de recebíveis no saldo <b>{emReais(giro.antecipacao)}</b></> : null}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <p className="legenda">
+              o mesmo pagamento no Omie e no DFC (mesmo sentido, mesmo dia, mesmo valor) conta uma vez: foram{' '}
+              {giro.contagem.extras.pares} neste mês. Juros e IOF continuam no resultado financeiro do DRE; aqui eles só
+              aparecem.{giro.recusados?.length ? ` ${giro.recusados.length} linha(s) da planilha de contratos ficaram de fora por falta de ${[...new Set(giro.recusados.flatMap((r) => r.faltam))].join(', ')}.` : ''}
+            </p>
+          </div>
+
+          <div className="compromisso">
+            <h3>Obrigações com clientes</h3>
+            <p className="fonte-do-quadro">{obrig.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>no começo do mês</th><td className="num">{emReais(obrig.inicio)}</td><td>{obrig.contagem.extras.noInicio} sinais</td></tr>
+                <tr><th>+ sinais novos</th><td className="num">{emReais(obrig.novos)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.novos} /></td></tr>
+                <tr><th>− baixados com a NF</th><td className="num">{emReais(obrig.baixados)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.baixados} /></td></tr>
+                <tr className="total"><th>= no fim do mês</th><td className="num">{emReais(obrig.valor)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.saldo} /></td></tr>
+              </tbody>
+            </table>
+            <p className="legenda">
+              {obrig.contagem.extras.pedidoCancelado} dos {obrig.contagem.omie} sinais em aberto são de pedido que o Omie
+              marca como cancelado, sem NF — o dinheiro entrou e nenhuma devolução está registrada.
+            </p>
+          </div>
+
+          <div className="compromisso">
+            <h3>Dívida líquida</h3>
+            <p className="fonte-do-quadro">{liquida.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>capital de giro tomado</th><td className="num">{liquida.saldoDevedor === null ? '—' : emReais(liquida.saldoDevedor)}</td><td>{liquida.saldoDevedor === null ? <span className="legenda">{liquida.semValor}</span> : null}</td></tr>
+                <tr><th>− saldo dos bancos</th><td className="num">{emReais(liquida.saldoDosBancos)}</td><td><Lancamentos rotulo="bancos" um="banco" colunas={COLUNAS_DOS_BANCOS} linhas={liquida.bancos} /></td></tr>
+                <tr className="total"><th>= dívida líquida</th><td className="num">{liquida.valor === null ? '—' : emReais(liquida.valor)}</td><td /></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="compromisso">
+            <h3>Resultado sem dinheiro de terceiros</h3>
+            <p className="fonte-do-quadro">{semTerceiros.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>lucro líquido do DRE (caixa)</th><td className="num">{emReais(semTerceiros.partes.lucro)}</td><td>a linha &quot;(=) Lucro líquido&quot;, acima</td></tr>
+                <tr><th>− variação das obrigações com clientes</th><td className="num">{emReais(semTerceiros.partes.variacaoObrigacoes)}</td><td>sinais novos − baixados com a NF</td></tr>
+                <tr><th>− captação líquida de empréstimos</th><td className="num">{emReais(semTerceiros.partes.captacaoLiquida)}</td><td>captado {emReais(semTerceiros.partes.captado)} − amortizado {emReais(semTerceiros.partes.amortizado)}</td></tr>
+                <tr className="total"><th>= resultado sem dinheiro de terceiros</th><td className="num">{emReais(semTerceiros.valor)}</td><td /></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function Pagina({ searchParams }) {
   await exigirLogin();
   const q = await searchParams;
@@ -242,7 +389,7 @@ export default async function Pagina({ searchParams }) {
     <div className="tela">
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
-        <span className="titulo">DRE — Demonstrativo de Resultados</span>
+        <span className="titulo">DRE gerencial (regime de caixa)</span>
         <nav className="abas">
           <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
           <span className="ativa">DRE</span>
@@ -535,6 +682,9 @@ export default async function Pagina({ searchParams }) {
           Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não tem coluna.
         </p>
       </section>
+
+      {/* 7. OS COMPROMISSOS (decisão do dono, 29/09/2026): o passivo, abaixo do DRE e fora dele. */}
+      <Compromissos c={d.compromissos} />
 
       <footer className="rodape">
         <Atualizar ano={ano} />

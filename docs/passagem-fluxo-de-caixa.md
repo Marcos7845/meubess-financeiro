@@ -31,6 +31,7 @@ A tela "Contas a Receber" virou **Fluxo de Caixa**:
 | a lista de despesas fixas | `dados/despesas-fixas.json`, gravado por `scripts/despesas-fixas.mjs` a partir da planilha respondida (`docs/despesas-fixas-respondida-2026-09-28.xlsx`) |
 | o saldo de cada banco (abertura e último `SALDO` de cada bloco do `FLUXO DE CAIXA`) | `saldosPorBanco` em `lerMesDoDfc`, `lib/regras/dfc.mjs` |
 | diagnóstico do dia a dia, só no terminal (traz valor em dinheiro) | `scripts/diagnostico-dia-a-dia.mjs --mes 9 [--dias 1,31] [--saldos]` |
+| vários meses no dia a dia (`?meses=4,5,6,7,8`, a lista "dia a dia" do recorte; pedido de 29/09) | `periodo` em `lib/indicadores/fluxo-de-caixa.mjs` |
 | os cinzas da previsão | `--previsao-escuro` / `--previsao-claro` em `app/globals.css` |
 
 ## Decisões e achados que não se adivinham

@@ -315,6 +315,40 @@ A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
 | "Para onde foi a despesa fixa?" | barra deitada com **todas** as contas fixas do mês, ao lado da tabela conta por conta (pago, % da receita líquida, linhas) | o dono pediu todas, não as dez maiores; a tabela é o controle, a barra é a proporção |
 | "De onde saiu cada número?" | não é gráfico: "de onde saiu" fechado embaixo de cada cartão | a origem está junto do número, e abre só quando alguém quer conferir |
 
+### A ordem da página (o "F" da skill)
+
+Escrita a partir de `app/fluxo-de-caixa/page.js` e da captura, em 29/09/2026. De cima para baixo:
+
+1. **O título e a frase de 5 segundos** (`page.js:151-171`): o mês e o ano, a frase *"Entrou X e saiu Y: o mês fechou
+   com lucro (ou prejuízo) de Z"* e, embaixo, em corpo pequeno, o "para decidir a estratégia de venda". Com o mês em
+   andamento a frase ganha uma segunda metade, a projeção do fechamento (`page.js:160-163`).
+2. **O recorte** (`page.js:180-199`): os filtros numa faixa só — ano, período (dia a dia e fixas), mês, empresa e a chave
+   do Omie, mais o botão "aplicar" —, com o que cada um alcança num bloco que abre e fecha. Os avisos do Omie
+   (`page.js:173-177`) só aparecem quando a leitura pede.
+3. **A fila de números, em duas filas de 4** (`page.js:203-218`): o caixa do mês (Entrou, Saiu, Resultado do mês,
+   Projeção do mês) e o que falta (Venceu no mês e não foi pago, A receber do mês, Despesas fixas pagas, Fixas / receita
+   líquida). O "Resultado do mês" é o maior (`page.js:206`). Embaixo de cada número, o "de onde saiu", fechado.
+4. **O gráfico principal, na largura inteira** (`page.js:227-317`): o mês dia a dia, com o consolidado e a previsão, a
+   linha da posição de caixa e a conferência dia a dia com a planilha, fechada.
+5. **Este mês contra a média dos anteriores** (`page.js:324-335`): quatro frases, sem gráfico.
+6. **Para onde foi a despesa fixa** (`page.js:337-407`): a tabela conta por conta, com a barrinha de CSS em cada linha,
+   que fecha o F como tabela de detalhe.
+7. **O rodapé** (`page.js:410-420`): a fonte, o recorte de empresas, a hora das duas leituras e de onde vieram os números.
+
+**Onde a tela de hoje difere do plano acima** (o plano é de 28/09/2026 e a tela mudou depois, a pedido do dono):
+
+- **O destaque é o "Resultado do mês", não a "Projeção do mês"** (`page.js:206`). A primeira linha do plano diz que a
+  projeção é o número da frase; a frase só a traz com o mês em andamento, e num mês fechado o número dela é o resultado.
+- **O gráfico do ano saiu em 29/09/2026** (`page.js:321-323`; o dono o achou "meio sem propósito"). A linha "Este mês foi
+  típico?" do plano descreve colunas, linha do saldo e média tracejada; hoje a pergunta é respondida só pelas frases de
+  `Curva` (`page.js:76-86`). `FluxoNoAno` continua exportado em `app/graficos.js:367` e não é usado por nenhuma tela.
+- **A previsão é cinza em degradê**, não "a mesma cor, mais clara" (pedido do dono, 28/09/2026; `app/globals.css:25-28`).
+- **As fixas são uma tabela com barrinha de CSS, não uma barra do Recharts** (`page.js:337-340`), e aceitam vários meses
+  (`page.js:341-377`).
+
+**A frase de "o filtro não vale" NÃO entrou no bloco que abre e fecha:** ela é parte do número, e continua dentro do
+cartão (`app/quadro.js`, `Filtrado`), como `docs/filtros.md` manda.
+
 ## O que ficou de fora, e por quê
 
 - **A receita por cliente**: o dono disse que é indiferente.
@@ -322,6 +356,66 @@ A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
   vocabulários não têm de-para (`docs/fontes.md`). A tela mostra o total a pagar do mês, e as fixas pagas.
 - **A lista de títulos a receber, um a um, e o "para quem ligar"**: eram o propósito da antiga tela, que saiu da
   navegação. O cálculo dela continua, e volta como tela se o dono pedir.
+
+## O checklist da fase 5 da skill, respondido
+
+Conferido em 29/09/2026 contra `app/fluxo-de-caixa/page.js`, `app/graficos.js`, `app/globals.css` e a captura
+[`tela-3-captura.html`](tela-3-captura.html) (agosto de 2026, mês **fechado**). O que só existe com o mês em andamento
+(a marca "hoje", a previsão, a projeção) está conferido no código e **não aparece na captura**. `[x]` é o que a tela
+cumpre; `[ ]` é o que ela não cumpre, com o que falta.
+
+- [x] **Dá para entender a mensagem principal em 5 segundos?** Sim: `<p class="frase">` embaixo do título (`page.js:153-165`),
+  em 16,5px (`globals.css:260`), diz na captura *"Entrou — e saiu —: o mês fechou com lucro de —."*, com o lucro em
+  verde e o prejuízo em vermelho (`globals.css:427-429`) e o número dela no cartão "Resultado do mês", o único em 28px
+  (`globals.css:402`). Duas ressalvas: o título do mês (19px, `globals.css:257`) é maior que a frase; e, com o mês em
+  andamento, a frase traz dois números (o resultado até aqui e a projeção), enquanto o cartão em destaque é só o
+  resultado — o plano acima diz que o destaque é a projeção.
+- [x] **Cada gráfico responde a uma pergunta específica?** Sim: a tela tem **um** gráfico, o dia a dia
+  (`page.js:227-252`, `app/graficos.js:400-462`), e ele responde a "como o caixa anda no mês: o que já foi e o que ainda
+  vem". Os outros dois quadros não são gráficos: "Agosto contra a média dos meses anteriores" são quatro frases
+  (`page.js:324-335`) e "Para onde foi a despesa fixa" é uma tabela (`page.js:379-406`). Ressalva: o título do gráfico
+  diz "o que ainda vem" também num mês fechado, em que não há previsão — a legenda esconde a chave dela
+  (`page.js:233`), o título não.
+- [x] **Há hierarquia visual clara?** Sim: o cartão "Resultado do mês" em 28px (`globals.css:402`) > os outros sete em
+  20px (`globals.css:396`) > o gráfico na largura inteira (`page.js:228`, `className="larga"`) > a tabela das fixas em
+  11px (`globals.css:446`); os oito "de onde saiu" ficam fechados (`page.js:54`). Ressalva: são oito números em duas
+  filas, mais o aviso do vencido (`page.js:219-224`), antes do gráfico; não medi se o gráfico aparece na primeira tela.
+- [ ] **Funcionaria impresso em cinza?** **Não por inteiro.** Pela luminância relativa das variáveis de `globals.css`
+  (não imprimi): a linha "posição de caixa" (`--marca`, `#004888`, `globals.css:424`) contra as colunas "entrou"
+  (`--marca-escura`, `#102040`, `globals.css:422`) dá **1,75 para 1** — onde a linha cruza uma coluna de entrada, em
+  cinza, ela some; a previsão a pagar, que começa em `#8a929c` (`globals.css:27`), contra o "saiu" (`#0079cb`) dá
+  **1,45 para 1**, e as duas ficam encostadas na mesma coluna. O que funciona: "entrou" contra "saiu" dá 3,53 para 1 e,
+  além disso, entrada é para cima e saída para baixo do zero; a previsão é separada do consolidado pela marca "hoje" e
+  pelo tracejado; lucro e prejuízo estão escritos por extenso na frase. **Falta:** um tom para a linha da posição que se
+  separe das colunas escuras (ou um contorno branco nela), e um rótulo direto na linha em vez de só a legenda.
+- [x] **Há linha de referência e a fonte dos dados?** Linha de referência: a **linha do zero** (`graficos.js:445`;
+  `linha-zero` no SVG da captura) e, com o mês em andamento, a **marca "hoje"** (`graficos.js:446-449`), que a captura
+  não mostra por ser agosto. **Não pus média, meta nem benchmark**, pela regra 6 das adaptações; a média dos meses
+  anteriores aparece só escrita, em `Curva` (`page.js:76-86`), depois que o gráfico do ano saiu. Fonte: cada quadro
+  diz a sua embaixo do título (`page.js:230`, `325`, `381-382`, `fonte-do-quadro` na captura), e o rodapé diz o regime,
+  as empresas somadas e a hora das duas leituras (`page.js:410-419`; na captura, "Última leitura — Omie: 29/09, 15:21").
+  O período está no título da tela e do gráfico (`page.js:152`, `228-230`), não no rodapé.
+- [x] **A paleta é consistente e tem significado?** Sim: escuro é receita (`--marca-escura`, `globals.css:422`) e claro é
+  despesa (`--destaque`, `globals.css:423`), como na Tela 1, e as duas chaves estão nos cartões "Entrou" e "Saiu"
+  (`page.js:206`); a barrinha das fixas, que é despesa, usa `--destaque` (`globals.css:461`); a posição é `--marca`
+  (`globals.css:424`); a previsão é cinza (`globals.css:25-28`, `440-445`); lucro e prejuízo são `--positivo` e
+  `--negativo`. Nenhuma cor está escrita em `page.js` nem em `graficos.js` (busca por `#rrggbb` nos dois: nada); os
+  `#ccc` e `#666` que aparecem no SVG da captura são o padrão do Recharts e o CSS os cobre (`globals.css:472` e `475`, `.eixo
+  text`). Ressalva: o mesmo resultado positivo é verde na frase (`--positivo`) e azul no cartão (`--marca`,
+  `globals.css:402`).
+- [x] **A narrativa desce de contexto para ação?** Sim: contexto (a frase, `page.js:153-165`) → os oito números
+  (`page.js:203-218`) → o mês dia a dia, o que já foi e o que vem (`page.js:227-317`) → este mês foi típico?
+  (`page.js:324-335`) → para onde foi a despesa fixa (`page.js:337-407`) → ação (o "para decidir a estratégia de venda",
+  `page.js:166-170`). A prova ("de onde saiu", `page.js:51-73`, e a conferência dia a dia, `page.js:283-314`) está
+  fechada junto do número, e não no fim. Ressalva: a ação é uma frase fixa, condicional em palavras ("se o mês fecha no
+  prejuízo…"); ela não muda com o número.
+
+**A captura** está lá em cima, logo abaixo do título desta tela: [`tela-3-captura.html`](tela-3-captura.html), gerada por
+`node scripts/capturar-tela.mjs --tela 3`, de 08/2026, com todo valor em dinheiro trocado por "—". **Foi regerada em
+29/09/2026:** a que estava no repositório era mais velha que a página — trazia o gráfico do ano que já tinha saído, os
+percentuais das fixas sem casa decimal e nenhum filtro "período".
+
+**O que a Tela 3 não cumpre hoje:** o item "Funcionaria impresso em cinza?", acima.
 
 ---
 

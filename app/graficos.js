@@ -412,7 +412,7 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
   if (!hoje && dados.length && dias.every((d) => d.fase === 'previsao')) for (const x of dados) x.posicao = null;
   // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
   // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
-  // versão tirava o sinal de tudo, e uma posição de −R$ 819.727 aparecia como R$ 819.727).
+  // versão tirava o sinal de tudo, e uma posição negativa aparecia positiva).
   const dica = { ...DICA, formatter: (v, n) => [emReais(n.startsWith('posição de caixa') ? v : Math.abs(v)), n] };
   return (
     <div className="grafico" ref={medida.ref}>
@@ -433,7 +433,7 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }} />
         {/* UM EIXO SÓ, para colunas e linha (correção de 28/09/2026). Com dois, o zero de um ficava noutra altura que o
-            do outro, e o dono leu uma posição de +R$ 385 mil, desenhada no eixo da direita, como −R$ 600 mil no da
+            do outro, e o dono leu uma posição positiva, desenhada no eixo da direita, como negativa no da
             esquerda. Com o caixa partindo da abertura dos bancos, linha e colunas são da mesma ordem de grandeza. */}
         <YAxis yAxisId="dia" {...EIXO_VALOR} />
         <ReferenceLine yAxisId="dia" y={0} className="linha-zero" />

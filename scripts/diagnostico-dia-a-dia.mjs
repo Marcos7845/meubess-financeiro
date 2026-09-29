@@ -6,8 +6,8 @@
 //   node scripts/diagnostico-dia-a-dia.mjs --mes 9 --saldos     # as linhas de SALDO INICIAL/FINAL de cada banco
 //
 // POR QUE EXISTE (28/09/2026). A posição de caixa que o Fluxo de Caixa calcula das linhas do `FLUXO DE CAIXA` não bate
-// com o `Final` que o quadro do caixa da própria planilha escreve para o dia: em 31/08 a tela dava R$ 757 mil e a
-// planilha, R$ 215 mil. Este script põe, dia a dia, os dois lados lado a lado, e diz de que coluna saiu o dia de cada
+// com o `Final` que o quadro do caixa da própria planilha escreve para o dia: em 31/08 as duas ficavam centenas de
+// milhares de reais longe uma da outra. Este script põe, dia a dia, os dois lados lado a lado, e diz de que coluna saiu o dia de cada
 // lançamento — `DIA PG` (o dia do pagamento) ou `VENCIMENTO` (quando o `DIA PG` está vazio). A suspeita é essa: um
 // pagamento sem `DIA PG` cai no dia do vencimento, e o dia fica com saída que não aconteceu nele.
 //

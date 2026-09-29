@@ -9,8 +9,11 @@
 
 import { esquecer, mesCorrente, RAIZ } from '../../../lib/dados.mjs';
 import { pedirReleituraDoOmie } from '../../../lib/regras/omie-releitura.mjs';
+import { quemPediu } from '../../../lib/acesso/sessao.mjs';
 
+// SÓ COM LOGIN (desde 29/09/2026): o `proxy.js` já barra, e a rota confere de novo por conta própria.
 export async function POST(pedido) {
+  if (!quemPediu(pedido)) return Response.json({ ok: false, erro: 'é preciso entrar' }, { status: 401 });
   esquecer();
   // O ano da tela de onde o botão foi apertado — o cache do Omie é guardado por ano. Sem corpo, o ano corrente.
   let ano = mesCorrente().ano;

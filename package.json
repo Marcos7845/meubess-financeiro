@@ -7,6 +7,8 @@
     "build": "node scripts/subir-local.mjs --so-build",
     "start": "node scripts/subir-local.mjs --sem-build",
     "local": "node scripts/subir-local.mjs",
+    "criar-admin": "node scripts/criar-admin.mjs",
+    "testar-login": "node scripts/testar-login.mjs",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
     "conferir-filtros": "node scripts/conferir-filtros.mjs",

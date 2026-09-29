@@ -575,3 +575,21 @@ a { color: inherit; }
   background: var(--cartao); color: var(--texto); border-top: 1px solid var(--texto-fraco);
 }
 .quadro .rolagem-lista { max-height: 420px; }
+
+/* ---------------------------------------------------------------- login e administrador */
+.sessao { white-space: nowrap; }
+.sessao a { color: var(--marca-clara); }
+.sair { display: inline; }
+.sair button { background: none; border: 0; padding: 0; font: inherit; color: var(--marca-clara); text-decoration: underline; cursor: pointer; }
+.entrar { max-width: 360px; margin: 64px auto; background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); overflow: hidden; }
+.entrar header { background: var(--marca-escura); color: var(--texto-claro); padding: 14px 18px; display: flex; gap: 12px; align-items: center; }
+.entrar header img { height: 22px; filter: brightness(0) invert(1); }
+.entrar form, .admin form.bloco { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
+.entrar label, .admin label { font-size: 12px; color: var(--texto-fraco); display: flex; flex-direction: column; gap: 4px; }
+.entrar input, .admin input[type=email], .admin input[type=password], .admin select { font: inherit; font-size: 14px; padding: 7px 9px; border: 1px solid var(--borda); border-radius: 6px; }
+.entrar .aviso, .admin .aviso { margin: 0; }
+.admin { max-width: 860px; margin: 0 auto; padding: 0 12px 30px; }
+.admin table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--cartao); }
+.admin th, .admin td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--borda); }
+.admin td form { display: inline-flex; gap: 6px; align-items: center; }
+.admin .ok { background: #e8f5ee; border: 1px solid var(--positivo); border-radius: var(--raio); padding: 8px 11px; }

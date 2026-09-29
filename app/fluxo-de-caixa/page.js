@@ -30,6 +30,7 @@ import { DiaADiaDoFluxo } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
+import Sessao, { exigirLogin } from '../sessao.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,6 +86,7 @@ function Curva({ nome, c, dinheiro = true }) {
 }
 
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
@@ -413,6 +415,7 @@ export default async function Pagina({ searchParams }) {
           contábil — esse é a tela DRE.
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
+        <Sessao />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </div>

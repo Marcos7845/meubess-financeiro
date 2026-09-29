@@ -11,13 +11,18 @@
 //      `next build` quebra na página de erro que o próprio Next monta. O modo de produção é o que o dono quer de
 //      qualquer jeito (a tela carrega pronta, sem a recompilação a cada visita), então o script o impõe.
 //
-// PORTA 4781, a mesma de sempre, e a que `scripts/capturar-tela.mjs` procura.
+// PORTA 4781, a mesma de sempre, e a que `scripts/capturar-tela.mjs` procura. `--porta N` sobe em outra — para
+// conferir um build novo (`MEUBESS_DIST=.next-prova`) sem derrubar o app que já está de pé na 4781.
+//
+// SEM LOGIN, E SÓ AQUI (desde 29/09/2026, quando o login entrou para o Railway): este script põe
+// `MEUBESS_LOGIN=desligado` no ambiente do servidor, porque ele só atende 127.0.0.1. O servidor da nuvem sobe por
+// `scripts/subir-servidor.mjs`, que exige o login e se recusa a subir com essa variável.
 //
 //   npm run local              # constrói e sobe  ← o comando de produção
 //   npm run start              # só sobe (usa o build que já existe)
 //   npm run build              # só constrói
 //
-// Para parar, Ctrl+C na janela em que ele subiu. Não põe nada no ar fora desta máquina, não faz login, não escreve
+// Para parar, Ctrl+C na janela em que ele subiu. Não põe nada no ar fora desta máquina, não pede login, não escreve
 // no Omie nem nas planilhas: o único lugar em que o app escreve é o cache local `.cache/`.
 
 import { spawnSync } from 'node:child_process';
@@ -27,7 +32,8 @@ import { fileURLToPath } from 'node:url';
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT = path.join(RAIZ, 'node_modules', 'next', 'dist', 'bin', 'next');
 const ENDERECO = '127.0.0.1';
-const PORTA = '4781';
+const iPorta = process.argv.indexOf('--porta');
+const PORTA = iPorta > 0 && /^\d+$/.test(process.argv[iPorta + 1] ?? '') ? process.argv[iPorta + 1] : '4781';
 
 const tem = (f) => process.argv.includes(f);
 const soBuild = tem('--so-build');
@@ -35,18 +41,20 @@ const semBuild = tem('--sem-build');
 
 // O `next` é chamado pelo mesmo node que está rodando este script — sem depender de `.bin/next.cmd`, de shell nem
 // de PATH. `NODE_ENV` é imposto aqui e não vaza para o ambiente do usuário.
-function next(...args) {
+// O LOGIN DESLIGADO VAI SÓ PARA O `next start`: o `next build` é o mesmo que o Railway roda, e nada do build pode
+// sair dele marcado como "sem login".
+function next(args, extra = {}) {
   const r = spawnSync(process.execPath, [NEXT, ...args], {
     cwd: RAIZ,
     stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'production' },
+    env: { ...process.env, NODE_ENV: 'production', ...extra },
   });
   if (r.error) { console.error(r.error.message); process.exit(1); }
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
-if (!semBuild) next('build');
+if (!semBuild) next(['build']);
 if (soBuild) process.exit(0);
 
 console.log(`\nAs três telas sobem em http://${ENDERECO}:${PORTA} — só neste computador. Ctrl+C para parar.\n`);
-next('start', '-H', ENDERECO, '-p', PORTA);
+next(['start', '-H', ENDERECO, '-p', PORTA], { MEUBESS_LOGIN: 'desligado' });

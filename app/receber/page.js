@@ -6,10 +6,12 @@
 // no mês", e as conferências (`npm run conferir-telas`, `conferir-filtros`, `conferir-chave-omie`) seguem conferindo-o.
 
 import { redirect } from 'next/navigation';
+import { exigirLogin } from '../sessao.js';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const leva = new URLSearchParams();
   for (const k of ['ano', 'mes', 'empresa', 'omie']) if (q?.[k]) leva.set(k, String(q[k]));

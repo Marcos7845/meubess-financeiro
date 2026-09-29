@@ -64,6 +64,7 @@ import { MargemNoAno, PesoNaReceita } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
+import Sessao, { exigirLogin } from '../sessao.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,6 +177,7 @@ function MapaDaVariacao({ linhas, colunas, emFoco, bomSubir }) {
 }
 
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
@@ -541,6 +543,7 @@ export default async function Pagina({ searchParams }) {
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo} (${d.dfc.mesesLidos.length} dos 12 meses do ano lidos).` : ''}
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
+        <Sessao />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </div>

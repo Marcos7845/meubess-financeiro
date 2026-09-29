@@ -48,6 +48,7 @@ import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './
 import { Kpi, Quadro } from './quadro.js';
 import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
+import Sessao, { exigirLogin } from './sessao.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,7 @@ export const dynamic = 'force-dynamic';
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
@@ -420,6 +422,7 @@ export default async function Pagina({ searchParams }) {
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo}.` : ''}
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
+        <Sessao />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </div>

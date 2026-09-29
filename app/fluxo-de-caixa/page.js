@@ -211,7 +211,8 @@ export default async function Pagina({ searchParams }) {
       <section className="kpis de-4">
         {[cartao('a-pagar'), cartao('a-receber'), fixas, peso].map((c) => (
           <div key={c.id}>
-            <Kpi c={c} pe={pe(c)} />
+            {/* O peso das fixas sai com UMA casa decimal, a mesma da coluna "% rec. líq." da tabela logo abaixo (6,1%). */}
+            <Kpi c={c} pe={pe(c)} texto={c.id === 'peso-fixas' ? pct1(c.valor) : null} />
             <Origem c={c} />
           </div>
         ))}
@@ -226,8 +227,8 @@ export default async function Pagina({ searchParams }) {
       {/* 4. O MÊS DIA A DIA (pedido do dono, 28/09/2026): o que já foi e o que ainda vem, num gráfico só. */}
       <div className="grade-g">
         <Quadro className="larga" titulo={d.periodo
-            ? `De ${NOMES_DOS_MESES[d.periodo.meses[0]]} a ${NOMES_DOS_MESES[d.periodo.meses.at(-1)]} dia a dia: o que já foi e o que ainda vem`
-            : `${nomeDoMes} dia a dia: o que já foi e o que ainda vem`} fonte={comCodigo(d.diaADia.fonte)}>
+            ? `De ${NOMES_DOS_MESES[d.periodo.meses[0]]} a ${NOMES_DOS_MESES[d.periodo.meses.at(-1)]} dia a dia: ${temPrevisao ? 'o que já foi e o que ainda vem' : 'como o caixa andou'}`
+            : `${nomeDoMes} dia a dia: ${temPrevisao ? 'o que já foi e o que ainda vem' : 'como o caixa andou'}`} fonte={comCodigo(d.diaADia.fonte)}>
           <p className="legenda">
             <span className="chave serie-receita" />entrou &nbsp;
             {temPrevisao && <><span className="chave previsao" />a receber e a pagar (previsão, em cinza) &nbsp;</>}

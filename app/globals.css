@@ -441,7 +441,16 @@ a { color: inherit; }
 .previsao-claro { stop-color: var(--previsao-claro); }
 .serie-previsao-linha { color: var(--previsao-escuro); }  /* a posição prevista do fluxo diário: cinza, tracejada */
 /* A chave da legenda da previsão: o mesmo degradê cinza das barras. */
-.chave.previsao { background: linear-gradient(to top, var(--previsao-escuro), var(--previsao-claro)) !important; }
+.chave.previsao { background: linear-gradient(to top, var(--previsao-escuro), var(--previsao-claro)) !important; border: 1px dashed var(--marca-escura); }
+/* O FLUXO DIÁRIO IMPRESSO EM CINZA (29/09/2026). Só forma, com as cores que já existem:
+ *  - a linha da posição de caixa (`--marca`) ganha um contorno da cor do fundo por baixo (`.contorno-da-posicao`, uma
+ *    segunda linha mais grossa) e o nome na ponta (`.rotulo-da-linha`, com o mesmo contorno no texto). Onde ela cruza
+ *    uma coluna escura, o que separa as duas é o contorno: fundo branco contra a coluna, e a linha contra o branco;
+ *  - as colunas da previsão ganham um contorno tracejado em `--marca-escura`, que as separa do "saiu" mesmo quando o
+ *    cinza delas e o azul dele viram o mesmo tom. */
+.contorno-da-posicao { color: var(--cartao); }
+.rotulo-da-linha { fill: var(--marca); font-size: 11.5px; font-weight: 600; paint-order: stroke; stroke: var(--cartao); stroke-width: 3px; stroke-linejoin: round; }
+.serie-previsao .recharts-rectangle { stroke: var(--marca-escura); stroke-width: 1; stroke-dasharray: 3 2; }
 .chave.previsao-linha { background: repeating-linear-gradient(to right, var(--previsao-escuro) 0 4px, transparent 4px 7px) !important; height: 3px !important; vertical-align: 2px !important; }
 .tabela-fixas { border-collapse: collapse; width: 100%; font-size: 11px; }
 .tabela-fixas th, .tabela-fixas td { padding: 4px 8px; border-bottom: 1px solid var(--borda); text-align: left; }

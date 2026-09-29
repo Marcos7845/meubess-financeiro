@@ -78,9 +78,9 @@ const DICA = {
 // de "direct labeling", e é a razão de a margem da direita deste gráfico ser tão larga.
 // O `desvio` afasta um nome do outro: em dezembro as duas linhas podem estar no mesmo ponto — as duas em zero, por
 // exemplo —, e aí os dois nomes sairiam um em cima do outro.
-function PontaDaLinha({ x, y, index, ultimo, texto, desvio }) {
+function PontaDaLinha({ x, y, index, ultimo, texto, desvio, classe = 'ponta-da-linha', dx = 9, ancora }) {
   if (index !== ultimo) return null;
-  return <text x={x + 9} y={y} dy={desvio} className="ponta-da-linha">{texto}</text>;
+  return <text x={x + dx} y={y} dy={desvio} className={classe} textAnchor={ancora}>{texto}</text>;
 }
 
 export function AnoInteiro({ meses, mesEmFoco }) {
@@ -359,44 +359,15 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
 
 // ================================================================ TELA 3 — FLUXO DE CAIXA
 //
-// O MÊS CONTRA OS ANTERIORES. Colunas de entrada e saída por mês (evento do mês, como na Tela 1) e uma linha do saldo
-// de cada mês por cima, com a média do saldo dos meses anteriores ao da tela como linha tracejada — é ela que diz se o
-// mês ficou fora da curva. Nenhum número novo: entradas e saídas são o bloco `Entradas`/`Gastos` que o gráfico "Receita
-// × despesa por mês" da Tela 1 já desenha; o saldo é a diferença dos dois; a média é a dos meses anteriores, escrita
-// em `docs/fontes.md`.
-export function FluxoNoAno({ meses, mesEmFoco, mediaDoSaldo }) {
-  const medida = useLargura(1100);
-  const dados = meses.map((m) => ({ rotulo: MESES_CURTOS[m.mes], entrou: m.entradas, saiu: m.gastos, saldo: m.saldo }));
-  const foco = MESES_CURTOS[mesEmFoco];
-  return (
-    <div className="grafico" ref={medida.ref}>
-      <ComposedChart width={medida.largura} height={300} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }} barGap={1}>
-        <CartesianGrid {...GRADE} />
-        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
-        <YAxis {...EIXO_VALOR} />
-        <ReferenceLine y={0} className="linha-zero" />
-        {dados.some((d) => d.rotulo === foco) && (
-          <ReferenceLine x={foco} className="marca-do-mes"
-            label={{ value: `${foco} — o mês desta tela`, position: 'top', className: 'marca-do-mes-texto' }} />
-        )}
-        {mediaDoSaldo !== null && mediaDoSaldo !== undefined && (
-          <ReferenceLine y={mediaDoSaldo} className="media-do-saldo"
-          />
-        )}
-        <Tooltip {...DICA} />
-        <Bar dataKey="entrou" name="entrou" className="serie-receita" fill="currentColor" isAnimationActive={false} />
-        <Bar dataKey="saiu" name="saiu" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
-        <Line type="linear" dataKey="saldo" name="resultado" className="serie-saldo" stroke="currentColor" strokeWidth={2}
-          dot={{ r: 3, strokeWidth: 0, fill: 'currentColor' }} isAnimationActive={false} />
-      </ComposedChart>
-    </div>
-  );
-}
-
 // O MÊS DIA A DIA: o que já foi (consolidado) e o que ainda vem (previsão), num gráfico só. Entrada para cima e saída
 // para baixo, cada dia uma coluna; a parte prevista é a mesma cor, mais clara (`.previsao`). A linha é o acumulado do
 // mês — consolidado até hoje, e daí em diante somando a previsão. A marca tracejada é hoje. Nenhum número nasce aqui:
 // cada dia chega pronto de `lib/indicadores/fluxo-de-caixa.mjs`.
+//
+// PARA FUNCIONAR IMPRESSO EM CINZA (29/09/2026): a cor sozinha não separa a linha das colunas — `--marca` contra
+// `--marca-escura` dá 1,75 para 1. Então a linha leva um CONTORNO da cor do fundo (`.contorno-da-posicao`, uma segunda
+// linha por baixo dela) e o NOME NA PONTA, e a previsão leva um contorno tracejado (`.serie-previsao`, em
+// `app/globals.css`). As duas coisas são forma, e forma sobrevive ao cinza.
 export function DiaADiaDoFluxo({ dias, hoje }) {
   const medida = useLargura(1100);
   const dados = dias.map((d) => ({
@@ -411,13 +382,19 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
   }));
   // Sem mês em andamento não há "hoje": num mês à frente tudo é previsão, e a linha inteira fica cinza.
   if (!hoje && dados.length && dias.every((d) => d.fase === 'previsao')) for (const x of dados) x.posicao = null;
+  // ONDE O NOME DA LINHA VAI (rotulagem direta): na ponta de cada uma. A consolidada termina em "hoje", e aí o nome sai
+  // para a esquerda e para cima, para não cair em cima da parte prevista.
+  const ultimoCom = (k) => dados.reduce((u, x, i) => (x[k] !== null ? i : u), -1);
+  const fimDaPosicao = ultimoCom('posicao');
+  const fimDaPrevista = ultimoCom('posicaoPrevista');
+  const posicaoVaiAteOFim = fimDaPosicao === dados.length - 1;
   // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
   // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
   // versão tirava o sinal de tudo, e uma posição negativa aparecia positiva).
   const dica = { ...DICA, formatter: (v, n) => [emReais(n.startsWith('posição de caixa') ? v : Math.abs(v)), n] };
   return (
     <div className="grafico" ref={medida.ref}>
-      <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 16, left: 0, bottom: 4 }}
+      <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 100, left: 0, bottom: 4 }}
         stackOffset="sign" barCategoryGap={2}>
         {/* A PREVISÃO EM DEGRADÊ CINZA (pedido do dono, 28/09/2026): o que ainda não aconteceu não usa as cores de
             entrou e saiu. Mais escuro perto do zero, mais claro na ponta — o degradê é por barra, e não por valor. */}
@@ -452,10 +429,22 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
         <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-entrada)" isAnimationActive={false} />
         <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
         <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-saida)" isAnimationActive={false} />
+        {/* O CONTORNO: a mesma linha, mais grossa e na cor do fundo, por baixo. Fora da dica e da legenda. */}
+        <Line yAxisId="dia" type="linear" dataKey="posicao" className="contorno-da-posicao" stroke="currentColor"
+          strokeWidth={5} dot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
+        <Line yAxisId="dia" type="linear" dataKey="posicaoPrevista" className="contorno-da-posicao" stroke="currentColor"
+          strokeWidth={5} dot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
         <Line yAxisId="dia" type="linear" dataKey="posicao" name="posição de caixa" className="serie-saldo" stroke="currentColor"
-          strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
+          strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false}>
+          <LabelList dataKey="posicao" content={(p) => (posicaoVaiAteOFim
+            ? <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={4} classe="rotulo-da-linha" />
+            : <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={-9} dx={-6} ancora="end" classe="rotulo-da-linha" />)} />
+        </Line>
         <Line yAxisId="dia" type="linear" dataKey="posicaoPrevista" name="posição de caixa (prevista)" className="serie-previsao-linha"
-          stroke="currentColor" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} connectNulls={false} />
+          stroke="currentColor" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} connectNulls={false}>
+          <LabelList dataKey="posicaoPrevista" content={(p) => (
+            <PontaDaLinha {...p} ultimo={fimDaPrevista} texto="posição prevista" desvio={4} classe="rotulo-da-linha" />)} />
+        </Line>
       </ComposedChart>
     </div>
   );

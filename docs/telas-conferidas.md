@@ -27,7 +27,7 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**36 indicadores**: 36 conferidos, 0 divergentes e 0 a conferir.
+**40 indicadores**: 40 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
@@ -39,7 +39,7 @@ não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas
 não venceu, e num mês fechado todo título já venceu. `docs/conferencia.md` mede essa faixa noutra janela de
 vencimento, 01/10/2026 a 31/10/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
-Os outros 35 indicadores são de agosto de 2026.
+Os outros 39 indicadores são de agosto de 2026.
 
 O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 leu `08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 12 dos 12 arquivos do ano.
 
@@ -81,3 +81,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** clientes 87, semNome 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lista de títulos.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** comPedido 128, semPedido 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.
+- **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 119. **Na conferência:** DFC 119. **Também conferido:** contasFixasNoMes 27, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
+- **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 119. **Na conferência:** DFC 119. **Também conferido:** receita 101, deducoes 2. **Fonte:** DFC nas duas pontas.
+- **Tela 3 — Projeção do mês.** **Na tela:** DFC 382. **Na conferência:** DFC 382. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 388. **Na conferência:** DFC 388. **Também conferido:** diasComMovimento 21, bancos 5, bancosQueFecham 5, linhasNaoBaixadasNoSaldo 1, bancosComLancamentoDepoisDoSaldo 2, ponteFecha true. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").

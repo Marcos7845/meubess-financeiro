@@ -103,15 +103,18 @@ export default async function Pagina({ searchParams }) {
   const maior = Math.max(1, ...d.fixas.porConta.map((g) => g.valor));
   // A legenda da previsão segue o que o gráfico desenha: o período inteiro, quando há um, e não só o mês dos cartões.
   const temPrevisao = d.periodo ? d.periodo.dias.some((x) => x.fase !== 'consolidado') && comOmie : d.diaADia.comPrevisao;
-  // A LINHA CONFERIDA COM OS BANCOS: no último dia consolidado, a posição que a tela calculou contra a soma do último
-  // `SALDO` de cada banco no `FLUXO DE CAIXA`. Batendo, a linha é o caixa das contas; não batendo, a tela diz quanto.
-  const ultimoConsolidado = [...d.diaADia.dias].reverse().find((x) => x.fase !== 'previsao');
-  const posicaoConsolidada = ultimoConsolidado ? ultimoConsolidado.acumulado - (ultimoConsolidado.aReceber - ultimoConsolidado.aPagar) : null;
-  const conferencia = d.diaADia.finalDosBancos !== null && posicaoConsolidada !== null
-    ? (Math.abs(posicaoConsolidada - d.diaADia.finalDosBancos) < 100
-      ? `Conferido: no dia ${ultimoConsolidado.dia} a linha dá ${emReais(posicaoConsolidada)}, o mesmo que o último SALDO dos bancos na planilha.`
-      : `No dia ${ultimoConsolidado.dia} a linha dá ${emReais(posicaoConsolidada)}, e o último SALDO dos bancos na planilha soma ${emReais(d.diaADia.finalDosBancos)} (diferença de ${emReais(posicaoConsolidada - d.diaADia.finalDosBancos)}: lançamentos que entram no saldo da planilha e não nas linhas baixadas, como os ainda "a pagar").`)
-    : null;
+  // A LINHA CONFERIDA COM OS BANCOS — a ponte de `conferenciaDosBancos` (`lib/indicadores/fluxo-de-caixa.mjs`), escrita
+  // em português. Ela NÃO diz "a linha é igual ao último SALDO": o saldo corrido da planilha corre até a última linha
+  // digitada do mês, e essas incluem lançamentos que ainda não foram baixados. O que a tela afirma é que a diferença
+  // entre os dois está inteira explicada — e, quando não está, mostra o que sobrou.
+  const cb = d.diaADia.conferenciaDosBancos;
+  // "somando" ou "tirando", pelo SINAL do termo e nunca por um menos escrito na frente do valor: a ponte tem termos que
+  // somam (o não baixado, o baixado depois do corte) e um que subtrai (o lançado depois do último saldo), e cada um pode
+  // vir positivo ou negativo. `emReais(-13.400)` dentro de "tirando" daria "tirando −R$ 13.400", que ninguém lê.
+  const termo = (valor, soma) => `${(soma ? valor : -valor) >= 0 ? 'somando' : 'tirando'} ${emReais(Math.abs(valor))}`;
+  const conferencia = !cb ? null : !cb.fecham
+    ? `A conferência com os bancos não pode ser feita neste mês: o saldo corrido da planilha PULA — anda por um valor diferente do movimento da linha — em ${cb.naoFecham} ${cb.nBancos === 1 ? 'bloco de banco, o único que este arquivo tem' : `dos ${cb.nBancos} blocos de banco`}, e sem essa coluna mantida não há com o que comparar a posição de caixa. Nos meses em que a planilha a mantém — agosto e setembro de 2026, entre outros — a conferência fecha sem sobra.`
+    : `Conferido com os bancos no dia ${cb.corte}: a linha dá ${emReais(cb.posicao)}; ${termo(cb.naoBaixado.valor, true)} que o saldo da planilha já conta e ainda não foi baixado (${cb.naoBaixado.n} ${cb.naoBaixado.n === 1 ? 'linha' : 'linhas'})${cb.baixadoDepois.n ? `, ${termo(cb.baixadoDepois.valor, true)} baixado depois do dia ${cb.corte}` : ''}${cb.depoisDoSaldo.n ? `, e ${termo(cb.depoisDoSaldo.valor, false)} que a planilha lançou depois de parar de escrever o saldo, em ${cb.depoisDoSaldo.n} ${cb.depoisDoSaldo.n === 1 ? 'banco' : 'bancos'}` : ''}, chega-se ao último saldo dos bancos, ${emReais(cb.final)}${cb.diferenca === 0 ? ' — sem um centavo de sobra' : `, com ${emReais(cb.diferenca)} sem explicação`}.`;
   const nomeDoMes = NOMES_DOS_MESES?.[mes] ?? MESES_CURTOS[mes];
   // O PÉ DE CADA CARTÃO: quantas linhas do DFC e quantos títulos do Omie entraram nele — só a fonte que ele usa. Um
   // cartão só do DFC não escreve "sem o Omie", que daria a entender que faltou dado.
@@ -243,11 +246,11 @@ export default async function Pagina({ searchParams }) {
           <p className="legenda">
             {d.diaADia.aberturaDosBancos !== null
               ? <>A linha parte de <b>{emReais(d.diaADia.aberturaDosBancos)}</b>, o caixa das contas antes do primeiro
-                lançamento do mês — da coluna <code>SALDO</code> do <code>FLUXO DE CAIXA</code>, banco por banco
-                ({d.diaADia.bancos.map((x) => `${x.banco ?? 'sem nome'} ${emReais(x.abertura)}`).join(' · ')}). </>
+                lançamento do mês — o saldo corrido do <code>FLUXO DE CAIXA</code> na primeira linha do bloco de cada
+                banco ({d.diaADia.bancos.map((x) => `${x.banco ?? 'sem nome'} ${emReais(x.abertura)}`).join(' · ')}). </>
               : d.diaADia.finalDoMesAnterior !== null
               ? <>A linha parte de <b>{emReais(d.diaADia.finalDoMesAnterior)}</b>, o <code>Final</code> do último dia do
-                quadro do caixa do mês anterior (esta planilha não tem a coluna <code>SALDO</code>). </>
+                quadro do caixa do mês anterior (esta planilha não tem saldo corrido). </>
               : d.diaADia.inicial !== null
               ? <>A linha parte de <b>{emReais(d.diaADia.inicial)}</b>, o <code>Inicial</code> do dia 1 do quadro do caixa. </>
               : <>Sem saldo na planilha, a linha parte do zero e mostra só o que o mês movimentou. </>}

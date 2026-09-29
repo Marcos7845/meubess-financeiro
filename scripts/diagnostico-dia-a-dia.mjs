@@ -46,7 +46,7 @@ else {
   const bancos = r.saldosPorBanco ?? [];
   if (bancos.length) {
     partida = bancos.reduce((t, b) => t + b.abertura, 0);
-    deOnde = `abertura dos bancos pela coluna SALDO: ${bancos.map((b) => `${b.banco ?? '?'} ${R(b.abertura)}`).join(' · ')}; último SALDO somado ${R(bancos.reduce((t, b) => t + b.final, 0))}`;
+    deOnde = `abertura dos bancos pelo saldo corrido: ${bancos.map((b) => `${b.banco ?? '?'} ${R(b.abertura)}`).join(' · ')}; último saldo somado ${R(bancos.reduce((t, b) => t + b.final, 0))}`;
   }
   console.log(`ponto de partida: ${R(partida)} (${deOnde}); Inicial do dia 1 do quadro: ${R(q?.posicao?.inicial?.[0])}\n`);
   console.log(`${col('dia', 3)} | ${col('entrou tela', 14)} ${col('Entradas plan.', 15)} | ${col('saiu tela', 14)} ${col('Gastos plan.', 14)} | ${col('posição tela', 14)} ${col('Final plan.', 14)} | linhas (pelo vencimento)`);
@@ -68,6 +68,7 @@ else {
       console.log(`  linha ${col(l.linha, 5)}  ${l.natureza === 'R' ? 'entrada' : 'saída  '}  ${col(R(Math.abs(l.valor)), 14)}  dia pelo ${l.dataDe ?? '?'}  ${l.pagamento}  ${l.classe} / ${l.sub2}`);
   }
   console.log('\n"linhas (pelo vencimento)": entre parênteses, quantas linhas do dia não tinham DIA PG e caíram nele pelo VENCIMENTO.');
+  ponteDosBancos(r, bancos);
   if (SALDOS) await saldosDoFluxo(r.arquivo);
 }
 
@@ -101,4 +102,42 @@ async function saldosDoFluxo(arquivo) {
   let soma = 0;
   for (const [b, x] of ultimoSaldo) { soma += x.saldo; console.log(`  bloco ${b}  linha ${String(x.linha).padStart(5)}  ${String(x.banco || '(sem banco)').padEnd(14)}  ${R(x.saldo)}`); }
   console.log(`  soma dos blocos: ${R(soma)}`);
+}
+
+// A PONTE ENTRE A LINHA DO GRÁFICO E O SALDO DOS BANCOS — a mesma conta de `conferenciaDosBancos` em
+// `lib/indicadores/fluxo-de-caixa.mjs`, para conferir no terminal o que a tela escreve embaixo do gráfico diário.
+//
+//   posição no corte + o que o saldo já desconta e não está baixado + o baixado depois do corte
+//     − o que a planilha lançou depois de parar de escrever o saldo = último saldo escrito, somado
+//
+// O CORTE é o último dia consolidado: hoje, no mês corrente; o último dia do mês, num mês fechado. A ponte NÃO compara
+// a posição direto com o último saldo — o saldo corrido da planilha corre até a última linha digitada do mês, e essas
+// linhas incluem o que ainda não foi baixado. O que se prova é que nada sobra sem explicação.
+function ponteDosBancos(r, bancos) {
+  if (!bancos.length || !r.ok) { console.log('\nsem bloco de banco com saldo corrido: não dá para fazer a ponte.'); return; }
+  const hoje = new Date();
+  const mesCorrente = hoje.getFullYear() === ANO && hoje.getMonth() + 1 === MES;
+  const corte = mesCorrente ? hoje.getDate() : ultimoDia(ANO, MES);
+  const abertura = bancos.reduce((t, b) => t + b.abertura, 0);
+  const fim = bancos.reduce((t, b) => t + b.final, 0);
+  const ate = r.linhas.filter((l) => l.dia <= corte);
+  const depois = r.linhas.filter((l) => l.dia > corte);
+  const posicao = abertura + ate.reduce((t, l) => t + l.valor, 0);
+  const naoBaixado = bancos.reduce((t, b) => t + (b.naoBaixado ?? 0), 0);
+  const nNaoBaixado = bancos.reduce((t, b) => t + (b.linhasNaoBaixado ?? 0), 0);
+  const depoisV = depois.reduce((t, l) => t + l.valor, 0);
+  const depoisDoSaldo = bancos.reduce((t, b) => t + (b.depoisDoUltimoSaldo ?? 0), 0);
+  const dif = posicao + naoBaixado + depoisV - depoisDoSaldo - fim;
+  console.log(`\na ponte entre a linha do gráfico e o saldo dos bancos (corte no dia ${corte}${mesCorrente ? ', hoje' : ', mês fechado'}):`);
+  for (const b of bancos) {
+    console.log(`  ${String(b.banco ?? '?').padEnd(10)} abertura ${col(R(b.abertura), 16)} (linha ${b.linhaAbertura})  último saldo ${col(R(b.final), 16)} (linha ${b.linhaFinal ?? '—'})  movimento ${col(R(b.movimento), 16)}  não baixado ${col(R(b.naoBaixado), 14)} em ${b.linhasNaoBaixado} linhas  depois do último saldo ${col(R(b.depoisDoUltimoSaldo), 14)}  ${b.semSaldoEscrito ? 'SEM SALDO ESCRITO' : b.fecha ? 'o saldo anda com o movimento' : `NÃO ANDA (${b.desvios} desvios)`}`);
+  }
+  console.log(`  posição no dia ${corte}: ${R(posicao)}`);
+  console.log(`  + o que o saldo já desconta e não está baixado (${nNaoBaixado} linhas): ${R(naoBaixado)}`);
+  console.log(`  + baixado depois do dia ${corte} (${depois.length} linhas): ${R(depoisV)}`);
+  console.log(`  − lançado depois de a planilha parar de escrever o saldo (${bancos.filter((b) => (b.depoisDoUltimoSaldo ?? 0) !== 0).length} bancos): ${R(depoisDoSaldo)}`);
+  console.log(`  = ${R(posicao + naoBaixado + depoisV - depoisDoSaldo)}   ·   último saldo somado dos bancos: ${R(fim)}`);
+  console.log(`  diferença: ${R(dif)} (${(Math.abs(dif) / Math.max(1, Math.abs(fim)) * 100).toFixed(4)}% do saldo dos bancos) — ${dif === 0 ? 'CONFERE, sem um centavo de sobra' : 'NÃO CONFERE'}`);
+  const naoFecham = bancos.filter((b) => !b.fecha);
+  if (naoFecham.length) console.log(`  ATENÇÃO: em ${naoFecham.length} de ${bancos.length} bancos o saldo corrido da planilha não anda com o movimento; a ponte não se sustenta neste mês.`);
 }

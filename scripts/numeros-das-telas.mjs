@@ -47,7 +47,7 @@
 // sempre vazia — todo título que já venceu está pago ou atrasado —, então o caso real dela só existe em título que
 // ainda não venceu. Essa faixa, e só ela, é conferida numa janela que começa HOJE: o mês seguinte inteiro, com o que
 // resta do mês corrente lido ao lado para dizer por que o mês seguinte foi o escolhido. As duas leituras são gravadas
-// no cache por `scripts/ler-omie-faltante.mjs`; os outros 35 indicadores seguem no mês fechado.
+// no cache por `scripts/ler-omie-faltante.mjs`; todos os outros indicadores seguem no mês fechado.
 //
 //   node scripts/numeros-das-telas.mjs                 # agosto de 2026, tentando ler o DFC
 //   node scripts/numeros-das-telas.mjs --sem-dfc       # só o cache do Omie; as linhas do DFC saem "a conferir:"
@@ -69,7 +69,8 @@ import { abrirCacheOmie } from '../lib/regras/cache-omie.mjs';
 import { lerRecorte, criarRegras } from '../lib/regras/movimentos.mjs';
 import { NOMES_DOS_MESES, dois, ultimoDia, dataBR, noMesDe, noAnoDe } from '../lib/regras/periodo.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
-import { lerDfc, norm, ePessoalDfc, eReceitaTela1Dfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
+import { lerDfc, norm, ePessoalDfc, eReceitaTela1Dfc, eDeducaoDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
+import { lerDespesasFixas } from '../lib/regras/despesas-fixas.mjs';
 import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1038,7 +1039,7 @@ linhaT3({
   // sem espaço; pelos campos é o mesmo status, e `FAIXA_DO_STATUS` tira o espaço antes de comparar.
   const grafias = (m) => [...new Set(EMPRESAS.flatMap((emp) => m[emp].map((t) => String(t.cabecTitulo?.cStatus ?? ''))))].sort();
   const comEspaco = [...new Set([...grafias(ABERTO_SEGUINTE), ...grafias(ABERTO_CORRENTE)])].filter((g) => /\s/.test(g));
-  const POR_QUE = `o mês usado nesta linha é **${MES_DA_FAIXA_ABERTO}**, e não ${NOME_DO_MES} de ${ANO} como nos outros 35 indicadores: em ${NOME_DO_MES} esta faixa deu 0 títulos, e num mês fechado ela é sempre vazia — todo título que já venceu está pago ou atrasado, e os quatro \`cStatus\` da faixa são os de um título que ainda não venceu. Das duas janelas que começam hoje (${HOJE}), ${MES_DA_FAIXA_ABERTO} é o primeiro mês inteiramente à frente: a janela é o mês todo, como nos outros indicadores, e nenhum título dele venceu. Do mês corrente sobram ${DIAS_QUE_RESTAM} dias (${JANELA_CORRENTE[0]} a ${JANELA_CORRENTE[1]}), que são um trecho de ${MES_CORRENTE_NOME} e não um mês; essa janela foi lida também e traz ${t3Total(ABERTO_CORRENTE)} títulos na faixa (${ABERTO_CORRENTE[1].length} na empresa 1 e ${ABERTO_CORRENTE[2].length} na 2)`;
+  const POR_QUE = `o mês usado nesta linha é **${MES_DA_FAIXA_ABERTO}**, e não ${NOME_DO_MES} de ${ANO} como em todos os outros indicadores desta página: em ${NOME_DO_MES} esta faixa deu 0 títulos, e num mês fechado ela é sempre vazia — todo título que já venceu está pago ou atrasado, e os quatro \`cStatus\` da faixa são os de um título que ainda não venceu. Das duas janelas que começam hoje (${HOJE}), ${MES_DA_FAIXA_ABERTO} é o primeiro mês inteiramente à frente: a janela é o mês todo, como nos outros indicadores, e nenhum título dele venceu. Do mês corrente sobram ${DIAS_QUE_RESTAM} dias (${JANELA_CORRENTE[0]} a ${JANELA_CORRENTE[1]}), que são um trecho de ${MES_CORRENTE_NOME} e não um mês; essa janela foi lida também e traz ${t3Total(ABERTO_CORRENTE)} títulos na faixa (${ABERTO_CORRENTE[1].length} na empresa 1 e ${ABERTO_CORRENTE[2].length} na 2)`;
   linhaT3({
     nome: 'Valor pendente',
     filtro: `\`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "R"\` e \`dDtVencDe\`/\`dDtVencAte\` em ${JANELA_SEGUINTE[0]} a ${JANELA_SEGUINTE[1]} (leitura feita no Omie em ${HOJE}, só leitura), recorte da MeuBESS por \`cabecTitulo.nCodCC\`, fora os \`cStatus = "CANCELADO"\` (que ficam fora da tela, decisão do dono de 25/09/2026), faixa **em aberto** (\`cStatus\` \`EMABERTO\`, \`AVENCER\`, \`VENCEHOJE\` ou \`PAGTO_PARCIAL\`, decisão do dono de 25/09/2026, a regra como está escrita em \`docs/fontes.md\`); soma \`resumo.nValAberto\``,
@@ -1132,6 +1133,120 @@ linhaT3({
   contagem: `${t3Total(T3_NA_TELA)} títulos na rosca — pago ${t3Total(T3_PAGO)}, atrasado ${t3Total(T3_ATRASADO)}, em aberto ${t3Total(T3_ABERTO)}${SOBRA_DE_STATUS}`,
   lista: T3_NA_TELA,
 });
+
+// ---------------------------------------------------------------- Tela 3, os números que o Fluxo de Caixa trouxe
+//
+// A Tela 3 virou Fluxo de Caixa em 28/09/2026, e os quatro números que NASCERAM nela — despesas fixas pagas, o peso
+// delas na receita líquida, a projeção do mês e o gráfico do mês dia a dia — não passavam por esta página. Os outros
+// seis cartões dela são cartões das Telas 1 e 3 pelo mesmo cálculo, e já estão conferidos nas linhas deles.
+//
+// Os quatro são de fonte DFC (a projeção soma o Omie por cima), e por isso são conferidos como os do DFC já eram: a
+// contagem das linhas que o filtro de `docs/fontes.md` pega, e a linha de menor número achada de volta numa segunda
+// leitura crua da aba `FLUXO DE CAIXA`. Nenhum valor em dinheiro entra aqui.
+const FIXAS = lerDespesasFixas(RAIZ);
+const eFixaDfc = (l) => l.natureza === 'P' && FIXAS.fixas.has(l.sub2);
+const eReceitaLiquidaDfc = (l) => l.natureza === 'R' && DFC_RECEITA.includes(l.sub2);
+const FILTRO_FLUXO = `aba \`FLUXO DE CAIXA\` do arquivo do mês, linhas baixadas (\`PAGAMENTO\` diferente de A PAGAR / A RECEBER) com \`DIA PG\` no mês`;
+
+if (!FIXAS.respondido) {
+  add({
+    tela: 'Tela 3', nome: 'Despesas fixas pagas', fonte: 'DFC', estado: 'a-conferir',
+    filtro: `${FILTRO_FLUXO}, coluna \`SAIDA\`, só as linhas cujo \`SUB 2\` está na lista de fixas de \`dados/despesas-fixas.json\``,
+    contagem: 'nenhuma linha: a classificação de despesa fixa ainda não foi respondida pela gestora',
+    motivo: 'a lista de despesas fixas de `dados/despesas-fixas.json` não está respondida, e sem ela a tela não mostra número de despesa fixa (`docs/fontes.md`)',
+    caso: '',
+  });
+  add({
+    tela: 'Tela 3', nome: 'Fixas / receita líquida', fonte: 'DFC', estado: 'a-conferir',
+    filtro: 'despesas fixas pagas ÷ receita líquida do mês, as duas do DFC',
+    contagem: 'nenhuma linha: a classificação de despesa fixa ainda não foi respondida pela gestora',
+    motivo: 'o numerador desta razão é a despesa fixa, e a lista de `dados/despesas-fixas.json` não está respondida',
+    caso: '',
+  });
+} else {
+  const rFixas = MOTIVO_DFC ? null : conferirDfc(eFixaDfc);
+  const contasFixas = MOTIVO_DFC ? null : new Set(DFC.linhas.filter(eFixaDfc).map((l) => l.sub2));
+  add({
+    tela: 'Tela 3', nome: 'Despesas fixas pagas', fonte: 'DFC',
+    filtro: `${FILTRO_FLUXO}, coluna \`SAIDA\`, só as linhas cujo \`SUB 2\` a gestora marcou como Fixa em \`dados/despesas-fixas.json\` (${FIXAS.fixas.size} contas${FIXAS.respondidoEm ? `, respondido em ${FIXAS.respondidoEm}` : ''}); soma a \`SAIDA\` delas`,
+    contagem: MOTIVO_DFC
+      ? 'as planilhas não foram lidas nesta rodada'
+      : `${pl(rFixas.quantas, 'linha de saída fixa no mês', 'linhas de saída fixas no mês')}, em ${pl(contasFixas.size, 'conta fixa distinta', 'contas fixas distintas')} das ${FIXAS.fixas.size} que a gestora marcou; ${pl(FIXAS.ausentesDaResposta.length, 'conta de despesa não voltou na resposta dela e fica fora das fixas', 'contas de despesa não voltaram na resposta dela e ficam fora das fixas')} (${FIXAS.ausentesDaResposta.join(', ')})`,
+    estado: MOTIVO_DFC ? 'a-conferir' : (rFixas.vazio ? 'a-conferir' : (rFixas.ok ? 'conferido' : 'divergente')),
+    motivo: MOTIVO_DFC ? `a fonte deste indicador é o DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`
+      : (rFixas.vazio ? 'nenhuma linha de despesa fixa no mês, então não há caso real para conferir'
+        : (rFixas.ok ? null : `a linha do DFC não conferiu: ${rFixas.dif.join('; ')}`)),
+    caso: MOTIVO_DFC || rFixas.vazio ? '' : textoDoCasoDfc(rFixas),
+  });
+
+  const rRl = MOTIVO_DFC ? null : conferirDfc(eReceitaLiquidaDfc);
+  const nDed = MOTIVO_DFC ? null : DFC.linhas.filter(eDeducaoDfc).length;
+  add({
+    tela: 'Tela 3', nome: 'Fixas / receita líquida', fonte: 'DFC',
+    filtro: `despesas fixas pagas ÷ receita líquida do mês, as duas do DFC. A receita líquida é a MESMA conta do cartão "% desp. funcionários / receita líquida" da Tela 1: linhas de \`SUB 2\` ${DFC_RECEITA.join(', ')}, menos as de dedução (\`SUB 2\` DEVOLUCÃO ou \`CLASS. CONTABIL\` ESTORNO)`,
+    contagem: MOTIVO_DFC
+      ? 'as planilhas não foram lidas nesta rodada'
+      : `${pl(rFixas.quantas, 'linha fixa no numerador', 'linhas fixas no numerador')} e ${pl(rRl.quantas, 'linha de receita no denominador', 'linhas de receita no denominador')}, menos ${pl(nDed, 'linha de dedução', 'linhas de dedução')}`,
+    estado: MOTIVO_DFC ? 'a-conferir' : (rRl.vazio ? 'a-conferir' : (rRl.ok ? 'conferido' : 'divergente')),
+    motivo: MOTIVO_DFC ? `as duas pontas desta razão são do DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`
+      : (rRl.vazio ? 'nenhuma linha de receita no mês, então não há denominador para conferir'
+        : (rRl.ok ? null : `a linha de receita do DFC não conferiu: ${rRl.dif.join('; ')}`)),
+    caso: MOTIVO_DFC || rRl.vazio ? '' : `o denominador, ${textoDoCasoDfc(rRl)}`,
+  });
+}
+
+// A PROJEÇÃO: num mês fechado ela não existe — é o resultado do mês, e o cartão do Omie vira "venceu no mês e não foi
+// pago". O que se confere aqui é justamente isso: as linhas do DFC que a conta consome, e a ausência do lado do Omie.
+{
+  const rEnt = MOTIVO_DFC ? null : conferirDfc(eReceitaTela1Dfc);
+  const nSaida = MOTIVO_DFC ? null : DFC.linhas.filter((l) => l.natureza === 'P').length;
+  add({
+    tela: 'Tela 3', nome: 'Projeção do mês', fonte: 'DFC + Omie',
+    filtro: `resultado do mês (Entrou − Saiu, do ${FILTRO_FLUXO}) + ainda a receber no mês (Omie, faixa EM ABERTO) − ainda a pagar no mês (Omie, títulos a pagar vencendo no mês e sem baixa). **Só com o mês em andamento:** num mês fechado o cartão diz "mês fechado" e não traz projeção, e o cartão do Omie ao lado passa a se chamar "Venceu no mês e não foi pago" (\`docs/fontes.md\`)`,
+    contagem: MOTIVO_DFC
+      ? 'as planilhas não foram lidas nesta rodada'
+      : `${pl(rEnt.quantas + nSaida, 'linha do `FLUXO DE CAIXA` no mês', 'linhas do `FLUXO DE CAIXA` no mês')} do lado do DFC — ${n(rEnt.quantas)} de entrada e ${n(nSaida)} de saída; sem título do Omie, porque ${NOME_DO_MES} é mês fechado e num mês fechado não há projeção — a tela não mostra contagem do Omie neste cartão, e não um zero`,
+    estado: MOTIVO_DFC ? 'a-conferir' : (rEnt.vazio ? 'a-conferir' : (rEnt.ok ? 'conferido' : 'divergente')),
+    motivo: MOTIVO_DFC ? `a parte do DFC desta conta é a fonte principal e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`
+      : (rEnt.vazio ? 'nenhuma linha de entrada no mês, então não há caso real para conferir'
+        : (rEnt.ok ? null : `a linha do DFC não conferiu: ${rEnt.dif.join('; ')}`)),
+    caso: MOTIVO_DFC || rEnt.vazio ? '' : textoDoCasoDfc(rEnt),
+  });
+}
+
+// O MÊS DIA A DIA: o consolidado é o mesmo conjunto de linhas dos cartões Entrou e Saiu, repartido pelo dia de
+// `DIA PG`; a previsão é do Omie e não existe num mês fechado. O que esta linha acrescenta é a PONTE COM OS BANCOS:
+// a posição do último dia consolidado mais o que o saldo corrido da planilha já desconta e não está baixado tem de dar
+// o último saldo somado dos bancos. Só o veredito entra aqui — o valor em reais fica no terminal
+// (`scripts/diagnostico-dia-a-dia.mjs`).
+{
+  const bancos = MOTIVO_DFC ? [] : (DFC.saldosPorBanco ?? []);
+  const rDia = MOTIVO_DFC ? null : conferirDfc(() => true);
+  const dias = MOTIVO_DFC ? null : new Set(DFC.linhas.map((l) => l.dia)).size;
+  const naoBaixado = bancos.reduce((t, b) => t + (b.naoBaixado ?? 0), 0);
+  const nNaoBaixado = bancos.reduce((t, b) => t + (b.linhasNaoBaixado ?? 0), 0);
+  const fecham = bancos.filter((b) => b.fecha).length;
+  const posicao = bancos.reduce((t, b) => t + b.abertura + b.movimentoUsado, 0);
+  const fim = bancos.reduce((t, b) => t + b.final, 0);
+  // A PONTE, a mesma de `conferenciaDosBancos` em `lib/indicadores/fluxo-de-caixa.mjs`. O último termo é o movimento que
+  // a planilha lançou DEPOIS de parar de escrever o saldo no bloco — em agosto de 2026 são dois bancos.
+  const depoisDoSaldo = bancos.reduce((t, b) => t + (b.depoisDoUltimoSaldo ?? 0), 0);
+  const nDepoisDoSaldo = bancos.filter((b) => (b.depoisDoUltimoSaldo ?? 0) !== 0).length;
+  const ponteFecha = bancos.length > 0 && fecham === bancos.length && posicao + naoBaixado - depoisDoSaldo - fim === 0;
+  add({
+    tela: 'Tela 3', nome: 'O mês dia a dia', fonte: 'DFC (consolidado) + Omie (previsão)',
+    filtro: `consolidado: ${FILTRO_FLUXO}, repartidas pelo dia de \`DIA PG\`, a mesma conta dos cartões Entrou e Saiu; previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento, **só com o mês em andamento**. A linha é a posição de caixa e soma TODAS as linhas do dia, transferência inclusive; ela parte do saldo corrido de cada banco na primeira linha do bloco dele (\`saldosPorBanco\` em \`lerMesDoDfc\`)`,
+    contagem: MOTIVO_DFC
+      ? 'as planilhas não foram lidas nesta rodada'
+      : `${pl(rDia.quantas, 'linha do `FLUXO DE CAIXA` no mês', 'linhas do `FLUXO DE CAIXA` no mês')} no consolidado, em ${pl(dias, 'dia com movimento', 'dias com movimento')}; sem título de previsão, porque ${NOME_DO_MES} é mês fechado; ${pl(bancos.length, 'bloco de banco', 'blocos de banco')}, ${fecham} em que o saldo corrido anda exatamente com o movimento, ${pl(nNaoBaixado, 'linha que o saldo já desconta e não está baixada', 'linhas que o saldo já desconta e não estão baixadas')} e ${pl(nDepoisDoSaldo, 'banco em que a planilha lançou depois de parar de escrever o saldo', 'bancos em que a planilha lançou depois de parar de escrever o saldo')}; a ponte com os bancos ${ponteFecha ? 'fecha sem sobra' : 'não fecha'}`,
+    estado: MOTIVO_DFC ? 'a-conferir' : (rDia.vazio ? 'a-conferir' : (rDia.ok && ponteFecha ? 'conferido' : (rDia.ok ? 'a-conferir' : 'divergente'))),
+    motivo: MOTIVO_DFC ? `a fonte do consolidado é o DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`
+      : (rDia.vazio ? 'nenhuma linha no mês, então não há caso real para conferir'
+        : (!rDia.ok ? `a linha do DFC não conferiu: ${rDia.dif.join('; ')}`
+          : (ponteFecha ? null : `a ponte com os bancos não fecha em ${NOME_DO_MES}: em ${bancos.length - fecham} de ${bancos.length} blocos o saldo corrido da planilha PULA — ele anda por um valor diferente do movimento da linha —, e sem essa coluna mantida não há com o que comparar a posição de caixa. O valor da sobra sai só no terminal, em \`node scripts/diagnostico-dia-a-dia.mjs --mes ${MES} --saldos\``))),
+    caso: MOTIVO_DFC || rDia.vazio ? '' : `${textoDoCasoDfc(rDia)}; e a ponte com os bancos, banco por banco: ${bancos.map((b) => `${b.banco ?? 'sem nome'} (abertura na linha ${b.linhaAbertura}, último saldo escrito na linha ${b.linhaFinal ?? '—'}, ${b.semSaldoEscrito ? 'nenhum saldo escrito' : b.fecha ? 'o saldo anda com o movimento' : `${b.desvios} pulo(s) do saldo`}${(b.depoisDoUltimoSaldo ?? 0) !== 0 ? ', com lançamento depois do último saldo escrito' : ''})`).join(', ')}`,
+  });
+}
 
 // ================================================================ a trava do mês conferido
 //

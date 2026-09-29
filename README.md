@@ -5,8 +5,11 @@ acesso próprio). Não se mistura com o Painel Logístico (`meubess_dashboard`),
 Lovable.
 
 **Estado:** as **três telas** — Gestão de Contas, DRE e **Fluxo de Caixa** — estão construídas e rodando localmente.
-A Tela 3 era Contas a Receber até 28/09/2026, quando o dono a redefiniu como Fluxo de Caixa (`docs/layout.md`); as
-despesas fixas dela esperam a classificação da gestora (`docs/despesas-fixas-para-classificar.xlsx`).
+A Tela 3 era Contas a Receber até 28/09/2026, quando o dono a redefiniu como Fluxo de Caixa (`docs/layout.md`), e a
+classificação de despesa fixa da gestora chegou no mesmo dia (33 fixas, 21 variáveis, 3 contas de despesa em aberto).
+O que essa tela ainda espera de resposta do dono ou da gestora, cada ponto com a pergunta e a recomendação, está em
+[`docs/passagem-fluxo-de-caixa.md`](docs/passagem-fluxo-de-caixa.md) — o registro vivo dela, e o primeiro arquivo a ler
+quem for continuar o trabalho.
 As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
 [`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
 [`docs/telas-conferidas.md`](docs/telas-conferidas.md). Os **filtros** de cada tela — onde valem e onde não valem, com um
@@ -126,13 +129,18 @@ e fevereiro têm o DFC cheio e quase nenhum lançamento do Omie no recorte da Me
 dois meses misturam um lado cheio com outro vazio e a coluna não se lê como DRE. A leitura do Omie que está no cache
 vai de **01/01 a 30/09**; mês fora dessa janela não vira coluna.
 
-A **Tela 3 é a carteira de títulos a receber** e fica **no Omie inteira**: o DFC é caixa e não registra carteira em
-aberto nem tem cadastro de cliente. O seletor de mês é a **janela de vencimento** da consulta, e as três faixas
-(pago, atrasado, em aberto) são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. Num mês já
-fechado o cartão **Valor Pendente** é sempre zero — todo título que venceu está pago ou atrasado —, e a própria tela
-diz isso; escolha um mês à frente (por exemplo <http://127.0.0.1:4781/receber?ano=2026&mes=10>) para ver a carteira a
-vencer. O **nome do cliente** aparece na tela, vindo de `geral/clientes`, e **nunca** em arquivo versionado: a
-captura troca cada nome pelo código antes de gravar.
+A **Tela 3 é o Fluxo de Caixa** desde 28/09/2026, e mistura as duas fontes: o caixa do mês vem do DFC e o que falta
+pagar e receber vem do Omie. Ela tem oito cartões — seis são cartões que já existiam, pelo mesmo cálculo — e quatro
+números que nasceram nela: as **despesas fixas pagas** (pela lista que a gestora respondeu), o **peso delas na receita
+líquida**, a **projeção do mês** e o **mês dia a dia** num gráfico só, consolidado e previsão, partindo da posição de
+caixa real. Embaixo do gráfico diário a tela **confere a posição com o saldo dos bancos da planilha**, e a conta que
+fecha os dois está em [`docs/fontes.md`](docs/fontes.md); em setembro e em agosto de 2026 ela fecha sem sobra.
+
+A **carteira de títulos a receber** continua calculada em `lib/indicadores/tela-3.mjs` — é dela que sai o "ainda a
+receber no mês" —, mas não é mais uma tela: `/receber` leva para `/fluxo-de-caixa`. Ela fica **no Omie inteira** (o DFC
+é caixa e não registra carteira em aberto nem tem cadastro de cliente), e as três faixas (pago, atrasado, em aberto)
+são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. O **nome do cliente** nunca entra em
+arquivo versionado: a captura troca cada nome pelo código antes de gravar.
 
 **As fontes são relidas de hora em hora** (decisão do dono, 25/09/2026), e "atualizar agora" força a releitura na
 hora. Desde 27/09/2026 reler o Omie quer dizer **ir à API do Omie**, não só reabrir o cache: a releitura busca as 22
@@ -160,7 +168,7 @@ total pode bater por acaso com a repartição errada. Os números esperados são
 `docs/conferencia.md`, não recalculados, para o teste não comparar o código com ele mesmo. O comando sai com erro se
 alguma linha ficar **divergente**.
 
-**Um indicador dos 36 não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+**Um indicador não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado, porque os quatro `cStatus` dela são os de um título que
 ainda não venceu. `docs/conferencia.md` mede essa faixa noutra janela de vencimento e diz na própria linha qual foi;
 o teste **lê a janela do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.

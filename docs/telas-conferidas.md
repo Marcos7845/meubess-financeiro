@@ -27,7 +27,7 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**40 indicadores**: 40 conferidos, 0 divergentes e 0 a conferir.
+**44 indicadores**: 44 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
@@ -39,7 +39,7 @@ não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas
 não venceu, e num mês fechado todo título já venceu. `docs/conferencia.md` mede essa faixa noutra janela de
 vencimento, 01/10/2026 a 31/10/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
-Os outros 39 indicadores são de agosto de 2026.
+Os outros 43 indicadores são de agosto de 2026.
 
 O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 leu `08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 12 dos 12 arquivos do ano.
 
@@ -67,12 +67,16 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — (=) Receita líquida.** **Na tela:** Omie 120. **Na conferência:** Omie 120. **Fonte:** mistura as duas, calculado.
 - **Tela 2 — (−) Custos de vendas: custo do produto, outros custos.** **Na tela:** DFC 62 e Omie 82. **Na conferência:** DFC 62 e Omie 82. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Lucro bruto.** **Na tela:** Omie 120. **Na conferência:** Omie 120. **Também conferido:** despesa 299. **Fonte:** mistura as duas, calculado.
-- **Tela 2 — (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI.** **Na tela:** Omie 201. **Na conferência:** Omie 201. **Também conferido:** titulos1 94, baixas1 2, avulsos1 45, titulos2 4, baixas2 0, avulsos2 56. **Fonte:** Omie recortado (principal) / DFC por `SUB 2` (confronto).
+- **Tela 2 — (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI.** **Na tela:** Omie 198. **Na conferência:** Omie 198. **Também conferido:** titulos1 94, baixas1 2, avulsos1 42, titulos2 4, baixas2 0, avulsos2 56. **Fonte:** Omie recortado (principal) / DFC por `SUB 2` (confronto).
 - **Tela 2 — (=) EBITDA.** **Na tela:** Omie 419. **Na conferência:** Omie 419. **Fonte:** Omie recortado, calculado.
 - **Tela 2 — (+/−) Resultado financeiro: receitas e despesas financeiras.** **Na tela:** Omie 28. **Na conferência:** Omie 28. **Também conferido:** receita1 10, receita2 3, despesa1 11, despesa2 4. **Fonte:** Omie recortado (principal) / DFC por `SUB 2` (confronto).
 - **Tela 2 — (−) Impostos pagos (guias).** **Na tela:** DFC 5 e Omie 4. **Na conferência:** DFC 5 e Omie 4. **Também conferido:** titulos 1, baixas 0, avulsos 3. **Fonte:** DFC, guias pagas (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Lucro líquido.** **Na tela:** Omie 419. **Na conferência:** Omie 419. **Fonte:** Omie recortado, calculado.
 - **Tela 2 — (=) sem conta.** **Na tela:** Omie 21. **Na conferência:** Omie 21. **Também conferido:** empresa1 21, empresa2 0. **Fonte:** Omie recortado.
+- **Tela 2 — Capital de giro tomado.** **Na tela:** DFC 2 e Omie 3. **Na conferência:** DFC 2 e Omie 3. **Também conferido:** pares 2, lancamentos 3, captado 0, amortizado 3, juros 0, iof 0, contratos 0. **Fonte:** fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos.
+- **Tela 2 — Obrigações com clientes.** **Na tela:** Omie 78. **Na conferência:** Omie 78. **Também conferido:** pedidoCancelado 37, noInicio 58, novos 45, baixados 25. **Fonte:** Omie, sinais `ADVR` recebidos de pedidos ainda sem NF, pelo valor nominal.
+- **Tela 2 — Dívida líquida.** **Na tela:** DFC 5. **Na conferência:** DFC 5. **Também conferido:** contratos 0. **Fonte:** capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
+- **Tela 2 — Resultado sem dinheiro de terceiros.** **Na tela:** Omie 419. **Na conferência:** Omie 419. **Também conferido:** divida 3, sinais 70. **Fonte:** lucro líquido do DRE do mês − variação das obrigações com clientes − captação líquida de empréstimos.
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** empresa1 0, empresa2 128, cancelados 15. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor recebido.** **Na tela:** Omie 91. **Na conferência:** Omie 91. **Também conferido:** empresa1 0, empresa2 91. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor pendente.** **Na tela:** Omie 10. **Na conferência:** Omie 10. **Também conferido:** empresa1 0, empresa2 10. **Fonte:** Omie, títulos a receber por vencimento.

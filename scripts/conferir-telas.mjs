@@ -130,6 +130,31 @@ const EXTRATORES = {
     extras: { empresa1: /— ([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2/ },
   },
 
+  // ---------------------------------------------------------------- Tela 2, o bloco "Compromissos" (29/09/2026)
+  'capital-de-giro': {
+    dfc: /do Omie e ([\d.]+) linhas? do DFC no fluxo do mês/, omie: /^([\d.]+) lançamentos? do Omie e/,
+    extras: {
+      pares: /no fluxo do mês, ([\d.]+) deles o mesmo pagamento/, lancamentos: /— ([\d.]+) pagamentos?:/,
+      captado: /captado ([\d.]+)/, amortizado: /amortizado ([\d.]+)/, juros: /juros ([\d.]+)/, iof: /IOF ([\d.]+)/,
+      contratos: /; ([\d.]+) contratos? na planilha de contratos/,
+    },
+  },
+  'obrigacoes-clientes': {
+    dfc: null, omie: /^([\d.]+) sina(?:l|is) `ADVR` em aberto/,
+    extras: {
+      pedidoCancelado: /, ([\d.]+) deles de pedido cancelado/, noInicio: /; ([\d.]+) no fim do mês anterior/,
+      novos: /, ([\d.]+) sina(?:l novo|is novos) no mês/, baixados: /e ([\d.]+) baixados com a NF/,
+    },
+  },
+  'divida-liquida': {
+    dfc: /^([\d.]+) blocos? de banco/, omie: null,
+    extras: { contratos: /; ([\d.]+) contratos? na planilha de contratos/ },
+  },
+  'resultado-sem-terceiros': {
+    dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
+    extras: { divida: /, ([\d.]+) pagamentos? do fluxo da dívida/, sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
+  },
+
   // ---------------------------------------------------------------- Tela 3
   // Nenhum indicador desta tela tem lado do DFC: ela fica no Omie inteira (`docs/fontes.md`).
   'valor-previsto': {
@@ -283,7 +308,7 @@ if (!linhaPendente) {
   }
 }
 
-const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela,
+const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela, ...tela2.compromissos.itens,
   ...tela3.cartoes, ...tela3.blocos,
   // Só os quatro que nasceram no Fluxo de Caixa: os outros seis cartões dele são cartões das Telas 1 e 3 pelo mesmo
   // cálculo, e já estão comparados pelo id de lá.
@@ -325,6 +350,11 @@ const NOME_NA_CONFERENCIA = {
     'dre-impostos': '(−) Impostos pagos (guias)',
     'dre-lucro-liquido': '(=) Lucro líquido',
     'dre-sem-conta': '(=) sem conta',
+    // O bloco "Compromissos", abaixo do DRE (decisão do dono, 29/09/2026).
+    'capital-de-giro': 'Capital de giro tomado',
+    'obrigacoes-clientes': 'Obrigações com clientes',
+    'divida-liquida': 'Dívida líquida',
+    'resultado-sem-terceiros': 'Resultado sem dinheiro de terceiros',
   },
   'Tela 3': {
     'valor-previsto': 'Valor previsto',

@@ -2,11 +2,11 @@
   "mes": "08/2026",
   "o-que-e": "o que agosto de 2026 deu na leitura abaixo. scripts/numeros-das-telas.mjs compara com isto antes de gravar e para se algo mudou; refixar é --refazer-trava. Só contagem e campo de cadastro: nenhum valor em dinheiro, nenhum nome.",
   "da-leitura": {
-    "id": "d59ddbbd5851",
-    "gravadoEm": "2026-09-27T17:31:01.328Z",
-    "okEm": "2026-09-27T12:20:28.569Z",
+    "id": "3bf5bc36138d",
+    "gravadoEm": "2026-09-29T16:26:54.604Z",
+    "okEm": "2026-09-29T16:26:55.806Z",
     "paginas": 287,
-    "arquivos": 357
+    "arquivos": 359
   },
   "baldes": {
     "1": {
@@ -66,6 +66,7 @@
   "casos": [
     "nCodMovCC 6035856476 (empresa 1, `CONTA_CORRENTE_REC`, `cNatureza` R, `cStatus` RECEBIDO, `nCodCC` 5969611697, `cCodCateg` 1.02.02, `cOrigem` EXTR, pago em 03/08/2026)",
     "nCodMovCC 6040025305 (empresa 1, `CONTA_CORRENTE_PAG`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.06.07, `cOrigem` EXTP, pago em 10/08/2026)",
+    "nCodMovCC 6040026963 (empresa 1, `CONTA_CORRENTE_PAG`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.04.89, `cOrigem` EXTP, pago em 17/08/2026)",
     "nCodTitulo 1589788375 (empresa 1, `CONTA_A_PAGAR`, `cNatureza` P, `cStatus` PAGO, `nCodCC` 5969611697, `cCodCateg` 2.01.01, `cOrigem` APIP, pago em 06/08/2026)",
     "nCodTitulo 5228925723 (empresa 2, `cNatureza` R, `cStatus` ATRASADO, `nCodCC` 5191263677, `cCodCateg` 1.01.01, vence em 09/08/2026, `resumo.cLiquidado` N)",
     "nCodTitulo 5268010983 (empresa 2, `cNatureza` R, `cStatus` RECEBIDO, `nCodCC` 5191263677, `cCodCateg` 1.01.01, vence em 02/08/2026, `resumo.cLiquidado` S)",

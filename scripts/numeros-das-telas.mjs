@@ -66,12 +66,13 @@ import { fileURLToPath } from 'node:url';
 // importam as MESMAS funções e as MESMAS listas do dono — é o que garante que a tela mostra o número que esta página
 // confere. Enquanto isto aqui era o único leitor, a regra vivia neste arquivo; desde que o app começou, mora lá.
 import { abrirCacheOmie } from '../lib/regras/cache-omie.mjs';
-import { lerRecorte, criarRegras } from '../lib/regras/movimentos.mjs';
+import { lerRecorte, criarRegras, valorOmie } from '../lib/regras/movimentos.mjs';
 import { NOMES_DOS_MESES, dois, ultimoDia, dataBR, noMesDe, noAnoDe } from '../lib/regras/periodo.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
-import { lerDfc, norm, ePessoalDfc, eReceitaTela1Dfc, eDeducaoDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
+import { lerDfc, arquivosDoDfc, norm, ePessoalDfc, eReceitaTela1Dfc, eDeducaoDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
 import { lerDespesasFixas } from '../lib/regras/despesas-fixas.mjs';
-import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
+import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, AMORTIZACAO_DE_DIVIDA, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
+import { GRUPOS_DA_DIVIDA, eDividaDfc, casar, lerContratos, obrigacoesComClientes } from '../lib/regras/passivo.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SAIDA_MD = path.join(RAIZ, 'docs', 'conferencia.md');
@@ -327,13 +328,16 @@ for (const emp of EMPRESAS) jsGuias[emp] = contar(emp, janSet, 'P', { categoria:
 registrar('guias', 'impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas)',
   [jsGuias[1].titulos.size + jsGuias[2].titulos.size, jsGuias[1].baixas.size + jsGuias[2].baixas.size, jsGuias[1].avulsos.size + jsGuias[2].avulsos.size], [14, 0, 10]);
 
-// A divisão da linha "(+) Receitas": docs/fontes.md diz 3 códigos de venda e 26 / 28 de outras receitas.
+// A divisão da linha "(+) Receitas": docs/fontes.md diz 3 códigos de venda e 25 / 27 de outras receitas — eram 26 / 28
+// até 29/09/2026, quando o Recebimento de Empréstimo Intercompany (`1.04.99`, nas duas empresas) saiu da receita, como
+// a regra de intercompany já mandava (FORA_DO_DRE).
 const outrasReceitasDe = (emp) => [...categorias[emp].values()]
-  .filter((c) => c.conta_receita === 'S' && c.totalizadora === 'N' && !eTransferencia(emp, c.codigo) && !VENDA_DE_PRODUTOS.includes(String(c.codigo)))
+  .filter((c) => c.conta_receita === 'S' && c.totalizadora === 'N' && !eTransferencia(emp, c.codigo) && !VENDA_DE_PRODUTOS.includes(String(c.codigo))
+    && !FORA_DO_DRE[emp].includes(String(c.codigo)))
   .map((c) => String(c.codigo));
 const OUTRAS_RECEITAS = { 1: outrasReceitasDe('1'), 2: outrasReceitasDe('2') };
-registrar('grupos-receita', 'códigos de outra receita no cadastro (empresa 1, empresa 2)',
-  [OUTRAS_RECEITAS[1].length, OUTRAS_RECEITAS[2].length], [26, 28]);
+registrar('grupos-receita', 'códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` desde 29/09/2026',
+  [OUTRAS_RECEITAS[1].length, OUTRAS_RECEITAS[2].length], [25, 27]);
 
 // O par do adiantamento ao fornecedor: docs/fontes.md diz 53 títulos `ADCP` em 2026, 1 deles em agosto.
 const adcpPorMes = {};
@@ -770,7 +774,7 @@ for (const c of [
     : 'nenhum lançamento de receita entrou neste mês';
   add({
     tela: 'Tela 2', nome: '(+) Receitas: outras receitas, vendas de produtos', fonte: 'Omie recortado (principal) / DFC (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\`; a linha se divide pela CATEGORIA do lançamento (decisão do dono, 25/09/2026): venda de produtos são \`1.01.01\`, \`1.01.03\` e \`1.04.01\` nas duas empresas, e outras receitas é todo o resto com \`conta_receita = "S"\` e \`totalizadora = "N"\` em \`geral/categorias\` fora as de transferência (${OUTRAS_RECEITAS[1].length} códigos na empresa 1 e ${OUTRAS_RECEITAS[2].length} na 2); as quatro totalizadoras \`1.01\` a \`1.04\` ficam fora dos dois grupos`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "R"\`; a linha se divide pela CATEGORIA do lançamento (decisão do dono, 25/09/2026): venda de produtos são \`1.01.01\`, \`1.01.03\` e \`1.04.01\` nas duas empresas, e outras receitas é todo o resto com \`conta_receita = "S"\` e \`totalizadora = "N"\` em \`geral/categorias\` fora as de transferência e fora as que ficam fora do DRE — o Recebimento de Empréstimo Intercompany \`1.04.99\` saiu daqui em 29/09/2026, como a regra de intercompany já mandava (${OUTRAS_RECEITAS[1].length} códigos na empresa 1 e ${OUTRAS_RECEITAS[2].length} na 2); o sinal do cliente (título \`ADVR\`) continua receita no mês em que foi pago; as quatro totalizadoras \`1.01\` a \`1.04\` ficam fora dos dois grupos`,
     contagem: `${total} lançamentos — ${venda[1].total + venda[2].total} em vendas de produtos (${venda[1].total} na empresa 1 e ${venda[2].total} na 2) e ${outras[1].total + outras[2].total} em outras receitas (${outras[1].total} e ${outras[2].total})`,
     estado: ok ? 'conferido' : 'divergente',
     motivo: ok ? null : [
@@ -872,7 +876,7 @@ add({
   const cat = caso ? categorias[caso.emp].get(String(caso.d.cCodCateg)) : null;
   add({
     tela: 'Tela 2', nome: '(−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2); Cartão de Credito (\`2.11.98\`), Aluguel Veiculo (\`2.11.99\`) e Financiamento Veiculo (\`2.11.95\`) da empresa 1 ficam aqui, embora o Omie pendure os dois primeiros em Despesas Financeiras e o terceiro em Outros Custos (decisão do dono, 25/09/2026; o Financiamento Veiculo entrou nesta linha pela terceira resposta do mesmo dia, e segue fora do resultado financeiro)`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e a amortização de dívida — \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, da empresa 1 (${AMORTIZACAO_DE_DIVIDA[1].length + AMORTIZACAO_DE_DIVIDA[2].length} códigos), que saíram desta linha em 29/09/2026 (decisão do dono: parcela de empréstimo não é despesa; vão para o bloco "Compromissos", fora do lucro); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
     contagem: `${dg[1].total + dg[2].total} lançamentos — ${dg[1].titulos.size} títulos + ${dg[1].baixas.size} baixas de parcial + ${dg[1].avulsos.size} avulsos na empresa 1 e ${dg[2].titulos.size} + ${dg[2].baixas.size} + ${dg[2].avulsos.size} na 2`,
     estado: caso && caso.r.ok ? 'conferido' : 'divergente',
     motivo: caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento de despesa geral entrou neste mês'),
@@ -935,7 +939,7 @@ add({
 
 add({
   tela: 'Tela 2', nome: '(=) Lucro líquido', fonte: 'Omie recortado, calculado',
-  filtro: 'EBITDA (linha acima) + resultado financeiro − impostos pagos (guias). Não tem leitura própria; sai sem depreciação e sem amortização, e a linha "(−) Impostos retidos na nota" não existe mais (decisão do dono, 25/09/2026, opção A)',
+  filtro: 'EBITDA (linha acima) + resultado financeiro − impostos pagos (guias). Não tem leitura própria; sai sem depreciação e sem amortização, e a linha "(−) Impostos retidos na nota" não existe mais (decisão do dono, 25/09/2026, opção A). Desde 29/09/2026 a amortização de dívida (`2.04.89` e `2.11.95`) também fica fora: é lucro de caixa sem o pagamento de principal de empréstimo, e os juros e o IOF da dívida seguem dentro, no resultado financeiro',
   contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês, que passam pelas linhas que a compõem`,
   estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok ? 'conferido' : 'divergente'),
   motivo: MOTIVO_DFC
@@ -967,6 +971,165 @@ add({
       : 'nenhum lançamento sem conta do DRE entrou neste mês',
   });
 }
+
+// ---------------------------------------------------------------- Tela 2, o bloco "Compromissos" (29/09/2026)
+//
+// O PASSIVO, abaixo do DRE. As regras moram em `lib/regras/passivo.mjs` e as listas em `lib/regras/listas.mjs`, como
+// todas; aqui o script refaz a contagem de cada número e confere um caso real de cada um na fonte crua — o pagamento da
+// parcela no Omie E na planilha, o sinal do cliente no título E no pedido, o bloco de banco na aba do mês.
+
+// Um pedido de venda relido nas páginas cruas de `produtos/pedido` → `ListarPedidos`, pelo `codigo_pedido`.
+function acharPedidoCru(emp, codigo) {
+  for (const f of arquivosDoCache.filter((x) => x.startsWith(`${emp}-produtos-pedido`))) {
+    const j = JSON.parse(fs.readFileSync(path.join(OMIE.CACHE, f), 'utf8'));
+    for (const p of j.pedido_venda_produto ?? []) if (String(p.cabecalho?.codigo_pedido) === String(codigo)) return p;
+  }
+  return null;
+}
+
+// Um título a receber relido nas páginas cruas, com os campos do sinal que a regra usa.
+function conferirSinal(s) {
+  const cab = s.cru;
+  const r = conferirTituloR(s.empresa, cab);
+  const cru = acharTituloCru(s.empresa, cab.nCodTitulo);
+  const dif = [...(r.dif ?? []), ...(r.motivo ? [r.motivo] : [])];
+  if (cru) dif.push(...comparar(cru.cabecTitulo, { cOrigem: 'ADVR', dDtPagamento: cab.dDtPagamento, nCodOS: cab.nCodOS, cNumDocFiscal: cab.cNumDocFiscal ?? '' }));
+  const ped = acharPedidoCru(s.empresa, cab.nCodOS);
+  if (!ped) dif.push(`o \`nCodOS\` ${cab.nCodOS} não foi achado nas páginas cruas de \`ListarPedidos\``);
+  else dif.push(...comparar(ped.infoCadastro ?? {}, { faturado: pedidos[s.empresa].get(String(cab.nCodOS))?.infoCadastro?.faturado ?? '' }));
+  return { ok: dif.length === 0, dif, pagina: r.pagina, ped };
+}
+
+const FLUXO_DO_MES = (() => {
+  const grupos = {};
+  for (const g of GRUPOS_DA_DIVIDA) {
+    const omie = [];
+    for (const emp of EMPRESAS) {
+      for (const d of contar(emp, noMes, g.natureza, { categoria: naLista(g.omie[emp] ?? []) }).todos) {
+        const eTitulo = d.cGrupo === 'CONTA_A_PAGAR' || d.cGrupo === 'CONTA_A_RECEBER';
+        omie.push({ emp, d, natureza: d.cNatureza, codigo: String(eTitulo ? d.nCodTitulo : d.nCodMovCC), dia: dataBR(d.dDtPagamento)?.d ?? null, valor: Math.abs(valorOmie(d)) });
+      }
+    }
+    const dfc = g.dfc && DFC.ok ? DFC.linhas.filter((l) => eDividaDfc(l) && l.natureza === g.natureza) : [];
+    grupos[g.id] = { omie, dfc, ...casar(omie, dfc) };
+  }
+  return grupos;
+})();
+const CONTRATOS = SEM_DFC
+  ? { ok: false, motivo: 'falta a planilha de contratos', porque: 'esta rodada foi feita com `--sem-dfc`' }
+  : await lerContratos({ fonte: fonteDoDfc(), arquivos: await arquivosDoDfc(fonteDoDfc()) });
+const N_CONTRATOS = CONTRATOS.ok ? CONTRATOS.contratos.length : 0;
+const TEXTO_CONTRATOS = CONTRATOS.ok
+  ? `a planilha \`${CONTRATOS.arquivo}\` da pasta do DFC, com ${pl(N_CONTRATOS, 'contrato', 'contratos')}${CONTRATOS.recusados.length ? ` e ${pl(CONTRATOS.recusados.length, 'linha recusada', 'linhas recusadas')} por falta de coluna obrigatória` : ''}`
+  : `${CONTRATOS.porque} — é o que a tela diz no lugar do saldo ("saldo: ${CONTRATOS.motivo}")`;
+const nDoFluxo = (lado) => Object.values(FLUXO_DO_MES).reduce((s, g) => s + g[lado].length, 0);
+const LANC_DO_FLUXO = Object.values(FLUXO_DO_MES).reduce((s, g) => s + g.pares.length + g.soOmie.length + g.soDfc.length, 0);
+const nGrupo = (id) => { const g = FLUXO_DO_MES[id]; return g.pares.length + g.soOmie.length + g.soDfc.length; };
+
+// O CASO DO FLUXO: o pagamento que está nas DUAS fontes, o de menor código no Omie — é ele que prova o "sem contar duas
+// vezes". Sem nenhum par no mês, o de menor código do Omie; sem Omie, a linha do DFC de menor número.
+const CASO_DA_DIVIDA = (() => {
+  const pares = Object.values(FLUXO_DO_MES).flatMap((g) => g.pares).sort((a, b) => Number(a.omie.codigo) - Number(b.omie.codigo));
+  const soOmie = Object.values(FLUXO_DO_MES).flatMap((g) => g.soOmie).sort((a, b) => Number(a.codigo) - Number(b.codigo));
+  const soDfc = Object.values(FLUXO_DO_MES).flatMap((g) => g.soDfc).sort((a, b) => a.linha - b.linha);
+  const doDfc = (l, o) => {
+    const cru = DFC.cruas.get(l.linha);
+    const dif = [];
+    if (!cru) dif.push(`a linha ${l.linha} não foi achada de volta na segunda leitura da aba`);
+    else {
+      for (const [campo, usou, veio] of [['SUB 2', l.sub2, cru.sub2], ['sentido', l.natureza, cru.natureza], ['dia', l.dia, cru.dia]])
+        if (String(veio ?? '') !== String(usou ?? '')) dif.push(`\`${campo}\` veio "${veio}" e o cálculo usou "${usou}"`);
+      if (cru.mes !== `${MES}/${ANO}`) dif.push(`a data da linha caiu em ${cru.mes}`);
+    }
+    if (o && (o.dia !== l.dia || o.valor !== Math.abs(l.valor))) dif.push('o dia ou o valor da linha do DFC não é o do lançamento do Omie com que ela casou');
+    return { ok: dif.length === 0, dif, texto: `linha ${l.linha} da aba \`FLUXO DE CAIXA\` do arquivo \`${DFC.arquivo}\` (\`CLASS. CONTABIL\` ${l.classe}, \`SUB 2\` ${l.sub2}, ${l.natureza === 'R' ? 'entrada' : 'saída'}, dia ${l.dia})` };
+  };
+  if (pares.length) {
+    const p = pares[0];
+    const r = conferirLancamento(p.omie.emp, p.omie.d);
+    const t = casoDoLancamento(p.omie.emp, p.omie.d);
+    const x = doDfc(p.dfc, p.omie);
+    const ok = r.ok && x.ok;
+    return {
+      ok, emp: p.omie.emp, d: p.omie.d,
+      motivo: ok ? null : [...(r.dif ?? []), ...(r.motivo ? [r.motivo] : []), ...x.dif].join('; '),
+      texto: `o pagamento ${t} — achado de volta na página ${r.pagina ?? '?'} da leitura crua do cache com os mesmos campos — é o MESMO pagamento da ${x.texto}, relida pelo número da linha numa segunda leitura da aba: mesmo sentido, mesmo dia e mesmo valor em centavos, e por isso entra UMA vez no fluxo do mês, no grupo "${GRUPOS_DA_DIVIDA.find((g) => FLUXO_DO_MES[g.id].pares.includes(p)).rotulo}"`,
+    };
+  }
+  if (soOmie.length) {
+    const o = soOmie[0];
+    const r = conferirLancamento(o.emp, o.d);
+    return { ok: r.ok, emp: o.emp, d: o.d, motivo: r.ok ? null : (r.motivo ?? r.dif.join('; ')), texto: `${casoDoLancamento(o.emp, o.d)} — ${r.ok ? `achado de volta na página ${r.pagina} da leitura crua do cache com os mesmos campos` : 'não conferiu'}; nenhuma linha do DFC do mês casou com ele` };
+  }
+  if (soDfc.length) { const x = doDfc(soDfc[0], null); return { ok: x.ok, motivo: x.ok ? null : x.dif.join('; '), texto: `${x.texto}; nenhum lançamento do Omie do mês casou com ela` }; }
+  return null;
+})();
+
+add({
+  tela: 'Tela 2', nome: 'Capital de giro tomado',
+  fonte: 'fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos',
+  filtro: `**fluxo do mês** — Omie: ${FILTRO_CAIXA}, pela categoria (decisão do dono, 29/09/2026): captado = \`1.04.03\` Recebimento de Empréstimos Bancários (\`cNatureza = "R"\`); amortizado = \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, só na empresa 1 (\`cNatureza = "P"\`), que saíram de "(−) Despesas gerais"; juros = \`2.05.01\` Juros sobre Empréstimos; IOF = \`2.06.95\` (juros e IOF continuam no resultado financeiro do DRE, e aqui só aparecem). DFC: \`FLUXO DE CAIXA\` do mês, \`SUB 2\` (J) = \`EMPRESTIMO\` (entrada é captação, saída é parcela) e toda linha com "ANTECIPA" em \`SUB 2\` ou \`CLASS. CONTABIL\` (antecipação de recebíveis conta como dívida). **Sem contar duas vezes:** um lançamento do Omie e uma linha do DFC são o mesmo pagamento quando têm o mesmo sentido, o mesmo dia do mês e o mesmo valor em centavos, casados um a um. **Saldo devedor** — a planilha de contratos do financeiro na pasta do DFC (um \`.xlsx\` com "contrato" no nome, modelo em \`docs/modelo-contratos.xlsx\`), a custo amortizado no último dia do mês: principal mais os juros já corridos pela taxa ao mês, sem juros futuros, com as parcelas vencidas até o corte contando como pagas; vencimentos em 0–3, 3–12 e mais de 12 meses pelo valor nominal das parcelas que faltam`,
+  contagem: `${pl(nDoFluxo('omie'), 'lançamento', 'lançamentos')} do Omie e ${pl(nDoFluxo('dfc'), 'linha', 'linhas')} do DFC no fluxo do mês, ${Object.values(FLUXO_DO_MES).reduce((s, g) => s + g.pares.length, 0)} deles o mesmo pagamento nas duas fontes, que conta uma vez — ${pl(LANC_DO_FLUXO, 'pagamento', 'pagamentos')}: captado ${nGrupo('captado')}, amortizado ${nGrupo('amortizado')}, juros ${nGrupo('juros')}, IOF ${nGrupo('iof')}; ${pl(N_CONTRATOS, 'contrato', 'contratos')} na planilha de contratos (${TEXTO_CONTRATOS})`,
+  estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DA_DIVIDA && CASO_DA_DIVIDA.ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC ? `metade do fluxo é o DFC — ${MOTIVO_DFC}` : (CASO_DA_DIVIDA ? CASO_DA_DIVIDA.motivo : 'nenhum pagamento de dívida entrou neste mês, então não há caso real'),
+  caso: CASO_DA_DIVIDA ? CASO_DA_DIVIDA.texto : 'nenhum pagamento de dívida entrou neste mês',
+});
+
+// OBRIGAÇÕES COM CLIENTES: a regra é a de `obrigacoesComClientes`; os casos são um sinal ainda em aberto no fim do mês
+// e um baixado com a NF no mês, cada um relido no título cru E no pedido cru.
+const OBRIG = obrigacoesComClientes({ EMPRESAS, titulosR, pedidos, recorte: RECORTE, ano: ANO, mes: MES });
+const menorSinal = (xs) => xs.slice().sort((a, b) => Number(a.nCodTitulo) - Number(b.nCodTitulo))[0] ?? null;
+const textoDoSinal = (s, r) => `nCodTitulo ${s.nCodTitulo} (empresa ${s.empresa}, \`cOrigem\` ADVR, \`cStatus\` ${s.cru.cStatus}, \`nCodCC\` ${s.cru.nCodCC}, pago em ${s.cru.dDtPagamento}, ${s.cru.cNumDocFiscal ? 'com `cNumDocFiscal`' : 'sem `cNumDocFiscal`'}) — ${r.ok ? `achado de volta na página ${r.pagina} da leitura crua do cache com os mesmos campos` : `**não conferiu**: ${r.dif.join('; ')}`}; o \`nCodOS\` ${s.nCodOS} dele é o \`codigo_pedido\` do pedido \`numero_pedido\` ${r.ped?.cabecalho?.numero_pedido ?? '?'}, relido nas páginas cruas de \`ListarPedidos\` com \`faturado\` ${r.ped?.infoCadastro?.faturado ?? '?'} e \`cancelado\` ${r.ped?.infoCadastro?.cancelado ?? '?'}`;
+// O caso do saldo prefere o sinal de pedido vivo que ainda espera a NF (não cancelado e sem NF até hoje): é o caso típico.
+const SINAL_ABERTO = menorSinal(OBRIG.lancamentos.saldo.filter((s) => !s.pedidoCancelado && !s.comNf))
+  ?? menorSinal(OBRIG.lancamentos.saldo.filter((s) => !s.pedidoCancelado)) ?? menorSinal(OBRIG.lancamentos.saldo);
+const dataTexto = (d) => (d ? `${dois(d.d)}/${dois(d.m)}/${d.a}` : '(sem data)');
+const SINAL_BAIXADO = menorSinal(OBRIG.lancamentos.baixados);
+const R_ABERTO = SINAL_ABERTO ? conferirSinal(SINAL_ABERTO) : null;
+const R_BAIXADO = SINAL_BAIXADO ? conferirSinal(SINAL_BAIXADO) : null;
+const nfDoBaixado = SINAL_BAIXADO?.dataDaNf ? `${dois(SINAL_BAIXADO.dataDaNf.d)}/${dois(SINAL_BAIXADO.dataDaNf.m)}/${SINAL_BAIXADO.dataDaNf.a}` : null;
+add({
+  tela: 'Tela 2', nome: 'Obrigações com clientes', fonte: 'Omie, sinais `ADVR` recebidos de pedidos ainda sem NF, pelo valor nominal',
+  filtro: `\`financas/pesquisartitulos\` → \`PesquisarLancamentos\` com \`cNatureza: "R"\` por vencimento em ${ANO} (a leitura da carteira), recorte da MeuBESS por \`cabecTitulo.nCodCC\`, guardando \`cabecTitulo.cOrigem = "ADVR"\` (o sinal, adiantamento de venda) com \`cStatus\` na faixa pago e \`dDtPagamento\` até o dia de corte; ligado ao pedido por \`cabecTitulo.nCodOS\` = \`cabecalho.codigo_pedido\` de \`produtos/pedido\` → \`ListarPedidos\`. O sinal está **com NF** quando o pedido tem \`infoCadastro.faturado = "S"\` e o sinal traz \`cabecTitulo.cNumDocFiscal\`; a data da NF é a \`dDtEmissao\` do primeiro título \`VENR\` do pedido com o mesmo \`cNumDocFiscal\` (ou \`infoCadastro.dFat\`). **Saldo** no último dia do mês: os sinais recebidos até ele cuja NF não tinha saído até ele, somados por \`nValorTitulo\` (valor nominal). **Movimento:** sinais novos = recebidos no mês; baixados com a NF = os que estavam em aberto no começo do mês ou entraram nele e não estão no fim. O sinal continua receita no mês do pagamento, no DRE (decisão do dono, 29/09/2026)`,
+  contagem: `${pl(OBRIG.contagem.emAberto, 'sinal', 'sinais')} \`ADVR\` em aberto no fim do mês (recebidos, de pedido ainda sem NF), ${OBRIG.contagem.pedidoCancelado} deles de pedido cancelado; ${OBRIG.contagem.noInicio} no fim do mês anterior, ${pl(OBRIG.contagem.novos, 'sinal novo', 'sinais novos')} no mês e ${OBRIG.contagem.baixados} baixados com a NF; ${OBRIG.contagem.sinaisLidos} sinais recebidos lidos na carteira de ${ANO}${OBRIG.contagem.nfSemData ? `, ${OBRIG.contagem.nfSemData} com NF sem data achada` : ''}`,
+  estado: R_ABERTO && R_ABERTO.ok && (!R_BAIXADO || R_BAIXADO.ok) ? 'conferido' : 'divergente',
+  motivo: R_ABERTO ? (R_ABERTO.ok && (!R_BAIXADO || R_BAIXADO.ok) ? null : [...R_ABERTO.dif, ...(R_BAIXADO?.dif ?? [])].join('; ')) : 'nenhum sinal em aberto no fim do mês, então não há caso real do saldo',
+  caso: [
+    SINAL_ABERTO ? `no saldo: ${textoDoSinal(SINAL_ABERTO, R_ABERTO)} — recebido e sem NF no fim de ${NOME_DO_MES}${SINAL_ABERTO.comNf ? ` (a NF só saiu em ${dataTexto(SINAL_ABERTO.dataDaNf)})` : ''}` : null,
+    SINAL_BAIXADO ? `baixado com a NF no mês: ${textoDoSinal(SINAL_BAIXADO, R_BAIXADO)} — a NF é de ${nfDoBaixado ?? '(sem data)'}, a emissão do título \`VENR\` do mesmo pedido com o mesmo \`cNumDocFiscal\`` : null,
+  ].filter(Boolean).join('; '),
+});
+
+// DÍVIDA LÍQUIDA: o saldo devedor (a planilha) menos o saldo dos bancos — os blocos de banco do `FLUXO DE CAIXA` do mês,
+// os mesmos que o Fluxo de Caixa soma. O caso é o primeiro bloco, relido pela linha do último saldo dele.
+const BANCOS = DFC.ok ? (DFC.saldosPorBanco ?? []) : [];
+const CASO_DO_BANCO = (() => {
+  const b = BANCOS.find((x) => x.linhaFinal !== null && x.linhaFinal !== undefined);
+  if (!b) return null;
+  const cru = DFC.cruas.get(b.linhaFinal);
+  return { ok: Boolean(cru), texto: `o bloco ${b.bloco} da aba \`FLUXO DE CAIXA\` do arquivo \`${DFC.arquivo}\` (\`BANCO\` ${b.banco || '(vazio)'}), cujo último saldo está na linha ${b.linhaFinal}${cru ? ', achada de volta pelo número da linha numa segunda leitura da aba' : ', que **não** foi achada de volta na segunda leitura'}` };
+})();
+add({
+  tela: 'Tela 2', nome: 'Dívida líquida', fonte: 'capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês)',
+  filtro: 'o saldo devedor do "Capital de giro tomado" (linha acima), menos o saldo dos bancos da Tela 3: o último saldo escrito de cada bloco de banco da aba `FLUXO DE CAIXA` do mês — a coluna de saldo corrido, reconhecida pela regra de `lib/regras/dfc.mjs` (o número só vale como saldo quando é o saldo anterior mais o movimento da linha). Sem a planilha de contratos a tela não tem este número e escreve "falta a planilha de contratos" no lugar dele',
+  contagem: `${pl(BANCOS.length, 'bloco', 'blocos')} de banco no \`FLUXO DE CAIXA\` do mês (o saldo dos bancos da Tela 3); ${pl(N_CONTRATOS, 'contrato', 'contratos')} na planilha de contratos (${TEXTO_CONTRATOS})`,
+  estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DO_BANCO && CASO_DO_BANCO.ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC ? `o saldo dos bancos é do DFC — ${MOTIVO_DFC}` : (CASO_DO_BANCO?.ok ? null : 'nenhum bloco de banco do mês foi achado de volta'),
+  caso: [
+    CASO_DO_BANCO ? `no saldo dos bancos: ${CASO_DO_BANCO.texto}` : null,
+    CASO_DA_DIVIDA ? `na dívida: o mesmo pagamento da linha "Capital de giro tomado" — ${CASO_DA_DIVIDA.texto.split(' — ')[0]}` : null,
+    CONTRATOS.ok ? `a planilha de contratos foi lida: ${TEXTO_CONTRATOS}` : `a planilha de contratos não está na pasta: ${TEXTO_CONTRATOS}`,
+  ].filter(Boolean).join('; '),
+});
+
+add({
+  tela: 'Tela 2', nome: 'Resultado sem dinheiro de terceiros', fonte: 'lucro líquido do DRE do mês − variação das obrigações com clientes − captação líquida de empréstimos',
+  filtro: 'não tem leitura própria (decisão do dono, 29/09/2026): o lucro de caixa — a linha "(=) Lucro líquido" do mês, com a amortização de dívida já fora dela — menos a variação das obrigações com clientes (sinais novos − baixados com a NF, linha acima) menos a captação líquida de empréstimos (captado − amortizado, do fluxo do "Capital de giro tomado")',
+  contagem: `${soma(MES_R) + soma(MES_P)} lançamentos do mês do lucro líquido, ${pl(LANC_DO_FLUXO, 'pagamento', 'pagamentos')} do fluxo da dívida e ${pl(OBRIG.contagem.novos + OBRIG.contagem.baixados, 'sinal', 'sinais')} que mexeram nas obrigações com clientes`,
+  estado: MOTIVO_DFC ? 'a-conferir' : (calc(porEmp(MES_P)).ok && CASO_DA_DIVIDA?.ok !== false && R_ABERTO?.ok ? 'conferido' : 'divergente'),
+  motivo: MOTIVO_DFC ? `o lucro líquido consome linhas de fonte DFC — ${MOTIVO_DFC}` : (calc(porEmp(MES_P)).ok && CASO_DA_DIVIDA?.ok !== false && R_ABERTO?.ok ? null : 'um dos casos das três partes não conferiu'),
+  caso: `é aritmética de três números desta página, cada um conferido na linha dele: o lucro líquido (${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}), o sinal em aberto nº ${SINAL_ABERTO?.nCodTitulo ?? '—'} das obrigações com clientes e o pagamento da dívida da linha "Capital de giro tomado"`,
+});
 
 // ---------------------------------------------------------------- Tela 3
 

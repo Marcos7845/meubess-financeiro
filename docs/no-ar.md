@@ -67,14 +67,21 @@ início de contêiner, nenhum `heap out of memory` nos logs.
   por memória acima).
 - **Rodada à mão às 20:16:49 (Brasília): resultado 0.** O servidor registra o envio em `2026-09-30T23:16:49Z`, 13
   planilhas (`GET /api/dfc`). Próxima passagem agendada: 21:00.
+- **Às 20:42 (Brasília):** o Agendador mostra a tarefa `Pronto`, habilitada, último resultado 0, próxima execução
+  21:00; `GET /api/dfc` no ar segue com o último envio em `2026-09-30T23:16:49Z`. Deploy ativo `4df298c4` (`SUCCESS`);
+  variáveis do serviço (só nomes): `SESSAO_SEGREDO`, `DFC_ENVIO_SEGREDO`, as quatro do Omie 1 e 2 e `PORT` — sem as do
+  administrador, que entrou no ar de novo às 20:42.
 
 ## Números de agosto/2026 no ar contra `docs/telas-conferidas.md` (45 linhas)
 
 Lido nas telas publicadas, logado, depois da releitura do Omie das 23:25 UTC: a tabela "Os números exatos" da Tela 1,
 o pé de cada cartão, o que cada linha do DRE abre (a composição que a página recebe) e os cartões do Fluxo de Caixa.
-"Esperado" é o "Na tela" de `docs/telas-conferidas.md` (gerado com a leitura do Omie de 30/09, 17:15, Brasília).
+"Esperado" é o "Na tela" de `docs/telas-conferidas.md` refeito às 20:40 (Brasília) de 30/09 — `npm run conferencia`
+(trava de agosto conferida, 45/0/0) e `npm run conferir-telas` (45/0/0) —, depois de reler no Omie, só consulta, a
+janela de vencimento 01/10–31/10 da faixa "em aberto", que no cache deste PC era de 26/09. Das 45 linhas, só a do
+"Valor pendente" mudou (10 → 14); as outras 44 são as mesmas da versão de 17:15.
 
-**Resultado: 37 conferidos, 1 divergente (com motivo) e 7 sem contagem na tela**, de 45 linhas.
+**Resultado: 38 conferidos e 7 sem contagem na tela**, de 45 linhas.
 
 - conferido: **Tela 1 — Saldo.** **No ar:** DFC 388 e Omie 419. **Esperado:** DFC 388 e Omie 419. **Lido em:** tabela "Os números exatos" da Tela 1.
 - conferido: **Tela 1 — Receitas.** **No ar:** DFC 101 e Omie 120. **Esperado:** DFC 101 e Omie 120. **Lido em:** tabela "Os números exatos" da Tela 1.
@@ -111,7 +118,7 @@ o pé de cada cartão, o que cada linha do DRE abre (a composição que a págin
 - conferido: **Tela 2 — Provisões por projeto.** **No ar:** DFC 4. **Esperado:** DFC 4. **Lido em:** pé do cartão da Tela 2.
 - sem contagem na tela: **Tela 3 — Valor previsto.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
 - sem contagem na tela: **Tela 3 — Valor recebido.** **Esperado:** Omie 91. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- divergente: **Tela 3 — Valor pendente.** **No ar:** Omie 14. **Esperado:** Omie 10. **Lido em:** Fluxo de Caixa de outubro: cartão "Ainda a receber no mês" (o nome dele em mês ainda aberto). **Motivo:** a faixa "em aberto" é medida na janela de vencimento de outubro/2026, não em agosto, e anda com o Omie. `docs/telas-conferidas.md` a leu da leitura EXATA da janela 01/10–31/10 do cache deste PC, gravada em 26/09/2026 às 00:12 UTC por `scripts/ler-omie-faltante.mjs`: a releitura das telas não a refaz, e o servidor não a tem — ele recorta a leitura do ano, que relê de hora em hora (a de 23:25 UTC). Mesma regra, leituras de dias diferentes: com a leitura do ano deste PC (30/09, 17:15, Brasília) a conta dá 13 — os 10 de 26/09 mais três títulos da empresa 2 que não existiam naquela leitura, `5300690800` (`A VENCER`, vence 28/10/2026), `5302263925` e `5302423083` (`A VENCER`, vencem 30/10/2026) —, e a do servidor, de 23:25, dá 14: os mesmos 13 mais `5302508435` (empresa 2, `A VENCER`, vence 30/10/2026), que entrou no Omie depois da leitura das 17:15 — este PC, relido às 23:34 UTC, dá os mesmos 14. Nenhum dos 10 de 26/09 saiu. Não é defeito do servidor nem da regra: nesta linha a referência é que está velha. Neste PC a tela de outubro também mostra 10, porque prefere a leitura exata de 26/09 quando ela existe; refazer essa leitura (`node scripts/ler-omie-faltante.mjs`) e a conferência (`npm run conferencia`) fica com o dono.
+- conferido: **Tela 3 — Valor pendente.** **No ar:** Omie 14. **Esperado:** Omie 14. **Lido em:** Fluxo de Caixa de outubro: cartão "Ainda a receber no mês" (o nome dele em mês ainda aberto), lido às 20:42 (Brasília). A faixa "em aberto" é medida na janela de vencimento de outubro/2026, não em agosto, e anda com o Omie. A referência anterior (10) vinha da leitura exata dessa janela gravada neste PC em 26/09; relida no Omie em 30/09 às 20:40, dá 14 (0 na empresa 1, 14 na 2) — os 10 de 26/09 e quatro títulos da empresa 2 lançados depois, `5300690800`, `5302263925`, `5302423083` e `5302508435`, todos `A VENCER` com vencimento em 28/10 ou 30/10/2026. Mesma regra; nenhum dos 10 saiu.
 - conferido: **Tela 3 — Valor vencido.** **No ar:** Omie 37. **Esperado:** Omie 37. **Lido em:** Fluxo de Caixa de agosto: "já venceu e ainda não foi recebido (N títulos)".
 - sem contagem na tela: **Tela 3 — Lançamentos por mês e status.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
 - sem contagem na tela: **Tela 3 — Valor previsto por cliente e status.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").

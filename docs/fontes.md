@@ -370,7 +370,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `9eae01dd6324` — 366 arquivos no cache local, o mais novo gravado em 30/09/2026 às 17h15; a última releitura do app que trouxe dado do Omie foi em 30/09/2026 às 17h15 (ok, 292 páginas).
+**De que leitura são as contagens desta tabela:** leitura `2f1b7d2c9d78` — 366 arquivos no cache local, o mais novo gravado em 30/09/2026 às 20h40; a última releitura do app que trouxe dado do Omie foi em 30/09/2026 às 17h15 (ok, 292 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -380,13 +380,13 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`9eae01dd6324`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`2f1b7d2c9d78`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 168 | 9, 0, 162 | **não** — a releitura mexeu |
-| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 284 | 809, 9, 276 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 292 | 809, 9, 276 | **não** — a releitura mexeu |
 | total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 550, 26, 620 | 536, 25, 611 | **não** — a releitura mexeu |
 | total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 567, 3, 571 | 556, 3, 547 | **não** — a releitura mexeu |
-| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 68, 1, 21, 458, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
+| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 68, 1, 27, 458, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
 | resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2), sem o `2.04.91` da empresa 2 desde 29/09/2026 | 55, 11, 99, 31 | 55, 11, 98, 31 | **não** — a releitura mexeu |
 | pessoal pago, jan–set (empresa 1, empresa 2) | 256, 332 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |

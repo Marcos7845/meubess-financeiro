@@ -80,7 +80,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — Provisões por projeto.** **Na tela:** DFC 4. **Na conferência:** DFC 4. **Também conferido:** frete 0, comissao 0, comissaoHead 0, compra 4, repasse 0. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, comissão, comissão head e compra de cada projeto vendido (toda linha da aba é ainda não paga; o imposto é crédito e fica fora).
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** empresa1 0, empresa2 128, cancelados 15. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor recebido.** **Na tela:** Omie 91. **Na conferência:** Omie 91. **Também conferido:** empresa1 0, empresa2 91. **Fonte:** Omie, títulos a receber por vencimento.
-- **Tela 3 — Valor pendente.** **Na tela:** Omie 10. **Na conferência:** Omie 10. **Também conferido:** empresa1 0, empresa2 10. **Fonte:** Omie, títulos a receber por vencimento.
+- **Tela 3 — Valor pendente.** **Na tela:** Omie 14. **Na conferência:** Omie 14. **Também conferido:** empresa1 0, empresa2 14. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor vencido.** **Na tela:** Omie 37. **Na conferência:** Omie 37. **Também conferido:** empresa1 0, empresa2 37. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por mês e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** clientes 87, semNome 0. **Fonte:** Omie, títulos a receber por vencimento.

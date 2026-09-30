@@ -28,31 +28,42 @@ export async function sugerirClassificacoes(descricoes, categorias, { chave = pr
   const porCodigo = new Map(Object.entries(criterios));
   const resultados = new Map();
   const estatisticas = { chamadas: 0, caracteres: 0, lancamentosEnviados: 0 };
+  // Por que um texto limpo ficou sem categoria válida. Só guarda o motivo, nunca o texto, e é contado por lançamento.
+  const motivos = new Map();
+  const porMotivo = { classificada: 0, incerta: 0, foraDaLista: 0, malformada: 0, erroOuLimite: 0, semChave: 0 };
   const perguntas = { categoria: { type: 'choice', instructions: 'Choose the best DFC category for message. If there is insufficient evidence, choose uncertain.',
     criteria: { ...criterios, uncertain: 'Insufficient information in the description' } } };
   for (const bruta of descricoes) {
     const limpa = limparDescricao(bruta);
     if (!limpa) continue;
     if (chave && escolhas.length) estatisticas.lancamentosEnviados++;
-    if (resultados.has(limpa)) continue;
-    if (!chave || !escolhas.length) { resultados.set(limpa, null); continue; }
-    estatisticas.chamadas++;
-    estatisticas.caracteres += limpa.length;
-    try {
-      const resposta = await fetcher(URL, { method: 'POST', headers: {
-        Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json', 'X-Title': 'MeuBESS auditoria',
-      }, body: JSON.stringify({ model: MODELO, state: { message: limpa }, questions: perguntas }),
-      signal: AbortSignal.timeout(timeoutMs) });
-      const json = await resposta.json();
-      const escolha = json?.answers?.categoria?.choice;
-      const confianca = Number(json?.answers?.categoria?.confidence);
-      resultados.set(limpa, resposta.ok && porCodigo.has(escolha) && Number.isFinite(confianca)
-        && confianca >= 0 && confianca <= 1 ? { categoria: porCodigo.get(escolha), confianca } : null);
-    } catch {
-      resultados.set(limpa, null);
+    if (!resultados.has(limpa)) {
+      if (!chave || !escolhas.length) { resultados.set(limpa, null); motivos.set(limpa, 'semChave'); }
+      else {
+        estatisticas.chamadas++;
+        estatisticas.caracteres += limpa.length;
+        try {
+          const resposta = await fetcher(URL, { method: 'POST', headers: {
+            Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json', 'X-Title': 'MeuBESS auditoria',
+          }, body: JSON.stringify({ model: MODELO, state: { message: limpa }, questions: perguntas }),
+          signal: AbortSignal.timeout(timeoutMs) });
+          const json = await resposta.json().catch(() => ({}));
+          const escolha = json?.answers?.categoria?.choice;
+          const confianca = Number(json?.answers?.categoria?.confidence);
+          if (!resposta.ok) { resultados.set(limpa, null); motivos.set(limpa, 'erroOuLimite'); }
+          else if (escolha === 'uncertain') { resultados.set(limpa, null); motivos.set(limpa, 'incerta'); }
+          else if (!porCodigo.has(escolha)) { resultados.set(limpa, null); motivos.set(limpa, 'foraDaLista'); }
+          else if (!(Number.isFinite(confianca) && confianca >= 0 && confianca <= 1)) { resultados.set(limpa, null); motivos.set(limpa, 'malformada'); }
+          else resultados.set(limpa, { categoria: porCodigo.get(escolha), confianca });
+        } catch {
+          resultados.set(limpa, null);
+          motivos.set(limpa, 'erroOuLimite');
+        }
+      }
     }
+    porMotivo[motivos.get(limpa) ?? 'classificada']++;
   }
-  return { resultados, estatisticas };
+  return { resultados, estatisticas, porMotivo };
 }
 
 export function compararComDfc(dfc, extratos, conciliacao, resultados, limiar = LIMIAR_PADRAO) {
@@ -84,8 +95,9 @@ export function compararComDfc(dfc, extratos, conciliacao, resultados, limiar = 
     const id = `${normal(e.conta)}|${e.id}`;
     const pares = porPar.get(id) ?? [];
     const dfcLinha = exato ?? (idsExtrato.get(id) === 1 && pares.length === 1 && !exatos.has(pares[0].n) ? pares[0] : null);
-    const sugestao = resultados.get(limparDescricao(e.historico)) ?? null;
-    return { linhaDfc: dfcLinha?.n ?? null, verdade: dfcLinha?.sub2 ?? null,
+    const texto = limparDescricao(e.historico);
+    const sugestao = resultados.get(texto) ?? null;
+    return { texto, linhaDfc: dfcLinha?.n ?? null, verdade: dfcLinha?.sub2 ?? null,
       sugestao: sugestao?.categoria ?? null, confianca: sugestao?.confianca ?? null,
       revisao: !sugestao || sugestao.confianca < limiar, pareamento: exato ? 'dia e valor' : dfcLinha ? 'conciliacao' : null };
   });
@@ -95,7 +107,19 @@ export function compararComDfc(dfc, extratos, conciliacao, resultados, limiar = 
     return { categoria, totalDfc: dfc.linhas.filter((l) => l.sub2 === categoria).length,
       avaliadas: c.length, concordantes: c.filter((l) => l.sugestao === categoria).length };
   });
-  return { linhas, categorias, avaliadas: elegiveis.length,
+  // Erro por falta de informação no texto limpo: o mesmo texto limpo aparece, no par individual com o DFC, em mais de
+  // uma categoria verdadeira. Nenhum classificador acerta os dois lados; o erro vem da limpeza, não do modelo.
+  const verdadesPorTexto = new Map();
+  for (const l of linhas.filter((l) => l.verdade && l.texto)) {
+    verdadesPorTexto.set(l.texto, new Set([...(verdadesPorTexto.get(l.texto) ?? []), l.verdade]));
+  }
+  const erros = elegiveis.filter((l) => l.verdade !== l.sugestao);
+  const errosPorTextoAmbiguo = erros.filter((l) => verdadesPorTexto.get(l.texto).size > 1).length;
+  const sugeridas = [...new Set(elegiveis.map((l) => l.sugestao))].sort().map((categoria) => {
+    const c = elegiveis.filter((l) => l.sugestao === categoria);
+    return { categoria, sugeridas: c.length, acertos: c.filter((l) => l.verdade === categoria).length };
+  });
+  return { linhas, categorias, sugeridas, erros: erros.length, errosPorTextoAmbiguo, avaliadas: elegiveis.length,
     concordantes: elegiveis.filter((l) => l.verdade === l.sugestao).length,
     baixaConfianca: linhas.filter((l) => l.sugestao && l.revisao).length,
     naoClassificadas: linhas.filter((l) => !l.sugestao).length,

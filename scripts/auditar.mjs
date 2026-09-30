@@ -327,8 +327,8 @@ const faltamExtratos = conciliacoes.get(periodo).faltam;
 const conciliacao = conciliacoes.get(periodo).resultado;
 const jev = usarJev ? await (async () => {
   const categorias = [...new Set((atual?.linhas ?? []).map((l) => l.sub2).filter(Boolean))];
-  const { resultados, estatisticas } = await sugerirClassificacoes(extratos.encontrados.map((e) => e.historico), categorias);
-  return { ...compararComDfc(atual ?? { linhas: [] }, extratos.encontrados, conciliacao, resultados, limiarJev), estatisticas };
+  const { resultados, estatisticas, porMotivo } = await sugerirClassificacoes(extratos.encontrados.map((e) => e.historico), categorias);
+  return { ...compararComDfc(atual ?? { linhas: [] }, extratos.encontrados, conciliacao, resultados, limiarJev), estatisticas, porMotivo };
 })() : null;
 const caixaCompleto = Boolean(conciliacao?.confere && !faltamExtratos.length);
 if (conciliacao) for (const r of conciliacao.porConta.values()) if (!r.confere)
@@ -901,12 +901,36 @@ const provaMaster = resumoMaster ? `<section><h2>Master documental</h2>
 const secaoJev = !jev ? '' : (() => {
   const taxa = (n, d) => d ? `${(100 * n / d).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%` : '—';
   const categorias = jev.categorias.map((c) => `<tr><td>${esc(c.categoria)}</td><td>${c.totalDfc}</td><td>${c.avaliadas}</td><td>${c.concordantes}</td><td>${taxa(c.concordantes, c.avaliadas)}</td></tr>`).join('');
+  const ROTULOS = { incerta: 'Resposta “incerta” do Jev', foraDaLista: 'Categoria fora da lista', malformada: 'Resposta malformada (confiança ausente ou fora de 0–1)',
+    erroOuLimite: 'Erro ou limite do serviço (HTTP não-OK, 429, tempo esgotado, rede)', semChave: 'Sem chave' };
+  const motivos = Object.entries(ROTULOS).map(([k, r]) => `<tr><td>${r}</td><td>${jev.porMotivo[k]}</td></tr>`).join('');
+  const semCategoria = Object.keys(ROTULOS).reduce((t, k) => t + jev.porMotivo[k], 0);
+  const MIN_AMOSTRA = 5, MIN_TAXA = 0.7;
+  // Serve só se acerta quando é a categoria verdadeira (cobertura) E é confiável quando a sugere (precisão): uma categoria
+  // que o Jev sugere para tudo tem cobertura perfeita e não ajuda ninguém.
+  const vered = (c) => { const g = jev.sugeridas.find((x) => x.categoria === c.categoria);
+    if (c.avaliadas < MIN_AMOSTRA) return 'sem evidência';
+    return c.concordantes / c.avaliadas >= MIN_TAXA && g && g.acertos / g.sugeridas >= MIN_TAXA ? 'serve' : 'não serve'; };
+  const veredito = jev.categorias.map((c) => { const g = jev.sugeridas.find((x) => x.categoria === c.categoria);
+    return `<tr class="${{ serve: 'ok', 'não serve': 'bad', 'sem evidência': 'na' }[vered(c)]}"><td>${esc(c.categoria)}</td><td>${c.avaliadas}</td><td>${c.concordantes}</td><td>${g ? `${g.sugeridas} / ${g.acertos}` : '0 / 0'}</td><td>${vered(c)}</td></tr>`; }).join('');
+  const lista = (v) => jev.categorias.filter((c) => vered(c) === v).map((c) => c.categoria);
+  const juntar = (a) => a.length ? a.join(', ') : 'nenhuma';
+  const semFolga = lista('sem evidência');
+  const conclusao = `${lista('serve').length ? '' : 'Com esta limpeza, o Jev não serve como sugestão confiável em nenhuma categoria que deu para medir. '}Serve (revisão humana, nunca para lançar sozinho): ${juntar(lista('serve'))}. Não serve: ${juntar(lista('não serve'))}. Sem comparadas suficientes para afirmar (${semFolga.length} categorias; ver a tabela): nem a favor nem contra.`;
   const baixas = jev.linhas.filter((l) => l.sugestao && l.revisao);
   const divergencias = jev.linhas.filter((l) => l.verdade && l.sugestao && l.verdade !== l.sugestao);
   const linhas = (ls) => ls.length ? `<table><thead><tr><th>Linha DFC</th><th>DFC</th><th>Sugestão</th><th>Confiança</th></tr></thead><tbody>${ls.map((l) => `<tr><td>${l.linhaDfc ?? 'sem par único'}</td><td>${esc(l.verdade ?? '—')}</td><td>${esc(l.sugestao)}</td><td>${taxa(l.confianca, 1)}</td></tr>`).join('')}</tbody></table>` : '<p>Nenhuma.</p>';
   return `<section class="scroll"><h2>Classificação sugerida (Jev)</h2>
 <p>Somente agosto/2026. Categorias de SUB 2 do DFC local, para revisão do dono. O Jev só sugere; nenhuma fonte foi alterada. Concordância em movimentos classificados com par individual no DFC: <strong>${jev.concordantes}/${jev.avaliadas} (${taxa(jev.concordantes, jev.avaliadas)})</strong>. Extratos lidos: ${jev.linhas.length}; descrições representadas nas chamadas: ${jev.estatisticas.lancamentosEnviados}; classificadas: ${jev.classificadas}; comparadas: ${jev.avaliadas}; pares por dia e valor: ${jev.paresPorDiaValor}; pares pela conciliação: ${jev.paresPorConciliacao}; baixa confiança: ${jev.baixaConfianca}; não classificadas: ${jev.naoClassificadas}. Limiar de revisão humana: ${taxa(limiarJev, 1)}.</p>
 <table><thead><tr><th>Categoria DFC</th><th>Linhas DFC</th><th>Avaliadas</th><th>Concordantes</th><th>Concordância</th></tr></thead><tbody>${categorias}</tbody></table>
+<h3>Por que ${semCategoria} lançamentos enviados ficaram sem categoria válida</h3>
+<table><thead><tr><th>Motivo</th><th>Lançamentos</th></tr></thead><tbody>${motivos}<tr><td><strong>Total sem categoria válida</strong></td><td><strong>${semCategoria}</strong>${semCategoria === jev.estatisticas.lancamentosEnviados - jev.porMotivo.classificada ? '' : ' (não fecha com enviados − classificados)'}</td></tr></tbody></table>
+<p>Contagem por lançamento (vários lançamentos com o mesmo texto limpo repetem a mesma resposta; cada texto distinto foi perguntado uma vez). Classificados (categoria válida, qualquer confiança): ${jev.porMotivo.classificada} de ${jev.estatisticas.lancamentosEnviados} enviados.</p>
+<h3>Dos ${jev.avaliadas} comparados, quantos erraram por falta de informação no texto limpo</h3>
+<p>Erros: <strong>${jev.erros}</strong>. Desses, <strong>${jev.errosPorTextoAmbiguo}</strong> têm um texto limpo que, nos pares individuais com o DFC, aparece em mais de uma categoria verdadeira (por exemplo, “PIX RECEBIDO” genérico, que o DFC classifica de formas diferentes conforme o cliente e o contrato, dados que a limpeza retira): nenhuma resposta única acerta todos, então o erro vem da limpeza e não do modelo. Os outros <strong>${jev.erros - jev.errosPorTextoAmbiguo}</strong> têm texto que, neste mês, só aparece numa categoria verdadeira; aí não dá para provar que o texto é insuficiente, e o erro fica sem atribuição (modelo ou texto curto demais).</p>
+<h3>Quando a sugestão do Jev serve, por categoria</h3>
+<table><thead><tr><th>Categoria DFC</th><th>Comparadas</th><th>Acertos</th><th>Quando o Jev sugere esta categoria: sugestões / corretas</th><th>Veredito</th></tr></thead><tbody>${veredito}</tbody></table>
+<p><strong>Conclusão.</strong> ${conclusao} Regra do veredito: serve = pelo menos ${MIN_AMOSTRA} comparadas, ao menos ${taxa(MIN_TAXA, 1)} de acerto quando a categoria é a verdadeira e ao menos ${taxa(MIN_TAXA, 1)} de sugestões corretas quando o Jev a sugere; não serve = pelo menos ${MIN_AMOSTRA} comparadas e abaixo de qualquer um dos dois; sem evidência = menos de ${MIN_AMOSTRA} comparadas. Com a limpeza atual, o texto não traz contraparte, valor nem data, e por isso o Jev só diferencia o que o próprio código bancário já diferencia.</p>
 <h3>Baixa confiança: revisão humana</h3>${linhas(baixas)}
 <h3>Divergências com o DFC</h3>${linhas(divergencias)}
 <p>Sem histórico seguro, sem chave, com erro de serviço ou sem par único: não classificado ou fora da concordância. A limpeza local elimina tokens desconhecidos e todo número; nenhum histórico, valor, data, conta, documento ou nome aparece nesta seção. Chamadas tentadas: ${jev.estatisticas.chamadas}; caracteres de descrições enviados: ${jev.estatisticas.caracteres}.</p></section>`;
@@ -932,4 +956,4 @@ fs.mkdirSync(path.dirname(htmlSaida), { recursive: true });
 fs.writeFileSync(htmlSaida, html, 'utf8');
 console.log(`ARTEFATO: ${path.relative(raiz, htmlSaida).replace(/\\/g, '/')}`);
 console.log(`${rows.length} indicadores: ${counts.conferido} conferidos, ${counts.divergente} divergentes, ${counts['não auditável']} não auditáveis`);
-if (jev) console.log(`Jev: ${jev.estatisticas.lancamentosEnviados} lançamentos enviados, ${jev.classificadas} classificados, ${jev.avaliadas} comparados, ${jev.concordantes} concordantes; ${jev.baixaConfianca} baixa confiança; ${jev.naoClassificadas} não classificadas; ${jev.estatisticas.chamadas} chamadas; ${jev.estatisticas.caracteres} caracteres enviados; limiar ${limiarJev}`);
+if (jev) console.log(`Jev: ${jev.estatisticas.lancamentosEnviados} lançamentos enviados, ${jev.classificadas} classificados, ${jev.avaliadas} comparados, ${jev.concordantes} concordantes; ${jev.baixaConfianca} baixa confiança; ${jev.naoClassificadas} não classificadas; sem categoria por motivo ${JSON.stringify(jev.porMotivo)}; ${jev.erros} erros, ${jev.errosPorTextoAmbiguo} por texto ambíguo; ${jev.estatisticas.chamadas} chamadas; ${jev.estatisticas.caracteres} caracteres enviados; limiar ${limiarJev}`);

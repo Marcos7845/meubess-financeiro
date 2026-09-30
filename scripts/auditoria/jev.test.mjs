@@ -82,3 +82,27 @@ test('id de extrato repetido não reutiliza linha do DFC na comparação', () =>
   const r = compararComDfc(dfc, extratos, { casadas: new Map([[3, ['mesmo-id']]]) }, resultados);
   assert.deepEqual(r.linhas.map((x) => x.linhaDfc), [3, null]);
 });
+
+test('motivos das sem categoria: incerta, fora da lista, malformada, erro, limite e sem chave somam os enviados', async () => {
+  const respostas = { PIX: { ok: true, json: async () => ({ answers: { categoria: { choice: 'uncertain', confidence: 0.9 } } }) },
+    TED: { ok: true, json: async () => ({ answers: { categoria: { choice: 'c9', confidence: 0.9 } } }) },
+    TARIFA: { ok: true, json: async () => ({ answers: { categoria: { choice: 'c1' } } }) },
+    JUROS: { ok: false, status: 429, json: async () => ({}) },
+    IOF: { ok: true, json: async () => ({ answers: { categoria: { choice: 'c1', confidence: 0.95 } } }) } };
+  const fetcher = async (_u, a) => { const m = JSON.parse(a.body).state.message; if (m === 'SERVICO') throw Error('x'); return respostas[m]; };
+  const r = await sugerirClassificacoes(['PIX', 'PIX', 'TED', 'TARIFA', 'JUROS', 'SERVICO', 'IOF'], ['ALUGUEL'], { chave: 'ficticia', fetcher });
+  assert.deepEqual(r.porMotivo, { classificada: 1, incerta: 2, foraDaLista: 1, malformada: 1, erroOuLimite: 2, semChave: 0 });
+  assert.equal(r.estatisticas.lancamentosEnviados, 7);
+  const semChave = await sugerirClassificacoes(['PIX', 'TED'], ['ALUGUEL'], { chave: '' });
+  assert.equal(semChave.porMotivo.semChave, 2);
+});
+
+test('erro por falta de informação: mesmo texto limpo com duas categorias verdadeiras', () => {
+  const l = (n, dia, sub2) => ({ n, conta: 'ITAU--1', data: { a: 2026, m: 8, d: dia }, movimento: 100, sub2 });
+  const e = (id, dia) => ({ id, conta: 'ITAU--1', data: `2026-08-0${dia}`, valor: 100, historico: 'PIX RECEBIDO de Ana' });
+  const dfc = { linhas: [l(1, 1, 'RECEITA COM VENDAS'), l(2, 2, 'OUTRAS RECEITAS'), l(3, 3, 'RECEITA COM VENDAS')] };
+  const resultados = new Map([['PIX RECEBIDO', { categoria: 'RECEITA COM VENDAS', confianca: 0.9 }]]);
+  const r = compararComDfc(dfc, [e('a', 1), e('b', 2), e('c', 3)], null, resultados);
+  assert.deepEqual([r.avaliadas, r.concordantes, r.erros, r.errosPorTextoAmbiguo], [3, 2, 1, 1]);
+  assert.deepEqual(r.sugeridas, [{ categoria: 'RECEITA COM VENDAS', sugeridas: 3, acertos: 2 }]);
+});

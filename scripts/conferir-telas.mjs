@@ -154,13 +154,16 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
     extras: { sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
   },
-  // As provisões por projeto (aba `PROVISÃO` do DFC, 29/09/2026). A contagem é de LINHAS DE PROJETO, e os extras são
-  // quantos projetos têm cada uma das quatro provisões maior que zero.
+  // As provisões por projeto (aba `PROVISÃO` do DFC, com as respostas do dono de 29/09/2026). A contagem é de LINHAS DE
+  // PROJETO, e os extras são quantos projetos não pagos têm cada provisão maior que zero, quantas linhas de imposto
+  // batem com 9,25% do projeto e quantas ficam a conferir, quantos têm repasse (que vai para as obrigações com
+  // clientes) e quantos estão pagos.
   'provisoes-projetos': {
     dfc: /^([\d.]+) projetos? na aba `PROVISÃO`/, omie: null,
     extras: {
-      frete: /— frete em ([\d.]+)/, repasse: /, repasse em ([\d.]+)/,
-      comissao: /, comissão em ([\d.]+)/, comissaoHead: /comissão head em ([\d.]+)/,
+      frete: /— frete em ([\d.]+)/, comissao: /, comissão em ([\d.]+)/, comissaoHead: /comissão head em ([\d.]+)/,
+      impostoBate: /imposto que bate com a alíquota do projeto em ([\d.]+)/, impostoAConferir: /\(a conferir: ([\d.]+)/,
+      compra: /, compra em ([\d.]+)/, repasse: /; repasse a clientes em ([\d.]+)/, pagos: /; pagos em ([\d.]+)/,
     },
   },
 
@@ -317,10 +320,10 @@ if (!linhaPendente) {
   }
 }
 
-// A SEGUNDA JANELA QUE NÃO É A DO MÊS: as provisões por projeto da Tela 2. O quadro por projeto da aba `PROVISÃO`
-// começa no arquivo de setembro de 2026 — de abril a agosto a aba é um razão, sem projeto —, e a conferência diz na
-// própria linha de que mês leu ("na aba `PROVISÃO` do mês MM/AAAA"). O teste lê esse mês DO ARQUIVO e pede à mesma
-// camada de dados a Tela 2 nele: a regra é a mesma, muda o mês.
+// O MÊS DAS PROVISÕES POR PROJETO da Tela 2. Desde as respostas do dono de 29/09/2026 a conferência lê a aba
+// `PROVISÃO` do próprio mês conferido (mês sem o quadro sai "0 projetos"), e diz na própria linha de que mês leu ("na
+// aba `PROVISÃO` do mês MM/AAAA"). O teste continua lendo esse mês DO ARQUIVO e, se ele não for o conferido (uma
+// conferência gravada pela regra antiga), pede à mesma camada de dados a Tela 2 nele.
 const linhaProvisao = doConferencia.find((i) => i.tela === 'Tela 2' && i.nome === 'Provisões por projeto');
 const mesDaProvisao = linhaProvisao && /na aba `PROVISÃO` do mês (\d{2})\/(\d{4})/.exec(linhaProvisao.entram);
 let provisao = null, motivoProvisao = null, janelaProvisao = null;

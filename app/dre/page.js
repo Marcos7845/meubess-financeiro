@@ -126,7 +126,8 @@ function Celulas({ ponto, bom, comAh, comAv }) {
 }
 
 // O BLOCO "COMPROMISSOS" (decisão do dono, 29/09/2026) — o passivo, abaixo da tabela do DRE. Cinco números do mês da
-// URL — o quinto, as provisões por projeto da aba `PROVISÃO` do DFC, desde o fim do mesmo dia —, e cada um abre as linhas de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
+// URL — o quinto, as provisões por projeto da aba `PROVISÃO` do DFC, desde o fim do mesmo dia; o repasse da mesma aba vai no
+// quadro das obrigações com clientes, à parte —, e cada um abre as linhas de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
 // `lib/indicadores/tela-2.mjs`, que usa as regras de `lib/regras/passivo.mjs`.
 const COLUNAS_DA_DIVIDA = [
   { rotulo: 'dia', chave: 'dia', tipo: 'num' }, { rotulo: 'fonte', chave: 'fonte' }, { rotulo: 'empresa', chave: 'empresa' },
@@ -147,10 +148,37 @@ const COLUNAS_DOS_CONTRATOS = [
 const COLUNAS_DOS_BANCOS = [{ rotulo: 'banco', chave: 'banco' }, { rotulo: 'último saldo do mês', chave: 'valor', tipo: 'reais' }];
 const COLUNAS_DAS_PROVISOES = [
   { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'consultor', chave: 'consultor' },
-  { rotulo: 'frete', chave: 'frete', tipo: 'reais' }, { rotulo: 'repasse', chave: 'repasse', tipo: 'reais' },
-  { rotulo: 'comissão', chave: 'comissao', tipo: 'reais' }, { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' },
+  { rotulo: 'frete', chave: 'frete', tipo: 'reais' }, { rotulo: 'comissão', chave: 'comissao', tipo: 'reais' },
+  { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' }, { rotulo: 'imposto', chave: 'imposto', tipo: 'reais' },
+  { rotulo: 'compra', chave: 'compra', tipo: 'reais' },
   { rotulo: 'soma', chave: 'total', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
 ];
+const COLUNAS_DO_IMPOSTO_A_CONFERIR = [
+  { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' }, { rotulo: 'projeto', chave: 'projeto' },
+  { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'por quê', chave: 'motivo' },
+  { rotulo: 'valor do projeto', chave: 'valorProjeto', tipo: 'reais' }, { rotulo: 'imposto na planilha', chave: 'imposto', tipo: 'reais' },
+  { rotulo: '9,25% do projeto', chave: 'esperado', tipo: 'reais' },
+];
+const COLUNAS_DO_REPASSE = [
+  { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' },
+  { rotulo: 'repasse', chave: 'valor', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
+];
+
+// O REPASSE A CLIENTES (resposta do dono, 29/09/2026): pagamento que a MeuBESS ainda vai fazer a clientes, da aba
+// `PROVISÃO` do DFC. Fica junto das obrigações com clientes, como parte separada dos sinais do Omie — não soma com eles,
+// não soma nas provisões e não entra no resultado sem dinheiro de terceiros.
+function RepasseAClientes({ p }) {
+  if (p.valor === null) {
+    return <tr><th>repasse a clientes (aba PROVISÃO)</th><td className="num">—</td><td className="legenda">{p.semValor}</td></tr>;
+  }
+  return (
+    <tr>
+      <th>repasse a clientes, à parte (aba PROVISÃO{p.data ? `, ${p.data}` : ''})</th>
+      <td className="num">{emReais(p.repasse.total)}</td>
+      <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DO_REPASSE} linhas={p.repasse.projetos} /></td>
+    </tr>
+  );
+}
 
 // AS PROVISÕES POR PROJETO, o quadro que abre embaixo do bloco. Ele aparece também com a chave do Omie desligada: a aba
 // `PROVISÃO` é só do DFC (`livre`, de `lib/indicadores/tela-2.mjs`).
@@ -169,16 +197,26 @@ function ProvisoesPorProjeto({ p }) {
                   <tr key={x.id}><th>{x.rotulo}</th><td className="num">{emReais(x.valor)}</td><td>{x.projetos} projetos</td></tr>
                 ))}
                 <tr className="total">
-                  <th>= provisionado{p.data ? ` em ${p.data}` : ''}</th>
+                  <th>= {p.rotuloDoTotal}{p.data ? ` em ${p.data}` : ''}</th>
                   <td className="num">{emReais(p.valor)}</td>
                   <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DAS_PROVISOES} linhas={p.projetos} /></td>
                 </tr>
+                {p.impostoAConferir.length > 0 && (
+                  <tr>
+                    <th>imposto a conferir, fora da soma</th>
+                    <td className="num">linhas {p.impostoAConferir.map((x) => x.linha).join(', ')}</td>
+                    <td><Lancamentos rotulo="linhas" um="linha" colunas={COLUNAS_DO_IMPOSTO_A_CONFERIR} linhas={p.impostoAConferir} /></td>
+                  </tr>
+                )}
               </tbody>
             </table>
             <p className="legenda">
-              o que o financeiro provisionou para pagar a terceiros por projeto já vendido: frete, repasse, comissão e
-              comissão head. A aba não diz o que já foi pago, e a compra, o imposto e o valor final dela ficam fora
-              daqui (ver <code>docs/fontes.md</code>).
+              o que o financeiro provisionou para pagar a terceiros por projeto já vendido: frete, comissão, comissão
+              head, imposto e compra. O imposto entra só na linha em que a planilha escreve 9,25% do valor do projeto;
+              nas outras ele fica a conferir, com a linha. O repasse é pagamento a clientes e está em &quot;Obrigações com
+              clientes&quot;. {p.temPago
+                ? `A linha com data na coluna de pagamento saiu da soma (${p.pagos} neste mês).`
+                : 'A aba ainda não tem a coluna "pago em": tudo o que está nela conta como provisionado.'} Ver <code>docs/fontes.md</code>.
             </p>
           </>
         )}
@@ -211,6 +249,7 @@ function Compromissos({ c }) {
           <div className="rotulo">{obrig.nome}</div>
           <div className="numero">{emReais(obrig.valor)}</div>
           <div className="pe">{obrig.contagem.omie} sinais em aberto, do Omie</div>
+          {prov.repasse && <div className="pe">+ repasse a clientes {emReais(prov.repasse.total)} em {prov.repasse.projetos.length} projetos, à parte</div>}
         </div>
         <div className="kpi">
           <div className="rotulo">{liquida.nome}</div>
@@ -280,12 +319,14 @@ function Compromissos({ c }) {
                 <tr><th>+ sinais novos</th><td className="num">{emReais(obrig.novos)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.novos} /></td></tr>
                 <tr><th>− baixados com a NF</th><td className="num">{emReais(obrig.baixados)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.baixados} /></td></tr>
                 <tr className="total"><th>= no fim do mês</th><td className="num">{emReais(obrig.valor)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.saldo} /></td></tr>
+                <RepasseAClientes p={prov} />
               </tbody>
             </table>
             <p className="legenda">
               {obrig.contagem.extras.pedidoCancelado} dos {obrig.contagem.omie} sinais em aberto são de pedido que o Omie
               marca como cancelado, sem NF — o dinheiro entrou e nenhuma devolução está registrada, e eles continuam no
-              saldo até o financeiro confirmar a devolução.
+              saldo até o financeiro confirmar a devolução. O repasse vem da planilha, não do Omie, e não soma com os
+              sinais: são duas obrigações diferentes com clientes.
             </p>
           </div>
 
@@ -308,7 +349,7 @@ function Compromissos({ c }) {
               <tbody>
                 <tr><th>lucro líquido do DRE (caixa)</th><td className="num">{emReais(semTerceiros.partes.lucro)}</td><td>a linha &quot;(=) Lucro líquido&quot;, acima</td></tr>
                 <tr><th>− variação dos sinais em aberto</th><td className="num">{emReais(semTerceiros.partes.variacaoObrigacoes)}</td><td>sinais recebidos de pedidos sem NF {emReais(semTerceiros.partes.novos)} − sinais baixados {emReais(semTerceiros.partes.baixados)}</td></tr>
-                <tr><td colSpan={3} className="legenda">empréstimo, captação e amortização não entram: já estão fora do DRE</td></tr>
+                <tr><td colSpan={3} className="legenda">empréstimo, captação e amortização não entram: já estão fora do DRE; o repasse a clientes da aba PROVISÃO também não</td></tr>
                 <tr className="total"><th>= resultado sem dinheiro de terceiros</th><td className="num">{emReais(semTerceiros.valor)}</td><td /></tr>
               </tbody>
             </table>
@@ -318,9 +359,14 @@ function Compromissos({ c }) {
         </div>
       )}
 
-      {/* Com a chave do Omie desligada, só as provisões ficam: elas são do DFC. */}
+      {/* Com a chave do Omie desligada, só as provisões e o repasse ficam: eles são do DFC. */}
       {c.bloqueado && prov.livre && (
         <div className="compromissos-detalhe">
+          <div className="compromisso">
+            <h3>Obrigações com clientes — só o repasse</h3>
+            <p className="fonte-do-quadro">os sinais são do Omie e saem com a chave desligada; o repasse é da aba PROVISÃO do DFC</p>
+            <table className="conta-do-compromisso"><tbody><RepasseAClientes p={prov} /></tbody></table>
+          </div>
           <ProvisoesPorProjeto p={prov} />
         </div>
       )}

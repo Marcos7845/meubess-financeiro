@@ -17,11 +17,11 @@ import { centavos, normal, soma, lerDfcBruto, indicadoresDfc, lerCsvExtrato, ler
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (nome, padrao) => { const i = args.indexOf(`--${nome}`); return i < 0 ? padrao : args[i + 1]; };
-const periodo = opt('mes', '2026-09');
+const periodo = opt('mes', '2026-08');
 if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(periodo)) throw new Error('use --mes AAAA-MM');
 const [ano, mes] = periodo.split('-').map(Number);
 const anterior = new Date(Date.UTC(ano, mes - 2, 1)).toISOString().slice(0, 7);
-const janela = Math.max(1, Number(opt('janela', '2')));
+const janela = Math.max(1, Number(opt('janela', '1')));
 const meses = Array.from({ length: janela }, (_, i) => new Date(Date.UTC(ano, mes - 1 - i, 1)).toISOString().slice(0, 7)).reverse();
 const modoOmie = args.includes('--cache-omie') ? 'cache' : 'ao vivo';
 const pastaDfc = path.resolve(opt('dfc-dir', path.join(raiz, '.cache', `dfc-${ano}`)));
@@ -134,8 +134,11 @@ const resumoMaster = (() => {
   };
   return { dfc, extratos, mesesFiscais, saidasFiscais, n3Dfc, fechamentoPdf: fechamentoArquivos.filter((f) => /\.pdf$/i.test(f)).length,
     comprovantes: Object.fromEntries(Object.entries(comprovantes)
-    .map(([tipo, arqs]) => [tipo, { total: arqs.length, setembro: arqs.filter((a) => /(?:SET|SEP|09[-. ]2026|09\.2026)/i.test(path.dirname(a))).length }])) };
+    .map(([tipo, arqs]) => [tipo, { total: arqs.length,
+      mes: arqs.filter((a) => new RegExp(`(?:${prefixoDoMes(periodo)}[-. ]${ano}|${prefixoDoMes(periodo)}\\.${ano})`, 'i').test(path.dirname(a))).length }])) };
 })();
+
+function prefixoDoMes(p) { return p.slice(5); }
 
 function abrirDfc(p) {
   const [a, m] = p.split('-').map(Number);
@@ -252,12 +255,19 @@ function duplicidades(dfc, omie) {
     const id = `${m.emp}|${codigo}|${d.cGrupo}|${d.cNatureza}|${d.dDtPagamento ?? ''}`;
     if (omieIds.has(id)) omieDuplicados++; else omieIds.add(id);
   }
-  return { dfcPossiveis, omieDuplicados };
+  const tituloIds = new Set(); let omieTitulosDuplicados = 0;
+  for (const t of omie?.titulos ?? []) {
+    const id = `${t.emp}|${t.cabecTitulo?.nCodTitulo ?? ''}`;
+    if (!t.cabecTitulo?.nCodTitulo) continue;
+    if (tituloIds.has(id)) omieTitulosDuplicados++; else tituloIds.add(id);
+  }
+  return { dfcPossiveis, omieDuplicados, omieTitulosDuplicados };
 }
 
 const dfcs = new Map(meses.map((p) => [p, abrirDfc(p)]));
 for (const [p, d] of dfcs) if (d.erro) avisos.push(d.erro);
 const atual = dfcs.get(periodo);
+const linhasN3 = (atual?.linhas ?? []).filter((l) => normal(l.empDfc) === 'N3');
 const extratosPorMes = new Map(meses.map((p) => [p, lerExtratos(p)]));
 const extratos = extratosPorMes.get(periodo);
 for (const [p, grupo] of extratosPorMes) for (const erro of grupo.erros) avisos.push(`Extrato ${p}: ${erro}`);
@@ -299,6 +309,39 @@ if (cru && modoOmie === 'ao vivo') {
     };
     const mov = descrever('movimentos', 'pagamento'), tit = descrever('titulos', 'vencimento');
     const exemplo = mov.alterados[0] ?? tit.alterados[0];
+    const porCampo = (grupo) => Object.entries(grupo.alterados.flatMap((x) => x.campos)
+      .reduce((m, campo) => { m[campo] = (m[campo] ?? 0) + 1; return m; }, {}))
+      .map(([campo, n]) => `${campo}: ${n}`).join(', ') || 'nenhum';
+    const mesmaConsultaAlterada = [];
+    const conferirMesmoRecorte = async (tipo, grupo) => {
+      const caso = grupo.alterados[0];
+      if (!caso) return;
+      const antigo = anteriorCru[tipo].find((m) => chave(m) === caso.chave);
+      if (!antigo) return;
+      const L = leiturasDe(ano), emp = antigo.emp;
+      let servico, call, param, campo;
+      if (tipo === 'titulos') {
+        const venc = antigo.cabecTitulo?.dDtVenc ?? '';
+        const ordem = (d) => d.split('/').reverse().join('-');
+        const faixa = L.FAIXAS_TIT_R.find(([de, ate]) => ordem(venc) >= ordem(de) && ordem(venc) <= ordem(ate));
+        if (!faixa) return;
+        [servico, call, param, campo] = ['financas/pesquisartitulos', 'PesquisarLancamentos',
+          (n) => L.TIT_R(n, ...faixa), 'titulosEncontrados'];
+      } else {
+        [servico, call, param, campo] = ['financas/mf', 'ListarMovimentos', L.MF, 'movimentos'];
+      }
+      const novaResposta = await consulta(emp, servico, call, param, campo, 'ao vivo');
+      const novo = novaResposta.find((m) => chave({ ...m, emp }) === caso.chave);
+      const mudados = novo ? Object.keys(campos(antigo)).filter((k) => String(campos(antigo)[k] ?? '') !== String(campos(novo)[k] ?? '')) : [];
+      mesmaConsultaAlterada.push(`${tipo} ${caso.chave}: ${novo
+        ? (mudados.length ? `mesma consulta atual difere do cache nos campos ${mudados.join(', ')}`
+          : 'mesma consulta atual coincide com o cache nos campos comparados; diferença da janela mensal')
+        : 'ausente na mesma consulta atual'}`);
+    };
+    for (const [tipo, grupo] of [['movimentos', mov], ['titulos', tit]]) {
+      try { await conferirMesmoRecorte(tipo, grupo); }
+      catch (erro) { mesmaConsultaAlterada.push(`${tipo}: repetição da consulta indisponível (${erro.message})`); }
+    }
     let mesmaConsulta = '';
     if (tit.somenteAtual.length) {
       const [emp, codigo] = tit.somenteAtual[0].split('|');
@@ -313,20 +356,61 @@ if (cru && modoOmie === 'ao vivo') {
         }
       }
     }
-    diagnosticoOmie = `Movimentos: ${mov.somenteAtual.length} apenas na consulta mensal atual, ${mov.somenteCache.length} apenas no cache anual no mês, ${mov.alterados.length} identificadores com campos alterados; exemplo só atual ${mov.somenteAtual[0] ?? 'nenhum'}. `
-      + `Títulos: ${tit.somenteAtual.length} apenas na consulta mensal atual, ${tit.somenteCache.length} apenas no cache anual no mês, ${tit.alterados.length} alterados; exemplo só atual ${tit.somenteAtual[0] ?? 'nenhum'}. `
-      + (exemplo ? `Exemplo: código ${exemplo.chave}; campos diferentes: ${exemplo.campos.join(', ')}. ` : '') + mesmaConsulta;
+    diagnosticoOmie = `Movimentos: ${mov.somenteAtual.length} apenas na consulta mensal atual, ${mov.somenteCache.length} apenas no cache anual no mês, ${mov.alterados.length} identificadores com campos alterados (${porCampo(mov)}); exemplo só atual ${mov.somenteAtual[0] ?? 'nenhum'}. `
+      + `Títulos: ${tit.somenteAtual.length} apenas na consulta mensal atual, ${tit.somenteCache.length} apenas no cache anual no mês, ${tit.alterados.length} alterados (${porCampo(tit)}); exemplo só atual ${tit.somenteAtual[0] ?? 'nenhum'}. `
+      + (exemplo ? `Exemplo: código ${exemplo.chave}; campos diferentes: ${exemplo.campos.join(', ')}. ` : '')
+      + (mesmaConsultaAlterada.length ? `Mesmo recorte: ${mesmaConsultaAlterada.join('; ')}. ` : '') + mesmaConsulta;
   } catch (erro) { diagnosticoOmie = `Comparação com cache indisponível: ${erro.message}`; }
 }
 const dup = duplicidades(atual, cru);
 if (dup.dfcPossiveis.length) avisos.push(`DFC: ${dup.dfcPossiveis.length} grupo(s) de possível duplicidade; exemplo: linhas ${dup.dfcPossiveis[0].join(', ')}`);
 if (dup.omieDuplicados) avisos.push(`Omie: ${dup.omieDuplicados} movimentos com identificador repetido`);
+if (dup.omieTitulosDuplicados) avisos.push(`Omie: ${dup.omieTitulosDuplicados} títulos com identificador repetido`);
 
 const fixasJson = JSON.parse(fs.readFileSync(path.join(raiz, 'dados', 'despesas-fixas.json'), 'utf8'));
 const contasParaDre = JSON.parse(fs.readFileSync(path.join(raiz, 'dados', 'contas-correntes-por-negocio.json'), 'utf8'));
 const recorteDre = new Set(contasParaDre.contas.filter((c) => c.negocio === 'MeuBESS').map((c) => c.chave));
 const esperado = new Map([...(atual?.linhas ? indicadoresDfc(atual, fixasJson.fixas.map(normal)) : []),
   ...(cru ? calcularOmie(cru) : []), ...(cru && atual?.linhas ? dreIndependente(cru, recorteDre, atual, periodo) : [])]);
+// Séries refeitas a partir das linhas cruas, sem usar os agrupadores das telas.
+if (atual?.linhas) {
+  const porClasse = new Map();
+  const saidas = atual.linhas.filter((l) => l.movimento < 0);
+  for (const l of saidas) porClasse.set(l.classe, (porClasse.get(l.classe) ?? 0) - l.movimento);
+  const serie = [...porClasse].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor).slice(0, 10);
+  esperado.set('top-10-despesas', { valor: soma(serie.map((x) => x.valor)), serie, linhas: saidas,
+    fonte: 'DFC / FLUXO DE CAIXA; saídas agrupadas por CLASS. CONTABIL, dez maiores' });
+}
+if (cru) {
+  const faixa = (s) => {
+    const x = normal(s).replace(/\s/g, '');
+    if (x === 'CANCELADO') return null;
+    if (['RECEBIDO', 'LIQUIDADO'].includes(x)) return 'pago';
+    if (x === 'ATRASADO') return 'atrasado';
+    if (['EMABERTO', 'AVENCER', 'VENCEHOJE', 'PAGTOPARCIAL'].includes(x)) return 'aberto';
+    return 'outro';
+  };
+  const titulosMes = cru.titulos.filter((t) => recorteDre.has(`${t.emp}|${t.cabecTitulo?.nCodCC}`)
+    && String(t.cabecTitulo?.dDtVenc ?? '').slice(3, 10) === `${String(mes).padStart(2, '0')}/${ano}`
+    && faixa(t.cabecTitulo?.cStatus) !== null);
+  const status = { total: titulosMes.length, pago: 0, atrasado: 0, aberto: 0 };
+  const clientes = new Map();
+  for (const t of titulosMes) {
+    const f = faixa(t.cabecTitulo?.cStatus);
+    if (f in status) status[f]++;
+    const codigo = String(t.cabecTitulo?.nCodCliente ?? ''), chave = `${t.emp}|${codigo}`;
+    if (!clientes.has(chave)) clientes.set(chave, { empresa: t.emp, codigo, total: 0, pago: 0, atrasado: 0, aberto: 0 });
+    const c = clientes.get(chave), v = centavos(t.cabecTitulo?.nValorTitulo);
+    c.total += v;
+    if (f in c) c[f] += v;
+  }
+  const porCliente = [...clientes.values()].sort((a, b) => a.empresa.localeCompare(b.empresa) || a.codigo.localeCompare(b.codigo));
+  const fonte = 'Omie / PesquisarLancamentos; títulos com vencimento no mês, sem CANCELADO, conta MeuBESS';
+  for (const id of ['por-status', 'por-mes-e-status'])
+    esperado.set(id, { valor: status.total, serie: status, linhas: titulosMes, fonte });
+  esperado.set('por-cliente-e-status', { valor: soma(porCliente.map((c) => c.total)), serie: porCliente,
+    linhas: titulosMes, fonte: `${fonte}; por empresa e código de cliente` });
+}
 const dataAtual = new Date();
 const mesAberto = ano === dataAtual.getFullYear() && mes === dataAtual.getMonth() + 1;
 if (mesAberto && esperado.has('receitas') && esperado.has('despesas-pendentes') && esperado.has('valor-pendente')) {
@@ -354,34 +438,46 @@ try {
 const semExtratos = !conciliacao;
 const semRecalculo = {
   'capital-de-giro': 'contratos de capital de giro não foram recalculados documento a documento',
-  'obrigacoes-clientes': 'obrigações da aba PROVISAO não foram recalculadas por contrato',
+  'obrigacoes-clientes': 'sinais de pedidos sem NF não foram recalculados título a título; repasse da aba PROVISAO não foi confrontado',
   'divida-liquida': 'não há recálculo independente dos saldos de contratos e caixa',
-  'resultado-sem-terceiros': 'depende da apuração documental de capital e obrigações',
-  'provisoes-projetos': 'não há recálculo por projeto da aba PROVISAO',
-  'por-mes-e-status': 'série por status do Omie não foi reconstruída título a título',
-  'por-cliente-e-status': 'agregação por cliente do Omie não foi reconstruída título a título',
-  'por-status': 'agregação por status do Omie não foi reconstruída título a título',
+  'resultado-sem-terceiros': 'depende do recálculo dos sinais de clientes ainda sem NF',
+  'provisoes-projetos': 'a aba PROVISAO de agosto não contém o quadro por projeto; não há valor a recalcular',
   'dia-a-dia': 'saldos corridos de cada bloco do DFC não foram reconstruídos dia a dia',
-  'receita-despesa-por-dia': 'série diária do DFC não foi reconstruída lançamento a lançamento',
+  'receita-despesa-por-dia': 'bloco diário Entradas/Gastos do DFC não foi reconciliado com lançamentos e extratos',
   'receita-despesa-por-mes': 'série anual do DFC exige recálculo dos outros meses, fora da janela',
-  'top-10-despesas': 'ordenação por categoria do DFC não foi reconstruída',
-  'top-10-receitas': 'ordenação por categoria do DFC não foi reconstruída',
+  'top-10-receitas': 'dez maiores lançamentos de receita do Omie não foram reordenados a partir da resposta bruta',
+  projecao: 'projeção não se aplica ao mês fechado de agosto; a tela não mostra valor',
 };
 const rows = Object.entries(titulos).map(([id, [tela, nome]]) => {
   const e = esperado.get(id), i = app?.get(id);
-  const mostrado = i?.valor ?? i?.porMes?.find((coluna) => coluna.mes === mes)?.valor
+  const serieMostrada = id === 'top-10-despesas' ? i?.dados?.map(({ nome, valor }) => ({ nome: normal(nome), valor }))
+    : id === 'por-cliente-e-status' ? i?.dados?.map(({ empresa, codigo, total, pago, atrasado, aberto }) =>
+      ({ empresa, codigo, total, pago, atrasado, aberto })).sort((a, b) => a.empresa.localeCompare(b.empresa) || a.codigo.localeCompare(b.codigo))
+    : id === 'por-status' ? i?.dados
+    : id === 'por-mes-e-status' ? i?.dados?.find((x) => x.mes === mes) : null;
+  const serieComparavel = id === 'por-mes-e-status' && serieMostrada
+    ? Object.fromEntries(['total', 'pago', 'atrasado', 'aberto'].map((k) => [k, serieMostrada[k]])) : serieMostrada;
+  const mostrado = e?.serie && serieComparavel
+    ? (Array.isArray(serieComparavel) ? soma(serieComparavel.map((x) => x.valor ?? x.total)) : serieComparavel.total)
+    : i?.valor ?? i?.porMes?.find((coluna) => coluna.mes === mes)?.valor
     ?? (id === 'lista-de-titulos' ? i?.total : null);
   let motivo = null;
   if (!e) motivo = falhaOmie && !caixaIds.has(id) ? `leitura direta do Omie indisponível: ${falhaOmie}` : semRecalculo[id] ?? 'regra ainda sem recálculo independente do valor ou série';
   else if (e.linhas?.length === 0 && id !== 'valor-pendente' && id !== 'valor-vencido') motivo = 'nenhum documento no recorte; conferir cobertura antes de aceitar zero';
   else if (e.fonte.startsWith('Omie') && modoOmie === 'cache') motivo = 'Omie lido do cache local; falta resposta direta desta execução';
+  else if (e.fonte.includes('PesquisarLancamentos') && dup.omieTitulosDuplicados) motivo = 'títulos com identificador repetido na resposta do Omie';
+  else if (e.serie && JSON.stringify(e.serie) !== JSON.stringify(serieComparavel)) motivo = 'agrupamento da série difere entre fonte atual e tela';
+  else if (e.serie && id === 'top-10-despesas' && semExtratos) motivo = 'série recalculada por classe; faltam extratos de todas as contas do mês';
+  else if (e.serie && e.fonte.includes('financas/mf') && dup.omieDuplicados) motivo = 'série recalculada; identificadores duplicados na resposta de movimentos do Omie';
   else if (caixaIds.has(id) && semExtratos) motivo = 'não auditada: faltam extratos de todas as contas do mês';
   else if (caixaIds.has(id) && conciliacao && !conciliacao.confere) motivo = 'conciliação DFC × extratos não fecha';
   else if (caixaIds.has(id) && dup.dfcPossiveis.length) motivo = 'possíveis duplicidades do DFC pendentes de análise documental';
-  else if (e.fonte.startsWith('Omie') && dup.omieDuplicados) motivo = 'identificadores duplicados na resposta do Omie';
   else if (e.fonte.startsWith('Omie') && modoOmie === 'ao vivo' && ultimaRespostaNoCache && mostrado !== null
     && Math.abs(mostrado - e.valor) > (percentuais.has(id) ? 0.0000001 : 0))
-    motivo = 'resposta atual do Omie difere da leitura anterior no cache usada pela tela; conferir atualização e recorte';
+    motivo = e.fonte.includes('PesquisarLancamentos')
+      ? 'resposta atual difere do cache usado pela tela; mesma consulta confirmou alteração de título em pago e aberto'
+      : 'resposta atual do Omie difere do cache usado pela tela; consultar a causa por lançamento';
+  else if (e.fonte.includes('financas/mf') && dup.omieDuplicados) motivo = 'identificadores duplicados na resposta de movimentos do Omie';
   const avaliacao = estado(e?.valor ?? null, mostrado, motivo, percentuais.has(id) ? 0.0000001 : 0);
   const amostra = e?.linhas?.[0];
   const codigo = amostra ? ('n' in amostra ? `${e.fonte.startsWith('DFC') ? atual.arquivo + ', linha ' : 'linha '}${amostra.n}`
@@ -430,7 +526,7 @@ const provaMaster = resumoMaster ? `<section><h2>Master documental</h2>
   const x = resumoMaster.extratos[i];
   return `<tr><td>${esc(d.mes)}</td><td>${d.master === 1 ? d.igual ? 'hash SHA-256 idêntico' : 'divergente ou ausente' : `${d.master} arquivos na master`}</td><td>${d.cacheApp ? d.cacheAppIgual ? 'hash SHA-256 idêntico' : `hash SHA-256 divergente; ${d.celulasDiferentes} células diferentes` : 'ausente'}</td><td>${x.pastasB3w} pasta(s); OFX ${x.b3w.ofx}, CSV ${x.b3w.csv}, PDF ${x.b3w.pdf}</td><td>OFX ${x.b3n.ofx}, CSV ${x.b3n.csv}, PDF ${x.b3n.pdf}</td></tr>`;
 }).join('')}</tbody></table>
-<p>Fiscal B3W: mês mais recente ${esc(resumoMaster.mesesFiscais[0] ?? 'ausente')}; relatório de saídas lido: ${resumoMaster.saidasFiscais?.total ?? 0} registros, ${resumoMaster.saidasFiscais?.faturadas ?? 0} faturados, ${resumoMaster.saidasFiscais?.canceladas ?? 0} cancelados. Contábil B3W: ${esc(resumoMaster.mesesFiscais[1] ?? 'ausente')}, ${resumoMaster.fechamentoPdf} PDFs; o relatório de faturamento termina em 08/2026. Não há pasta 09-2026 nesses dois ramos. CPA B3W: ${resumoMaster.comprovantes.cpa.setembro} arquivo(s) em pasta identificada como setembro; C.R B3W: ${resumoMaster.comprovantes.cr.setembro}. A pasta “08 - OUTUBRO” ao lado de “08 - AGOSTO” tem nome errado, foi registrada como achado e não foi lida.</p>
+<p>Fiscal B3W: mês mais recente ${esc(resumoMaster.mesesFiscais[0] ?? 'ausente')}; relatório de saídas lido: ${resumoMaster.saidasFiscais?.total ?? 0} registros, ${resumoMaster.saidasFiscais?.faturadas ?? 0} faturados, ${resumoMaster.saidasFiscais?.canceladas ?? 0} cancelados. Contábil B3W: ${esc(resumoMaster.mesesFiscais[1] ?? 'ausente')}, ${resumoMaster.fechamentoPdf} PDFs. CPA B3W: ${resumoMaster.comprovantes.cpa.mes} arquivo(s) em pasta identificada com ${esc(periodo)}; C.R B3W: ${resumoMaster.comprovantes.cr.mes}. A pasta “08 - OUTUBRO” ao lado de “08 - AGOSTO” tem nome errado e não foi usada.</p>
 <p>Os PDFs encontrados não têm transações estruturadas em OFX/CSV. Sem a extração e confirmação de conta, data, movimento e saldo final de cada PDF, não há conciliação bancária completa. N3 tem ${resumoMaster.n3Dfc} arquivo(s) DFC separado(s) na master; a cópia B3W não demonstra sua incorporação.</p></section>` : '';
 const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Auditoria independente · ${periodo}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 :root{font-family:system-ui,sans-serif;color:#172337;background:#eef2f5}body{max-width:1500px;margin:auto;padding:28px}h1{margin-bottom:4px}p{line-height:1.5}.cards{display:flex;gap:12px;flex-wrap:wrap}.cards strong{font-size:1.7rem;display:block}.cards>div{background:#fff;padding:14px 22px;border-radius:9px;min-width:130px}section{background:#fff;padding:18px;margin:18px 0;border-radius:9px}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{padding:10px;border-bottom:1px solid #dce3e8;text-align:left;vertical-align:top}th{background:#e5edf3;position:sticky;top:0}td:nth-child(3),td:nth-child(4),td:nth-child(5){white-space:nowrap;font-variant-numeric:tabular-nums}.bad{background:#fff0ee}.na{background:#fff9e9}.ok{background:#edf8f1}small{color:#536273}ul{line-height:1.6}caption{text-align:left;padding:8px 0} .scroll{overflow:auto}</style></head><body>
@@ -438,17 +534,18 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><tit
 <div class="cards"><div><strong>${counts.divergente}</strong>divergentes</div><div><strong>${counts['não auditável']}</strong>não auditáveis</div><div><strong>${counts.conferido}</strong>conferidos</div><div><strong>${rows.length}</strong>indicadores</div></div>
 <section><h2>Procedimentos e limites</h2><ul>${avisos.length ? avisos.map((a) => `<li>${esc(a)}</li>`).join('') : '<li>Nenhuma falta ou duplicidade detectada nas verificações executadas.</li>'}</ul>
 <p>Completude: ${meses.map((p) => `${p}: ${dfcs.get(p)?.erro ? 'ausente ou inválido' : `${dfcs.get(p).arquivo}, ${dfcs.get(p).abas.length} abas`}`).join(' · ')}. Corte: DRE gerencial segue caixa; DFC usa DIA PG e, quando vazio, VENCIMENTO. Extratos: ${extratos.encontrados.length} transações lidas em ${periodo}; ${faltamExtratos.length} contas sem arquivo.</p>
-<p>Duplicidades: ${dup.dfcPossiveis.length} grupos suspeitos no DFC; ${dup.omieDuplicados} identificadores repetidos no Omie. Conciliação: ${conciliacao ? conciliacao.confere ? 'fecha por conta, data, valor e saldos' : `${conciliacao.chavesDivergentes} movimentos e ${conciliacao.saldosDivergentes} saldos divergentes` : 'não auditada: faltam extratos'}.</p>
+<p>Duplicidades: ${dup.dfcPossiveis.length} grupos suspeitos no DFC; ${dup.omieDuplicados} movimentos e ${dup.omieTitulosDuplicados} títulos com identificador repetido no Omie. Conciliação: ${conciliacao ? conciliacao.confere ? 'fecha por conta, data, valor e saldos' : `${conciliacao.chavesDivergentes} movimentos e ${conciliacao.saldosDivergentes} saldos divergentes` : 'não auditada: faltam extratos'}.</p>
 <p>Rastreio por amostra: cada linha da tabela mostra o primeiro número de linha do DFC ou o código de título do Omie usado no recálculo. Isso localiza um registro, mas ainda não comprova CPA, C.R. ou a nota fiscal.</p></section>
 ${provaMaster}
+<section><h2>N3 no DFC B3W</h2><p>A cópia local auditada de ${esc(periodo)} contém ${linhasN3.length} linha(s) baixada(s) com <code>EMP.=N3</code>${linhasN3.length ? `; exemplo: linha ${linhasN3[0].n} do FLUXO DE CAIXA` : ''}. As telas leem essas linhas junto com as demais, sem filtro por <code>EMP.</code>. O DFC separado de N3 da master não foi comparado nesta execução; sua eventual parcela adicional permanece indeterminada. Nenhuma soma foi alterada.</p></section>
 <section><h2>Confrontos documentais</h2><table><thead><tr><th>Prova</th><th>Estado</th><th>Fonte necessária</th></tr></thead><tbody>
-<tr><td>DRE × notas de saída</td><td>Não auditável: o último mês fiscal disponível é ${esc(resumoMaster?.mesesFiscais[0] ?? 'desconhecido')}; faltam as notas e relatórios de setembro.</td><td>FISCAL &amp; CONTABIL/FISCAL/09-2026; saídas, serviços e XML.</td></tr>
-<tr><td>DRE × fechamento contábil</td><td>Não auditável: o último fechamento disponível é ${esc(resumoMaster?.mesesFiscais[1] ?? 'desconhecido')}; falta setembro.</td><td>FISCAL &amp; CONTABIL/CONTABIL/09-2026.</td></tr>
-<tr><td>Amostra de cada tela × comprovante</td><td>Não auditável: as pastas de setembro de CPA e C.R. não constam da master examinada.</td><td>FINANCEIRO/2. CPA B3W e 3. C.R B3W, pasta do mês.</td></tr>
+<tr><td>DRE × notas de saída</td><td>Não auditável: ${resumoMaster ? 'o inventário fiscal não foi confrontado nota a nota com o DRE' : 'documentos da master não foram lidos nesta execução'}.</td><td>FISCAL &amp; CONTABIL/FISCAL/${esc(prefixoDoMes(periodo))}-${ano}; saídas, serviços e XML.</td></tr>
+<tr><td>DRE × fechamento contábil</td><td>Não auditável: ${resumoMaster ? 'o fechamento foi inventariado, mas suas contas não foram confrontadas com o DRE' : 'fechamento da master não foi lido nesta execução'}.</td><td>FISCAL &amp; CONTABIL/CONTABIL/${esc(prefixoDoMes(periodo))}-${ano}.</td></tr>
+<tr><td>Amostra de cada tela × comprovante</td><td>Não auditável: ${resumoMaster ? 'os comprovantes foram inventariados, mas nenhum foi ligado a uma linha das telas' : 'comprovantes da master não foram lidos nesta execução'}.</td><td>FINANCEIRO/2. CPA B3W e 3. C.R B3W, pasta do mês.</td></tr>
 </tbody></table><p>B3W, B3N, N3 e 3N são unidades do mesmo CNPJ; a conciliação exige os movimentos misturados de todas elas.</p>
 <p>Omie atual × cache anterior: ${esc(diagnosticoOmie)}</p></section>
 <section><h2>Ponte DRE × caixa</h2><p>${esc(ponteDre)}</p><p>O DRE deste dashboard é gerencial em regime de caixa. Uma ponte contábil por competência exigiria documentos de reconhecimento por competência e não pode ser concluída a partir destas duas fontes. A ponte acima fecha a aritmética e separa os valores por origem; a atribuição causal ainda depende dos documentos e de extratos de todas as contas.</p></section>
-<section><h2>Setembro × agosto</h2>${comparacao}<p>Variação = mês auditado menos mês anterior. São valores recalculados do DFC bruto; o estado depende da conciliação de ambos os meses.</p></section>
+<section><h2>${esc(anterior)} × ${esc(periodo)}</h2>${comparacao}<p>Variação = mês auditado menos mês anterior. São valores recalculados do DFC bruto; o estado depende da conciliação de ambos os meses.</p></section>
 <section class="scroll"><h2>Dashboard × fonte</h2><table><thead><tr><th>Indicador</th><th>Fonte, filtro e amostra</th><th>Esperado</th><th>Mostrado</th><th>Diferença</th><th>Estado e motivo</th></tr></thead><tbody>${rows.map(linhaHtml).join('')}</tbody></table></section>
 <p><small>Página local fora do git. Não contém credencial nem nome de cliente. Os valores não saíram desta máquina.</small></p></body></html>`;
 fs.mkdirSync(path.dirname(htmlSaida), { recursive: true });

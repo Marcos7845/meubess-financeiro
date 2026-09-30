@@ -18,6 +18,7 @@
     "conferir-telas": "node scripts/conferir-telas.mjs",
     "auditar": "node scripts/auditar.mjs",
     "testar-auditoria": "node --test scripts/auditoria/core.test.mjs",
+    "testar-cache-omie": "node --test scripts/testar-cache-omie.mjs",
     "conferir-filtros": "node scripts/conferir-filtros.mjs",
     "conferir-chave-omie": "node scripts/conferir-chave-omie.mjs",
     "modelo-contratos": "node scripts/modelo-contratos.mjs",

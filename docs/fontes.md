@@ -385,7 +385,7 @@ do mês.
 | pessoal pago, jan–set (empresa 1, empresa 2) | 255, 325 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
 | códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` e o `1.04.03` desde 29/09/2026 | 24, 26 | 24, 26 | sim |
-| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em setembro) | 53, 0 | 53, 1 | **não** — a releitura mexeu |
+| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
 
 <!-- CONTAGENS-JAN-SET:FIM -->
 

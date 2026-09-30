@@ -31,7 +31,7 @@ export function lerDfcBruto(bytes, ano, mes) {
     const sub2 = normal(txt('SUB 2')), classe = normal(txt('CLASS. CONTABIL'));
     const pagamento = normal(txt('PAGAMENTO'));
     bancoAtual = normal(txt('BANCO')) || bancoAtual;
-    const linha = { n: r.n, bloco, banco: bancoAtual, sub2, classe, pagamento,
+    const linha = { n: r.n, bloco, banco: bancoAtual, empDfc: txt('EMP.'), sub2, classe, pagamento,
       dataPg, vencimento, data, movimento, saldo: num('SALDO') === undefined ? null : centavos(num('SALDO')) };
     brutas.push(linha);
     if (!movimento || ['SALDO INICIAL', 'SALDO FINAL', 'SALDO INICIAL PROVISAO', 'SALDO FINAL PROVISAO'].includes(sub2)) continue;

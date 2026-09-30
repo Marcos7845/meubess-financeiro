@@ -154,16 +154,14 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
     extras: { sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
   },
-  // As provisões por projeto (aba `PROVISÃO` do DFC, com as respostas do dono de 29/09/2026). A contagem é de LINHAS DE
-  // PROJETO, e os extras são quantos projetos não pagos têm cada provisão maior que zero, quantas linhas de imposto
-  // batem com 9,25% do projeto e quantas ficam a conferir, quantos têm repasse (que vai para as obrigações com
-  // clientes) e quantos estão pagos.
+  // As provisões por projeto (aba `PROVISÃO` do DFC, com as respostas do dono de 29 e 30/09/2026). A contagem é de
+  // LINHAS DE PROJETO — toda linha da aba é ainda não paga —, e os extras são quantos projetos têm cada provisão maior
+  // que zero e quantos têm repasse (que vai para as obrigações com clientes). O imposto é crédito e não é contado.
   'provisoes-projetos': {
     dfc: /^([\d.]+) projetos? na aba `PROVISÃO`/, omie: null,
     extras: {
       frete: /— frete em ([\d.]+)/, comissao: /, comissão em ([\d.]+)/, comissaoHead: /comissão head em ([\d.]+)/,
-      impostoBate: /imposto que bate com a alíquota do projeto em ([\d.]+)/, impostoAConferir: /\(a conferir: ([\d.]+)/,
-      compra: /, compra em ([\d.]+)/, repasse: /; repasse a clientes em ([\d.]+)/, pagos: /; pagos em ([\d.]+)/,
+      compra: /, compra em ([\d.]+)/, repasse: /; repasse a clientes em ([\d.]+)/,
     },
   },
 

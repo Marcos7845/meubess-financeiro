@@ -149,15 +149,8 @@ const COLUNAS_DOS_BANCOS = [{ rotulo: 'banco', chave: 'banco' }, { rotulo: 'últ
 const COLUNAS_DAS_PROVISOES = [
   { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'consultor', chave: 'consultor' },
   { rotulo: 'frete', chave: 'frete', tipo: 'reais' }, { rotulo: 'comissão', chave: 'comissao', tipo: 'reais' },
-  { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' }, { rotulo: 'imposto', chave: 'imposto', tipo: 'reais' },
-  { rotulo: 'compra', chave: 'compra', tipo: 'reais' },
+  { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' }, { rotulo: 'compra', chave: 'compra', tipo: 'reais' },
   { rotulo: 'soma', chave: 'total', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
-];
-const COLUNAS_DO_IMPOSTO_A_CONFERIR = [
-  { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' }, { rotulo: 'projeto', chave: 'projeto' },
-  { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'por quê', chave: 'motivo' },
-  { rotulo: 'valor do projeto', chave: 'valorProjeto', tipo: 'reais' }, { rotulo: 'imposto na planilha', chave: 'imposto', tipo: 'reais' },
-  { rotulo: '9,25% do projeto', chave: 'esperado', tipo: 'reais' },
 ];
 const COLUNAS_DO_REPASSE = [
   { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' },
@@ -201,22 +194,14 @@ function ProvisoesPorProjeto({ p }) {
                   <td className="num">{emReais(p.valor)}</td>
                   <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DAS_PROVISOES} linhas={p.projetos} /></td>
                 </tr>
-                {p.impostoAConferir.length > 0 && (
-                  <tr>
-                    <th>imposto a conferir, fora da soma</th>
-                    <td className="num">linhas {p.impostoAConferir.map((x) => x.linha).join(', ')}</td>
-                    <td><Lancamentos rotulo="linhas" um="linha" colunas={COLUNAS_DO_IMPOSTO_A_CONFERIR} linhas={p.impostoAConferir} /></td>
-                  </tr>
-                )}
               </tbody>
             </table>
             <p className="legenda">
               o que o financeiro provisionou para pagar a terceiros por projeto já vendido: frete, comissão, comissão
-              head, imposto e compra. O imposto entra só na linha em que a planilha escreve 9,25% do valor do projeto;
-              nas outras ele fica a conferir, com a linha. O repasse é pagamento a clientes e está em &quot;Obrigações com
-              clientes&quot;. {p.temPago
-                ? `A linha com data na coluna de pagamento saiu da soma (${p.pagos} neste mês).`
-                : 'A aba ainda não tem a coluna "pago em": tudo o que está nela conta como provisionado.'} Ver <code>docs/fontes.md</code>.
+              head e compra. Toda linha da aba é ainda não paga: o financeiro a tira quando paga ou cancela. O imposto
+              da aba é crédito da empresa, não se paga, e fica fora. A compra conta zero enquanto a coluna
+              estiver vazia. O repasse é pagamento a clientes e está em &quot;Obrigações com clientes&quot;. Ver
+              <code> docs/fontes.md</code>.
             </p>
           </>
         )}
@@ -306,7 +291,7 @@ function Compromissos({ c }) {
             <p className="legenda">
               o mesmo pagamento no Omie e no DFC (mesmo sentido, mesmo dia, mesmo valor) conta uma vez: foram{' '}
               {giro.contagem.extras.pares} neste mês. Juros e IOF continuam no resultado financeiro do DRE; aqui eles só
-              aparecem.{giro.recusados?.length ? ` ${giro.recusados.length} linha(s) da planilha de contratos ficaram de fora por falta de ${[...new Set(giro.recusados.flatMap((r) => r.faltam))].join(', ')}.` : ''}
+              aparecem.{giro.origem ? ` O saldo sai da planilha ${giro.arquivo}, lida da ${giro.origem}: principal mais juros já corridos pela taxa da planilha, parcela vencida até o fim do mês contada como paga.` : ''}{giro.recusados?.length ? ` ${giro.recusados.length} linha(s) da planilha de contratos ficaram de fora por falta de ${[...new Set(giro.recusados.flatMap((r) => r.faltam))].join(', ')}.` : ''}
             </p>
           </div>
 

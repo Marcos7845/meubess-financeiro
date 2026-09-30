@@ -45,19 +45,19 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 
 ## Os indicadores
 
-- **Tela 1 — Saldo.** **Na tela:** DFC 355 e Omie 354. **Na conferência:** DFC 355 e Omie 354. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Receitas.** **Na tela:** DFC 101 e Omie 113. **Na conferência:** DFC 101 e Omie 113. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Despesas.** **Na tela:** DFC 246 e Omie 241. **Na conferência:** DFC 246 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Despesas pagas.** **Na tela:** DFC 246 e Omie 241. **Na conferência:** DFC 246 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Saldo.** **Na tela:** DFC 345 e Omie 354. **Na conferência:** DFC 345 e Omie 354. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Receitas.** **Na tela:** DFC 95 e Omie 113. **Na conferência:** DFC 95 e Omie 113. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Despesas.** **Na tela:** DFC 242 e Omie 241. **Na conferência:** DFC 242 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Despesas pagas.** **Na tela:** DFC 242 e Omie 241. **Na conferência:** DFC 242 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas pendentes.** **Na tela:** Omie 155. **Na conferência:** Omie 155. **Fonte:** Omie recortado (principal) / DFC (confronto).
 - **Tela 1 — Despesas com funcionários.** **Na tela:** DFC 83 e Omie 85. **Na conferência:** DFC 83 e Omie 85. **Fonte:** DFC (principal) / Omie recortado por categoria de pessoal (confronto).
 - **Tela 1 — % desp. funcionários / receita líquida.** **Na tela:** DFC 83 e Omie 113. **Na conferência:** DFC 83 e Omie 113. **Fonte:** DFC nas duas pontas (principal) / a mesma razão no Omie recortado (confronto).
-- **Tela 1 — Top 10 despesas.** **Na tela:** DFC 246 e Omie 241. **Na conferência:** DFC 246 e Omie 241. **Fonte:** DFC (principal) / Omie recortado por centro de custo (confronto).
+- **Tela 1 — Top 10 despesas.** **Na tela:** DFC 242 e Omie 241. **Na conferência:** DFC 242 e Omie 241. **Fonte:** DFC (principal) / Omie recortado por centro de custo (confronto).
 - **Tela 1 — Top 10 receitas.** **Na tela:** Omie 113. **Na conferência:** Omie 113. **Fonte:** Omie recortado (principal) / DFC (confronto).
 - **Tela 1 — Receita × despesa por dia.** **Na tela:** DFC 31 e Omie 354. **Na conferência:** DFC 31 e Omie 354. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Receita × despesa por mês.** **Na tela:** DFC 12 e Omie 354. **Na conferência:** DFC 12 e Omie 354. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 2 — Receita total.** **Na tela:** DFC 97 e Omie 113. **Na conferência:** DFC 97 e Omie 113. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 2 — Custos e despesas.** **Na tela:** DFC 246 e Omie 241. **Na conferência:** DFC 246 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 2 — Receita total.** **Na tela:** DFC 91 e Omie 113. **Na conferência:** DFC 91 e Omie 113. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 2 — Custos e despesas.** **Na tela:** DFC 242 e Omie 241. **Na conferência:** DFC 242 e Omie 241. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — EBITDA.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Também conferido:** receita 113, despesa 241. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
 - **Tela 2 — Lucro líquido.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Também conferido:** receita 113, despesa 241. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
 - **Tela 2 — Margem de lucro.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Também conferido:** receita 113, despesa 241. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
@@ -65,7 +65,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — (=) Receita bruta.** **Na tela:** Omie 113. **Na conferência:** Omie 113. **Também conferido:** contasDoDre 28, totalizadoras 9. **Fonte:** Omie recortado, calculado.
 - **Tela 2 — (−) Deduções: devoluções, taxas de serviço.** **Na tela:** DFC 5 e Omie 1. **Na conferência:** DFC 5 e Omie 1. **Também conferido:** oper13 0. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Receita líquida.** **Na tela:** Omie 113. **Na conferência:** Omie 113. **Fonte:** mistura as duas, calculado.
-- **Tela 2 — (−) Custos de vendas: custo do produto, outros custos.** **Na tela:** DFC 52 e Omie 65. **Na conferência:** DFC 52 e Omie 65. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 2 — (−) Custos de vendas: custo do produto, outros custos.** **Na tela:** DFC 51 e Omie 65. **Na conferência:** DFC 51 e Omie 65. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Lucro bruto.** **Na tela:** Omie 113. **Na conferência:** Omie 113. **Também conferido:** despesa 241. **Fonte:** mistura as duas, calculado.
 - **Tela 2 — (−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI.** **Na tela:** Omie 165. **Na conferência:** Omie 165. **Também conferido:** titulos1 80, baixas1 1, avulsos1 30, titulos2 9, baixas2 0, avulsos2 45. **Fonte:** Omie recortado (principal) / DFC por `SUB 2` (confronto).
 - **Tela 2 — (=) EBITDA.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Fonte:** Omie recortado, calculado.
@@ -73,11 +73,11 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — (−) Impostos pagos (guias).** **Na tela:** DFC 1 e Omie 5. **Na conferência:** DFC 1 e Omie 5. **Também conferido:** titulos 4, baixas 0, avulsos 1. **Fonte:** DFC, guias pagas (principal) / Omie recortado (confronto).
 - **Tela 2 — (=) Lucro líquido.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Fonte:** Omie recortado, calculado.
 - **Tela 2 — (=) sem conta.** **Na tela:** Omie 11. **Na conferência:** Omie 11. **Também conferido:** empresa1 11, empresa2 0. **Fonte:** Omie recortado.
-- **Tela 2 — Capital de giro tomado.** **Na tela:** DFC 2 e Omie 1. **Na conferência:** DFC 2 e Omie 1. **Também conferido:** pares 1, lancamentos 2, captado 0, amortizado 2, juros 0, iof 0, contratos 0. **Fonte:** fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos.
+- **Tela 2 — Capital de giro tomado.** **Na tela:** DFC 2 e Omie 1. **Na conferência:** DFC 2 e Omie 1. **Também conferido:** pares 1, lancamentos 2, captado 0, amortizado 2, juros 0, iof 0, contratos 3. **Fonte:** fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos.
 - **Tela 2 — Obrigações com clientes.** **Na tela:** Omie 79. **Na conferência:** Omie 79. **Também conferido:** pedidoCancelado 39, noInicio 78, novos 37, baixados 36. **Fonte:** Omie, sinais `ADVR` recebidos de pedidos ainda sem NF, pelo valor nominal; à parte, o repasse a clientes da aba `PROVISÃO` do DFC.
-- **Tela 2 — Dívida líquida.** **Na tela:** DFC 3. **Na conferência:** DFC 3. **Também conferido:** contratos 0. **Fonte:** capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
+- **Tela 2 — Dívida líquida.** **Na tela:** DFC 3. **Na conferência:** DFC 3. **Também conferido:** contratos 3. **Fonte:** capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
 - **Tela 2 — Resultado sem dinheiro de terceiros.** **Na tela:** Omie 354. **Na conferência:** Omie 354. **Também conferido:** sinais 73. **Fonte:** lucro líquido do DRE do mês − variação dos sinais em aberto (sinais recebidos de pedidos sem NF − sinais baixados).
-- **Tela 2 — Provisões por projeto.** **Na tela:** DFC 21. **Na conferência:** DFC 21. **Também conferido:** frete 19, comissao 20, comissaoHead 20, impostoBate 17, impostoAConferir 3, compra 0, repasse 6, pagos 0. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, comissão, comissão head, imposto (quando bate com a alíquota sobre o valor do projeto) e compra de cada projeto vendido e ainda não pago.
+- **Tela 2 — Provisões por projeto.** **Na tela:** DFC 21. **Na conferência:** DFC 21. **Também conferido:** frete 19, comissao 20, comissaoHead 20, compra 0, repasse 6. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, comissão, comissão head e compra de cada projeto vendido (toda linha da aba é ainda não paga; o imposto é crédito e fica fora).
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 106. **Na conferência:** Omie 106. **Também conferido:** empresa1 0, empresa2 106, cancelados 8. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor recebido.** **Na tela:** Omie 93. **Na conferência:** Omie 93. **Também conferido:** empresa1 0, empresa2 93. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor pendente.** **Na tela:** Omie 10. **Na conferência:** Omie 10. **Também conferido:** empresa1 0, empresa2 10. **Fonte:** Omie, títulos a receber por vencimento.
@@ -86,10 +86,10 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 106. **Na conferência:** Omie 106. **Também conferido:** clientes 69, semNome 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lista de títulos.** **Na tela:** Omie 106. **Na conferência:** Omie 106. **Também conferido:** comPedido 106, semPedido 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por status.** **Na tela:** Omie 106. **Na conferência:** Omie 106. **Também conferido:** pago 93, atrasado 12, aberto 1. **Fonte:** Omie, títulos a receber por vencimento.
-- **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 109. **Na conferência:** DFC 109. **Também conferido:** contasFixasNoMes 25, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
-- **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 109. **Na conferência:** DFC 109. **Também conferido:** receita 97, deducoes 5. **Fonte:** DFC nas duas pontas.
-- **Tela 3 — Projeção do mês.** **Na tela:** DFC 347. **Na conferência:** DFC 347. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 355. **Na conferência:** DFC 355. **Também conferido:** diasComMovimento 20, bancos 3, bancosQueFecham 3, linhasNaoBaixadasNoSaldo 10, bancosComLancamentoDepoisDoSaldo 0, ponteFecha true. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 108. **Na conferência:** DFC 108. **Também conferido:** contasFixasNoMes 25, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
+- **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 108. **Na conferência:** DFC 108. **Também conferido:** receita 91, deducoes 5. **Fonte:** DFC nas duas pontas.
+- **Tela 3 — Projeção do mês.** **Na tela:** DFC 337. **Na conferência:** DFC 337. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 345. **Na conferência:** DFC 345. **Também conferido:** diasComMovimento 19, bancos 3, bancosQueFecham 3, linhasNaoBaixadasNoSaldo 20, bancosComLancamentoDepoisDoSaldo 0, ponteFecha true. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
 
 ## Antes e depois da correção do leitor
 

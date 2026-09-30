@@ -7,17 +7,17 @@ export const LIMIAR_PADRAO = 0.8;
 
 // Lista fechada de palavras de natureza financeira. Qualquer token desconhecido, inclusive nome próprio,
 // banco, documento, data, conta, agência ou valor, é descartado antes de montar a requisição.
-const VOCABULARIO = new Set(`ALUGUEL AGUA ARMAZENAGEM CARTAO COMISSAO COMPRA CONTRIBUICAO CSLL DEVOLUCAO
-  EMPRESTIMO ENERGIA ESTORNO FGTS FOLHA FORNECEDOR FRETE IMPOSTO INSS INTERNET IOF IRPJ ISS
-  JUROS MERCADORIA PAGAMENTO PESSOAL PIX PROLABORE RECEBIMENTO REEMBOLSO RENDIMENTO
-  RESCISAO SALARIO SERVICO TARIFA TELEFONIA TRANSFERENCIA VENDA`.split(/\s+/).filter(Boolean));
-const GENERICAS = new Set('PAGAMENTO RECEBIMENTO PIX CARTAO COMPRA SERVICO'.split(' '));
+const VOCABULARIO = new Set(`ALUGUEL AGUA ARMAZENAGEM BOLETO BOLETOS CARTAO CARTOES COBRANCA COMISSAO
+  COMPRA CONTRIBUICAO CREDITO CSLL DARF DEB DEBITO DEPOSITO DEVOLUCAO EMPRESTIMO ENERGIA
+  ESTORNO FATURA FGTS FOLHA FORNECEDOR FRETE IMPOSTO INSS INTERNET IOF IRPJ ISS JUROS
+  MERCADORIA PAGAMENTO PAGAMENTOS PAGTO PESSOAL PGTO PIX PROLABORE RECEBIDO RECEBIMENTO
+  RECEBIMENTOS REEMBOLSO RENDIMENTO RENDIMENTOS RESCISAO RESGATE SALARIO SEGURO SEGUROS
+  SERVICO TARIFA TARIFAS TED TELEFONIA TRANSFERENCIA TRIBUTO VENDA`.split(/\s+/).filter(Boolean));
 
 export function limparDescricao(bruta) {
   if (typeof bruta !== 'string' || bruta.length > 2000) return null;
   const tokens = normal(bruta).match(/[A-Z]+/g) ?? [];
   const limpos = tokens.filter((t) => VOCABULARIO.has(t));
-  if (!limpos.some((t) => !GENERICAS.has(t))) return null;
   return limpos.slice(0, 20).join(' ').slice(0, 160) || null;
 }
 
@@ -27,12 +27,14 @@ export async function sugerirClassificacoes(descricoes, categorias, { chave = pr
   const criterios = Object.fromEntries(escolhas.map((nome, i) => [`c${i + 1}`, nome]));
   const porCodigo = new Map(Object.entries(criterios));
   const resultados = new Map();
-  const estatisticas = { chamadas: 0, caracteres: 0 };
+  const estatisticas = { chamadas: 0, caracteres: 0, lancamentosEnviados: 0 };
   const perguntas = { categoria: { type: 'choice', instructions: 'Choose the best DFC category for message. If there is insufficient evidence, choose uncertain.',
     criteria: { ...criterios, uncertain: 'Insufficient information in the description' } } };
   for (const bruta of descricoes) {
     const limpa = limparDescricao(bruta);
-    if (!limpa || resultados.has(limpa)) continue;
+    if (!limpa) continue;
+    if (chave && escolhas.length) estatisticas.lancamentosEnviados++;
+    if (resultados.has(limpa)) continue;
     if (!chave || !escolhas.length) { resultados.set(limpa, null); continue; }
     estatisticas.chamadas++;
     estatisticas.caracteres += limpa.length;
@@ -54,20 +56,38 @@ export async function sugerirClassificacoes(descricoes, categorias, { chave = pr
 }
 
 export function compararComDfc(dfc, extratos, conciliacao, resultados, limiar = LIMIAR_PADRAO) {
-  const porPar = new Map();
+  // A identidade por conta, dia e valor fica inteiramente local. Só é segura quando
+  // há uma linha de cada lado; lotes e multiplicidades não ganham categoria por acaso.
+  const porChaveDfc = new Map(), porChaveExtrato = new Map(), porPar = new Map(), idsExtrato = new Map();
+  const chaveDfc = (l) => `${normal(l.conta)}|${l.data?.a}-${l.data?.m}-${l.data?.d}|${l.movimento}`;
+  const chaveExtrato = (e) => `${normal(e.conta)}|${Number(e.data?.slice(0, 4))}-${Number(e.data?.slice(5, 7))}-${Number(e.data?.slice(8, 10))}|${e.valor}`;
   for (const l of dfc.linhas) {
+    const kDia = chaveDfc(l);
+    porChaveDfc.set(kDia, [...(porChaveDfc.get(kDia) ?? []), l]);
     const ids = conciliacao?.casadas.get(l.n) ?? [];
     if (ids.length !== 1) continue;
     const k = `${normal(l.conta)}|${ids[0]}`;
     porPar.set(k, [...(porPar.get(k) ?? []), l]);
   }
+  for (const e of extratos.filter((e) => e.valor !== 0)) {
+    const k = chaveExtrato(e);
+    porChaveExtrato.set(k, (porChaveExtrato.get(k) ?? 0) + 1);
+    const id = `${normal(e.conta)}|${e.id}`;
+    idsExtrato.set(id, (idsExtrato.get(id) ?? 0) + 1);
+  }
+  const exatos = new Set([...porChaveDfc].filter(([k, linhas]) => linhas.length === 1 && porChaveExtrato.get(k) === 1)
+    .map(([, linhas]) => linhas[0].n));
   const linhas = extratos.filter((e) => e.valor !== 0).map((e) => {
-    const pares = porPar.get(`${normal(e.conta)}|${e.id}`) ?? [];
-    const dfcLinha = pares.length === 1 ? pares[0] : null;
+    const chave = chaveExtrato(e);
+    const candidatos = porChaveDfc.get(chave) ?? [];
+    const exato = candidatos.length === 1 && porChaveExtrato.get(chave) === 1 ? candidatos[0] : null;
+    const id = `${normal(e.conta)}|${e.id}`;
+    const pares = porPar.get(id) ?? [];
+    const dfcLinha = exato ?? (idsExtrato.get(id) === 1 && pares.length === 1 && !exatos.has(pares[0].n) ? pares[0] : null);
     const sugestao = resultados.get(limparDescricao(e.historico)) ?? null;
     return { linhaDfc: dfcLinha?.n ?? null, verdade: dfcLinha?.sub2 ?? null,
       sugestao: sugestao?.categoria ?? null, confianca: sugestao?.confianca ?? null,
-      revisao: !sugestao || sugestao.confianca < limiar };
+      revisao: !sugestao || sugestao.confianca < limiar, pareamento: exato ? 'dia e valor' : dfcLinha ? 'conciliacao' : null };
   });
   const elegiveis = linhas.filter((l) => l.verdade && l.sugestao);
   const categorias = [...new Set(dfc.linhas.map((l) => l.sub2).filter(Boolean))].sort().map((categoria) => {
@@ -78,5 +98,8 @@ export function compararComDfc(dfc, extratos, conciliacao, resultados, limiar = 
   return { linhas, categorias, avaliadas: elegiveis.length,
     concordantes: elegiveis.filter((l) => l.verdade === l.sugestao).length,
     baixaConfianca: linhas.filter((l) => l.sugestao && l.revisao).length,
-    naoClassificadas: linhas.filter((l) => !l.sugestao).length };
+    naoClassificadas: linhas.filter((l) => !l.sugestao).length,
+    classificadas: linhas.filter((l) => l.sugestao).length,
+    paresPorDiaValor: linhas.filter((l) => l.pareamento === 'dia e valor').length,
+    paresPorConciliacao: linhas.filter((l) => l.pareamento === 'conciliacao').length };
 }

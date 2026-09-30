@@ -1,4 +1,4 @@
-# Converte um extrato bancário em PDF (cópia local da master) no CSV que o auditor lê: data;valor;saldo;id.
+# Converte um extrato bancário em PDF (cópia local da master) no CSV que o auditor lê: data;valor;saldo;id;historico.
 # Só grava se cada saldo impresso no PDF for igual ao saldo refeito transação a transação; senão para e diz onde.
 # Ao lado do CSV grava um .json com a prova da conversão (sem valores nem nomes): contagens, período coberto,
 # saldos conferidos e o que foi excluído (depósito bloqueado, por exemplo).
@@ -63,7 +63,7 @@ if a.modelo == 'itau':
         if valor is None:
             falhar(f'linha de {d} sem valor')
         saldo += cent(valor)
-        tx.append((iso(d), cent(valor), saldo))
+        tx.append((iso(d), cent(valor), saldo, texto))
     fechamento = saldo
 elif a.modelo == 'bb':
     # Banco do Brasil, extrato de conta corrente: "Saldo Anterior" e "S A L D O" com o saldo; depósito bloqueado ("*")
@@ -83,25 +83,25 @@ elif a.modelo == 'bb':
         if valor is None:
             falhar(f'linha de {d} sem valor')
         saldo += cent(valor)
-        tx.append((iso(d), cent(valor), saldo))
+        tx.append((iso(d), cent(valor), saldo, texto))
     if saldo != fechamento:
         falhar('saldo final não fecha com as transações')
 else:
     # Santander Empresas: mais recente primeiro, cada linha com o saldo após ela. Refaz em ordem cronológica e confere
     # linha a linha (saldo anterior + valor = saldo).
-    brutas = [(iso(d), cent(v), cent(s)) for d, _t, v, s in linhas(80, (420, 500), 500) if v and s]
+    brutas = [(iso(d), cent(v), cent(s), t) for d, t, v, s in linhas(80, (420, 500), 500) if v and s]
     brutas.reverse()
     if not brutas:
         falhar('nenhuma transação')
     abertura = brutas[0][2] - brutas[0][1]
     anterior = abertura
-    for data, v, s in brutas:
+    for data, v, s, historico in brutas:
         if anterior + v != s:
             falhar(f'saldo de {data} não fecha')
         pontos += 1
         anterior = s
         if data[:7] == a.mes:
-            tx.append((data, v, s))
+            tx.append((data, v, s, historico))
     fechamento = tx[-1][2] if tx else None
 
 if not tx and fechamento is None:
@@ -116,11 +116,12 @@ if a.modelo == 'bb':
 os.makedirs(a.saida, exist_ok=True)
 base = os.path.join(a.saida, f'{a.mes}__{a.conta}')
 with open(base + '.csv', 'w', encoding='utf-8', newline='\n') as f:
-    f.write('data;valor;saldo;id\n')
+    f.write('data;valor;saldo;id;historico\n')
     if not tx:
         f.write(f'{a.mes}-{fim[8:10]};0.00;{fechamento / 100:.2f};saldo\n')
-    for i, (d, v, s) in enumerate(tx):
-        f.write(f'{d};{v / 100:.2f};{s / 100:.2f};pdf-{i + 1}\n')
+    for i, (d, v, s, historico) in enumerate(tx):
+        historico = ' '.join(historico.replace(';', ' ').replace('"', ' ').split())
+        f.write(f'{d};{v / 100:.2f};{s / 100:.2f};pdf-{i + 1};{historico}\n')
 ultimo = int(fim[8:10]) if fim else 0
 prova = {
     'pdf': os.path.basename(a.pdf), 'modelo': a.modelo, 'conta': a.conta, 'mes': a.mes,

@@ -15,12 +15,17 @@ import { sinaisDeClientes, saldoDeContratos } from './auditoria/compromissos.mjs
 import * as documentos from './auditoria/documentos.mjs';
 import { lerZip, sharedStrings, abasDo, lerAba } from '../lib/regras/xlsx.mjs';
 import { centavos, normal, soma, lerDfcBruto, indicadoresDfc, lerCsvExtrato, lerOfxExtrato, reconciliar, aberturasDfc, estado } from './auditoria/core.mjs';
+import { LIMIAR_PADRAO, sugerirClassificacoes, compararComDfc } from './auditoria/jev.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (nome, padrao) => { const i = args.indexOf(`--${nome}`); return i < 0 ? padrao : args[i + 1]; };
 const periodo = opt('mes', '2026-08');
 if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(periodo)) throw new Error('use --mes AAAA-MM');
+const usarJev = args.includes('--jev');
+if (usarJev && periodo !== '2026-08') throw new Error('--jev está limitado a agosto/2026');
+const limiarJev = Number(opt('jev-limiar', String(LIMIAR_PADRAO)));
+if (!Number.isFinite(limiarJev) || limiarJev < 0 || limiarJev > 1) throw new Error('--jev-limiar deve estar entre 0 e 1');
 const [ano, mes] = periodo.split('-').map(Number);
 const anterior = new Date(Date.UTC(ano, mes - 2, 1)).toISOString().slice(0, 7);
 const janela = Math.max(1, Number(opt('janela', '1')));
@@ -319,6 +324,11 @@ const conciliacoes = new Map(meses.map((p) => {
 }));
 const faltamExtratos = conciliacoes.get(periodo).faltam;
 const conciliacao = conciliacoes.get(periodo).resultado;
+const jev = usarJev ? await (async () => {
+  const categorias = [...new Set((atual?.linhas ?? []).map((l) => l.sub2).filter(Boolean))];
+  const { resultados, estatisticas } = await sugerirClassificacoes(extratos.encontrados.map((e) => e.historico), categorias);
+  return { ...compararComDfc(atual ?? { linhas: [] }, extratos.encontrados, conciliacao, resultados, limiarJev), estatisticas };
+})() : null;
 const caixaCompleto = Boolean(conciliacao?.confere && !faltamExtratos.length);
 if (conciliacao) for (const r of conciliacao.porConta.values()) if (!r.confere)
   avisos.push(`Conciliação ${r.conta}: ${r.soExtrato.length} movimento(s) só no extrato, ${r.soDfc.length} linha(s) só no DFC${r.mesInteiro ? '' : `; o PDF cobre só ${r.prova?.periodoDoPdf?.join(' a ')}`}${r.saldosFecham ? '' : '; abertura ou fechamento não fecham'}`);
@@ -846,6 +856,19 @@ const provaMaster = resumoMaster ? `<section><h2>Master documental</h2>
   return `<tr><td>${esc(d.mes)}</td><td>${d.master === 1 ? d.igual ? 'hash SHA-256 idêntico' : 'divergente ou ausente' : `${d.master} arquivos na master`}</td><td>${d.cacheApp ? d.cacheAppIgual ? 'hash SHA-256 idêntico' : `hash SHA-256 divergente; ${d.celulasDiferentes} células diferentes` : 'ausente'}</td><td>${x.pastasB3w} pasta(s); OFX ${x.b3w.ofx}, CSV ${x.b3w.csv}, PDF ${x.b3w.pdf}</td><td>OFX ${x.b3n.ofx}, CSV ${x.b3n.csv}, PDF ${x.b3n.pdf}</td></tr>`;
 }).join('')}</tbody></table>
 <p>Cópias locais dos documentos do mês (.cache/): ${resumoMaster.copias.total} arquivo(s), ${resumoMaster.copias.iguais} com SHA-256 igual ao da master, ${resumoMaster.copias.diferentes} diferente(s), ${resumoMaster.copias.semPar} sem par. A pasta “08 - OUTUBRO” ao lado de “08 - AGOSTO” tem nome errado e não foi usada.</p></section>` : '';
+const secaoJev = !jev ? '' : (() => {
+  const taxa = (n, d) => d ? `${(100 * n / d).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%` : '—';
+  const categorias = jev.categorias.map((c) => `<tr><td>${esc(c.categoria)}</td><td>${c.totalDfc}</td><td>${c.avaliadas}</td><td>${c.concordantes}</td><td>${taxa(c.concordantes, c.avaliadas)}</td></tr>`).join('');
+  const baixas = jev.linhas.filter((l) => l.sugestao && l.revisao);
+  const divergencias = jev.linhas.filter((l) => l.verdade && l.sugestao && l.verdade !== l.sugestao);
+  const linhas = (ls) => ls.length ? `<table><thead><tr><th>Linha DFC</th><th>DFC</th><th>Sugestão</th><th>Confiança</th></tr></thead><tbody>${ls.map((l) => `<tr><td>${l.linhaDfc ?? 'sem par único'}</td><td>${esc(l.verdade ?? '—')}</td><td>${esc(l.sugestao)}</td><td>${taxa(l.confianca, 1)}</td></tr>`).join('')}</tbody></table>` : '<p>Nenhuma.</p>';
+  return `<section class="scroll"><h2>Classificação sugerida (Jev)</h2>
+<p>Somente agosto/2026. Categorias de SUB 2 do DFC local, para revisão do dono. O Jev só sugere; nenhuma fonte foi alterada. Concordância medida em transações com histórico classificável e par único na conciliação: <strong>${jev.concordantes}/${jev.avaliadas} (${taxa(jev.concordantes, jev.avaliadas)})</strong>. Extratos lidos: ${jev.linhas.length}; baixa confiança: ${jev.baixaConfianca}; não classificadas: ${jev.naoClassificadas}. Limiar de revisão humana: ${taxa(limiarJev, 1)}.</p>
+<table><thead><tr><th>Categoria DFC</th><th>Linhas DFC</th><th>Avaliadas</th><th>Concordantes</th><th>Concordância</th></tr></thead><tbody>${categorias}</tbody></table>
+<h3>Baixa confiança: revisão humana</h3>${linhas(baixas)}
+<h3>Divergências com o DFC</h3>${linhas(divergencias)}
+<p>Sem histórico seguro, sem chave, com erro de serviço ou sem par único: não classificado ou fora da concordância. A limpeza local elimina tokens desconhecidos e todo número; nenhum histórico, valor, data, conta, documento ou nome aparece nesta seção. Chamadas tentadas: ${jev.estatisticas.chamadas}; caracteres de descrições enviados: ${jev.estatisticas.caracteres}.</p></section>`;
+})();
 const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Auditoria independente · ${periodo}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 :root{font-family:system-ui,sans-serif;color:#172337;background:#eef2f5}body{max-width:1500px;margin:auto;padding:28px}h1{margin-bottom:4px}p{line-height:1.5}.cards{display:flex;gap:12px;flex-wrap:wrap}.cards strong{font-size:1.7rem;display:block}.cards>div{background:#fff;padding:14px 22px;border-radius:9px;min-width:130px}section{background:#fff;padding:18px;margin:18px 0;border-radius:9px}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{padding:10px;border-bottom:1px solid #dce3e8;text-align:left;vertical-align:top}th{background:#e5edf3;position:sticky;top:0}td:nth-child(3),td:nth-child(4),td:nth-child(5){white-space:nowrap;font-variant-numeric:tabular-nums}.bad{background:#fff0ee}.na{background:#fff9e9}.ok{background:#edf8f1}small{color:#536273}ul{line-height:1.6}caption{text-align:left;padding:8px 0} .scroll{overflow:auto}</style></head><body>
 <h1>Auditoria independente · ${periodo}</h1><p>Gerado em ${esc(new Date().toLocaleString('pt-BR'))}. Janela: ${esc(meses.join(' a '))}; comparação: ${esc(anterior)}. Fonte DFC: cópia local. Omie: ${esc(modoOmie)}. Cache usado pela tela: última gravação ${ultimaRespostaNoCache ? esc(new Date(ultimaRespostaNoCache).toLocaleString('pt-BR')) : 'indisponível'}. Divergências aparecem primeiro. Valores em centavos foram somados a partir das células e respostas brutas; o valor mostrado foi calculado pela camada da tela em processo CLI, sem servidor.</p>
@@ -855,6 +878,7 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><tit
 <p>Duplicidades: ${dup.dfcPossiveis.length} grupos suspeitos no DFC, ${dfcPendentes.length} sem prova bancária; ${dup.omieDuplicados} movimentos e ${dup.omieTitulosDuplicados} títulos com identificador repetido no Omie; ${dup.lotes.length} baixas em lote. Caixa: ${caixaCompleto ? 'todas as contas conciliadas' : 'nem todas as contas conciliadas (tabela abaixo)'}.</p></section>
 <section><h2>Caixa: DFC × extratos, conta a conta</h2>${tabelaContas}<p>Casamento: mesma data e valor; mesmo valor com até 4 dias de diferença; várias linhas do DFC num débito só do banco (lote), ou o contrário; e, no fim, o que sobra no mesmo dia se as somas forem iguais ao centavo. Os CSV saíram dos PDFs da master por <code>scripts/auditoria/extrato-pdf.py</code>, que só grava se cada saldo impresso no PDF fechar com as transações.</p></section>
 ${provaMaster}
+${secaoJev}
 ${secaoN3}
 ${secaoDocumentos}
 <section><h2>Omie</h2><p>Omie atual × cache anterior: ${esc(diagnosticoOmie)}</p></section>
@@ -866,3 +890,4 @@ fs.mkdirSync(path.dirname(htmlSaida), { recursive: true });
 fs.writeFileSync(htmlSaida, html, 'utf8');
 console.log(`ARTEFATO: ${path.relative(raiz, htmlSaida).replace(/\\/g, '/')}`);
 console.log(`${rows.length} indicadores: ${counts.conferido} conferidos, ${counts.divergente} divergentes, ${counts['não auditável']} não auditáveis`);
+if (jev) console.log(`Jev: ${jev.concordantes}/${jev.avaliadas} concordantes; ${jev.baixaConfianca} baixa confiança; ${jev.naoClassificadas} não classificadas; ${jev.estatisticas.chamadas} chamadas; ${jev.estatisticas.caracteres} caracteres enviados; limiar ${limiarJev}`);

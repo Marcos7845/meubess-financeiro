@@ -1,0 +1,47 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { limparDescricao, sugerirClassificacoes, compararComDfc } from './jev.mjs';
+
+test('limpeza local remove valor, data, CNPJ, CPF, conta, agência, banco, documento e nome inventados', () => {
+  const texto = 'Pagamento ALUGUEL para João Silva, R$ 1.234,56 em 18/08/2026; CNPJ 12.345.678/0001-90; CPF 123.456.789-09; conta 12345-6 agência 0999; Banco Jacarandá; doc NF-8457';
+  assert.equal(limparDescricao(texto), 'PAGAMENTO ALUGUEL');
+  assert.equal(limparDescricao('PIX Ana Pereira 11/08/2026 R$ 50,00'), null);
+  assert.equal(limparDescricao(''), null);
+});
+
+test('requisição tipada contém apenas descrição limpa e categorias, sem histórico bruto', async () => {
+  const bruto = 'Tarifa para Maria Souza no Banco Jacarandá, conta 12345-6, R$ 12,00 em 19/08/2026';
+  let requisicao;
+  const fetcher = async (_url, args) => {
+    requisicao = args;
+    return { ok: true, json: async () => ({ answers: { categoria: { choice: 'c1', confidence: 0.91 } } }) };
+  };
+  const r = await sugerirClassificacoes([bruto, bruto], ['TARIFAS BANCARIAS'], { chave: 'chave-ficticia', fetcher });
+  const corpo = JSON.parse(requisicao.body);
+  assert.deepEqual(corpo.state, { message: 'TARIFA' });
+  assert.equal(corpo.model, 'typesafe/jev-1.13');
+  assert.equal(corpo.questions.categoria.type, 'choice');
+  assert.equal(r.estatisticas.chamadas, 1);
+  assert.equal(r.estatisticas.caracteres, 6);
+  assert.deepEqual(r.resultados.get('TARIFA'), { categoria: 'TARIFAS BANCARIAS', confianca: 0.91 });
+  for (const segredo of ['Maria', 'Souza', 'Jacarandá', '12345', '12,00', '19/08/2026']) assert.ok(!requisicao.body.includes(segredo));
+});
+
+test('sem chave ou erro segue não classificado e mede somente tentativas', async () => {
+  const semChave = await sugerirClassificacoes(['TARIFA'], ['TARIFAS BANCARIAS'], { chave: '' });
+  assert.deepEqual(semChave.estatisticas, { chamadas: 0, caracteres: 0 });
+  const falha = await sugerirClassificacoes(['TARIFA'], ['TARIFAS BANCARIAS'], { chave: 'ficticia', fetcher: async () => { throw Error('erro secreto'); } });
+  assert.equal(falha.resultados.get('TARIFA'), null);
+  assert.deepEqual(falha.estatisticas, { chamadas: 1, caracteres: 6 });
+});
+
+test('concordância usa somente par único com DFC e marca revisão pelo limiar', () => {
+  const dfc = { linhas: [{ n: 3, conta: 'ITAU--1', sub2: 'TARIFAS BANCARIAS' }, { n: 4, conta: 'ITAU--1', sub2: 'ALUGUEL' }] };
+  const extratos = [{ conta: 'ITAU--1', id: 'a', valor: -1, historico: 'Tarifa' },
+    { conta: 'ITAU--1', id: 'b', valor: -2, historico: 'Aluguel' }];
+  const resultados = new Map([['TARIFA', { categoria: 'TARIFAS BANCARIAS', confianca: 0.9 }],
+    ['ALUGUEL', { categoria: 'TARIFAS BANCARIAS', confianca: 0.7 }]]);
+  const r = compararComDfc(dfc, extratos, { casadas: new Map([[3, ['a']], [4, ['b']]]) }, resultados, 0.8);
+  assert.deepEqual([r.avaliadas, r.concordantes, r.baixaConfianca, r.naoClassificadas], [2, 1, 1, 0]);
+  assert.equal(r.categorias.find((c) => c.categoria === 'ALUGUEL').concordantes, 0);
+});

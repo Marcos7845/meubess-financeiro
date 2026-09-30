@@ -59,7 +59,7 @@ Nada aqui inclui, altera ou exclui no Omie, nem escreve nas planilhas do DFC. `l
   reais, gerado por `scripts/confronto-dfc-omie.mjs`), `.next*`. Não os force com `git add -f`.
 - As capturas `docs/tela-N-captura*.html` saem de `scripts/capturar-tela.mjs`, que troca todo valor por "—" e todo
   nome de cliente pelo código, e **se recusa a gravar** se sobrar um. Os conferidores têm a mesma trava.
-- Número financeiro não sai da máquina para ser medido ou classificado por serviço de terceiros.
+- Número financeiro não sai da máquina para ser medido ou classificado por serviço de terceiros. **Exceção do dono em 30/09/2026, somente no auditor independente com `--jev`:** o Jev (`typesafe/jev-1.13` pelo OpenRouter) pode sugerir a categoria de lançamentos de agosto/2026. De cada lançamento, só o texto da descrição previamente limpo por código local pode ser enviado: sem valor, data, nome de pessoa ou cliente, CNPJ/CPF, conta, agência, banco ou documento. Nenhum contexto sensível acompanha a descrição. A chave `OPENROUTER_API_KEY` vem só do ambiente e não é impressa nem gravada. Sugestões não alteram fonte e exigem revisão humana abaixo do limiar documentado.
 - O formato do dinheiro mora em `app/dinheiro.js`, num lugar só — é a forma que a trava da captura sabe apagar.
 
 ## Regra 3 — o número da tela tem que conferir com a fonte

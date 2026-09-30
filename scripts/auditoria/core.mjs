@@ -112,7 +112,8 @@ export function lerCsvExtrato(texto, contaArquivo, mes) {
     const data = get('DATA');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) throw new Error(`CSV linha ${i + 2}: DATA deve ser AAAA-MM-DD`);
     if (data.slice(0, 7) !== mes) throw new Error(`CSV linha ${i + 2}: fora do mês`);
-    return { conta: normal(contaArquivo), data, valor: decimal(get('VALOR'), i, 'VALOR'), saldo: decimal(get('SALDO'), i, 'SALDO'), id: get('ID') || `${i + 2}` };
+    return { conta: normal(contaArquivo), data, valor: decimal(get('VALOR'), i, 'VALOR'), saldo: decimal(get('SALDO'), i, 'SALDO'), id: get('ID') || `${i + 2}`,
+      historico: get('HISTORICO') || get('DESCRICAO') };
   });
 }
 
@@ -124,7 +125,8 @@ export function lerOfxExtrato(texto, conta, mes) {
     if (!/^\d{8}$/.test(d) || !/^-?\d+(?:\.\d{1,2})?$/.test(valor)) throw new Error(`OFX transação ${i + 1}: data ou valor inválido`);
     const data = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}`;
     if (data.slice(0, 7) !== mes) throw new Error(`OFX transação ${i + 1}: fora do mês`);
-    return { conta: normal(conta), data, valor: centavos(valor), id: tag(s, 'FITID') || `${i + 1}` };
+    return { conta: normal(conta), data, valor: centavos(valor), id: tag(s, 'FITID') || `${i + 1}`,
+      historico: tag(s, 'MEMO') || tag(s, 'NAME') };
   });
   const ledger = /<LEDGERBAL>([\s\S]*?)(?:<\/LEDGERBAL>|$)/i.exec(texto)?.[1] ?? '';
   const fechamento = tag(ledger, 'BALAMT');

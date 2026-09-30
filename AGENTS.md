@@ -90,6 +90,8 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 
 `npm run auditar -- --mes 2026-09` roda fora do Next e gera `docs/auditoria-2026-09.html` (ignorado pelo git). Usa a cópia local `.cache/dfc-2026` por padrão ou `--dfc-dir <pasta local>`; nunca indique uma pasta sincronizada. Consulta o Omie diretamente, só leitura, por `lib/regras/omie-api.mjs`, sem escrever no cache do app. Para um ensaio sem rede, `--cache-omie` lê o cache, mas as linhas do Omie ficam **não auditáveis** pela falta de resposta atual. `--janela 2` inclui o mês anterior; veja `docs/auditoria.md` para o formato de `extratos/`. Sem extratos de todas as contas, o caixa fica **não auditável**.
 
+**Exceção autorizada pelo dono em 30/09/2026, somente para o auditor independente:** ele pode ler diretamente, só o necessário e somente para consulta, a pasta master de FINANCEIRO & FISCAL dentro de `Meu Bess` do usuário, ciente de que a leitura baixa os arquivos sincronizados. Deve ignorar as pastas soltas de DFC com sufixo numérico, que são cópias. Arquivos necessários podem ser copiados para `.cache/` (ignorado pelo git); o caminho absoluto e o nome da pasta master não entram em arquivo versionado. A exceção não autoriza alteração, exclusão nem movimentação na master, e não se estende às conferências do app.
+
 ## Como subir local
 
 ```

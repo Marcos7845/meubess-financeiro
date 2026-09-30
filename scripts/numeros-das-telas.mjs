@@ -58,6 +58,7 @@
 //   DFC_DIR=<caminho> node scripts/numeros-das-telas.mjs
 
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1134,20 +1135,51 @@ const CASO_DO_CONTRATO = await (async () => {
   };
 })();
 
+// AS CCBs DO ITAÚ (decisão do dono, 30/09/2026): o cronograma que a regra leu do Anexo I (pelas colunas, em Python) é
+// relido aqui por OUTRO leitor, o texto do PDF pelo `pdftotext`; cada parcela que vence no mês tem de estar no texto
+// (data e total na mesma linha) e casar com uma linha de dívida do DFC do mês, no mesmo dia e no mesmo valor em centavos.
+const CASO_DAS_CCBS = (() => {
+  if (!CONTRATOS.ok || !CONTRATOS.ccbs?.size) return null;
+  const moeda = (c) => `${Math.floor(c / 100).toLocaleString('pt-BR')},${dois(c % 100)}`;
+  const partes = [], dif = [];
+  for (const [numero, ccb] of CONTRATOS.ccbs) {
+    if (!ccb) { dif.push(`CCB ${numero}: Anexo I ilegível na cópia local`); continue; }
+    let texto = null;
+    for (const exe of [process.env.PDFTOTEXT, 'pdftotext', 'C:\\Program Files\\Git\\mingw64\\bin\\pdftotext.exe'].filter(Boolean)) {
+      try { texto = execFileSync(exe, ['-layout', '-enc', 'UTF-8', ccb.arquivo, '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); break; } catch { /* próximo */ }
+    }
+    if (!texto) { dif.push(`CCB ${numero}: o texto do PDF não foi relido`); continue; }
+    const doMes = ccb.parcelas.filter((p) => { const d = new Date(p.venc); return d.getUTCFullYear() === ANO && d.getUTCMonth() + 1 === MES; });
+    const soJuros = ccb.parcelas.filter((p) => p.principal === 0).length;
+    const casadas = doMes.map((p) => {
+      const d = new Date(p.venc), data = `${dois(d.getUTCDate())}/${dois(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+      const noTexto = texto.split('\n').some((l) => l.includes(data) && l.includes(moeda(p.total)));
+      const linha = DFC.ok ? DFC.linhas.find((x) => eDividaDfc(x) && x.natureza === 'P' && x.dia === d.getUTCDate() && Math.abs(x.valor) === p.total) : null;
+      if (!noTexto) dif.push(`CCB ${numero}: a parcela ${p.n} (${data}) não foi achada no texto do PDF`);
+      if (!linha) dif.push(`CCB ${numero}: a parcela ${p.n} (${data}) não casa com linha de dívida do DFC do mês`);
+      return `parcela ${p.n} de ${data} (${p.principal === 0 ? 'só juros' : 'juros e principal'}) ${noTexto ? 'achada no texto do Anexo I' : '**não** achada no texto'}${linha ? ` e igual, em centavos, à linha ${linha.linha} do \`FLUXO DE CAIXA\`` : ''}`;
+    });
+    partes.push(`CCB \`${numero}\`: ${ccb.parcelas.length} parcelas no Anexo I, principal somado igual ao total financiado, ${soJuros} primeiras só de juros; ${casadas.join('; ') || `nenhuma parcela vence em ${NOME_DO_MES}`}`);
+  }
+  return { ok: dif.length === 0, dif, texto: partes.join('; ') };
+})();
+
 add({
   tela: 'Tela 2', nome: 'Capital de giro tomado',
-  fonte: 'fluxo do mês: Omie recortado + DFC por `SUB 2`, sem contar duas vezes o mesmo pagamento; saldo devedor: planilha de contratos',
-  filtro: `**fluxo do mês** — Omie: ${FILTRO_CAIXA}, pela categoria (decisão do dono, 29/09/2026): captado = \`1.04.03\` Recebimento de Empréstimos Bancários (\`cNatureza = "R"\`); amortizado = \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, na empresa 1, que saíram de "(−) Despesas gerais", e \`2.04.91\` Emprestimo, na empresa 2, que saiu do resultado financeiro (\`cNatureza = "P"\`); a captação e a amortização ficam fora do DRE; juros = \`2.05.01\` Juros sobre Empréstimos; IOF = \`2.06.95\` (juros e IOF continuam no resultado financeiro do DRE, e aqui só aparecem). DFC: \`FLUXO DE CAIXA\` do mês, \`SUB 2\` (J) = \`EMPRESTIMO\` (entrada é captação, saída é parcela) e toda linha com "ANTECIPA" em \`SUB 2\` ou \`CLASS. CONTABIL\` (antecipação de recebíveis conta como dívida). **Sem contar duas vezes:** um lançamento do Omie e uma linha do DFC são o mesmo pagamento quando têm o mesmo sentido, o mesmo dia do mês e o mesmo valor em centavos, casados um a um. **Saldo devedor** — a planilha de contratos do financeiro na pasta do DFC (um \`.xlsx\` com "contrato" no nome, modelo em \`docs/modelo-contratos.xlsx\`), a custo amortizado no último dia do mês: principal mais os juros já corridos pela taxa ao mês, sem juros futuros, com as parcelas vencidas até o corte contando como pagas; vencimentos em 0–3, 3–12 e mais de 12 meses pelo valor nominal das parcelas que faltam`,
+  fonte: 'fluxo do mês: Omie recortado + DFC por `SUB 2`, sem duplicar pagamentos; saldo: CCBs Itaú pelo Anexo I e planilha para contrato sem CCB legível',
+  filtro: `**fluxo do mês** — Omie: ${FILTRO_CAIXA}, pela categoria (decisão do dono, 29/09/2026): captado = \`1.04.03\` Recebimento de Empréstimos Bancários (\`cNatureza = "R"\`); amortizado = \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, na empresa 1, que saíram de "(−) Despesas gerais", e \`2.04.91\` Emprestimo, na empresa 2, que saiu do resultado financeiro (\`cNatureza = "P"\`); a captação e a amortização ficam fora do DRE; juros = \`2.05.01\` Juros sobre Empréstimos; IOF = \`2.06.95\` (juros e IOF continuam no resultado financeiro do DRE, e aqui só aparecem). DFC: \`FLUXO DE CAIXA\` do mês, \`SUB 2\` (J) = \`EMPRESTIMO\` (entrada é captação, saída é parcela) e toda linha com "ANTECIPA" em \`SUB 2\` ou \`CLASS. CONTABIL\` (antecipação de recebíveis conta como dívida). **Sem contar duas vezes:** um lançamento do Omie e uma linha do DFC são o mesmo pagamento quando têm o mesmo sentido, o mesmo dia do mês e o mesmo valor em centavos, casados um a um. **Saldo devedor** — para as CCBs Itaú \`4528305982\` e \`4528550256\` (decisão do dono, 30/09/2026), o PDF da CCB da cópia local: total financiado (crédito + IOF + ECG) menos o principal das parcelas do Anexo I vencidas até o corte, mais os juros corridos desde o último vencimento pela taxa da CCB, sem juros futuros; vencimentos em 0–3, 3–12 e mais de 12 meses pelo total nominal das parcelas do Anexo I que faltam. O contrato sem CCB legível segue a planilha de contratos do financeiro (um \`.xlsx\` com "contrato" no nome, modelo em \`docs/modelo-contratos.xlsx\`), a custo amortizado, com as parcelas vencidas contando como pagas. CCB exigida ausente ou ilegível: sem número`,
   contagem: `${pl(nDoFluxo('omie'), 'lançamento', 'lançamentos')} do Omie e ${pl(nDoFluxo('dfc'), 'linha', 'linhas')} do DFC no fluxo do mês, ${Object.values(FLUXO_DO_MES).reduce((s, g) => s + g.pares.length, 0)} deles o mesmo pagamento nas duas fontes, que conta uma vez — ${pl(LANC_DO_FLUXO, 'pagamento', 'pagamentos')}: captado ${nGrupo('captado')}, amortizado ${nGrupo('amortizado')}, juros ${nGrupo('juros')}, IOF ${nGrupo('iof')}; ${pl(N_CONTRATOS, 'contrato', 'contratos')} na planilha de contratos (${TEXTO_CONTRATOS})`,
-  estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DA_DIVIDA && CASO_DA_DIVIDA.ok && (!CASO_DO_CONTRATO || CASO_DO_CONTRATO.ok) ? 'conferido' : 'divergente'),
+  estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DA_DIVIDA && CASO_DA_DIVIDA.ok && (!CASO_DO_CONTRATO || CASO_DO_CONTRATO.ok) && (!CASO_DAS_CCBS || CASO_DAS_CCBS.ok) ? 'conferido' : 'divergente'),
   motivo: MOTIVO_DFC ? `metade do fluxo é o DFC — ${MOTIVO_DFC}` : ([
     CASO_DA_DIVIDA ? CASO_DA_DIVIDA.motivo : 'nenhum pagamento de dívida entrou neste mês, então não há caso real',
     CASO_DO_CONTRATO && !CASO_DO_CONTRATO.ok ? `no saldo: ${CASO_DO_CONTRATO.dif.join('; ')}` : null,
+    CASO_DAS_CCBS && !CASO_DAS_CCBS.ok ? `nas CCBs: ${CASO_DAS_CCBS.dif.join('; ')}` : null,
   ].filter(Boolean).join('; ') || null),
   caso: [
     `no fluxo do mês: ${CASO_DA_DIVIDA ? CASO_DA_DIVIDA.texto : 'nenhum pagamento de dívida entrou neste mês'}`,
-    CASO_DO_CONTRATO ? `no saldo devedor: ${CASO_DO_CONTRATO.texto}` : `no saldo devedor: ${TEXTO_CONTRATOS}`,
-  ].join('; '),
+    CASO_DAS_CCBS ? `nas CCBs do Itaú: ${CASO_DAS_CCBS.texto}` : null,
+    CASO_DO_CONTRATO ? `na planilha de contratos: ${CASO_DO_CONTRATO.texto}` : `na planilha de contratos: ${TEXTO_CONTRATOS}`,
+  ].filter(Boolean).join('; '),
 });
 
 // OBRIGAÇÕES COM CLIENTES: a regra é a de `obrigacoesComClientes`; os casos são um sinal ainda em aberto no fim do mês
@@ -1185,8 +1217,8 @@ const CASO_DO_BANCO = (() => {
   return { ok: Boolean(cru), texto: `o bloco ${b.bloco} da aba \`FLUXO DE CAIXA\` do arquivo \`${DFC.arquivo}\` (\`BANCO\` ${b.banco || '(vazio)'}), cujo último saldo está na linha ${b.linhaFinal}${cru ? ', achada de volta pelo número da linha numa segunda leitura da aba' : ', que **não** foi achada de volta na segunda leitura'}` };
 })();
 add({
-  tela: 'Tela 2', nome: 'Dívida líquida', fonte: 'capital de giro tomado (planilha de contratos) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês)',
-  filtro: 'o saldo devedor do "Capital de giro tomado" (linha acima), menos o saldo dos bancos da Tela 3: o último saldo escrito de cada bloco de banco da aba `FLUXO DE CAIXA` do mês — a coluna de saldo corrido, reconhecida pela regra de `lib/regras/dfc.mjs` (o número só vale como saldo quando é o saldo anterior mais o movimento da linha). Sem a planilha de contratos a tela não tem este número e escreve "falta a planilha de contratos" no lugar dele',
+  tela: 'Tela 2', nome: 'Dívida líquida', fonte: 'capital de giro tomado (CCBs Itaú e planilha) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês)',
+  filtro: 'o saldo devedor do "Capital de giro tomado" (linha acima), menos o saldo dos bancos da Tela 3: o último saldo escrito de cada bloco de banco da aba `FLUXO DE CAIXA` do mês — a coluna de saldo corrido, reconhecida pela regra de `lib/regras/dfc.mjs` (o número só vale como saldo quando é o saldo anterior mais o movimento da linha). Sem a planilha de contratos, ou sem uma CCB Itaú exigida legível, a tela não tem este número e escreve o motivo no lugar dele',
   contagem: `${pl(BANCOS.length, 'bloco', 'blocos')} de banco no \`FLUXO DE CAIXA\` do mês (o saldo dos bancos da Tela 3); ${pl(N_CONTRATOS, 'contrato', 'contratos')} na planilha de contratos (${TEXTO_CONTRATOS})`,
   estado: MOTIVO_DFC ? 'a-conferir' : (CASO_DO_BANCO && CASO_DO_BANCO.ok ? 'conferido' : 'divergente'),
   motivo: MOTIVO_DFC ? `o saldo dos bancos é do DFC — ${MOTIVO_DFC}` : (CASO_DO_BANCO?.ok ? null : 'nenhum bloco de banco do mês foi achado de volta'),
@@ -1267,6 +1299,25 @@ const CONF_PROV = (() => {
   // agosto tem "PROJETO", mas não "CONSULTOR"), e nela a letra de cada coluna pelo rótulo.
   const temRotulo = (n, r) => letras.some((c) => norm(celulaCrua(xml, ss, `${c}${n}`)) === r);
   const cabecalho = numeros.find((n) => temRotulo(n, 'PROJETO') && temRotulo(n, 'CONSULTOR'));
+  if (PROV.ok && PROV.formato === 'razão') {
+    const cabRazao = numeros.find((n) => temRotulo(n, 'TIPO') && temRotulo(n, 'SUB 2'));
+    const col = {};
+    for (const [k, rotulo] of Object.entries({ projeto: 'TIPO', sub2: 'SUB 2', compra: 'SAIDA', pagamento: 'PAGAMENTO' }))
+      col[k] = letras.find((c) => norm(celulaCrua(xml, ss, `${c}${cabRazao}`)) === rotulo);
+    const cru = (k, n) => celulaCrua(xml, ss, `${col[k]}${n}`);
+    const compras = numeros.filter((n) => n > cabRazao && norm(cru('sub2', n)) === 'COMPRAS - PROVISAO'
+      && norm(cru('pagamento', n)) === 'A PAGAR' && /^\d+$/.test(String(cru('projeto', n) ?? ''))
+      && Math.abs(Number(cru('compra', n))) > 0);
+    const dif = [];
+    if (compras.length !== PROV.contagem.projetos || compras.length !== PROV.contagem.compra)
+      dif.push(`compras por projeto: regra ${PROV.contagem.projetos}, releitura crua ${compras.length}`);
+    const caso = PROV.projetos[0];
+    if (caso && (String(cru('projeto', caso.linha)) !== caso.projeto
+      || Math.abs(Math.round(Number(cru('compra', caso.linha)) * 100)) !== caso.compra))
+      dif.push(`projeto ou compra da linha ${caso.linha} difere da célula crua`);
+    return { ok: dif.length === 0, dif, releitura: { projetos: compras.length, compra: compras.length }, caso,
+      campos: ['TIPO preenchido', 'SAIDA preenchida', 'PAGAMENTO A PAGAR'], col, cabecalho: cabRazao, formato: 'razão' };
+  }
   if (PROV.semQuadro) {
     return { ok: cabecalho === undefined, dif: cabecalho === undefined ? [] : [`a regra não achou o quadro, e a releitura crua achou o cabeçalho na linha ${cabecalho}`], semQuadro: true };
   }
@@ -1316,7 +1367,9 @@ const CONF_PROV = (() => {
         : `nenhum projeto: ${PROV.motivo}`),
     estado: MOTIVO_DFC || !(PROV.ok || semQuadro) ? 'a-conferir' : (CONF_PROV.ok ? 'conferido' : 'divergente'),
     motivo: MOTIVO_DFC ? `a fonte é o DFC — ${MOTIVO_DFC}` : (!(PROV.ok || semQuadro) ? PROV.motivo : (CONF_PROV.ok ? null : CONF_PROV.dif.join('; '))),
-    caso: PROV.ok && CONF_PROV.caso
+    caso: PROV.ok && CONF_PROV.caso && CONF_PROV.formato === 'razão'
+      ? `a linha ${CONF_PROV.caso.linha} da aba \`PROVISÃO\` de \`${PROV.arquivo}\`, projeto \`${CONF_PROV.caso.projeto}\`, relida no XML por referência: \`TIPO\` em ${CONF_PROV.col.projeto}, \`SAIDA\` em ${CONF_PROV.col.compra} e \`PAGAMENTO\` em ${CONF_PROV.col.pagamento}; as ${PROV.contagem.compra} compras a pagar foram recontadas independentemente`
+      : PROV.ok && CONF_PROV.caso
       ? `a linha ${CONF_PROV.caso.linha} da aba \`PROVISÃO\` de \`${PROV.arquivo}\`, projeto \`${CONF_PROV.caso.projeto}\`, relida no XML célula por célula pela referência — ${CONF_PROV.campos.join(', ')} —, com os mesmos valores que a regra usou; e as ${PROV.contagem.projetos} linhas de projeto e as contagens por coluna, recontadas na releitura crua a partir do cabeçalho da linha ${CONF_PROV.cabecalho}, ${CONF_PROV.ok ? 'batem' : 'não batem'}. As colunas, achadas pelo cabeçalho: \`PROJETO\` em ${CONF_PROV.col.projeto}, \`VALOR PROJETO\` em ${CONF_PROV.col.valorProjeto}, \`VALOR DE COMPRA\` em ${CONF_PROV.col.compra}, \`VALOR FRETE\` em ${CONF_PROV.col.frete}, \`VALOR REPASSE\` em ${CONF_PROV.col.repasse}, \`VALOR COMISSÃO\` em ${CONF_PROV.col.comissao} e \`VALOR COMISSÃO HEAD\` em ${CONF_PROV.col.comissaoHead}`
       : (semQuadro && CONF_PROV
         ? `a aba \`PROVISÃO\` de \`${PROV.arquivo}\`, relida no XML: ${CONF_PROV.semAba ? 'o arquivo não tem a aba' : (CONF_PROV.ok ? 'nenhuma linha tem os rótulos `PROJETO` e `CONSULTOR` juntos — é o razão, não o quadro por projeto' : CONF_PROV.dif.join('; '))}`

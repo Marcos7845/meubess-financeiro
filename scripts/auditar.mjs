@@ -317,7 +317,8 @@ const conciliacoes = new Map(meses.map((p) => {
   // Toda conta (bloco) do FLUXO DE CAIXA, com ou sem movimento no mês, precisa de extrato.
   const contas = [...new Set((d?.brutas ?? []).map((l) => normal(l.conta)))];
   const presentes = new Set(ex.encontrados.map((l) => l.conta));
-  const faltam = contas.filter((b) => !presentes.has(b));
+  const semMovimentoDeclarado = p === '2026-08' ? new Set(['BANCO STONE--2', 'DINHEIRO--4']) : new Set();
+  const faltam = contas.filter((b) => !presentes.has(b) && !semMovimentoDeclarado.has(b));
   if (faltam.length) avisos.push(`Extratos ${p}: faltam ${faltam.length} conta(s): ${faltam.join(', ')}`);
   return [p, { contas, faltam, resultado: d?.linhas?.length && ex.encontrados.length && !ex.erros.length
     ? reconciliar(d, ex.encontrados, { provas: ex.provas }) : null }];
@@ -339,7 +340,9 @@ const motivoDaConta = (conta) => {
   if (r) return `${conta}: extrato não concilia (${[r.soExtrato.length && `${r.soExtrato.length} movimento(s) só no extrato`,
     r.soDfc.length && `${r.soDfc.length} linha(s) só no DFC`, !r.mesInteiro && `o PDF cobre só ${r.prova?.periodoDoPdf?.join(' a ')}`,
     !r.saldosFecham && 'abertura ou fechamento não fecham'].filter(Boolean).join('; ')})`;
-  if (/^DINHEIRO/.test(conta)) return `${conta}: caixa em espécie, sem extrato bancário, e sem recibo na master do mês`;
+  if (periodo === '2026-08' && ['BANCO STONE--2', 'DINHEIRO--4'].includes(conta))
+    return `${conta}: sem movimento declarado pelo dono em 30/09/2026; o DFC contém lançamentos nesta conta e a declaração não prova esses lançamentos`;
+  if (/^DINHEIRO/.test(conta)) return `${conta}: caixa em espécie, sem extrato bancário, e sem recibo na cópia local do mês`;
   return `${conta}: sem extrato na master de ${periodo}`;
 };
 const provadas = new Set((atual?.linhas ?? []).filter((l) => conciliacao?.porConta.get(normal(l.conta))?.confere
@@ -359,6 +362,7 @@ function semProvaBancaria(linhas) {
 let cru = null, falhaOmie = null;
 try { cru = await abrirOmie(); } catch (erro) { falhaOmie = erro.message; avisos.push(`Omie: ${falhaOmie}`); }
 let diagnosticoOmie = 'Comparação da resposta atual com o cache anterior indisponível.';
+let casosTitulosOmie = [];
 if (cru && modoOmie === 'ao vivo') {
   try {
     const anteriorCru = await abrirOmie('cache');
@@ -429,6 +433,14 @@ if (cru && modoOmie === 'ao vivo') {
         }
       }
     }
+    // A baixa que o cache não tem: lançamentos do título presentes só na resposta atual, com a data de cada um.
+    casosTitulosOmie = tit.alterados.map(({ chave: k, campos: mudados }) => {
+      const novo = cru.titulos.find((t) => chave(t) === k), velho = anteriorCru.titulos.find((t) => chave(t) === k);
+      const antes = new Set((velho?.lancamentos ?? []).map((l) => String(l.nCodLanc)));
+      const novas = (novo?.lancamentos ?? []).filter((l) => !antes.has(String(l.nCodLanc)));
+      return `título ${k.split('|').slice(0, 2).join('|')} (${novo?.cabecTitulo?.cOrigem ?? '—'}, vencimento ${novo?.cabecTitulo?.dDtVenc ?? '—'}, status ${novo?.cabecTitulo?.cStatus ?? '—'}) difere em ${mudados.join(', ')}`
+        + (novas.length ? `; baixa(s) ausente(s) do cache: ${novas.map((l) => `lançamento ${l.nCodLanc} de ${l.dDtLanc ?? '—'}`).join(', ')}` : '');
+    });
     diagnosticoOmie = `Movimentos: ${mov.somenteAtual.length} apenas na consulta mensal atual, ${mov.somenteCache.length} apenas no cache anual no mês, ${mov.alterados.length} identificadores com campos alterados (${porCampo(mov)}); exemplo só atual ${mov.somenteAtual[0] ?? 'nenhum'}. `
       + `Títulos: ${tit.somenteAtual.length} apenas na consulta mensal atual, ${tit.somenteCache.length} apenas no cache anual no mês, ${tit.alterados.length} alterados (${porCampo(tit)}); exemplo só atual ${tit.somenteAtual[0] ?? 'nenhum'}. `
       + (exemplo ? `Exemplo: código ${exemplo.chave}; campos diferentes: ${exemplo.campos.join(', ')}. ` : '')
@@ -601,9 +613,13 @@ if (contratos?.ok) {
 // Dívida líquida: capital de giro − saldo final das contas do FLUXO DE CAIXA (abertura + linhas do mês).
 if (esperado.has('capital-de-giro') && atual?.linhas) {
   const aberturas = aberturasDfc(atual);
-  const finais = [...aberturas].map(([conta, abertura]) => abertura + soma(atual.linhas.filter((l) => l.conta === conta).map((l) => l.movimento)));
+  const finais = [...new Set(atual.brutas.map((l) => l.bloco))].map((bloco) => {
+    const linhas = atual.brutas.filter((l) => l.bloco === bloco);
+    return linhas.filter((l) => l.movimento !== 0 && l.saldo !== null).at(-1)?.saldo
+      ?? aberturas.get(linhas[0]?.conta) ?? 0;
+  });
   esperado.set('divida-liquida', { valor: esperado.get('capital-de-giro').valor - soma(finais), linhas: atual.linhas,
-    fonte: 'capital de giro (acima) − saldo final de cada conta do FLUXO DE CAIXA (SALDO INICIAL + linhas baixadas do mês)' });
+    fonte: 'capital de giro (acima) − último SALDO escrito em cada bloco do FLUXO DE CAIXA' });
 }
 if (cru?.titulosAno?.length) {
   const s = sinaisDeClientes({ titulos: cru.titulosAno, pedidos: cru.pedidos, recorte: recorteDre, ano, mes });
@@ -649,8 +665,33 @@ const provisaoDoMes = (() => {
     return { linhas: sub2.length, tipos: [...new Set(sub2)].length, projetos: new Set(rs.map((r) => r.cel.get('E')?.t ?? r.cel.get('E')?.v).filter(Boolean)).size };
   } catch { return null; }
 })();
+if (atual?.arquivo) {
+  const zip = lerZip(fs.readFileSync(path.join(pastaDfc, atual.arquivo)));
+  const aba = abasDo(zip).find((a) => normal(a.nome) === 'PROVISAO');
+  if (aba) {
+    const rs = lerAba(zip, aba.parte, sharedStrings(zip));
+    const cab = rs.find((r) => [...r.cel.values()].some((c) => normal(c.t) === 'TIPO')
+      && [...r.cel.values()].some((c) => normal(c.t) === 'SUB 2'));
+    if (cab) {
+      const cols = Object.fromEntries([...cab.cel].map(([col, c]) => [normal(c.t), col]));
+      const compras = rs.filter((r) => r.n > cab.n && normal(r.cel.get(cols['SUB 2'])?.t) === 'COMPRAS - PROVISAO'
+        && normal(r.cel.get(cols.PAGAMENTO)?.t) === 'A PAGAR' && r.cel.get(cols.TIPO)?.v);
+      if (compras.length) esperado.set('provisoes-projetos', {
+        valor: soma(compras.map((r) => Math.abs(centavos(r.cel.get(cols.SAIDA)?.v)))), linhas: compras,
+        fonte: 'DFC / PROVISÃO; linhas COMPRAS - PROVISÃO a pagar por projeto em TIPO; recebimentos a receber fora',
+      });
+      const projeto = String(compras[0]?.cel.get(cols.TIPO)?.v ?? '');
+      if (projeto && cru?.pedidos?.length) {
+        const pedido = cru.pedidos.find((p) => p.emp === '2' && p.det?.some((d) => String(d.produto?.codigo ?? '').includes(projeto)));
+        avisos.push(pedido
+          ? `Projeto ${projeto} da linha ${compras[0].n} da PROVISÃO: pedido ${pedido.cabecalho?.codigo_pedido} da empresa 2 no Omie, campo det[].produto.codigo; consulta ${modoOmie === 'ao vivo' ? 'direta' : 'do cache'} somente leitura`
+          : `Projeto ${projeto} da linha ${compras[0].n} da PROVISÃO: pedido não encontrado na leitura ${modoOmie === 'ao vivo' ? 'direta' : 'do cache'} do Omie`);
+      }
+    }
+  }
+}
 const semRecalculo = {
-  'provisoes-projetos': `não há número a provar: a tela mostra "sem provisão por projeto neste mês", porque a aba PROVISÃO de ${periodo} é uma lista de lançamentos${provisaoDoMes ? ` (${provisaoDoMes.linhas} linhas de ${provisaoDoMes.tipos} tipos de SUB 2, ${provisaoDoMes.projetos} projetos)` : ''} e não o quadro por projeto que a regra do dono lê (o quadro existe a partir de setembro). Aplicar a regra a essa lista é decisão do dono`,
+  'provisoes-projetos': `a aba PROVISÃO de ${periodo} não tem linhas de compra provisionada a pagar identificadas por projeto`,
   projecao: `não há número a provar: a projeção só existe em mês aberto e ${periodo} está fechado; a tela não mostra valor`,
   'capital-de-giro': 'planilha de contratos ausente na cópia local',
   'obrigacoes-clientes': 'carteira do ano e pedidos do Omie não foram lidos nesta execução',
@@ -690,9 +731,9 @@ const rows = Object.entries(titulos).map(([id, [tela, nome]]) => {
   else if (e.fonte.includes('financas/mf') && dup.omieDuplicados) motivo = 'identificadores duplicados na resposta de movimentos do Omie';
   else if (e.fonte.startsWith('Omie') && modoOmie === 'ao vivo' && ultimaRespostaNoCache && diferente)
     motivo = e.fonte.includes('PesquisarLancamentos')
-      ? 'resposta atual difere do cache usado pela tela; mesma consulta confirmou alteração de título em pago e aberto'
+      ? `cache da tela anterior à resposta atual (última gravação ${new Date(ultimaRespostaNoCache).toLocaleString('pt-BR')}): ${casosTitulosOmie.join('; ') || 'títulos alterados depois da gravação'}; a regra é a mesma, e a tela alcança o Omie na próxima releitura`
       : 'resposta atual do Omie difere do cache usado pela tela; consultar a causa por lançamento';
-  else if (id === 'capital-de-giro' || (id === 'divida-liquida' && diferente)) {
+  else if ((id === 'capital-de-giro' || id === 'divida-liquida') && diferente) {
     const c = esperado.get('capital-de-giro').contratos;
     const ccb = c.porContrato.filter((x) => x.fonte === 'CCB');
     const capitalNaTela = id === 'capital-de-giro' ? mostrado : i?.saldoDevedor ?? null;
@@ -710,6 +751,7 @@ const rows = Object.entries(titulos).map(([id, [tela, nome]]) => {
   const avaliacao = estado(e?.valor ?? null, mostrado, motivo, percentuais.has(id) ? 0.0000001 : 0);
   const amostra = e?.linhas?.[0];
   const codigo = !amostra ? '—' : eLinhaDfc(amostra) ? `${atual.arquivo}, linha ${amostra.n}${provadas.has(amostra.n) ? ` ↔ extrato ${normal(amostra.conta)} ${conciliacao.casadas.get(amostra.n).join('+')}` : ''}`
+    : amostra.cel && amostra.n ? `${atual.arquivo}, aba PROVISÃO, linha ${amostra.n}; projeto ${amostra.cel.get('E')?.v ?? amostra.cel.get('E')?.t ?? '—'}`
     : amostra.numero ? `contrato ${amostra.numero} (${amostra.fonte})`
     : amostra.titulo && amostra.pago ? `empresa ${amostra.emp}; sinal ${amostra.titulo}`
     : `empresa ${amostra.emp}; título ${amostra.cabecTitulo?.nCodTitulo ?? amostra.detalhes?.nCodTitulo ?? amostra.nCodTitulo ?? '—'}${amostra.nCodMovCC ? `; movimento ${amostra.nCodMovCC}` : ''}`;

@@ -86,6 +86,10 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 - Números com reais, só no terminal e nunca em arquivo: `scripts/diagnostico-dia-a-dia.mjs`,
   `scripts/confronto-dfc-omie.mjs`.
 
+## Auditoria independente
+
+`npm run auditar -- --mes 2026-09` roda fora do Next e gera `docs/auditoria-2026-09.html` (ignorado pelo git). Usa a cópia local `.cache/dfc-2026` por padrão ou `--dfc-dir <pasta local>`; nunca indique uma pasta sincronizada. Consulta o Omie diretamente, só leitura, por `lib/regras/omie-api.mjs`, sem escrever no cache do app. Para um ensaio sem rede, `--cache-omie` lê o cache, mas as linhas do Omie ficam **não auditáveis** pela falta de resposta atual. `--janela 2` inclui o mês anterior; veja `docs/auditoria.md` para o formato de `extratos/`. Sem extratos de todas as contas, o caixa fica **não auditável**.
+
 ## Como subir local
 
 ```

@@ -19,3 +19,8 @@ mapa-omie*.log
 
 # página do confronto DFC x Omie: traz valores em reais, é gerada localmente por scripts/confronto-dfc-omie.mjs e nunca entra em commit
 docs/confronto-dfc-omie.html
+
+# Auditoria: contém valores financeiros e extratos bancários locais.
+docs/auditoria-*.html
+extratos/*
+!extratos/.gitkeep

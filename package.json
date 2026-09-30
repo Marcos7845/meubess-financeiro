@@ -16,6 +16,7 @@
     "testar-login": "node scripts/testar-login.mjs",
     "conferencia": "node scripts/numeros-das-telas.mjs",
     "conferir-telas": "node scripts/conferir-telas.mjs",
+    "testar-detalhe-dre": "node scripts/testar-detalhe-dre.mjs",
     "auditar": "node scripts/auditar.mjs",
     "testar-auditoria": "node --test scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs",
     "testar-cache-omie": "node --test scripts/testar-cache-omie.mjs",

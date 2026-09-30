@@ -74,6 +74,7 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 | `npm run conferir-filtros` | cada filtro pega o mesmo recorte que os arquivos crus do cache; grava `docs/filtros.md` e `.html` | mexeu em filtro (`lib/regras/filtros.mjs`, `app/suspensa.js`, `app/empresa.js`) ou em tela com filtro |
 | `npm run conferir-chave-omie` | a chave "incluir dados do Omie": ligada não muda nada, desligada dá `null` e nunca zero | mexeu na chave (`app/chave-omie.js`) ou em bloco que depende do Omie |
 | `npm run testar-trava` | a trava de agosto para quando deve e passa a releitura retroativa (roda numa cópia do cache) | mexeu na trava ou em `scripts/numeros-das-telas.mjs` |
+| `npm run testar-detalhe-dre` | o que cada linha do DRE abre no clique soma o valor da linha, ao centavo, em cinco recortes (sem filtro, empresa 2, uma conta, dois meses, sem o Omie); usa `.cache/dfc-2026` se existir | mexeu em `lib/indicadores/tela-2.mjs`, em `app/linha-do-dre.js` ou numa regra que o DRE usa |
 | `npm run testar-login` | as três telas e as APIs recusam quem não entrou; `/admin` só para administrador; `/api/dfc` com segredo | mexeu em `proxy.js`, `lib/acesso/`, `/api/*` ou `/admin` |
 
 - Divergência é defeito do código ou da regra: **não edite o número esperado à mão** para o teste passar. A conferência
@@ -120,6 +121,7 @@ npm run local      # constrói e sobe em produção, só em http://127.0.0.1:478
 | conferência de um mês fechado, e as telas contra ela | `docs/conferencia.md`, `docs/telas-conferidas.md` |
 | cada filtro, onde vale e onde não vale, com caso real | `docs/filtros.md` |
 | Tela 3 (Fluxo de Caixa): o que falta responder ao dono, registro vivo — **leia primeiro se for continuar nela** | `docs/passagem-fluxo-de-caixa.md` |
+| o que "(=) sem conta" soma, por que é alarme sobreposto (não fatia à parte) e os achados de agosto; o detalhamento das linhas do DRE | `docs/fontes.md`, seção "O que '(=) sem conta' soma" (fim da Tela 2) |
 | desenho das telas, plano de gráficos, checklist | `docs/layout.md` e `.claude/skills/visualizacao-de-dados/SKILL.md` (as adaptações do topo mandam) |
 | Railway: variáveis (só nomes), volume, primeiro administrador | `docs/deploy-railway.md`, `railway.json` |
 | tempo de clique de filtro | `docs/desempenho.md` |

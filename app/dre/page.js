@@ -61,6 +61,7 @@ import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import Lancamentos from '../lancamentos.js';
+import LinhaDoDre from '../linha-do-dre.js';
 import { MargemNoAno, PesoNaReceita } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
@@ -655,8 +656,11 @@ export default async function Pagina({ searchParams }) {
                       <td colSpan={1 + colunas.length * porColuna + 1 + (comAv ? 1 : 0)}>{linha.grupo}</td>
                     </tr>
                   )}
-                  <tr className={linha.total ? 'linha-total' : (linha.foraDoTotal ? 'linha-fora' : '')}>
+                  {/* CADA LINHA ABRE O QUE ELA SOMA (30/09/2026), no clique: ver `app/linha-do-dre.js`. */}
+                  <LinhaDoDre className={linha.total ? 'linha-total' : (linha.foraDoTotal ? 'linha-fora' : '')}
+                    colunas={1 + colunas.length * porColuna + 1 + (comAv ? 1 : 0)} composicao={linha.composicao}>
                     <th className="grupo-col" title={linha.nota ?? linha.rotulo}>
+                      {linha.composicao && <span className="seta">▸</span>}
                       {linha.rotulo}
                       <Filtrado i={linha} />
                     </th>
@@ -665,7 +669,7 @@ export default async function Pagina({ searchParams }) {
                     ))}
                     <td className="num total">{emReais(linha.total)}</td>
                     {comAv && <td className="num av-col total">{emPorcento(linha.totalAv)}</td>}
-                  </tr>
+                  </LinhaDoDre>
                   {linha.detalhe.map((det) => (
                     <tr className="linha-detalhe" key={det.chave}>
                       <th className="grupo-col">{det.rotulo}</th>
@@ -700,7 +704,15 @@ export default async function Pagina({ searchParams }) {
           <strong>AH</strong> = variação contra o mês anterior. <strong>AV</strong> = a linha como fatia da receita
           líquida do próprio mês. As duas são leitura desta tela, não regra de <code>docs/fontes.md</code>: saem dos
           valores que as regras já calcularam. A linha <strong>(=) sem conta</strong> fica fora dos totalizadores, de
-          propósito — é o alarme de lançamento em categoria sem conta do DRE.
+          propósito — é o alarme de lançamento em categoria sem conta do DRE: esses lançamentos já estão, pela regra de
+          cada um, em outra linha (ou só no confronto do Omie), e ela avisa que a categoria não tem conta do DRE no
+          cadastro do Omie. Ver <code>docs/fontes.md</code>.
+        </p>
+        <p className="legenda rodape-tabela">
+          <strong>Clique numa linha para ver o que ela soma</strong>{' '}
+          {fMeses.ativo ? 'nos meses escolhidos' : `em ${NOMES_DOS_MESES[mes]}`}, com os filtros desta tela: as linhas
+          &quot;(=)&quot; abrem as linhas que as somam; as outras abrem a soma por categoria e cada lançamento — fonte,
+          empresa, data, categoria, código e valor. O total do que abre é o valor da linha.
         </p>
         <p className="legenda rodape-tabela">
           <strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números

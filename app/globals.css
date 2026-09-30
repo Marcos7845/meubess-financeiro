@@ -589,3 +589,15 @@ a { color: inherit; }
 .lancamentos-do-numero th { background: var(--fundo); color: var(--texto-fraco); font-weight: 600; }
 .lancamentos-do-numero .num { text-align: right; white-space: nowrap; }
 @media (max-width: 900px) { .compromissos-detalhe { grid-template-columns: 1fr; } }
+
+/* O DRE que abre cada linha (30/09/2026, `app/linha-do-dre.js`): o mesmo desenho das fixas da Tela 3. */
+.dre-tabela tr.explodivel { cursor: pointer; }
+.dre-tabela tr.explodivel:hover td, .dre-tabela tr.explodivel:hover th { background: var(--fundo); }
+.dre-tabela .seta { display: inline-block; width: 12px; color: var(--texto-fraco); transition: transform .15s; }
+.dre-tabela tr.aberta .seta { transform: rotate(90deg); }
+.dre-tabela tr.explodida > td { padding: 6px 8px 12px 22px; background: var(--fundo); text-align: left; }
+.dre-tabela tr.explodida table { width: auto; min-width: 60%; border-collapse: collapse; font-size: 10.5px; margin: 4px 0 10px; }
+.dre-tabela tr.explodida th { color: var(--texto-fraco); font-weight: 600; text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); background: none; position: static; }
+.dre-tabela tr.explodida td { padding: 2px 6px; border-bottom: 1px solid var(--borda); text-align: left; }
+.dre-tabela tr.explodida .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dre-tabela tr.explodida tfoot th { font-weight: 700; color: inherit; }

@@ -301,6 +301,7 @@ cada bloco de cada tela mostra sem o Omie está em [`docs/filtros.md`](docs/filt
 |---|---|
 | `lib/regras/` | **as regras, num lugar só.** O recorte da MeuBESS, os três baldes, as listas que o dono decidiu, o vocabulário do DFC e a leitura das planilhas. `scripts/numeros-das-telas.mjs` (a conferência) e o app importam **estes mesmos** arquivos — nenhuma regra é copiada de um lado para o outro. |
 | `lib/indicadores/` | cada tela: o valor que ela mostra e a contagem que a conferência confere, montados com as regras acima. |
+| `app/linha-do-dre.js` | a linha do DRE que **abre o que ela soma** no clique (30/09/2026): as "(=)" abrem as linhas que as somam; as outras, a soma por categoria e cada lançamento. Os itens vêm de `composicao`, em `lib/indicadores/tela-2.mjs`; `npm run testar-detalhe-dre` confere que o total é o valor da linha. |
 | `lib/dados.mjs` | a camada de dados do servidor: releitura de hora em hora e o "atualizar agora". |
 | `lib/regras/omie-releitura.mjs` | a releitura do Omie pelas telas: quais leituras, uma volta por vez, a hora da última. |
 | `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |

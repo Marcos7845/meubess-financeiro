@@ -10,15 +10,19 @@ export function lerDfcBruto(bytes, ano, mes) {
   const zip = lerZip(bytes), strings = sharedStrings(zip), abas = abasDo(zip);
   const fluxo = abas.find((a) => normal(a.nome) === 'FLUXO DE CAIXA');
   if (!fluxo) throw new Error('aba FLUXO DE CAIXA ausente');
-  const linhas = [], brutas = [], cabecalhos = [];
-  let colunas = null, bloco = 0, bancoAtual = '';
+  const linhas = [], brutas = [], cabecalhos = [], titulos = new Map();
+  let colunas = null, bloco = 0, bancoAtual = '', anterior = null;
   for (const r of lerAba(zip, fluxo.parte, strings)) {
     const textos = [...r.cel].filter(([, c]) => c.t).map(([c, v]) => [normal(v.t), c]);
     if (textos.some(([s]) => s === 'VENCIMENTO') && textos.some(([s]) => s === 'DIA PG')) {
       colunas = new Map(textos); bloco++; bancoAtual = '';
       cabecalhos.push(r.n);
+      // O título do bloco ("BANCO STONE", "DINHEIRO"...) fica na linha logo acima do cabeçalho repetido.
+      titulos.set(bloco, anterior?.n === r.n - 1 ? [...anterior.cel.values()].map((c) => normal(c.t)).find(Boolean) ?? '' : '');
+      anterior = r;
       continue;
     }
+    anterior = r;
     if (!colunas) continue;
     const cel = (nome) => r.cel.get(colunas.get(nome));
     const txt = (nome) => cel(nome)?.t?.trim() ?? '';
@@ -39,7 +43,24 @@ export function lerDfcBruto(bytes, ano, mes) {
     if (!data || data.a !== ano || data.m !== mes) continue;
     linhas.push(linha);
   }
+  // A conta de cada bloco: o título do bloco ou, sem título, o primeiro BANCO escrito nele, mais a ordem do bloco.
+  const bancoDoBloco = new Map();
+  for (const l of brutas) if (l.banco && !bancoDoBloco.has(l.bloco)) bancoDoBloco.set(l.bloco, l.banco);
+  for (const l of brutas) l.conta = `${titulos.get(l.bloco) || bancoDoBloco.get(l.bloco) || 'SEM NOME'}--${l.bloco}`;
   return { abas: abas.map((a) => a.nome), cabecalhos, linhas, brutas };
+}
+
+// Abertura de cada conta do DFC: a primeira linha SALDO INICIAL do bloco (coluna SALDO; vazia, a ENTRADA).
+export function aberturasDfc(dfc) {
+  const out = new Map(), lidas = new Set();
+  for (const l of dfc.brutas ?? []) {
+    if (!out.has(l.conta)) out.set(l.conta, 0);
+    if (!lidas.has(l.conta) && ['SALDO INICIAL', 'SALDO NICIAL'].includes(l.sub2)) {
+      out.set(l.conta, l.saldo ?? l.movimento ?? 0);
+      lidas.add(l.conta);
+    }
+  }
+  return out;
 }
 
 export const eReceita = (l) => l.movimento > 0 && l.sub2 !== 'TRANSFERENCIAS BANCARIAS - RECEITA';
@@ -117,35 +138,85 @@ export function lerOfxExtrato(texto, conta, mes) {
   return resultado;
 }
 
-export function reconciliar(dfc, extratos) {
-  const chave = (l) => `${normal(l.conta ?? `${l.banco}--${l.bloco}`)}|${l.data?.a ? `${mesDe(l.data)}-${String(l.data.d).padStart(2, '0')}` : l.data}|${l.movimento ?? l.valor}`;
-  const saldo = new Map();
-  for (const l of dfc.linhas) saldo.set(chave(l), (saldo.get(chave(l)) ?? 0) + 1);
-  for (const t of extratos) if (t.valor !== 0) saldo.set(chave(t), (saldo.get(chave(t)) ?? 0) - 1);
-  const diferencas = [...saldo].filter(([, n]) => n !== 0);
-  const porConta = new Map();
-  for (const t of extratos) porConta.set(t.conta, [...(porConta.get(t.conta) ?? []), t]);
-  let saldosDivergentes = 0, saldosAusentes = 0;
-  for (const [conta, transacoes] of porConta) {
-    const bruto = (dfc.brutas ?? []).filter((l) => normal(`${l.banco}--${l.bloco}`) === conta && l.saldo !== null);
-    if (!bruto.length || !transacoes.length) { saldosAusentes++; continue; }
-    const primeiras = bruto[0], aberturaDfc = primeiras.saldo - (dfc.linhas.includes(primeiras) ? primeiras.movimento : 0);
-    const fechamentoDfc = aberturaDfc + soma(dfc.linhas.filter((l) => normal(`${l.banco}--${l.bloco}`) === conta).map((l) => l.movimento));
-    const ordenadas = [...transacoes].sort((a, b) => a.data.localeCompare(b.data));
-    const ultimo = ordenadas.at(-1);
-    const saldoFinal = ultimo.saldoFinal ?? ultimo.saldo;
-    const aberturaExtrato = ordenadas[0].saldo !== undefined
-      ? ordenadas[0].saldo - ordenadas[0].valor
-      : saldoFinal === undefined ? null : saldoFinal - soma(transacoes.map((t) => t.valor));
-    if (saldoFinal === undefined || aberturaExtrato === null) { saldosAusentes++; continue; }
-    for (let i = 1; i < ordenadas.length; i++) {
-      if (ordenadas[i].saldo !== undefined && ordenadas[i - 1].saldo !== undefined
-        && ordenadas[i].saldo - ordenadas[i - 1].saldo !== ordenadas[i].valor) saldosDivergentes++;
+// Conciliação conta a conta. Cada transação do extrato casa com uma linha do DFC de mesma data e valor; depois com
+// uma de mesmo valor e data deslocada até `folga` dias; depois com várias linhas do DFC que somam exatamente o valor
+// (o banco junta um lote num débito só), ou o contrário; por último, o que sobra no mesmo dia dos dois lados, se as
+// somas forem iguais ao centavo. O que não casa fica listado. Abertura e fechamento da conta também precisam fechar.
+export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {}) {
+  const contaDe = (l) => normal(l.conta ?? `${l.banco}--${l.bloco}`);
+  const diaDe = (l) => (l.data?.a ? l.data.d : Number(String(l.data).slice(8, 10)));
+  const aberturas = new Map([...aberturasDfc(dfc)].map(([k, v]) => [normal(k), v]));
+  const porConta = new Map(), casadas = new Map();
+  for (const conta of new Set(extratos.map((t) => normal(t.conta)))) {
+    const dfcL = dfc.linhas.filter((l) => contaDe(l) === conta).map((l) => ({ n: l.n, dia: diaDe(l), v: l.movimento, par: null }));
+    const ext = extratos.filter((t) => normal(t.conta) === conta && t.valor !== 0)
+      .map((t) => ({ id: t.id, dia: diaDe(t), v: t.valor, par: null }));
+    const tipos = { exato: 0, deslocado: 0, agrupado: 0, loteDoDia: 0 };
+    const casar = (ls, ts, tipo) => {
+      for (const l of ls) l.par = ts.map((t) => t.id);
+      for (const t of ts) t.par = ls.map((l) => l.n);
+      tipos[tipo]++;
+    };
+    for (const t of ext) { const l = dfcL.find((x) => !x.par && x.dia === t.dia && x.v === t.v); if (l) casar([l], [t], 'exato'); }
+    for (const t of ext.filter((x) => !x.par)) {
+      const l = dfcL.filter((x) => !x.par && x.v === t.v && Math.abs(x.dia - t.dia) <= folga)
+        .sort((a, b) => Math.abs(a.dia - t.dia) - Math.abs(b.dia - t.dia))[0];
+      if (l) casar([l], [t], 'deslocado');
     }
-    if (aberturaDfc !== aberturaExtrato || fechamentoDfc !== saldoFinal) saldosDivergentes++;
+    const subconjunto = (cands, alvo) => {
+      let somas = new Map([[0, []]]);
+      for (const c of cands) {
+        const novas = new Map(somas);
+        for (const [s, arr] of somas) if (!novas.has(s + c.v) && arr.length < 15) novas.set(s + c.v, [...arr, c]);
+        somas = novas;
+        if (somas.has(alvo) || somas.size > 200000) break;
+      }
+      const r = somas.get(alvo);
+      return r && r.length > 1 ? r : null;
+    };
+    for (const [um, muitos, doExtrato] of [[ext, dfcL, true], [dfcL, ext, false]]) {
+      for (const u of um.filter((x) => !x.par)) {
+        for (let tol = 0; tol <= folga; tol++) {
+          const grupo = subconjunto(muitos.filter((x) => !x.par && Math.sign(x.v) === Math.sign(u.v) && Math.abs(x.dia - u.dia) <= tol), u.v);
+          if (grupo) { if (doExtrato) casar(grupo, [u], 'agrupado'); else casar([u], grupo, 'agrupado'); break; }
+        }
+      }
+    }
+    for (const dia of new Set([...dfcL, ...ext].filter((x) => !x.par).map((x) => x.dia))) {
+      const ls = dfcL.filter((x) => !x.par && x.dia === dia), ts = ext.filter((x) => !x.par && x.dia === dia);
+      if (ls.length && ts.length && soma(ls.map((x) => x.v)) === soma(ts.map((x) => x.v))) casar(ls, ts, 'loteDoDia');
+    }
+    for (const l of dfcL) if (l.par) casadas.set(l.n, l.par);
+    const ordenadas = extratos.filter((t) => normal(t.conta) === conta).sort((a, b) => a.data.localeCompare(b.data));
+    const ultimo = ordenadas.at(-1);
+    const fechamentoExtrato = ultimo?.saldoFinal ?? ultimo?.saldo ?? null;
+    const aberturaExtrato = ordenadas[0]?.saldo !== undefined ? ordenadas[0].saldo - ordenadas[0].valor
+      : fechamentoExtrato === null ? null : fechamentoExtrato - soma(ordenadas.map((t) => t.valor));
+    let saltos = 0;
+    for (let i = 1; i < ordenadas.length; i++)
+      if (ordenadas[i].saldo !== undefined && ordenadas[i - 1].saldo !== undefined
+        && ordenadas[i].saldo - ordenadas[i - 1].saldo !== ordenadas[i].valor) saltos++;
+    const aberturaDfc = aberturas.has(conta) ? aberturas.get(conta) : null;
+    const fechamentoDfc = aberturaDfc === null ? null : aberturaDfc + soma(dfcL.map((x) => x.v));
+    const prova = provas.get(conta) ?? null;
+    const r = {
+      conta, tipos, linhasDfc: dfcL.length, transacoes: ext.length, prova,
+      soDfc: dfcL.filter((x) => !x.par).map((x) => x.n), soExtrato: ext.filter((x) => !x.par).map((x) => x.id),
+      aberturaDfc, aberturaExtrato, fechamentoDfc, fechamentoExtrato, saltos,
+      mesInteiro: prova?.cobreMesInteiro !== false,
+    };
+    r.saldosFecham = aberturaDfc !== null && aberturaExtrato !== null && aberturaDfc === aberturaExtrato
+      && fechamentoDfc === fechamentoExtrato && !saltos;
+    r.confere = r.saldosFecham && r.mesInteiro && !r.soDfc.length && !r.soExtrato.length;
+    porConta.set(conta, r);
   }
-  return { confere: diferencas.length === 0 && saldosDivergentes === 0 && saldosAusentes === 0,
-    chavesDivergentes: diferencas.length, saldosDivergentes, saldosAusentes };
+  const lista = [...porConta.values()];
+  return {
+    confere: lista.length > 0 && lista.every((x) => x.confere), porConta, casadas,
+    chavesDivergentes: soma(lista.map((x) => x.soDfc.length + x.soExtrato.length)),
+    saldosDivergentes: lista.filter((x) => !x.saldosFecham && x.aberturaExtrato !== null && x.aberturaDfc !== null).length,
+    saldosAusentes: lista.filter((x) => x.aberturaExtrato === null || x.aberturaDfc === null).length,
+  };
 }
 
 export function estado(expected, shown, motivo = null, tolerancia = 0) {

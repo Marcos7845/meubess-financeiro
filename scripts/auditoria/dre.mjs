@@ -16,8 +16,21 @@ const fora = { 1: ['2.08.02', '2.05.99', '1.04.99', '2.04.89', '2.11.95', '1.04.
   2: ['1.04.99', '2.10.98', '2.04.91', '1.04.03'] };
 const transf = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
 
+// Os dez maiores recebimentos do mês, da mesma seleção de caixa (sem transferência nem par de adiantamento).
+export function maioresReceitas(cru, recorte, periodo) {
+  const { selecionar, valor } = preparar(cru, recorte, periodo);
+  const xs = selecionar('R', () => true);
+  const serie = xs.map((d) => ({ emp: d.emp, titulo: d.nCodTitulo || null, mov: d.nCodMovCC || null, valor: valor(d) }))
+    .sort((a, b) => b.valor - a.valor).slice(0, 10);
+  return { serie, linhas: xs };
+}
+
 export function dreIndependente(cru, recorte, dfc, periodo) {
   if (!dfc?.linhas || !cru?.categorias?.length || !cru?.movimentos?.length) return new Map();
+  return calcularDre(preparar(cru, recorte, periodo), dfc);
+}
+
+function preparar(cru, recorte, periodo) {
   const cad = Object.fromEntries(['1', '2'].map((emp) => [emp, new Map(cru.categorias.filter((c) => c.emp === emp).map((c) => [String(c.codigo), c]))]));
   const dentro = (d) => typeof d === 'string' && `${d.slice(6, 10)}-${d.slice(3, 5)}` === periodo;
   const base = {};
@@ -36,7 +49,9 @@ export function dreIndependente(cru, recorte, dfc, periodo) {
         const cod = String(d.cCodCateg ?? '');
         if (d.cNatureza !== natureza || transferencia(emp, cod) || !filtro(emp, cod, cad[emp].get(cod))) continue;
         if (['CONTA_A_RECEBER', 'CONTA_A_PAGAR'].includes(d.cGrupo) && d.nCodTitulo) tit.set(String(d.nCodTitulo), d);
-        else if (['CONTA_CORRENTE_REC', 'CONTA_CORRENTE_PAG'].includes(d.cGrupo)) corrente.set(String(d.nCodMovCC ?? `${d.nCodTitulo}|${d.dDtPagamento}|${d.resumo.nValPago}`), d);
+        // Uma baixa em lote é UM nCodMovCC com uma linha por título baixado (cada uma com nCodTitulo e nCodBaixa):
+        // a chave leva os três, senão o lote vira uma linha só.
+        else if (['CONTA_CORRENTE_REC', 'CONTA_CORRENTE_PAG'].includes(d.cGrupo)) corrente.set(`${d.nCodMovCC ?? ''}|${d.nCodTitulo ?? ''}|${d.nCodBaixa ?? ''}|${d.nCodMovCC ? '' : `${d.dDtPagamento}|${d.resumo.nValPago}`}`, d);
       }
       saida.push(...tit.values());
       for (const d of corrente.values()) if (!d.nCodTitulo || !tit.has(String(d.nCodTitulo))) saida.push(d);
@@ -45,6 +60,10 @@ export function dreIndependente(cru, recorte, dfc, periodo) {
   }
   const valor = (d) => centavos(['CONTA_A_RECEBER', 'CONTA_A_PAGAR'].includes(d.cGrupo)
     ? d.nValorTitulo ?? d.resumo?.nValPago : d.resumo?.nValPago ?? d.nValorTitulo);
+  return { selecionar, valor };
+}
+
+function calcularDre({ selecionar, valor }, dfc) {
   const total = (xs) => soma(xs.map(valor));
   const venda = selecionar('R', (_, cod) => vendas.includes(cod));
   const outras = selecionar('R', (emp, cod, c) => c?.conta_receita === 'S' && c?.totalizadora === 'N' && !vendas.includes(cod) && !fora[emp].includes(cod));

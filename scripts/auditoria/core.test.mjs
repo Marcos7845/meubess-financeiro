@@ -14,12 +14,27 @@ test('extrato CSV e OFX conservam sinal, data e centavos', () => {
 });
 
 test('conciliação preserva multiplicidade e mostra diferença', () => {
-  const linha = { banco: 'ITAU', bloco: 1, data: { a: 2026, m: 9, d: 3 }, movimento: -125 };
-  const extrato = { conta: 'ITAU--1', data: '2026-09-03', valor: -125, saldo: 875 };
-  const dfc = { linhas: [linha], brutas: [{ banco: 'ITAU', bloco: 1, saldo: 1000, movimento: 0 }] };
+  const linha = { n: 3, conta: 'ITAU--1', data: { a: 2026, m: 9, d: 3 }, movimento: -125 };
+  const extrato = { conta: 'ITAU--1', data: '2026-09-03', valor: -125, saldo: 875, id: 'a' };
+  const dfc = { linhas: [linha], brutas: [{ conta: 'ITAU--1', sub2: 'SALDO INICIAL', saldo: 1000, movimento: 100000 }] };
   assert.equal(reconciliar(dfc, [extrato]).confere, true);
-  assert.equal(reconciliar({ ...dfc, linhas: [linha, linha] }, [extrato]).chavesDivergentes, 1);
+  assert.equal(reconciliar({ ...dfc, linhas: [linha, { ...linha, n: 4 }] }, [extrato]).chavesDivergentes, 1);
   assert.equal(reconciliar(dfc, [{ ...extrato, saldo: 900 }]).saldosDivergentes, 1);
+  assert.equal(reconciliar(dfc, [extrato], { provas: new Map([['ITAU--1', { cobreMesInteiro: false }]]) }).confere, false);
+});
+
+test('conciliação aceita lote do banco e data deslocada, e nada além disso', () => {
+  const l = (n, d, movimento) => ({ n, conta: 'ITAU--1', data: { a: 2026, m: 8, d }, movimento });
+  const dfc = { linhas: [l(3, 3, -100), l(4, 3, -50), l(5, 14, 20)], brutas: [{ conta: 'ITAU--1', sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const ext = [{ conta: 'ITAU--1', data: '2026-08-03', valor: -150, saldo: 850, id: 'lote' },
+    { conta: 'ITAU--1', data: '2026-08-17', valor: 20, saldo: 870, id: 'depois' }];
+  const r = reconciliar(dfc, ext);
+  assert.equal(r.confere, true);
+  assert.deepEqual(r.porConta.get('ITAU--1').tipos, { exato: 0, deslocado: 1, agrupado: 1, loteDoDia: 0 });
+  assert.deepEqual(r.casadas.get(3), ['lote']);
+  const longe = reconciliar(dfc, [ext[0], { ...ext[1], data: '2026-08-25' }]);
+  assert.equal(longe.confere, false);
+  assert.deepEqual(longe.porConta.get('ITAU--1').soDfc, [5]);
 });
 
 test('nenhuma fonte ou extrato não vira conferido por coincidência', () => {
@@ -47,4 +62,35 @@ test('DRE bruto elimina a baixa espelho e corta por data de pagamento', () => {
   const r = dreIndependente(cru, new Set(['1|100']), { linhas: [] }, '2026-09');
   assert.equal(r.get('dre-receitas').valor, 1000);
   assert.equal(r.get('dre-receitas').linhas.length, 1);
+});
+
+test('baixa em lote: um nCodMovCC com vários títulos não vira uma linha só', () => {
+  const baixa = (titulo, baixaId, pago) => ({ emp: '1', resumo: { nValPago: pago }, detalhes: { cGrupo: 'CONTA_CORRENTE_PAG',
+    cNatureza: 'P', cCodCateg: '2.02.01', nCodCC: 100, nCodMovCC: 55, nCodTitulo: titulo, nCodBaixa: baixaId,
+    nValorMovCC: 30, cStatus: 'PAGO', dDtPagamento: '10/09/2026' } });
+  const cru = { categorias: [{ emp: '1', codigo: '2.02.01', conta_despesa: 'S', codigo_dre: 'x' }, { emp: '1', codigo: '1.01.01' }],
+    movimentos: [baixa(1, 11, 10), baixa(2, 12, 20)] };
+  const r = dreIndependente(cru, new Set(['1|100']), { linhas: [] }, '2026-09');
+  assert.equal(r.get('dre-despesas-gerais').valor, 3000);
+  assert.equal(r.get('dre-despesas-gerais').linhas.length, 2);
+});
+
+test('sinal de cliente fica em aberto até a NF do pedido sair', async () => {
+  const { sinaisDeClientes } = await import('./compromissos.mjs');
+  const t = (cod, origem, extra) => ({ emp: '2', cabecTitulo: { nCodTitulo: cod, cOrigem: origem, nCodCC: 9, nCodOS: 77, nValorTitulo: 10, ...extra } });
+  const titulos = [t(1, 'ADVR', { cStatus: 'RECEBIDO', dDtPagamento: '10/08/2026', cNumDocFiscal: '55' }),
+    t(2, 'VENR', { cNumDocFiscal: '55', dDtEmissao: '05/09/2026' })];
+  const pedidos = [{ emp: '2', cabecalho: { codigo_pedido: 77 }, infoCadastro: { faturado: 'S' } }];
+  const ago = sinaisDeClientes({ titulos, pedidos, recorte: new Set(['2|9']), ano: 2026, mes: 8 });
+  assert.deepEqual([ago.saldo, ago.inicio, ago.variacao], [1000, 0, 1000]);
+  assert.equal(sinaisDeClientes({ titulos, pedidos, recorte: new Set(['2|9']), ano: 2026, mes: 9 }).saldo, 0);
+});
+
+test('saldo da CCB: principal vencido sai, juros correm desde a última parcela', async () => {
+  const { saldoCcb } = await import('./documentos.mjs');
+  const c = { financiado: 100000, taxa: 2, parcelas: [{ n: 1, venc: Date.UTC(2026, 7, 1), juros: 2000, principal: 0 },
+    { n: 2, venc: Date.UTC(2026, 8, 1), juros: 2000, principal: 50000 }] };
+  assert.equal(saldoCcb(c, Date.UTC(2026, 7, 31)), Math.round(100000 * 1.02 ** 1));
+  assert.equal(saldoCcb(c, Date.UTC(2026, 8, 1)), 50000);
+  assert.equal(saldoCcb(c, Date.UTC(2026, 6, 1)), null);
 });

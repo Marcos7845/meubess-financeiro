@@ -370,7 +370,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `1c9ac66600b0` — 366 arquivos no cache local, o mais novo gravado em 30/09/2026 às 20h41; a última releitura do app que trouxe dado do Omie foi em 30/09/2026 às 20h41 (ok, 292 páginas).
+**De que leitura são as contagens desta tabela:** leitura `8ec0ec042059` — 368 arquivos no cache local, o mais novo gravado em 01/10/2026 às 07h32; a última releitura do app que trouxe dado do Omie foi em 30/09/2026 às 20h41 (ok, 292 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -380,7 +380,7 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`1c9ac66600b0`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`8ec0ec042059`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 168 | 9, 0, 162 | **não** — a releitura mexeu |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 292 | 809, 9, 276 | **não** — a releitura mexeu |
@@ -1318,10 +1318,16 @@ Referência: `referencias/tela-3-contas-a-receber.jpg`
 
 **E o filtro de EMPRESA (decisão do dono, 27/09/2026): empresa 1, empresa 2 ou as duas** — o primeiro filtro que
 atravessa as três telas. Ele escolhe quais das filiais `/0001-42` e `/0002-23` entram na soma que estas telas sempre
-fizeram; as duas, ou nenhuma escolha, é a soma de sempre. Nesta tela ele vale **inteiro** — nos 4 cartões e nos 4
-blocos, no valor e na contagem —, porque a tela é do Omie inteira e a leitura é feita uma vez por empresa. A única
-ressalva são as duas contagens do cadastro de clientes, que continuam as duas, lado a lado. Ver
+fizeram; as duas, ou nenhuma escolha, é a soma de sempre. Nesta tela ele valia **inteiro** — nos 4 cartões e nos 4
+blocos, no valor e na contagem —, porque a tela é do Omie inteira e a leitura é feita uma vez por empresa. Ver
 [`docs/filtros.md`](filtros.md).
+
+**Retirados em 01/10/2026 (decisão do dono, por serem de tela removida):** os indicadores "Valor previsto", "Valor
+recebido", "Lançamentos por mês e status", "Valor previsto por cliente e status", "Lista de títulos" e "Lançamentos por
+status" deixaram de ser indicadores deste documento. Ficam as regras que o Fluxo de Caixa usa — o de-para de status
+abaixo e os dois indicadores da tabela. **`"A VENCER"` com espaço:** o Omie devolve `"A VENCER"` (e `"VENCE HOJE"`), e
+não `AVENCER` (`VENCEHOJE`); pelos campos (nada pago, valor em aberto, `cLiquidado` `N`) é o mesmo status, e o código
+tira o espaço antes de comparar.
 
 A tela sai de uma chamada só: `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"`, e os quatro
 filtros indo direto para a API — vencimento em `dDtVencDe` / `dDtVencAte`, status em `cStatus`, cliente em
@@ -1339,20 +1345,9 @@ em aberto — e não tem cadastro de cliente nem os oito `cStatus`. O que mais s
 linhas, e a coluna `STATUS` (O) do `FLUXO DE CAIXA`, que diz se o recebimento foi `INTEGRAL`, `PARCIAL` ou `SINAL`.
 Nenhum dos dois cobre a tela. Ver "O que o DFC pode alimentar e o que fica no Omie".
 
-**Cartões no topo (4):**
+**Indicadores que o Fluxo de Caixa ainda usa (2):**
 
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
 |---|---|---|---|---|
-| Valor previsto | Omie | `financas/pesquisartitulos` → `PesquisarLancamentos` com `cNatureza: "R"` e `dDtVencDe` / `dDtVencAte` no período; soma `cabecTitulo.nValorTitulo`, fora os `cStatus = "CANCELADO"` | soma dos títulos do período | |
-| Valor recebido | Omie | a mesma consulta, títulos da faixa **pago** (`cStatus` `RECEBIDO` ou `LIQUIDADO`); soma `resumo.nValPago`. O `PAGTO_PARCIAL` está na faixa em aberto (decisão do dono, 25/09/2026), então a parte já paga dele não entra neste cartão | títulos com baixa total | |
 | Valor pendente | Omie | a mesma consulta, títulos da faixa **em aberto** (`cStatus` `EMABERTO`, `AVENCER`, `VENCEHOJE` ou `PAGTO_PARCIAL`, decisão do dono, 25/09/2026); soma `resumo.nValAberto` | faixa em aberto | |
 | Valor vencido | Omie | a mesma consulta, títulos da faixa **atrasado** (`cStatus = "ATRASADO"`); soma `resumo.nValAberto` | faixa atrasado | |
-
-**Blocos:**
-
-| bloco | forma | indicador | fonte | tabela/aba e filtro | conferido |
-|---|---|---|---|---|---|
-| Lançamentos por mês e status | colunas empilhadas (pago, atrasado, em aberto) | quantidade de títulos por mês | Omie | a mesma consulta; agrupa pelo ano-mês de `cabecTitulo.dDtVenc` e conta os títulos por faixa. **Decisão do dono (25/09/2026) — de-para dos oito `cStatus` do Omie (`CANCELADO`, `RECEBIDO`, `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE`, `AVENCER`, `ATRASADO`) para as três faixas da tela:** pago = `RECEBIDO` e `LIQUIDADO`; atrasado = `ATRASADO`; em aberto = `EMABERTO`, `AVENCER`, `VENCEHOJE` e `PAGTO_PARCIAL`; `CANCELADO` fica fora da tela | **Contagem lida no Omie por vencimento em 25/09/2026 (só leitura, com tempo limite de 60 s por chamada; a leitura ficou no cache local `.cache/omie/`, fora do git):** `financas/pesquisartitulos` → `PesquisarLancamentos`, `cNatureza = "R"`, sem filtro de status (vêm os cancelados também), `dDtVencDe` / `dDtVencAte` em duas leituras, 01/01/2026 a 25/09/2026 (até hoje) e 26/09/2026 a 31/12/2026 (a vencer), com as chaves `OMIE_MEUBESS_1` e `OMIE_MEUBESS_2`; recorte da MeuBESS por `cabecTitulo.nCodCC` na lista de `dados/contas-correntes-por-negocio.json` (`negocio = "MeuBESS"`); títulos únicos por `nCodTitulo`. **Conferência feita em 25/09/2026, no cache local:** o recorte por `cabecTitulo.nCodCC` pega os mesmos títulos que o por `detalhes.nCodCC` das telas 1 e 2 (empresa 1: 17 e 17; empresa 2: 816 e 816; nenhum título num recorte e não no outro); na empresa 2, 48 títulos têm movimentos em mais de uma conta, todas da MeuBESS, então o campo difere mas o recorte não — um título pago por conta de outro negócio poderia divergir, e nenhum caso assim apareceu. **Empresa 1:** 132 títulos lidos, 17 no recorte (115 em contas de outro negócio ou sem dono dito), todos com vencimento até hoje: `CANCELADO` 8, `RECEBIDO` 9, os outros seis 0; faixas: pago 9, atrasado 0, em aberto 0, fora 8; a vencer até 31/12, nenhum. **Empresa 2:** 816 títulos lidos, todos no recorte (782 até hoje, 34 a vencer): até hoje `CANCELADO` 87, `RECEBIDO` 530, `ATRASADO` 165; a vencer `CANCELADO` 10, `RECEBIDO` 12 e 12 com o `cStatus` escrito `"A VENCER"` (ver abaixo); no total `CANCELADO` 97, `RECEBIDO` 542, `ATRASADO` 165, `"A VENCER"` 12, e `LIQUIDADO`, `EMABERTO`, `PAGTO_PARCIAL`, `VENCEHOJE` e `AVENCER` 0; faixas: pago 542, atrasado 165, em aberto 0 (mais os 12 de `"A VENCER"`), fora 97. **Empresas 1 e 2 somadas:** 833 títulos, `CANCELADO` 105, `RECEBIDO` 551, `ATRASADO` 165, `"A VENCER"` 12; faixas: pago 551, atrasado 165, em aberto 0 (mais os 12), fora 105. **`PAGTO_PARCIAL`: 0 títulos nas duas empresas** (e nenhum `ATRASADO` ou `"A VENCER"` tem valor já pago: os 177 estão com `nValPago` zerado, `nValAberto` positivo e `cLiquidado = "N"`), então hoje não há caso para a regra do cartão "Valor recebido". **Nono `cStatus`:** o Omie devolve `"A VENCER"`, com espaço, e não `AVENCER`, nos 12 títulos a vencer da empresa 2; nenhum título veio com `AVENCER` sem espaço. Pelos campos (nada pago, valor em aberto, não liquidado) é o mesmo status, então o código deve tratar `"A VENCER"` como `AVENCER`; a contagem por faixa acima deixa os 12 à parte porque o de-para do dono de 25/09/2026 cita só a grafia sem espaço. Esta contagem substitui a do cache por data de pagamento (544 títulos, todos `RECEBIDO`), que só trazia título com baixa |
-| Valor previsto por cliente e status | barras horizontais empilhadas | valor por cliente, dividido por status | Omie | a mesma consulta; agrupa por `cabecTitulo.nCodCliente` somando `nValorTitulo` e separa pela faixa do `cStatus` (pago, atrasado, em aberto, pelo de-para do dono de 25/09/2026, `CANCELADO` fora); nome do cliente em `geral/clientes` → `ListarClientesResumido` | |
-| Lista de títulos | tabela com total | código, cliente, categoria, descrição, valor previsto, vencimento, status | Omie | a mesma consulta, um título por linha: código `cabecTitulo.nCodTitulo` (o `cNumTitulo` **não serve** como código visível: veio vazio em 97 dos 100 títulos lidos em 24/09/2026; o número legível que sobra é o do pedido, `cNumOS` — se é esse mesmo que a tela do ERP mostra não foi conferido), cliente por `nCodCliente` em `geral/clientes` → `ListarClientesResumido`, categoria `cCodCateg` com a `descricao` de `geral/categorias` → `ListarCategorias`, valor `nValorTitulo`, vencimento `dDtVenc`, status `cStatus`. **"Descrição":** o título não tem esse campo no Omie; o pedido de venda de origem tem, e o elo é `cabecTitulo.nCodOS` (= `cabecalho.codigo_pedido`) — `produtos/pedido` → `ConsultarPedido` (`det[].produto.descricao`, `cabecalho.numero_pedido`), como na Tela 1. **Decisão do dono (25/09/2026, opção 1 da página `docs/descricao-do-titulo.html`):** a descrição é a dos produtos do pedido de venda ligado pelo `nCodOS`; pedido com vários produtos mostra a descrição do primeiro `det[]`, na ordem do pedido, seguida de "+N" com o número de produtos que ficaram de fora (um produto só: sem sufixo); título sem pedido (`cOrigem = "MANR"`, lançado à mão) usa a `descricao` da categoria `cCodCateg` que a linha já traz, que nunca vem vazia | ligação `nCodOS` conferida no Omie em 24/09/2026 (pedido 827 ↔ título 5298681207), nos dois sentidos; `cNumTitulo` conferido como vazio na maioria. O número da tela, não |
-| Lançamentos por status | rosca com o total no centro | quantidade e % por faixa | Omie | a mesma consulta; conta os títulos por faixa do `cStatus` (pago, atrasado, em aberto) e usa `nTotRegistros` como total do centro, sem os `CANCELADO`. Mesmo de-para do primeiro bloco (decisão do dono, 25/09/2026) | |

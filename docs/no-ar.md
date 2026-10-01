@@ -90,7 +90,7 @@ janela de vencimento 01/10–31/10 da faixa "em aberto", que no cache deste PC e
 "Valor pendente" mudou (10 → 14); as outras 44 são as mesmas da versão de 17:15.
 
 **Resultado: 39 conferidos (um deles por outra tela) e 6 listadas como achado de tela removida, nenhum divergente**,
-de 45 linhas. As seis estão na seção "Achado: seis indicadores da antiga Tela 3" abaixo, fora da lista.
+de 45 linhas. As seis estão na seção "Achado: seis indicadores da antiga Tela 3" abaixo, fora da lista (resolvido em 01/10/2026: retiradas por decisão do dono).
 
 Reconferido às 22:58 (Brasília) de 30/09: `npm run conferencia` (trava de agosto conferida, agosto 45/0/0) e
 `npm run conferir-telas` (45/0/0) de novo; os 14 do "Valor pendente" seguem iguais no PC e no ar.
@@ -135,7 +135,9 @@ Reconferido às 22:58 (Brasília) de 30/09: `npm run conferencia` (trava de agos
 - conferido: **Tela 3 — Projeção do mês.** **No ar:** DFC 382. **Esperado:** DFC 382. **Lido em:** pé do cartão do Fluxo de Caixa.
 - conferido (por outra tela): **Tela 3 — O mês dia a dia.** **Esperado:** DFC 388. **No ar:** o bloco desenha o caixa dia a dia e não escreve quantas linhas do DFC entraram; a contagem está no "Saldo" da Tela 1, lida no ar como DFC 388 (linha acima). **Caso (agosto/2026, mês fechado, cálculo do app sobre a cópia local do DFC):** 31 dias no gráfico, 21 com movimento; a variação da linha do caixa no mês (último ponto menos o ponto de partida) é igual, ao centavo, ao valor do "Saldo" da Tela 1, e as linhas do "Saldo" são as 388 de `docs/telas-conferidas.md`. O gráfico em si, desenhado no servidor, não foi lido pixel a pixel no ar.
 
-## Achado: seis indicadores da antiga Tela 3 que nenhuma tela no ar mostra
+## Achado: seis indicadores da antiga Tela 3 que nenhuma tela no ar mostra — RESOLVIDO
+
+**Resolvido em 01/10/2026:** as seis linhas foram retiradas de `docs/fontes.md` por decisão do dono (são de tela removida). A regra do cálculo e o que o Fluxo de Caixa usa (Valor pendente, Valor vencido) ficam. O texto abaixo é o achado original, como estava.
 
 Os seis abaixo são da antiga Tela 3 (Contas a Receber), fora da navegação desde 28/09/2026 — `/receber` só redireciona
 para o Fluxo de Caixa, que escreve do mesmo cálculo apenas o "Valor vencido" (37, conferido acima) e, em mês aberto, o
@@ -146,4 +148,4 @@ para o Fluxo de Caixa, que escreve do mesmo cálculo apenas o "Valor vencido" (3
 
 O que se sabe: em agosto, `docs/telas-conferidas.md` traz o recorte fechando — pago 91 + atrasado 37 + em aberto 0 = 128 —, e a faixa atrasado (37) é a que a tela viva mostra e está conferida. Isso é consistência interna do cálculo, não contagem lida numa tela; por isso **nenhuma das seis foi trocada por "conferido"**.
 
-**Proposta, para o dono decidir (não aplicada):** retirar essas seis linhas da lista de indicadores de `docs/fontes.md` por pertencerem a tela removida — ou marcá-las lá como "tela removida em 28/09/2026" —, sem apagar a regra do cálculo, que `lib/indicadores/tela-3.mjs` continua usando para o Fluxo de Caixa. Se o dono quiser mantê-las, o caminho é escrever a contagem em alguma tela viva. Nada foi mudado em `docs/fontes.md` nem em indicador.
+**Proposta (aplicada em 01/10/2026, por decisão do dono):** retirar essas seis linhas da lista de indicadores de `docs/fontes.md` por pertencerem a tela removida — ou marcá-las lá como "tela removida em 28/09/2026" —, sem apagar a regra do cálculo, que `lib/indicadores/tela-3.mjs` continua usando para o Fluxo de Caixa. Se o dono quiser mantê-las, o caminho é escrever a contagem em alguma tela viva. Nada foi mudado em `docs/fontes.md` nem em indicador.

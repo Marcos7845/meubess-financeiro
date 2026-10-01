@@ -37,7 +37,7 @@ não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas
 **Um indicador não é de agosto, e a regra de cada um explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado — os quatro `cStatus` dela são os de um título que ainda
 não venceu, e num mês fechado todo título já venceu. `docs/conferencia.md` mede essa faixa noutra janela de
-vencimento, 01/10/2026 a 31/10/2026, e diz na própria linha qual foi;
+vencimento, 01/11/2026 a 30/11/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
 Os outros 44 indicadores são de agosto de 2026.
 
@@ -80,7 +80,7 @@ O DFC desta rodada saiu de **pasta sincronizada**, só para leitura: a Tela 1 le
 - **Tela 2 — Provisões por projeto.** **Na tela:** DFC 4. **Na conferência:** DFC 4. **Também conferido:** frete 0, comissao 0, comissaoHead 0, compra 4, repasse 0. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, comissão, comissão head e compra de cada projeto vendido (toda linha da aba é ainda não paga; o imposto é crédito e fica fora).
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** empresa1 0, empresa2 128, cancelados 15. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor recebido.** **Na tela:** Omie 91. **Na conferência:** Omie 91. **Também conferido:** empresa1 0, empresa2 91. **Fonte:** Omie, títulos a receber por vencimento.
-- **Tela 3 — Valor pendente.** **Na tela:** Omie 14. **Na conferência:** Omie 14. **Também conferido:** empresa1 0, empresa2 14. **Fonte:** Omie, títulos a receber por vencimento.
+- **Tela 3 — Valor pendente.** **Na tela:** Omie 1. **Na conferência:** Omie 1. **Também conferido:** empresa1 0, empresa2 1. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor vencido.** **Na tela:** Omie 37. **Na conferência:** Omie 37. **Também conferido:** empresa1 0, empresa2 37. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por mês e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Valor previsto por cliente e status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** clientes 87, semNome 0. **Fonte:** Omie, títulos a receber por vencimento.

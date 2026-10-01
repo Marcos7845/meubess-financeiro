@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT = path.join(RAIZ, 'node_modules', 'next', 'dist', 'bin', 'next');
-const ENDERECO = '127.0.0.1';
+const ENDERECO = process.env.HOSTNAME || '127.0.0.1';
 const PORTA = '4781';
 
 const tem = (f) => process.argv.includes(f);

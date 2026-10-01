@@ -71,6 +71,14 @@ início de contêiner, nenhum `heap out of memory` nos logs.
   21:00; `GET /api/dfc` no ar segue com o último envio em `2026-09-30T23:16:49Z`. Deploy ativo `4df298c4` (`SUCCESS`);
   variáveis do serviço (só nomes): `SESSAO_SEGREDO`, `DFC_ENVIO_SEGREDO`, as quatro do Omie 1 e 2 e `PORT` — sem as do
   administrador, que entrou no ar de novo às 20:42.
+- **22:00 (Brasília) de 30/09: resultado 0.** Lido às 22:58 (Brasília): `Get-ScheduledTaskInfo` dá última execução
+  `30/09/2026 22:00:01`, resultado 0, próxima 23:00, nenhuma passagem perdida; `GET /api/dfc` no ar registra o envio em
+  `2026-10-01T01:00:02Z` (22:00:02 em Brasília), 13 planilhas.
+- **21:00 (Brasília): resultado não recuperável.** O Agendador só guarda a última passagem (a de 22:00 apagou a de
+  21:00) e o log de eventos dele (`Microsoft-Windows-TaskScheduler/Operational`) está desligado; o servidor também
+  guarda só o último envio. O que se observou é a passagem de 20:16 (0) e a de 22:00 (0, mesmas 13 planilhas); o
+  resultado de 21:00 em si **não foi observado**. Ligar o histórico do Agendador resolveria para as próximas
+  (decisão do dono; não mexi).
 
 ## Números de agosto/2026 no ar contra `docs/telas-conferidas.md` (45 linhas)
 
@@ -81,7 +89,11 @@ o pé de cada cartão, o que cada linha do DRE abre (a composição que a págin
 janela de vencimento 01/10–31/10 da faixa "em aberto", que no cache deste PC era de 26/09. Das 45 linhas, só a do
 "Valor pendente" mudou (10 → 14); as outras 44 são as mesmas da versão de 17:15.
 
-**Resultado: 38 conferidos e 7 sem contagem na tela**, de 45 linhas.
+**Resultado: 39 conferidos (um deles por outra tela) e 6 listadas como achado de tela removida, nenhum divergente**,
+de 45 linhas. As seis estão na seção "Achado: seis indicadores da antiga Tela 3" abaixo, fora da lista.
+
+Reconferido às 22:58 (Brasília) de 30/09: `npm run conferencia` (trava de agosto conferida, agosto 45/0/0) e
+`npm run conferir-telas` (45/0/0) de novo; os 14 do "Valor pendente" seguem iguais no PC e no ar.
 
 - conferido: **Tela 1 — Saldo.** **No ar:** DFC 388 e Omie 419. **Esperado:** DFC 388 e Omie 419. **Lido em:** tabela "Os números exatos" da Tela 1.
 - conferido: **Tela 1 — Receitas.** **No ar:** DFC 101 e Omie 120. **Esperado:** DFC 101 e Omie 120. **Lido em:** tabela "Os números exatos" da Tela 1.
@@ -116,18 +128,22 @@ janela de vencimento 01/10–31/10 da faixa "em aberto", que no cache deste PC e
 - conferido: **Tela 2 — Dívida líquida.** **No ar:** DFC 5. **Esperado:** DFC 5. **Lido em:** pé do cartão da Tela 2.
 - conferido: **Tela 2 — Resultado sem dinheiro de terceiros.** **No ar:** Omie 419. **Esperado:** Omie 419. **Lido em:** pé do cartão da Tela 2.
 - conferido: **Tela 2 — Provisões por projeto.** **No ar:** DFC 4. **Esperado:** DFC 4. **Lido em:** pé do cartão da Tela 2.
-- sem contagem na tela: **Tela 3 — Valor previsto.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- sem contagem na tela: **Tela 3 — Valor recebido.** **Esperado:** Omie 91. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- conferido: **Tela 3 — Valor pendente.** **No ar:** Omie 14. **Esperado:** Omie 14. **Lido em:** Fluxo de Caixa de outubro: cartão "Ainda a receber no mês" (o nome dele em mês ainda aberto), lido às 20:42 (Brasília). A faixa "em aberto" é medida na janela de vencimento de outubro/2026, não em agosto, e anda com o Omie. A referência anterior (10) vinha da leitura exata dessa janela gravada neste PC em 26/09; relida no Omie em 30/09 às 20:40, dá 14 (0 na empresa 1, 14 na 2) — os 10 de 26/09 e quatro títulos da empresa 2 lançados depois, `5300690800`, `5302263925`, `5302423083` e `5302508435`, todos `A VENCER` com vencimento em 28/10 ou 30/10/2026. Mesma regra; nenhum dos 10 saiu.
+- conferido: **Tela 3 — Valor pendente.** **No ar:** Omie 14. **Esperado:** Omie 14. **Lido em:** Fluxo de Caixa de outubro: cartão "Ainda a receber no mês" (o nome dele em mês ainda aberto), lido às 20:42 e de novo às 22:58 (Brasília), nas duas vezes 14 títulos do Omie no pé do cartão; no PC, `npm run conferir-telas` também dá 14 (0 na empresa 1, 14 na 2). A leitura do Omie dessa janela não foi refeita às 22:58: `node scripts/ler-omie-faltante.mjs` achou as 173 respostas já no cache (0 vieram do Omie), a de 20:40. A faixa "em aberto" é medida na janela de vencimento de outubro/2026, não em agosto, e anda com o Omie. A referência anterior (10) vinha da leitura exata dessa janela gravada neste PC em 26/09; relida no Omie em 30/09 às 20:40, dá 14 (0 na empresa 1, 14 na 2) — os 10 de 26/09 e quatro títulos da empresa 2 lançados depois, `5300690800`, `5302263925`, `5302423083` e `5302508435`, todos `A VENCER` com vencimento em 28/10 ou 30/10/2026. Mesma regra; nenhum dos 10 saiu.
 - conferido: **Tela 3 — Valor vencido.** **No ar:** Omie 37. **Esperado:** Omie 37. **Lido em:** Fluxo de Caixa de agosto: "já venceu e ainda não foi recebido (N títulos)".
-- sem contagem na tela: **Tela 3 — Lançamentos por mês e status.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- sem contagem na tela: **Tela 3 — Valor previsto por cliente e status.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- sem contagem na tela: **Tela 3 — Lista de títulos.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
-- sem contagem na tela: **Tela 3 — Lançamentos por status.** **Esperado:** Omie 128. **Motivo:** o indicador é da antiga Tela 3 (Contas a Receber), que saiu da navegação em 28/09/2026 — `/receber` só redireciona para o Fluxo de Caixa —, e nenhuma tela no ar escreve a contagem dele; o Fluxo de Caixa usa o mesmo cálculo e mostra, dele, o "Valor vencido" (37, conferido acima) e a faixa em aberto ("Valor pendente").
 - conferido: **Tela 3 — Despesas fixas pagas.** **No ar:** DFC 119. **Esperado:** DFC 119. **Lido em:** pé do cartão do Fluxo de Caixa.
 - conferido: **Tela 3 — Fixas / receita líquida.** **No ar:** DFC 119. **Esperado:** DFC 119. **Lido em:** pé do cartão do Fluxo de Caixa.
 - conferido: **Tela 3 — Projeção do mês.** **No ar:** DFC 382. **Esperado:** DFC 382. **Lido em:** pé do cartão do Fluxo de Caixa.
-- sem contagem na tela: **Tela 3 — O mês dia a dia.** **Esperado:** DFC 388. **Motivo:** o bloco desenha o caixa dia a dia e não escreve quantas linhas do DFC entraram; as mesmas 388 linhas baixadas do mês aparecem conferidas no "Saldo" da Tela 1 (DFC 388), que lê a mesma aba e o mesmo recorte.
+- conferido (por outra tela): **Tela 3 — O mês dia a dia.** **Esperado:** DFC 388. **No ar:** o bloco desenha o caixa dia a dia e não escreve quantas linhas do DFC entraram; a contagem está no "Saldo" da Tela 1, lida no ar como DFC 388 (linha acima). **Caso (agosto/2026, mês fechado, cálculo do app sobre a cópia local do DFC):** 31 dias no gráfico, 21 com movimento; a variação da linha do caixa no mês (último ponto menos o ponto de partida) é igual, ao centavo, ao valor do "Saldo" da Tela 1, e as linhas do "Saldo" são as 388 de `docs/telas-conferidas.md`. O gráfico em si, desenhado no servidor, não foi lido pixel a pixel no ar.
 
-"Sem contagem na tela" quer dizer que nenhuma página no ar escreve a contagem daquele indicador — não é "a conferir"
-nem divergência: o número que ele alimenta, quando aparece, está conferido na linha indicada.
+## Achado: seis indicadores da antiga Tela 3 que nenhuma tela no ar mostra
+
+Os seis abaixo são da antiga Tela 3 (Contas a Receber), fora da navegação desde 28/09/2026 — `/receber` só redireciona
+para o Fluxo de Caixa, que escreve do mesmo cálculo apenas o "Valor vencido" (37, conferido acima) e, em mês aberto, o
+"Ainda a receber" (14, conferido acima). Nenhum deles tem contagem equivalente numa tela viva:
+
+- **Valor previsto** (Omie 128) e **Valor recebido** (Omie 91): o Fluxo de Caixa não escreve o total de títulos do mês nem a faixa paga.
+- **Lançamentos por mês e status** (Omie 128), **Valor previsto por cliente e status** (Omie 128), **Lista de títulos** (Omie 128) e **Lançamentos por status** (Omie 128): blocos que existiam só na tela removida.
+
+O que se sabe: em agosto, `docs/telas-conferidas.md` traz o recorte fechando — pago 91 + atrasado 37 + em aberto 0 = 128 —, e a faixa atrasado (37) é a que a tela viva mostra e está conferida. Isso é consistência interna do cálculo, não contagem lida numa tela; por isso **nenhuma das seis foi trocada por "conferido"**.
+
+**Proposta, para o dono decidir (não aplicada):** retirar essas seis linhas da lista de indicadores de `docs/fontes.md` por pertencerem a tela removida — ou marcá-las lá como "tela removida em 28/09/2026" —, sem apagar a regra do cálculo, que `lib/indicadores/tela-3.mjs` continua usando para o Fluxo de Caixa. Se o dono quiser mantê-las, o caminho é escrever a contagem em alguma tela viva. Nada foi mudado em `docs/fontes.md` nem em indicador.

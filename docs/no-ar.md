@@ -1,4 +1,4 @@
-# As três telas no ar — conferência de 30/09/2026
+# As três telas no ar — conferências de 30/09 e 01/10/2026
 
 **Estado:** publicado no Railway, com login, e **as três telas abrem** para o administrador. O serviço segue de pé depois
 de abri-las. Aqui só vão contagens, códigos e horas; nenhum valor em reais nem credencial.
@@ -7,6 +7,43 @@ de abri-las. Aqui só vão contagens, códigos e horas; nenhum valor em reais ne
 
 `https://meubess-financeiro-production.up.railway.app` — domínio `*.up.railway.app` do serviço `meubess-financeiro`
 (projeto `meubess-financeiro`, ambiente `production`, volume em `/data`). `http://` responde 301 para o `https://`.
+
+## Publicação de 01/10/2026 — commit `27a7ec9`
+
+O que subiu: o commit `27a7ec9` ("DRE: Retirada de sócio em linha própria abaixo do lucro líquido; 2.10.99 fora do DRE;
+cartões das 3 telas abrem o que somam"), da árvore limpa da `master`, do mesmo modo da publicação anterior: `railway up
+--ci` com um token de projeto criado só para este envio e apagado em seguida (0 tokens de projeto restantes). Login,
+variáveis, comando de início/build/saúde (`npm run servidor`, `npm run build`, `/entrar`) e limite de memória
+(`MEMORY_LIMIT_GB` 1,000) **não foram mexidos**.
+
+- **Deploy `1952a59e-d1db-4152-8bed-e9847f7bcd47`: `SUCCESS`**, criado às 12:50:17 UTC, mensagem `commit-27a7ec9`; o
+  anterior, `4df298c4`, ficou `REMOVED`. Contêiner iniciado às 12:51:13 UTC ("As três telas sobem em 0.0.0.0:8080,
+  com login"), volume `/data` montado; nenhum erro nos logs além do aviso `npm warn config production` de sempre.
+
+Conferido no ar a partir de 12:52:56 UTC (09:52 em Brasília), por HTTP:
+
+- **https e sem login:** `http://` → 301 para `https://`; `/entrar` → 200; `/`, `/dre`, `/fluxo-de-caixa`, `/receber`
+  e `/admin` → 307 para `/entrar?volta=…`; `GET` e `POST /api/atualizar` → 401; `GET /api/dfc` sem segredo → 401.
+- **E-mail sem cadastro barrado:** `POST /api/entrar` → 303 para `/entrar?erro=1`, sem cookie.
+- **Administrador entra:** 303 para `/` com cookie de sessão; `/admin` → 200.
+- **As três telas abrem logado:** `/?ano=2026&mes=8`, `/dre?ano=2026&mes=8` e `/fluxo-de-caixa?ano=2026&mes=8` → 200
+  (a primeira abertura da Tela 1 levou ~11 s; as seguintes, menos de 1,2 s).
+- **DRE de agosto/2026:** a linha **"Retirada de sócio"** está na tabela e abre **51 lançamentos do Omie**; o quadro
+  **"Fora do DRE"** está na página, com "Implantação de saldos (saídas)" abrindo **7 lançamentos do Omie**; "(−) Despesas
+  gerais" abre **140** (eram 198 em 30/09: 198 − 51 − 7 = 140). As três contagens são as de `docs/telas-conferidas.md`
+  (Despesas gerais 140, Retirada de sócio 51) e de `docs/conferencia.md` (Fora do DRE 7).
+- **Cada cartão abre o que soma:** em toda composição que a página recebe, a soma dos itens (lista), a conta das partes
+  (conta) ou o numerador ÷ denominador (razão) é igual ao valor dela, ao centavo, e o valor em reais das listas aparece
+  escrito na página. Tela 1: 7 de 7 iguais; Tela 2: 19 de 19 (5 cartões, 13 linhas do DRE e o quadro "Fora do DRE");
+  Fluxo de Caixa: 7 de 7. Um cartão de cada tela, com a contagem de itens:
+  - Tela 1 — **Saldo**: lista de 388 linhas do DFC (= DFC 388 de `docs/telas-conferidas.md`), total igual ao cartão.
+  - Tela 2 — **Receita total**: lista de 101 linhas do DFC (= DFC 101), total igual ao cartão.
+  - Fluxo de Caixa — **Entrou**: lista de 101 linhas do DFC, total igual ao cartão.
+- **Memória** (métrica do Railway, amostras de 30 s, de 12:50:00 a 12:54:30 UTC): **pico de 0,521 GB** às 12:54:00 UTC,
+  depois de abrir as três telas (0,204 GB antes de abri-las); limite 1,000 GB.
+- **O envio do DFC segue:** a tarefa `financeiro-enviar-dfc`, lida às 09:54 (Brasília), está `Ready`, **habilitada**,
+  última execução 01/10/2026 09:00:01 com resultado 0, próxima 10:00, nenhuma perdida. `GET /api/dfc` (com o segredo)
+  registra o último envio em `2026-10-01T12:00:01Z`, 13 planilhas — o volume guardou o envio através do deploy.
 
 ## O que foi feito no Railway
 

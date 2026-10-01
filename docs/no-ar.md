@@ -45,6 +45,21 @@ Conferido no ar a partir de 12:52:56 UTC (09:52 em Brasília), por HTTP:
   última execução 01/10/2026 09:00:01 com resultado 0, próxima 10:00, nenhuma perdida. `GET /api/dfc` (com o segredo)
   registra o último envio em `2026-10-01T12:00:01Z`, 13 planilhas — o volume guardou o envio através do deploy.
 
+## Medição posterior à publicação de 01/10/2026 (deploy `1952a59e`) — lida às 13:29 UTC (10:29 em Brasília)
+
+Só leitura: nada de serviço, variável, tarefa ou código foi mexido.
+
+- **Memória:** janela de **12:50:00 a 13:29:00 UTC** (79 amostras de 30 s, ~39 min, cobrindo a releitura completa do
+  Omie, que leva ~11 min depois de subir, e a sequência de leituras de depois dela). **Pico máximo: 0,654 GB**, às 13:10:00
+  UTC; limite 1,000 GB. Máximo por faixa de 5 min: 12:50 → 0,522; 13:00 → 0,457; 13:10 → 0,654; 13:20 → 0,480 GB.
+  Última amostra (13:29:00): 0,444 GB. O pico é do mesmo tipo do de 30/09 (0,594 GB, base nova montada ao lado da velha).
+- **Tarefa `financeiro-enviar-dfc`, passagem das 10:00 (Brasília):** `Get-ScheduledTaskInfo` às 10:29 dá última execução
+  `01/10/2026 10:00:01`, **resultado 0**, próxima 11:00:00, nenhuma passagem perdida; tarefa `Ready` e habilitada.
+  `GET /api/dfc` (com o segredo) registra o **último envio em `2026-10-01T13:00:01Z`** (10:00:01 em Brasília), 13 planilhas.
+- **Deploy:** `1952a59e-d1db-4152-8bed-e9847f7bcd47` segue **`SUCCESS`** (é o último; os anteriores, `REMOVED`). O log do
+  contêiner tem **1 "Starting Container"** (12:51:13 UTC), nenhuma linha de `heap out of memory`, `OOM`, `killed` ou
+  `SIGKILL`: **nenhum reinício por falta de memória**. `/entrar` → 200.
+
 ## O que foi feito no Railway
 
 - Domínio criado, porta 8080 (variável `PORT=8080` acrescentada ao serviço).

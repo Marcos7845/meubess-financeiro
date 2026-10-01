@@ -31,6 +31,36 @@ Execução com a cópia local `.cache/master-2026-08`, DFC isolado em `.cache/au
 
 Os 16 não auditáveis são 12 indicadores de caixa que dependem das linhas Stone/dinheiro, os dois gráficos Entradas/Gastos, a dívida líquida que depende da posição bancária e a projeção, sem número em mês fechado. O registro da passagem anterior abaixo é histórico.
 
+## Pasta de extratos B3W de agosto/2026 e o material da Stone (01/10/2026)
+
+O dono indicou a pasta de extratos B3W de agosto na master e entregou, como material da Stone, o arquivo "Relatório de resumo de vendas" de 01 a 31/08/2026. Leitura só de consulta: nada foi copiado para o repositório nem gravado na master. Os 12 arquivos que já estavam em `.cache/master-2026-08` têm SHA-256 igual ao da master; o relatório da Stone é novo (emitido em 01/10/2026) e foi lido direto da master, sem cópia.
+
+**O que é o arquivo da Stone.** Não é extrato de conta. É o resumo de vendas da maquininha: uma página, com texto, mesma razão social e mesmo CNPJ do titular do extrato Itaú, período 01/08 a 31/08/2026, três Stonecodes. Traz só o total vendido, a quantidade de vendas (13, todas no crédito, por bandeira), canceladas, contestadas e Pix na maquininha (zero). Não tem saldo, liquidação de recebíveis, saque, PIX/TED enviado nem lançamento por dia. Ele **não responde** se a Stone mandou dinheiro ao Itaú em agosto. Mostra, porém, 13 vendas no crédito em agosto, o que também **contradiz** a declaração de Stone sem movimento; o bloco Stone do DFC tem 9 recebimentos, e o relatório, sem venda a venda nem data de crédito, não permite casar uns com os outros.
+
+**Linhas 401, 404 e 408 (resultado).** As três continuam sem data e sem `PAGAMENTO`, só com saída e `SALDO` corrido no bloco `BANCO STONE`. **Na Stone: não há como conferir** — o único documento da Stone é o resumo de vendas, sem movimentação de conta. **No Itaú: as três entradas existem**, no PDF da master e no CSV convertido, na data e no valor das linhas 74 (07/08), 101 (10/08) e 267 (24/08): uma transação cada (`pdf-48`, `pdf-81`, `pdf-256`), `PIX RECEBIDO` cujo remetente tem o **CNPJ completo igual** ao do titular. Nenhum outro PDF da pasta (Banco do Brasil, Santander, Safra, Sicoob, faturas de cartão) tem lançamento desses três valores, e o resumo da Stone mostra que a maquininha é do mesmo CNPJ. A perna Stone segue provável e **sem prova**; a soma do caixa não foi mudada.
+
+**Inventário da pasta** (13 arquivos; "texto" = o PyMuPDF extrai o texto; "conversor" = `scripts/auditoria/extrato-pdf.py` tem modelo):
+
+| arquivo (conta) | formato | período | leitura pelo auditor | entra no `FLUXO DE CAIXA` B3W |
+|---|---|---|---|---|
+| Itaú, conta corrente | PDF, 9 páginas, texto | 01/08–31/08 | texto e conversor (`itau`); concilia | sim, `ITAU--1` |
+| Banco do Brasil, conta corrente | PDF, 1 página, texto | mês 08 | texto e conversor (`bb`); concilia | sim, `BANCO DO BRASIL--3` |
+| Banco do Brasil, Rende Fácil (aplicação) | PDF, 1 página, texto | 31/07–31/08 | texto, sem conversor; sem aplicação nem resgate no mês | não tem bloco próprio |
+| Santander, conta corrente | PDF, 2 páginas, texto | 09/08–08/09 | texto e conversor (`santander`); não concilia (não cobre 01–08/08) | sim, `BANCO SANTANDER--5` |
+| Safra, conta corrente | PDF, 2 páginas, texto | 03/08–31/08 | texto, sem conversor | não (conta dos DFCs separados) |
+| Sicoob, conta corrente | PDF, 3 páginas, texto | 01/08–31/08 | texto, sem conversor | não (conta dos DFCs separados) |
+| Stone, resumo de vendas | PDF, 1 página, texto | 01/08–31/08 | texto, mas não é extrato | o bloco `BANCO STONE--2` existe; o arquivo não o prova |
+| Itaú, cartão de crédito (titular A), fatura de agosto | PDF, 8 páginas, texto | fechamento 09/08 | texto, sem conversor | não (fatura; o pagamento aparece no Itaú) |
+| Itaú, cartão de crédito (titular A), fatura de setembro, aberta | PDF, 8 páginas, texto | fatura com vencimento em setembro | texto, sem conversor | não |
+| Itaú, cartão de crédito (titular B) | PDF, 2 páginas, texto | fechamento 02/09 | texto, sem conversor | não |
+| Sicoob, cartão de crédito, fatura de agosto | PDF, 6 páginas, texto | vencimento 19/08 | texto, sem conversor | não |
+| Safra, cartão de crédito, agosto | PNG | — | **só imagem**, sem texto | não |
+| Safra, cartão de crédito, setembro | PNG | — | **só imagem**, sem texto | não |
+
+Só as duas faturas Safra são imagem. Nenhuma conta do bloco de caixa depende de imagem; as faturas de cartão não entram nos 12 indicadores (entra o débito do pagamento na conta corrente).
+
+**O que falta para fechar os 12 indicadores de caixa.** (1) Extrato de **conta** da Stone de agosto (saldo inicial e final, recebíveis liquidados, PIX/TED enviados), de preferência em CSV/OFX ou PDF com texto: prova as 9 receitas e as saídas 401, 404 e 408, e resolve a dúvida das linhas 400 e 402. (2) Comprovante das 2 linhas de `DINHEIRO--4`, ou decisão do dono sobre elas. (3) Extrato Santander de 01/08 a 31/08 e resposta sobre os 4 movimentos que o DFC não tem. Sem (1) e (2) os 12 seguem **não auditáveis**; a regra do auditor não mudou.
+
 ## Classificação sugerida pelo Jev
 
 `npm run auditar -- --mes 2026-08 --jev --dfc-dir .cache/auditoria-dfc-2026` acrescenta a seção **Classificação sugerida (Jev)** ao HTML. A exceção do dono de 30/09/2026 vale só para esta classificação de agosto. O cliente segue a opção tipada da Central de Comando (`typesafe/jev-1.13` pelo OpenRouter). A chave `OPENROUTER_API_KEY` é lida somente do ambiente, nunca de arquivo nem do registro do Windows. Sem chave, com falha de rede ou resposta inválida, a linha fica não classificada e o auditor continua. Sem `--jev`, não há chamada nem seção. O contador final mostra tentativas de chamada e caracteres das descrições limpas enviados, sem imprimir as descrições.

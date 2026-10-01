@@ -58,7 +58,8 @@ const titulos = {
   'dre-receita-liquida': ['DRE', '(=) Receita líquida'], 'dre-custos-de-vendas': ['DRE', '(−) Custos de vendas'],
   'dre-lucro-bruto': ['DRE', '(=) Lucro bruto'], 'dre-despesas-gerais': ['DRE', '(−) Despesas gerais'], 'dre-ebitda': ['DRE', '(=) EBITDA'],
   'dre-resultado-financeiro': ['DRE', '(+/−) Resultado financeiro'], 'dre-impostos': ['DRE', '(−) Impostos pagos'],
-  'dre-lucro-liquido': ['DRE', '(=) Lucro líquido'], 'dre-sem-conta': ['DRE', '(=) sem conta'],
+  'dre-lucro-liquido': ['DRE', '(=) Lucro líquido'], 'dre-retirada-socio': ['DRE', 'Retirada de sócio'],
+  'fora-implantacao-de-saldos': ['DRE', 'Fora do DRE: implantação de saldos'], 'dre-sem-conta': ['DRE', '(=) sem conta'],
   'capital-de-giro': ['DRE', 'Capital de giro tomado'], 'obrigacoes-clientes': ['DRE', 'Obrigações com clientes'],
   'divida-liquida': ['DRE', 'Dívida líquida'], 'resultado-sem-terceiros': ['DRE', 'Resultado sem dinheiro de terceiros'],
   'provisoes-projetos': ['DRE', 'Provisões por projeto'],
@@ -649,7 +650,7 @@ try {
     calcularTela3({ raiz, ano, mes, fonte: fonteLocal }), calcularFluxoDeCaixa({ raiz, ano, mes, fonte: fonteLocal }),
   ]);
   fluxoApp = fluxo;
-  app = new Map([...t1.cartoes, ...t1.blocos, ...t2.cartoes, ...t2.tabela, ...t2.compromissos.itens,
+  app = new Map([...t1.cartoes, ...t1.blocos, ...t2.cartoes, ...t2.tabela, ...t2.foraDoDre, ...t2.compromissos.itens,
     ...t3.cartoes, ...t3.blocos, ...fluxo.cartoes.filter((x) => ['fixas', 'peso-fixas', 'projecao'].includes(x.id)), ...fluxo.blocos]
     .map((x) => [x.id, x]));
 } catch (e) { erroApp = `indicadores locais indisponíveis: ${e.message}`; avisos.push(erroApp); }

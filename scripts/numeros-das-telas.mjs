@@ -72,7 +72,7 @@ import { NOMES_DOS_MESES, dois, ultimoDia, dataBR, noMesDe, noAnoDe } from '../l
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { lerDfc, arquivosDoDfc, norm, ePessoalDfc, eReceitaTela1Dfc, eDeducaoDfc, DFC_RECEITA, DFC_PESSOAL_CLASSE, DFC_PESSOAL_SUB2, DFC_CUSTO_CLASSE, DFC_CUSTO_SUB2, DFC_IMPOSTO_SUB2, DFC_FINANCEIRO_SUB2 } from '../lib/regras/dfc.mjs';
 import { lerDespesasFixas } from '../lib/regras/despesas-fixas.mjs';
-import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, AMORTIZACAO_DE_DIVIDA, FAIXA_DO_STATUS } from '../lib/regras/listas.mjs';
+import { VENDA_DE_PRODUTOS, PESSOAL, CUSTO_DE_VENDAS, RESULTADO_FINANCEIRO, DEDUCOES, IMPOSTOS_GUIAS, INTERCOMPANY, FORA_DO_DRE, AMORTIZACAO_DE_DIVIDA, FAIXA_DO_STATUS, RETIRADA_DE_SOCIO, IMPLANTACAO_DE_SALDOS } from '../lib/regras/listas.mjs';
 import { GRUPOS_DA_DIVIDA, eDividaDfc, casar, lerContratos, fonteLocalDosContratos, saldoDosContratos, obrigacoesComClientes } from '../lib/regras/passivo.mjs';
 import { provisoesDoMes, COLUNAS_DA_PROVISAO, E_CODIGO_DE_PROJETO } from '../lib/regras/provisao.mjs';
 import { lerZip, sharedStrings, abasDo } from '../lib/regras/xlsx.mjs';
@@ -875,18 +875,19 @@ add({
   const dg = {};
   for (const emp of EMPRESAS) dg[emp] = contar(emp, noMes, 'P', {
     categoria: (cod) => categorias[emp].get(cod)?.conta_despesa === 'S'
-      && !CUSTO_DE_VENDAS[emp].includes(cod) && !RESULTADO_FINANCEIRO[emp].includes(cod) && !FORA_DO_DRE[emp].includes(cod),
+      && !CUSTO_DE_VENDAS[emp].includes(cod) && !RESULTADO_FINANCEIRO[emp].includes(cod) && !FORA_DO_DRE[emp].includes(cod)
+      && !RETIRADA_DE_SOCIO[emp].includes(cod),
   });
   const caso = conferirPrimeiro({ 1: dg[1].todos, 2: dg[2].todos });
   const cat = caso ? categorias[caso.emp].get(String(caso.d.cCodCateg)) : null;
   add({
     tela: 'Tela 2', nome: '(−) Despesas gerais: administrativas, financeiras, marketing, RH, relacionamento com cliente, TI', fonte: 'Omie recortado (principal) / DFC por `SUB 2` (confronto)',
-    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e a amortização de dívida — \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, da empresa 1, que saíram desta linha em 29/09/2026, e \`2.04.91\` Emprestimo, da empresa 2, que saiu do resultado financeiro no mesmo dia (${AMORTIZACAO_DE_DIVIDA[1].length + AMORTIZACAO_DE_DIVIDA[2].length} códigos; decisão do dono: parcela de empréstimo não é despesa; vão para o bloco "Compromissos", fora do lucro); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e as categorias com \`conta_despesa = "S"\` em \`geral/categorias\`, agrupadas pelo \`codigo_dre\` — cada lançamento entra pela categoria dele, não por departamento. Saem desta linha, para as linhas próprias, as ${CUSTO_DE_VENDAS[1].length + CUSTO_DE_VENDAS[2].length} categorias de custo de vendas e as ${RESULTADO_FINANCEIRO[1].length + RESULTADO_FINANCEIRO[2].length} de resultado financeiro; ficam fora do DRE os empréstimos e transferências Intercompany (${INTERCOMPANY[1].length} códigos na empresa 1 e ${INTERCOMPANY[2].length} na 2) e a amortização de dívida — \`2.04.89\` Giro de Capital e \`2.11.95\` Financiamento Veiculo, da empresa 1, que saíram desta linha em 29/09/2026, e \`2.04.91\` Emprestimo, da empresa 2, que saiu do resultado financeiro no mesmo dia (${AMORTIZACAO_DE_DIVIDA[1].length + AMORTIZACAO_DE_DIVIDA[2].length} códigos; decisão do dono: parcela de empréstimo não é despesa; vão para o bloco "Compromissos", fora do lucro); a implantação de saldos (\`2.10.99\` Implantação de saldos (saidas), só na empresa 1) também fica fora do DRE, e a retirada de sócio (\`2.08.01\`, nas duas empresas) sai desta linha para a linha própria "Retirada de sócio", abaixo do lucro líquido (decisão do dono, 01/10/2026; na empresa 2 o \`2.10.99\` é Adiantamentos a Fornecedores e fica aqui); Cartão de Credito (\`2.11.98\`) e Aluguel Veiculo (\`2.11.99\`) da empresa 1 ficam aqui, embora o Omie os pendure em Despesas Financeiras (decisão do dono, 25/09/2026)`,
     contagem: `${dg[1].total + dg[2].total} lançamentos — ${dg[1].titulos.size} títulos + ${dg[1].baixas.size} baixas de parcial + ${dg[1].avulsos.size} avulsos na empresa 1 e ${dg[2].titulos.size} + ${dg[2].baixas.size} + ${dg[2].avulsos.size} na 2`,
     estado: caso && caso.r.ok ? 'conferido' : 'divergente',
     motivo: caso && caso.r.ok ? null : (caso ? (caso.r.motivo ?? caso.r.dif.join('; ')) : 'nenhum lançamento de despesa geral entrou neste mês'),
     caso: caso
-      ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está em \`geral/categorias\` da empresa ${caso.emp} com \`conta_despesa\` ${cat?.conta_despesa ?? '?'} e \`codigo_dre\` ${cat?.codigo_dre || '(vazio)'}, e não está em nenhuma das três listas que saem desta linha`
+      ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está em \`geral/categorias\` da empresa ${caso.emp} com \`conta_despesa\` ${cat?.conta_despesa ?? '?'} e \`codigo_dre\` ${cat?.codigo_dre || '(vazio)'}, e não está em nenhuma das listas que saem desta linha`
       : 'nenhum lançamento de despesa geral entrou neste mês',
   });
 }
@@ -952,6 +953,47 @@ add({
     : calc(porEmp(MES_P)).motivo,
   caso: `${textoDoCaso(conferirPrimeiro(porEmp(MES_P)), 'no lado do Omie: ')}; segue o cartão "Lucro líquido" do topo — as três linhas que a conta consome estão conferidas nas linhas delas nesta página`,
 });
+
+// Retirada de sócio — linha própria, abaixo do lucro líquido (decisão do dono, 01/10/2026). Omie inteiro, e conferível.
+{
+  const ret = {};
+  for (const emp of EMPRESAS) ret[emp] = contar(emp, noMes, 'P', { categoria: naLista(RETIRADA_DE_SOCIO[emp]) });
+  const caso = conferirPrimeiro({ 1: ret[1].todos, 2: ret[2].todos });
+  const total = ret[1].total + ret[2].total;
+  add({
+    tela: 'Tela 2', nome: 'Retirada de sócio', fonte: 'Omie recortado',
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e \`detalhes.cCodCateg\` = \`2.08.01\` Adiantamento/Retirada de Sócio, nas duas empresas. Saiu de "(−) Despesas gerais" e é linha própria do DRE, **abaixo** do "(=) Lucro líquido" e fora dos totalizadores: nem o EBITDA nem o lucro líquido a descontam, porque é distribuição ao sócio e não despesa da operação (decisão do dono, 01/10/2026)`,
+    contagem: `${total} lançamentos — ${ret[1].titulos.size} títulos + ${ret[1].baixas.size} baixas de parcial + ${ret[1].avulsos.size} avulsos na empresa 1 e ${ret[2].titulos.size} + ${ret[2].baixas.size} + ${ret[2].avulsos.size} na 2`,
+    estado: total === 0 ? 'a-conferir' : (caso && caso.r.ok ? 'conferido' : 'divergente'),
+    motivo: total === 0
+      ? 'nenhum lançamento de retirada de sócio entrou neste mês, então não há caso real para conferir (a linha existe e fica zerada)'
+      : (caso && caso.r.ok ? null : (caso.r.motivo ?? caso.r.dif.join('; '))),
+    caso: caso
+      ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está na lista de retirada de sócio da empresa ${caso.emp}`
+      : 'nenhum lançamento de retirada de sócio entrou neste mês',
+  });
+}
+
+// Fora do DRE: implantação de saldos (decisão do dono, 01/10/2026). Não entra em linha nenhuma; a tela a mostra à
+// parte, com o valor. Omie inteiro, e conferível.
+{
+  const impl = {};
+  for (const emp of EMPRESAS) impl[emp] = contar(emp, noMes, 'P', { categoria: naLista(IMPLANTACAO_DE_SALDOS[emp]) });
+  const caso = conferirPrimeiro({ 1: impl[1].todos, 2: impl[2].todos });
+  const total = impl[1].total + impl[2].total;
+  add({
+    tela: 'Tela 2', nome: 'Fora do DRE: implantação de saldos', fonte: 'Omie recortado',
+    filtro: `${FILTRO_CAIXA}, guardando \`detalhes.cNatureza = "P"\` e \`detalhes.cCodCateg\` = \`2.10.99\` Implantação de saldos (saidas), **só na empresa 1** — na empresa 2 o mesmo código é Adiantamentos a Fornecedores, tem conta do DRE e fica em "(−) Despesas gerais". É ajuste de saldo inicial e fica fora do DRE (\`FORA_DO_DRE\`); a tela o mostra à parte, abaixo da tabela, com o valor (decisão do dono, 01/10/2026)`,
+    contagem: `${total} lançamentos — ${impl[1].titulos.size} títulos + ${impl[1].baixas.size} baixas de parcial + ${impl[1].avulsos.size} avulsos, todos na empresa 1`,
+    estado: total === 0 ? 'a-conferir' : (caso && caso.r.ok ? 'conferido' : 'divergente'),
+    motivo: total === 0
+      ? 'nenhum lançamento de implantação de saldos entrou neste mês, então não há caso real para conferir'
+      : (caso && caso.r.ok ? null : (caso.r.motivo ?? caso.r.dif.join('; '))),
+    caso: caso
+      ? `${textoDoCaso(caso)}; a categoria ${caso.d.cCodCateg} está na lista de implantação de saldos da empresa ${caso.emp}, que fica fora do DRE`
+      : 'nenhum lançamento de implantação de saldos entrou neste mês',
+  });
+}
 
 // (=) sem conta — Omie inteiro, e conferível.
 {

@@ -125,6 +125,24 @@ const EXTRATORES = {
     },
   },
   'dre-lucro-liquido': { dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/ },
+  // A retirada de sócio (linha própria) e a implantação de saldos (fora do DRE), desde 01/10/2026.
+  'dre-retirada-socio': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      titulos1: /— ([\d.]+) títulos \+/, baixas1: /títulos \+ ([\d.]+) baixas de parcial/,
+      avulsos1: /baixas de parcial \+ ([\d.]+) avulsos na empresa 1/,
+      titulos2: /na empresa 1 e ([\d.]+) \+ [\d.]+ \+ [\d.]+ na 2/,
+      baixas2: /na empresa 1 e [\d.]+ \+ ([\d.]+) \+ [\d.]+ na 2/,
+      avulsos2: /na empresa 1 e [\d.]+ \+ [\d.]+ \+ ([\d.]+) na 2/,
+    },
+  },
+  'fora-implantacao-de-saldos': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      titulos: /— ([\d.]+) títulos \+/, baixas: /títulos \+ ([\d.]+) baixas de parcial/,
+      avulsos: /baixas de parcial \+ ([\d.]+) avulsos/,
+    },
+  },
   'dre-sem-conta': {
     dfc: null, omie: /^([\d.]+) lançamentos —/,
     extras: { empresa1: /— ([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2/ },
@@ -336,7 +354,7 @@ if (linhaProvisao && !mesDaProvisao) {
   if (!provisao) motivoProvisao = 'a Tela 2 não devolveu o item das provisões por projeto';
 }
 
-const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela, ...tela2.compromissos.itens,
+const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela, ...tela2.foraDoDre, ...tela2.compromissos.itens,
   ...tela3.cartoes, ...tela3.blocos,
   // Só os quatro que nasceram no Fluxo de Caixa: os outros seis cartões dele são cartões das Telas 1 e 3 pelo mesmo
   // cálculo, e já estão comparados pelo id de lá.
@@ -378,6 +396,8 @@ const NOME_NA_CONFERENCIA = {
     'dre-resultado-financeiro': '(+/−) Resultado financeiro: receitas e despesas financeiras',
     'dre-impostos': '(−) Impostos pagos (guias)',
     'dre-lucro-liquido': '(=) Lucro líquido',
+    'dre-retirada-socio': 'Retirada de sócio',
+    'fora-implantacao-de-saldos': 'Fora do DRE: implantação de saldos',
     'dre-sem-conta': '(=) sem conta',
     // O bloco "Compromissos", abaixo do DRE (decisão do dono, 29/09/2026).
     'capital-de-giro': 'Capital de giro tomado',

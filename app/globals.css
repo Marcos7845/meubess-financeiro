@@ -601,3 +601,23 @@ a { color: inherit; }
 .dre-tabela tr.explodida td { padding: 2px 6px; border-bottom: 1px solid var(--borda); text-align: left; }
 .dre-tabela tr.explodida .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dre-tabela tr.explodida tfoot th { font-weight: 700; color: inherit; }
+
+/* OS CARTÕES QUE ABREM O QUE SOMAM (01/10/2026, `app/cartao-explodivel.js`): o cartão é o mesmo `.kpi`, dentro de um
+ * embrulho que é a célula da fila; aberto, o detalhamento ocupa a largura da fila logo abaixo, e os outros cartões
+ * continuam na linha deles (`dense`). As tabelas de dentro são as mesmas da linha do DRE. */
+.kpis { grid-auto-flow: row dense; }
+.cartao-explodivel { min-width: 0; }
+.cartao-explodivel .kpi { border-left: 1px solid var(--borda); padding-left: 14px; }
+.kpis > .cartao-explodivel:first-child .kpi { border-left: 0; padding-left: 0; }
+.cartao-explodivel .abre-cartao { cursor: pointer; border-radius: 4px; }
+.cartao-explodivel .abre-cartao:hover, .cartao-explodivel.aberto .abre-cartao { background: var(--fundo); }
+.cartao-explodivel .abre-cartao:focus-visible { outline: 2px solid var(--marca-clara); }
+.cartao-explodido { grid-column: 1 / -1; margin: 10px 0 4px; padding: 8px 12px 10px; background: var(--fundo); border: 1px solid var(--borda); border-radius: 6px; font-size: 11.5px; overflow-x: auto; }
+.cartao-explodido .titulo-do-detalhe { margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; }
+.cartao-explodido .fechar { margin-left: auto; font: inherit; font-size: 11px; padding: 1px 7px; border: 1px solid var(--borda); border-radius: 4px; background: var(--cartao); cursor: pointer; }
+.cartao-explodido table { width: auto; min-width: 60%; border-collapse: collapse; font-size: 10.5px; margin: 4px 0 10px; }
+.cartao-explodido th { color: var(--texto-fraco); font-weight: 600; text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--borda); }
+.cartao-explodido td { padding: 2px 6px; border-bottom: 1px solid var(--borda); text-align: left; }
+.cartao-explodido .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cartao-explodido tfoot th { font-weight: 700; color: inherit; }
+.parte-da-razao { margin: 8px 0 2px; font-size: 11.5px; }

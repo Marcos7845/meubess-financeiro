@@ -32,6 +32,13 @@ Três telas, todas com filtros na URL (`?ano=&mes=&empresa=`):
 - **DFC** (planilhas `.xlsx` do ano, na pasta que o OneDrive espelha): `lib/regras/dfc-fonte.mjs` a acha ou lê `DFC_DIR`.
   A coluna `EMP.` (`B3W`/`N3`) **não** é filial do Omie: o DFC não se filtra por empresa (`docs/fontes.md`).
 - Receita da MeuBESS nasce em **pedido de venda** criado pela plataforma; despesa é lançada à mão no Omie.
+- **DRE (decisão do dono, 01/10/2026):** a retirada de sócio (`2.08.01`, empresas 1 e 2) **não** é despesa geral: é a
+  linha própria "Retirada de sócio", **abaixo do "(=) Lucro líquido"** e fora dos totalizadores (EBITDA e lucro líquido
+  não a descontam). A implantação de saldos (`2.10.99`, **só empresa 1** — na 2 o código é outra coisa) fica **fora do
+  DRE**, no quadro "Fora do DRE" com o valor. Listas `RETIRADA_DE_SOCIO` e `IMPLANTACAO_DE_SALDOS` em
+  `lib/regras/listas.mjs`; a regra de "(=) sem conta" não mudou.
+- **Toda linha do DRE e todo cartão das três telas abre, no clique, o que soma** (`lib/indicadores/composicao.mjs`,
+  `app/linha-do-dre.js`, `app/cartao-explodivel.js`): os mesmos itens que o valor somou, nunca leitura nova.
 - Leitor de xlsx: um só, `lib/regras/xlsx.mjs` (`linhasCruas` + `lerAba`). Não crie outro. Doc ou medição anterior a
   29/09/2026 falando em "saldo em L" ou "data em TIPO" descreve o defeito já corrigido.
 - Onde mora o quê: `lib/regras/` (regras, num lugar só), `lib/indicadores/` (o que cada tela mostra),
@@ -75,6 +82,7 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 | `npm run conferir-chave-omie` | a chave "incluir dados do Omie": ligada não muda nada, desligada dá `null` e nunca zero | mexeu na chave (`app/chave-omie.js`) ou em bloco que depende do Omie |
 | `npm run testar-trava` | a trava de agosto para quando deve e passa a releitura retroativa (roda numa cópia do cache) | mexeu na trava ou em `scripts/numeros-das-telas.mjs` |
 | `npm run testar-detalhe-dre` | o que cada linha do DRE abre no clique soma o valor da linha, ao centavo, em cinco recortes (sem filtro, empresa 2, uma conta, dois meses, sem o Omie); usa `.cache/dfc-2026` se existir | mexeu em `lib/indicadores/tela-2.mjs`, em `app/linha-do-dre.js` ou numa regra que o DRE usa |
+| `npm run testar-detalhe-cartoes` | o que cada cartão das três telas (e o quadro "Fora do DRE") abre no clique soma o valor do cartão — lista ao centavo, conta pelas partes, razão pelo numerador ÷ denominador — e o número de itens é a contagem publicada, em quatro recortes; usa `.cache/dfc-2026` se existir | mexeu em `lib/indicadores/`, em `lib/indicadores/composicao.mjs`, em `app/cartao-explodivel.js` ou em `app/linha-do-dre.js` |
 | `npm run testar-login` | as três telas e as APIs recusam quem não entrou; `/admin` só para administrador; `/api/dfc` com segredo | mexeu em `proxy.js`, `lib/acesso/`, `/api/*` ou `/admin` |
 
 - Divergência é defeito do código ou da regra: **não edite o número esperado à mão** para o teste passar. A conferência
@@ -121,7 +129,8 @@ npm run local      # constrói e sobe em produção, só em http://127.0.0.1:478
 | conferência de um mês fechado, e as telas contra ela | `docs/conferencia.md`, `docs/telas-conferidas.md` |
 | cada filtro, onde vale e onde não vale, com caso real | `docs/filtros.md` |
 | Tela 3 (Fluxo de Caixa): o que falta responder ao dono, registro vivo — **leia primeiro se for continuar nela** | `docs/passagem-fluxo-de-caixa.md` |
-| o que "(=) sem conta" soma, por que é alarme sobreposto (não fatia à parte) e os achados de agosto; o detalhamento das linhas do DRE | `docs/fontes.md`, seção "O que '(=) sem conta' soma" (fim da Tela 2) |
+| o que "(=) sem conta" soma, por que é alarme sobreposto (não fatia à parte) e os achados de agosto; o detalhamento das linhas do DRE e dos cartões das três telas | `docs/fontes.md`, seção "O que '(=) sem conta' soma" (fim da Tela 2) |
+| retirada de sócio e implantação de saldos no DRE (01/10/2026), com antes e depois de agosto | `docs/fontes.md`, seção "O que mudou em 01/10/2026" (Tela 2) |
 | desenho das telas, plano de gráficos, checklist | `docs/layout.md` e `.claude/skills/visualizacao-de-dados/SKILL.md` (as adaptações do topo mandam) |
 | Railway: variáveis (só nomes), volume, primeiro administrador | `docs/deploy-railway.md`, `railway.json` |
 | tempo de clique de filtro | `docs/desempenho.md` |

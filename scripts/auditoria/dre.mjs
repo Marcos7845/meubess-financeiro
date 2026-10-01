@@ -12,8 +12,12 @@ const financeiro = {
   1: ['1.01.02', '1.02.02', '1.04.95', '2.05.01', '2.05.02', '2.05.04', '2.06.95'],
   2: ['1.02.02', '1.04.94', '2.05.01', '2.05.02', '2.05.04', '2.05.99', '2.06.95'],
 };
-const fora = { 1: ['2.08.02', '2.05.99', '1.04.99', '2.04.89', '2.11.95', '1.04.03'],
+const fora = { 1: ['2.08.02', '2.05.99', '1.04.99', '2.04.89', '2.11.95', '1.04.03', '2.10.99'],
   2: ['1.04.99', '2.10.98', '2.04.91', '1.04.03'] };
+// Retirada de sócio: linha própria abaixo do lucro líquido, fora das despesas gerais (decisão do dono, 01/10/2026).
+const retirada = { 1: ['2.08.01'], 2: ['2.08.01'] };
+// Implantação de saldos (saídas): fora do DRE, mostrada à parte com o valor; só na empresa 1 (na 2 o código é outro).
+const implantacao = { 1: ['2.10.99'], 2: [] };
 const transf = { 1: ['1.04.96', '1.04.97', '2.05.98'], 2: ['1.04.96', '2.05.98'] };
 
 // Os dez maiores recebimentos do mês, da mesma seleção de caixa (sem transferência nem par de adiantamento).
@@ -67,7 +71,9 @@ function calcularDre({ selecionar, valor }, dfc) {
   const total = (xs) => soma(xs.map(valor));
   const venda = selecionar('R', (_, cod) => vendas.includes(cod));
   const outras = selecionar('R', (emp, cod, c) => c?.conta_receita === 'S' && c?.totalizadora === 'N' && !vendas.includes(cod) && !fora[emp].includes(cod));
-  const dg = selecionar('P', (emp, cod, c) => c?.conta_despesa === 'S' && !custo[emp].includes(cod) && !financeiro[emp].includes(cod) && !fora[emp].includes(cod));
+  const dg = selecionar('P', (emp, cod, c) => c?.conta_despesa === 'S' && !custo[emp].includes(cod) && !financeiro[emp].includes(cod) && !fora[emp].includes(cod) && !retirada[emp].includes(cod));
+  const ret = selecionar('P', (emp, cod) => retirada[emp].includes(cod));
+  const impl = selecionar('P', (emp, cod) => implantacao[emp].includes(cod));
   const finR = selecionar('R', (emp, cod) => financeiro[emp].includes(cod));
   const finP = selecionar('P', (emp, cod) => financeiro[emp].includes(cod));
   const semR = selecionar('R', (_emp, _cod, c) => !c?.codigo_dre);
@@ -92,6 +98,8 @@ function calcularDre({ selecionar, valor }, dfc) {
   add('dre-lucro-liquido', lucro, [...venda, ...outras, ...dg, ...finR, ...finP], `${fonte}; menos DFC: deduções, custos e impostos`);
   add('cartao-lucro-liquido', lucro, [...venda, ...outras, ...dg, ...finR, ...finP], `${fonte}; menos DFC: deduções, custos e impostos`);
   add('cartao-margem', rec ? lucro / rec : null, [...venda, ...outras, ...dg], `${fonte}; lucro ÷ receita bruta`);
+  add('dre-retirada-socio', total(ret), ret);
+  add('fora-implantacao-de-saldos', total(impl), impl);
   add('dre-sem-conta', total(semR) - total(semP), [...semR, ...semP]);
   return out;
 }

@@ -62,6 +62,7 @@ import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
 import Lancamentos from '../lancamentos.js';
 import LinhaDoDre from '../linha-do-dre.js';
+import CartaoExplodivel from '../cartao-explodivel.js';
 import { MargemNoAno, PesoNaReceita } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
@@ -584,10 +585,12 @@ export default async function Pagina({ searchParams }) {
           a frase de 5 segundos fala; o que o destaca é o corpo do número, não a posição. */}
       <section className="kpis de-5">
         {d.cartoes.map((c) => (
-          <Kpi c={c} destaque={c.id === 'cartao-lucro-liquido'} key={c.id}
-            texto={c.tipo === 'percentual' ? emPorcento(c.valor) : null}>
-            <Fita serie={c.serie} />
-          </Kpi>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} key={c.id}>
+            <Kpi c={c} destaque={c.id === 'cartao-lucro-liquido'}
+              texto={c.tipo === 'percentual' ? emPorcento(c.valor) : null}>
+              <Fita serie={c.serie} />
+            </Kpi>
+          </CartaoExplodivel>
         ))}
       </section>
 
@@ -709,6 +712,11 @@ export default async function Pagina({ searchParams }) {
           cadastro do Omie. Ver <code>docs/fontes.md</code>.
         </p>
         <p className="legenda rodape-tabela">
+          <strong>Retirada de sócio</strong> fica abaixo do lucro líquido e também fora dos totalizadores (decisão do
+          dono, 01/10/2026): é o lucro que vai para o sócio, e não um gasto para fazê-lo — nem o EBITDA nem o lucro
+          líquido a descontam. Até 30/09/2026 ela estava dentro de &quot;(−) Despesas gerais&quot;.
+        </p>
+        <p className="legenda rodape-tabela">
           <strong>Clique numa linha para ver o que ela soma</strong>{' '}
           {fMeses.ativo ? 'nos meses escolhidos' : `em ${NOMES_DOS_MESES[mes]}`}, com os filtros desta tela: as linhas
           &quot;(=)&quot; abrem as linhas que as somam; as outras abrem a soma por categoria e cada lançamento — fonte,
@@ -721,6 +729,36 @@ export default async function Pagina({ searchParams }) {
           Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não tem coluna.
         </p>
       </section>
+
+      {/* 6b. FORA DO DRE, À PARTE (decisão do dono, 01/10/2026): o que a regra tira do DRE, com o valor, para a conta do
+          mês fechar com o caixa. Cada linha abre o que soma, como as da tabela. */}
+      {d.foraDoDre.length > 0 && (
+        <section className="quadro detalhe tabela-dre">
+          <h2>Fora do DRE — {fMeses.ativo ? 'nos meses escolhidos' : `${NOMES_DOS_MESES[mes]} de ${ano}`}</h2>
+          <p className="fonte-do-quadro">
+            não entram em linha nenhuma da tabela acima; ficam aqui com o valor, para a conta do mês fechar com o caixa
+          </p>
+          <div className="rolagem">
+            <table className="dre-tabela">
+              <thead><tr><th className="grupo-col">o quê</th><th className="num">valor</th><th className="num">lançamentos</th></tr></thead>
+              <tbody>
+                {d.foraDoDre.map((f) => (
+                  <LinhaDoDre className="linha-fora" colunas={3} composicao={f.composicao} key={f.id}>
+                    <th className="grupo-col" title={f.nota}>
+                      {f.composicao && <span className="seta">▸</span>}
+                      {f.rotulo}
+                      <Filtrado i={f} />
+                    </th>
+                    <td className="num">{emReais(f.valor)}</td>
+                    <td className="num">{f.contagem.omie === null ? 'sem o Omie' : f.contagem.omie}</td>
+                  </LinhaDoDre>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {d.foraDoDre.map((f) => <p className="legenda rodape-tabela" key={f.id}><strong>{f.rotulo}:</strong> {f.nota}.</p>)}
+        </section>
+      )}
 
       {/* 7. OS COMPROMISSOS (decisão do dono, 29/09/2026): o passivo, abaixo do DRE e fora dele. */}
       <Compromissos c={d.compromissos} />

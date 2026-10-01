@@ -28,6 +28,7 @@ import { comCodigo } from '../filtrado.js';
 import ContaExplodivel from '../conta-explodivel.js';
 import { DiaADiaDoFluxo } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
+import CartaoExplodivel from '../cartao-explodivel.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
 import Sessao, { exigirLogin } from '../sessao.js';
@@ -202,19 +203,17 @@ export default async function Pagina({ searchParams }) {
           falta pagar, e como o mês fecha). */}
       <section className="kpis de-4">
         {[entrou, saiu, resultado, projecao].map((c) => (
-          <div key={c.id}>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />} key={c.id}>
             <Kpi c={c} destaque={c.id === 'resultado'} pe={pe(c)} tom={c.id === 'entrou' ? 'serie-receita' : c.id === 'saiu' ? 'serie-despesa' : null} />
-            <Origem c={c} />
-          </div>
+          </CartaoExplodivel>
         ))}
       </section>
       <section className="kpis de-4">
         {[cartao('a-pagar'), cartao('a-receber'), fixas, peso].map((c) => (
-          <div key={c.id}>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />} key={c.id}>
             {/* O peso das fixas sai com UMA casa decimal, a mesma da coluna "% rec. líq." da tabela logo abaixo (6,1%). */}
             <Kpi c={c} pe={pe(c)} texto={c.id === 'peso-fixas' ? pct1(c.valor) : null} />
-            <Origem c={c} />
-          </div>
+          </CartaoExplodivel>
         ))}
       </section>
       {comOmie && d.vencidoAReceber.valor > 0 && (

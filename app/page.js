@@ -46,6 +46,7 @@ import FiltroDeEmpresa, { ExplicaEmpresa } from './empresa.js';
 import Filtrado from './filtrado.js';
 import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './graficos.js';
 import { Kpi, Quadro } from './quadro.js';
+import CartaoExplodivel from './cartao-explodivel.js';
 import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 import Sessao, { exigirLogin } from './sessao.js';
@@ -351,10 +352,14 @@ export default async function Pagina({ searchParams }) {
       </section>
 
       {/* 3. A FILA DE NÚMEROS DO TOPO. Os 7 cartões de sempre, na ordem de sempre; o "Saldo" é o primeiro e o maior
-          porque é dele que a frase de 5 segundos fala. */}
+          porque é dele que a frase de 5 segundos fala. Cada um abre, no clique, o que soma (01/10/2026). */}
       <section className="kpis">
         {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
-          .map((id, n) => <Kpi c={cartao(id)} destaque={n === 0} key={id} />)}
+          .map((id, n) => (
+            <CartaoExplodivel nome={cartao(id).nome} composicao={cartao(id).composicao} key={id}>
+              <Kpi c={cartao(id)} destaque={n === 0} />
+            </CartaoExplodivel>
+          ))}
       </section>
 
       {/* 4 e 5. O GRÁFICO PRINCIPAL E OS DE APOIO. */}

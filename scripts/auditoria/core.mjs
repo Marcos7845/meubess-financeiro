@@ -143,8 +143,10 @@ export function lerOfxExtrato(texto, conta, mes) {
 // Conciliação conta a conta. Cada transação do extrato casa com uma linha do DFC de mesma data e valor; depois com
 // uma de mesmo valor e data deslocada até `folga` dias; depois com várias linhas do DFC que somam exatamente o valor
 // (o banco junta um lote num débito só), ou o contrário; por último, o que sobra no mesmo dia dos dois lados, se as
-// somas forem iguais ao centavo. O que não casa fica listado. Abertura e fechamento da conta também precisam fechar.
+// somas forem iguais ao centavo. Diferenças de até cinco centavos usam a mesma folga de data.
+// O que não casa fica listado. Abertura e fechamento da conta também precisam fechar.
 export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {}) {
+  const toleranciaCentavos = 5;
   const contaDe = (l) => normal(l.conta ?? `${l.banco}--${l.bloco}`);
   const diaDe = (l) => (l.data?.a ? l.data.d : Number(String(l.data).slice(8, 10)));
   const aberturas = new Map([...aberturasDfc(dfc)].map(([k, v]) => [normal(k), v]));
@@ -153,11 +155,14 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
     const dfcL = dfc.linhas.filter((l) => contaDe(l) === conta).map((l) => ({ n: l.n, dia: diaDe(l), v: l.movimento, par: null }));
     const ext = extratos.filter((t) => normal(t.conta) === conta && t.valor !== 0)
       .map((t) => ({ id: t.id, dia: diaDe(t), v: t.valor, par: null }));
-    const tipos = { exato: 0, deslocado: 0, agrupado: 0, loteDoDia: 0 };
+    const tipos = { exato: 0, deslocado: 0, agrupado: 0, loteDoDia: 0, centavos: 0 };
+    const diferencasCentavos = [], pendenciasData = [];
     const casar = (ls, ts, tipo) => {
       for (const l of ls) l.par = ts.map((t) => t.id);
       for (const t of ts) t.par = ls.map((l) => l.n);
       tipos[tipo]++;
+      const diferenca = soma(ts.map((t) => t.v)) - soma(ls.map((l) => l.v));
+      if (diferenca) diferencasCentavos.push({ linhas: ls.map((l) => l.n), transacoes: ts.map((t) => t.id), diferenca });
     };
     for (const t of ext) { const l = dfcL.find((x) => !x.par && x.dia === t.dia && x.v === t.v); if (l) casar([l], [t], 'exato'); }
     for (const t of ext.filter((x) => !x.par)) {
@@ -188,6 +193,42 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
       const ls = dfcL.filter((x) => !x.par && x.dia === dia), ts = ext.filter((x) => !x.par && x.dia === dia);
       if (ls.length && ts.length && soma(ls.map((x) => x.v)) === soma(ts.map((x) => x.v))) casar(ls, ts, 'loteDoDia');
     }
+    // Primeiro preserva todos os casamentos exatos. Depois procura o menor desvio por grupo,
+    // sem ampliar a folga de data e sem compensar diferenças entre grupos distintos.
+    const subconjuntoProximo = (cands, alvo, minimo = 1) => {
+      let somas = new Map([[0, []]]);
+      for (const c of cands) {
+        const novas = new Map(somas);
+        for (const [s, arr] of somas) if (!novas.has(s + c.v) && arr.length < 15) novas.set(s + c.v, [...arr, c]);
+        somas = novas;
+        if (somas.size > 200000) break;
+      }
+      return [...somas].filter(([s, arr]) => arr.length >= minimo && Math.abs(s - alvo) > 0
+        && Math.abs(s - alvo) <= toleranciaCentavos)
+        .sort((a, b) => Math.abs(a[0] - alvo) - Math.abs(b[0] - alvo) || a[1].length - b[1].length)[0]?.[1] ?? null;
+    };
+    const pares = ext.flatMap((t, i) => ext.slice(i + 1)
+      .filter((u) => !t.par && !u.par && t.dia === u.dia && Math.sign(t.v) === Math.sign(u.v))
+      .map((u) => [t, u]));
+    for (const ts of [...pares, ...ext.map((t) => [t])]) {
+      if (ts.some((t) => t.par)) continue;
+      const alvo = soma(ts.map((t) => t.v));
+      const ls = subconjuntoProximo(dfcL.filter((l) => !l.par && Math.sign(l.v) === Math.sign(alvo)
+        && ts.every((t) => Math.abs(l.dia - t.dia) <= folga)), alvo, ts.length === 1 ? 1 : 2);
+      if (ls) casar(ls, ts, 'centavos');
+    }
+    // Uma proximidade de valor fora da janela é informativa, mas não produz casamento.
+    for (const l of dfcL.filter((x) => !x.par)) {
+      const ts = ext.filter((t) => !t.par && Math.sign(t.v) === Math.sign(l.v)
+        && Math.abs(t.dia - l.dia) === folga + 1);
+      const paresDoDia = ts.flatMap((t, i) => ts.slice(i + 1).filter((u) => u.dia === t.dia).map((u) => [t, u]));
+      const par = paresDoDia.find((grupo) => {
+        const diferenca = soma(grupo.map((t) => t.v)) - l.v;
+        return diferenca && Math.abs(diferenca) <= toleranciaCentavos;
+      });
+      if (par) pendenciasData.push({ linhas: [l.n], transacoes: par.map((t) => t.id),
+        diferenca: soma(par.map((t) => t.v)) - l.v, dias: folga + 1 });
+    }
     for (const l of dfcL) if (l.par) casadas.set(l.n, l.par);
     const ordenadas = extratos.filter((t) => normal(t.conta) === conta).sort((a, b) => a.data.localeCompare(b.data));
     const ultimo = ordenadas.at(-1);
@@ -202,13 +243,14 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
     const fechamentoDfc = aberturaDfc === null ? null : aberturaDfc + soma(dfcL.map((x) => x.v));
     const prova = provas.get(conta) ?? null;
     const r = {
-      conta, tipos, linhasDfc: dfcL.length, transacoes: ext.length, prova,
+      conta, tipos, diferencasCentavos, pendenciasData, linhasDfc: dfcL.length, transacoes: ext.length, prova,
       soDfc: dfcL.filter((x) => !x.par).map((x) => x.n), soExtrato: ext.filter((x) => !x.par).map((x) => x.id),
       aberturaDfc, aberturaExtrato, fechamentoDfc, fechamentoExtrato, saltos,
       mesInteiro: prova?.cobreMesInteiro !== false,
     };
+    const diferencaAceita = soma(diferencasCentavos.map((d) => d.diferenca));
     r.saldosFecham = aberturaDfc !== null && aberturaExtrato !== null && aberturaDfc === aberturaExtrato
-      && fechamentoDfc === fechamentoExtrato && !saltos;
+      && fechamentoDfc + diferencaAceita === fechamentoExtrato && !saltos;
     r.confere = r.saldosFecham && r.mesInteiro && !r.soDfc.length && !r.soExtrato.length;
     porConta.set(conta, r);
   }

@@ -30,11 +30,35 @@ test('conciliação aceita lote do banco e data deslocada, e nada além disso', 
     { conta: 'ITAU--1', data: '2026-08-17', valor: 20, saldo: 870, id: 'depois' }];
   const r = reconciliar(dfc, ext);
   assert.equal(r.confere, true);
-  assert.deepEqual(r.porConta.get('ITAU--1').tipos, { exato: 0, deslocado: 1, agrupado: 1, loteDoDia: 0 });
+  assert.deepEqual(r.porConta.get('ITAU--1').tipos, { exato: 0, deslocado: 1, agrupado: 1, loteDoDia: 0, centavos: 0 });
   assert.deepEqual(r.casadas.get(3), ['lote']);
   const longe = reconciliar(dfc, [ext[0], { ...ext[1], data: '2026-08-25' }]);
   assert.equal(longe.confere, false);
   assert.deepEqual(longe.porConta.get('ITAU--1').soDfc, [5]);
+});
+
+test('lote dentro de cinco centavos casa e conserva a diferença; seis centavos não casa', () => {
+  const linha = (n, movimento) => ({ n, conta: 'ITAU--1', data: { a: 2026, m: 8, d: 3 }, movimento });
+  const dfc = { linhas: [linha(3, 100), linha(4, 50)], brutas: [{ conta: 'ITAU--1', sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const transacao = (id, valor, saldoFinal) => ({ id, conta: 'ITAU--1', data: '2026-08-06', valor, saldoFinal });
+  const dentro = reconciliar(dfc, [transacao('a', 71), transacao('b', 81, 1152)]);
+  assert.deepEqual(dentro.porConta.get('ITAU--1').diferencasCentavos,
+    [{ linhas: [3, 4], transacoes: ['a', 'b'], diferenca: 2 }]);
+  assert.deepEqual(dentro.porConta.get('ITAU--1').soDfc, []);
+  assert.equal(dentro.confere, true);
+  const fora = reconciliar(dfc, [transacao('a', 71), transacao('b', 85, 1156)]);
+  assert.equal(fora.porConta.get('ITAU--1').tipos.centavos, 0);
+  assert.deepEqual(fora.porConta.get('ITAU--1').soDfc, [3, 4]);
+  assert.equal(fora.confere, false);
+});
+
+test('diferença de centavos fora da folga de data é apontada, sem casar', () => {
+  const dfc = { linhas: [{ n: 409, conta: 'ITAU--1', data: { a: 2026, m: 8, d: 20 }, movimento: 100 }],
+    brutas: [{ conta: 'ITAU--1', sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const ext = [51, 50].map((valor, i) => ({ id: String(i), conta: 'ITAU--1', data: '2026-08-25', valor }));
+  const r = reconciliar(dfc, ext).porConta.get('ITAU--1');
+  assert.deepEqual(r.soDfc, [409]);
+  assert.deepEqual(r.pendenciasData, [{ linhas: [409], transacoes: ['0', '1'], diferenca: 1, dias: 5 }]);
 });
 
 test('nenhuma fonte ou extrato não vira conferido por coincidência', () => {

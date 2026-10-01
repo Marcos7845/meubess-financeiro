@@ -61,6 +61,76 @@ test('diferença de centavos fora da folga de data é apontada, sem casar', () =
   assert.deepEqual(r.pendenciasData, [{ linhas: [409], transacoes: ['0', '1'], diferenca: 1, dias: 5 }]);
 });
 
+test('recebimento de maquininha casa em cinco dias; PIX em cinco dias não casa', () => {
+  const linha = { n: 409, conta: 'BANCO STONE--2', data: { a: 2026, m: 8, d: 20 },
+    movimento: 100, sub2: 'RECEITA COM VENDAS' };
+  const dfc = { linhas: [linha], brutas: [{ conta: linha.conta, sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const credito = (id, valor, historico) => ({ id, conta: linha.conta, data: '2026-08-25', valor, historico });
+  const maquininha = reconciliar(dfc, [credito('a', 51, 'Crédito Transferência entre contas'),
+    credito('b', 50, 'Crédito Transferência entre contas')]).porConta.get(linha.conta);
+  assert.deepEqual(maquininha.datasMaquininha, [{ linhas: [409], transacoes: ['a', 'b'], dias: 5, diferenca: 1 }]);
+  assert.deepEqual(maquininha.diferencasCentavos,
+    [{ linhas: [409], transacoes: ['a', 'b'], diferenca: 1 }]);
+  assert.deepEqual(maquininha.soDfc, []);
+  const pix = reconciliar(dfc, [credito('a', 51, 'Crédito PIX recebido'),
+    credito('b', 50, 'Crédito PIX recebido')]).porConta.get(linha.conta);
+  assert.deepEqual(pix.datasMaquininha, []);
+  assert.deepEqual(pix.soDfc, [409]);
+  assert.deepEqual(pix.pendenciasData, [{ linhas: [409], transacoes: ['a', 'b'], diferenca: 1, dias: 5 }]);
+});
+
+test('um crédito de maquininha casa com duas vendas do DFC e expõe cada parcela', () => {
+  const conta = 'BANCO STONE--2';
+  const linha = (n, movimento) => ({ n, conta, data: { a: 2026, m: 8, d: 3 }, movimento, sub2: 'RECEITA COM VENDAS' });
+  const dfc = { linhas: [linha(3, 100), linha(4, 50)],
+    brutas: [{ conta, sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const credito = (valor, historico = 'Crédito Transferência entre contas') => ({
+    id: 'c', conta, data: '2026-08-08', valor, saldo: 1000 + valor, historico,
+  });
+  const exato = reconciliar(dfc, [credito(150)]).porConta.get(conta);
+  assert.deepEqual(exato.gruposMaquininha[0].linhas.map((l) => l.n), [3, 4]);
+  assert.equal(exato.gruposMaquininha[0].diferenca, 0);
+  assert.equal(exato.confere, true);
+  const dentro = reconciliar(dfc, [credito(152)]).porConta.get(conta);
+  assert.deepEqual(dentro.gruposMaquininha, [{ linhas: [{ n: 3, valor: 100 }, { n: 4, valor: 50 }],
+    creditos: [{ id: 'c', valor: 152 }], diferenca: 2, dias: 5 }]);
+  assert.deepEqual(dentro.soDfc, []);
+  assert.deepEqual(dentro.soExtrato, []);
+  assert.equal(dentro.confere, true);
+  const fora = reconciliar(dfc, [credito(156)]).porConta.get(conta);
+  assert.deepEqual(fora.gruposMaquininha, []);
+  assert.deepEqual(fora.soDfc, [3, 4]);
+  assert.deepEqual(fora.soExtrato, ['c']);
+  for (const historico of ['PIX recebido', 'TED recebido'])
+    assert.deepEqual(reconciliar(dfc, [credito(150, historico)]).porConta.get(conta).gruposMaquininha, []);
+});
+
+test('duas parcelas da Stone casam com uma venda; saída não ganha a janela da maquininha', () => {
+  const conta = 'BANCO STONE--2';
+  const dfc = { linhas: [{ n: 9, conta, data: { a: 2026, m: 8, d: 3 }, movimento: 150,
+    sub2: 'RECEITA COM VENDAS' }], brutas: [{ conta, sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const credito = (id, valor) => ({ id, conta, data: '2026-08-08', valor,
+    historico: 'Crédito Transferência entre contas' });
+  const r = reconciliar(dfc, [credito('a', 70), credito('b', 80)]).porConta.get(conta);
+  assert.deepEqual(r.gruposMaquininha, [{ linhas: [{ n: 9, valor: 150 }],
+    creditos: [{ id: 'a', valor: 70 }, { id: 'b', valor: 80 }], diferenca: 0, dias: 5 }]);
+  assert.deepEqual(r.soDfc, []);
+  const saida = { ...dfc, linhas: [{ ...dfc.linhas[0], movimento: -150 }] };
+  assert.deepEqual(reconciliar(saida, [credito('a', -70), credito('b', -80)]).porConta.get(conta).soDfc, [9]);
+});
+
+test('lote de maquininha já casado por centavos também expõe créditos e vendas', () => {
+  const conta = 'BANCO STONE--2';
+  const dfc = { linhas: [3, 4].map((n, i) => ({ n, conta, data: { a: 2026, m: 8, d: 3 },
+    movimento: i ? 50 : 100, sub2: 'RECEITA COM VENDAS' })),
+  brutas: [{ conta, sub2: 'SALDO INICIAL', saldo: 1000 }] };
+  const ext = [71, 81].map((valor, i) => ({ id: String(i), conta, data: '2026-08-06', valor,
+    historico: 'Crédito Transferência entre contas' }));
+  const r = reconciliar(dfc, ext).porConta.get(conta);
+  assert.deepEqual(r.gruposMaquininha, [{ linhas: [{ n: 3, valor: 100 }, { n: 4, valor: 50 }],
+    creditos: [{ id: '0', valor: 71 }, { id: '1', valor: 81 }], diferenca: 2, dias: 3 }]);
+});
+
 test('nenhuma fonte ou extrato não vira conferido por coincidência', () => {
   assert.equal(estado(100, 100, 'faltam extratos').estado, 'não auditável');
   assert.equal(estado(100, 101, 'faltam extratos').estado, 'divergente');

@@ -143,7 +143,8 @@ export function lerOfxExtrato(texto, conta, mes) {
 // Conciliação conta a conta. Cada transação do extrato casa com uma linha do DFC de mesma data e valor; depois com
 // uma de mesmo valor e data deslocada até `folga` dias; depois com várias linhas do DFC que somam exatamente o valor
 // (o banco junta um lote num débito só), ou o contrário; por último, o que sobra no mesmo dia dos dois lados, se as
-// somas forem iguais ao centavo. Diferenças de até cinco centavos usam a mesma folga de data.
+// somas forem iguais ao centavo. Diferenças de até cinco centavos usam a folga de data aplicável.
+// Um crédito de maquininha que corresponde a venda no DFC pode casar no quinto dia, inclusive em grupo.
 // O que não casa fica listado. Abertura e fechamento da conta também precisam fechar.
 export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {}) {
   const toleranciaCentavos = 5;
@@ -152,17 +153,26 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
   const aberturas = new Map([...aberturasDfc(dfc)].map(([k, v]) => [normal(k), v]));
   const porConta = new Map(), casadas = new Map();
   for (const conta of new Set(extratos.map((t) => normal(t.conta)))) {
-    const dfcL = dfc.linhas.filter((l) => contaDe(l) === conta).map((l) => ({ n: l.n, dia: diaDe(l), v: l.movimento, par: null }));
+    const dfcL = dfc.linhas.filter((l) => contaDe(l) === conta).map((l) => ({ n: l.n, dia: diaDe(l), v: l.movimento, sub2: l.sub2, par: null }));
     const ext = extratos.filter((t) => normal(t.conta) === conta && t.valor !== 0)
-      .map((t) => ({ id: t.id, dia: diaDe(t), v: t.valor, par: null }));
+      .map((t) => ({ id: t.id, dia: diaDe(t), v: t.valor, historico: normal(t.historico), par: null }));
     const tipos = { exato: 0, deslocado: 0, agrupado: 0, loteDoDia: 0, centavos: 0 };
-    const diferencasCentavos = [], pendenciasData = [];
+    const diferencasCentavos = [], datasMaquininha = [], gruposMaquininha = [], pendenciasData = [];
+    const creditoMaquininha = (t) => t.v > 0 && !/\b(PIX|TED)\b/.test(t.historico)
+      && (/\b(MAQUININHA|RECEBIVEL|ANTECIPACAO|CARTAO)\b/.test(t.historico)
+        || (/\bSTONE\b/.test(conta) && t.historico.startsWith('CREDITO TRANSFERENCIA ENTRE')));
     const casar = (ls, ts, tipo) => {
       for (const l of ls) l.par = ts.map((t) => t.id);
       for (const t of ts) t.par = ls.map((l) => l.n);
       tipos[tipo]++;
       const diferenca = soma(ts.map((t) => t.v)) - soma(ls.map((l) => l.v));
       if (diferenca) diferencasCentavos.push({ linhas: ls.map((l) => l.n), transacoes: ts.map((t) => t.id), diferenca });
+      if ((ls.length > 1 || ts.length > 1) && ls.every((l) => l.v > 0 && l.sub2 === 'RECEITA COM VENDAS')
+        && ts.every(creditoMaquininha)) gruposMaquininha.push({
+        linhas: ls.map((l) => ({ n: l.n, valor: l.v })),
+        creditos: ts.map((t) => ({ id: t.id, valor: t.v })),
+        diferenca, dias: Math.max(...ls.flatMap((l) => ts.map((t) => Math.abs(l.dia - t.dia))), 0),
+      });
     };
     for (const t of ext) { const l = dfcL.find((x) => !x.par && x.dia === t.dia && x.v === t.v); if (l) casar([l], [t], 'exato'); }
     for (const t of ext.filter((x) => !x.par)) {
@@ -203,7 +213,7 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
         somas = novas;
         if (somas.size > 200000) break;
       }
-      return [...somas].filter(([s, arr]) => arr.length >= minimo && Math.abs(s - alvo) > 0
+      return [...somas].filter(([s, arr]) => arr.length >= minimo && s !== alvo
         && Math.abs(s - alvo) <= toleranciaCentavos)
         .sort((a, b) => Math.abs(a[0] - alvo) - Math.abs(b[0] - alvo) || a[1].length - b[1].length)[0]?.[1] ?? null;
     };
@@ -216,6 +226,57 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
       const ls = subconjuntoProximo(dfcL.filter((l) => !l.par && Math.sign(l.v) === Math.sign(alvo)
         && ts.every((t) => Math.abs(l.dia - t.dia) <= folga)), alvo, ts.length === 1 ? 1 : 2);
       if (ls) casar(ls, ts, 'centavos');
+    }
+    // Só a venda recebida pela maquininha ganha o quinto dia. O histórico do crédito
+    // precisa indicar recebível/cartão, ou transferência interna da própria Stone.
+    for (const l of dfcL.filter((x) => !x.par && x.v > 0 && x.sub2 === 'RECEITA COM VENDAS')) {
+      const candidatos = ext.filter((t) => !t.par && creditoMaquininha(t) && Math.abs(t.dia - l.dia) === 5);
+      const grupos = [...candidatos.map((t) => [t]), ...candidatos.flatMap((t, i) => candidatos.slice(i + 1)
+        .filter((u) => u.dia === t.dia).map((u) => [t, u]))];
+      const ts = grupos.filter((g) => Math.abs(soma(g.map((t) => t.v)) - l.v) <= toleranciaCentavos)
+        .sort((a, b) => Math.abs(soma(a.map((t) => t.v)) - l.v) - Math.abs(soma(b.map((t) => t.v)) - l.v)
+          || a.length - b.length)[0];
+      if (!ts) continue;
+      casar([l], ts, soma(ts.map((t) => t.v)) === l.v ? 'deslocado' : 'centavos');
+      datasMaquininha.push({ linhas: [l.n], transacoes: ts.map((t) => t.id), dias: 5,
+        diferenca: soma(ts.map((t) => t.v)) - l.v });
+    }
+    // A Stone pode creditar juntas vendas que o DFC separa por projeto, ou dividir
+    // um recebimento em mais de um crédito. Cada parte precisa ser venda/maquininha
+    // e estar dentro da própria janela; PIX, TED e saídas não entram no grupo.
+    const casarGrupoMaquininha = (ls, ts) => {
+      const diferenca = soma(ts.map((t) => t.v)) - soma(ls.map((l) => l.v));
+      casar(ls, ts, diferenca ? 'centavos' : 'agrupado');
+    };
+    const subconjuntoMaquininha = (candidatos, alvo) => {
+      // Conserva separadamente somas feitas com uma e com várias parcelas.
+      // Assim uma parcela isolada não esconde um grupo de mesmo total.
+      let somas = new Map([['0|0', { valor: 0, itens: [] }]]);
+      for (const candidato of candidatos) {
+        const novas = new Map(somas);
+        for (const { valor, itens } of somas.values()) {
+          if (itens.length >= 15) continue;
+          const proxima = { valor: valor + candidato.v, itens: [...itens, candidato] };
+          const chave = `${proxima.valor}|${Math.min(proxima.itens.length, 2)}`;
+          if (!novas.has(chave)) novas.set(chave, proxima);
+        }
+        somas = novas;
+        if (somas.size > 200000) break;
+      }
+      return [...somas.values()].filter(({ valor, itens }) => itens.length >= 2
+        && Math.abs(valor - alvo) <= toleranciaCentavos)
+        .sort((a, b) => Math.abs(a.valor - alvo) - Math.abs(b.valor - alvo)
+          || a.itens.length - b.itens.length)[0]?.itens ?? null;
+    };
+    for (const t of ext.filter((x) => !x.par && creditoMaquininha(x))) {
+      const ls = subconjuntoMaquininha(dfcL.filter((l) => !l.par && l.v > 0
+        && l.sub2 === 'RECEITA COM VENDAS' && Math.abs(l.dia - t.dia) <= 5), t.v);
+      if (ls) casarGrupoMaquininha(ls, [t]);
+    }
+    for (const l of dfcL.filter((x) => !x.par && x.v > 0 && x.sub2 === 'RECEITA COM VENDAS')) {
+      const ts = subconjuntoMaquininha(ext.filter((t) => !t.par && creditoMaquininha(t)
+        && Math.abs(l.dia - t.dia) <= 5), l.v);
+      if (ts) casarGrupoMaquininha([l], ts);
     }
     // Uma proximidade de valor fora da janela é informativa, mas não produz casamento.
     for (const l of dfcL.filter((x) => !x.par)) {
@@ -243,7 +304,7 @@ export function reconciliar(dfc, extratos, { folga = 4, provas = new Map() } = {
     const fechamentoDfc = aberturaDfc === null ? null : aberturaDfc + soma(dfcL.map((x) => x.v));
     const prova = provas.get(conta) ?? null;
     const r = {
-      conta, tipos, diferencasCentavos, pendenciasData, linhasDfc: dfcL.length, transacoes: ext.length, prova,
+      conta, tipos, diferencasCentavos, datasMaquininha, gruposMaquininha, pendenciasData, linhasDfc: dfcL.length, transacoes: ext.length, prova,
       soDfc: dfcL.filter((x) => !x.par).map((x) => x.n), soExtrato: ext.filter((x) => !x.par).map((x) => x.id),
       aberturaDfc, aberturaExtrato, fechamentoDfc, fechamentoExtrato, saltos,
       mesInteiro: prova?.cobreMesInteiro !== false,

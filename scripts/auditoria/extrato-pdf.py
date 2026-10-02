@@ -5,12 +5,15 @@
 #
 #   python scripts/auditoria/extrato-pdf.py --modelo itau --mes 2026-08 --conta "ITAU--1" --pdf <cópia local do PDF>
 #
+# Modelos: itau, bb, santander e stone ("Extrato de conta corrente" da Stone em PDF; o xlsx do "Comprovante de Extrato"
+# tem o seu conversor, extrato-stone.mjs).
+#
 # Requer PyMuPDF (pymupdf). O PDF deve estar em .cache/, nunca na pasta sincronizada.
 import argparse, json, os, re, sys
 import pymupdf
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--modelo', required=True, choices=['itau', 'bb', 'santander'])
+ap.add_argument('--modelo', required=True, choices=['itau', 'bb', 'santander', 'stone'])
 ap.add_argument('--mes', required=True)
 ap.add_argument('--conta', required=True)
 ap.add_argument('--pdf', required=True)
@@ -37,6 +40,37 @@ def linhas(x_data, x_valor, x_saldo, tol=2.5):
             valor = [v[4] for v in mesma if x_valor[0] <= v[0] < x_valor[1] and DINHEIRO.match(v[4])]
             saldo = [v[4] for v in mesma if v[0] >= x_saldo and DINHEIRO.match(v[4])]
             yield w[4], texto, valor[0] if valor else None, saldo[0] if saldo else None
+
+
+def linhas_stone():
+    """Extrato de conta da Stone: mais recente primeiro; por lançamento, em linhas de texto: data (dd/mm/aa), tipo,
+    descrição, valor ("R$ 1,00" ou "- R$ 1,00"), saldo e contraparte. Entrega (data, texto, valor, saldo) como `linhas`."""
+    dt, dinheiro = re.compile(r'\d{2}/\d{2}/\d{2}$'), re.compile(r'(-\s*)?R\$\s*[\d.]+,\d{2}$')
+    cabecalho = re.compile(r'(DATA|TIPO|DESCRIÇÃO|VALOR|SALDO|CONTRAPARTE|Extrato de conta corrente|Emitido em .*|Página \d+ de \d+)$')
+    atual = None
+    for p in doc:
+        for linha in (l.strip() for l in p.get_text().split('\n')):
+            if linha.startswith('Informações do Comprovante'):
+                break
+            if dt.match(linha):
+                if atual:
+                    yield atual
+                atual = {'d': linha[:6] + '20' + linha[6:], 'texto': [], 'dinheiro': []}
+            elif atual is None or cabecalho.match(linha):
+                continue
+            elif dinheiro.match(linha):
+                atual['dinheiro'].append(linha)
+            elif not atual['dinheiro']:
+                atual['texto'].append(linha)
+    if atual:
+        yield atual
+
+
+def lancamentos_stone():
+    for l in linhas_stone():
+        if len(l['dinheiro']) != 2:
+            falhar(f'lançamento de {l["d"]} sem valor e saldo')
+        yield l['d'], ' '.join(l['texto']), l['dinheiro'][0].replace(' ', '').replace('R$', ''), l['dinheiro'][1].replace(' ', '').replace('R$', '')
 
 
 def falhar(msg):
@@ -87,9 +121,10 @@ elif a.modelo == 'bb':
     if saldo != fechamento:
         falhar('saldo final não fecha com as transações')
 else:
-    # Santander Empresas: mais recente primeiro, cada linha com o saldo após ela. Refaz em ordem cronológica e confere
+    # Santander Empresas e Stone: mais recente primeiro, cada linha com o saldo após ela. Refaz em ordem cronológica e confere
     # linha a linha (saldo anterior + valor = saldo).
-    brutas = [(iso(d), cent(v), cent(s), t) for d, t, v, s in linhas(80, (420, 500), 500) if v and s]
+    origem = lancamentos_stone() if a.modelo == 'stone' else linhas(80, (420, 500), 500)
+    brutas = [(iso(d), cent(v), cent(s), t) for d, t, v, s in origem if v and s]
     brutas.reverse()
     if not brutas:
         falhar('nenhuma transação')

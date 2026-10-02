@@ -38,6 +38,7 @@ const dados = fs.mkdtempSync(path.join(os.tmpdir(), 'meubess-teste-login-'));
 const ADMIN = { email: 'admin-de-teste@exemplo.com.br', senha: sorteio(18) };
 const PESSOA = { email: 'pessoa-de-teste@exemplo.com.br', senha: sorteio(18) };
 const DFC_SEGREDO = sorteio(24);
+const PENDENCIAS_SEGREDO = sorteio(24);
 
 const env = {
   ...process.env,
@@ -46,6 +47,7 @@ const env = {
   MEUBESS_DADOS_DIR: dados,
   SESSAO_SEGREDO: sorteio(48),
   DFC_ENVIO_SEGREDO: DFC_SEGREDO,
+  PENDENCIAS_PONTE_SEGREDO: PENDENCIAS_SEGREDO,
   MEUBESS_ADMIN_EMAIL: ADMIN.email,
   MEUBESS_ADMIN_SENHA: ADMIN.senha,
   DFC_FONTE: 'servidor',
@@ -110,12 +112,24 @@ try {
   }
 
   console.log('\nsem login');
-  for (const tela of ['/', '/dre', '/fluxo-de-caixa', '/admin']) {
+  for (const tela of ['/', '/dre', '/fluxo-de-caixa', '/pendencias', '/admin']) {
     const r = await pedir(tela);
     confere(`GET ${tela} sem login é recusado`, redirecionaParaEntrar(r), `${r.status} → ${r.local}`);
   }
   let r = await pedir('/api/atualizar', { metodo: 'POST', json: { ano: 2026 } });
   confere('POST /api/atualizar sem login é recusado', r.status === 401, `${r.status} ${r.texto}`);
+  r = await pedir('/api/pendencias/responder', { metodo: 'POST' });
+  confere('responder sem login é recusado', r.status === 401, `${r.status}`);
+  r = await pedir('/api/pendencias/ponte');
+  confere('consultar a ponte sem segredo é recusado', r.status === 401, `${r.status}`);
+  r = await pedir('/api/pendencias/ponte', { cabecalhos: { Authorization: 'Bearer errado' } });
+  confere('consultar a ponte com segredo errado é recusado', r.status === 401, `${r.status}`);
+  r = await pedir('/api/pendencias/ponte', { metodo: 'PUT', json: { id: 'sem-segredo' } });
+  confere('publicar na ponte sem segredo é recusado', r.status === 401, `${r.status}`);
+  r = await pedir('/api/pendencias/ponte/recebidas', { metodo: 'POST', json: { id: 'qualquer' } });
+  confere('marcar recebimento sem segredo é recusado', r.status === 401, `${r.status}`);
+  r = await pedir('/api/pendencias/ponte/anexos/qualquer');
+  confere('baixar anexo sem segredo é recusado', r.status === 401, `${r.status}`);
   r = await pedir('/api/atualizar', { metodo: 'POST', json: { ano: 2026 }, cookie: 'meubess_sessao=forjado.assinatura' });
   confere('POST /api/atualizar com cookie forjado é recusado', r.status === 401, `${r.status}`);
 
@@ -151,6 +165,30 @@ try {
   confere('a pessoa cadastrada entra', Boolean(pessoa), `${r.status} → ${r.local}`);
   r = await pedir('/fluxo-de-caixa', { cookie: pessoa });
   confere('a pessoa vê as telas', r.status === 200, `${r.status}`);
+  const ponte = { Authorization: `Bearer ${PENDENCIAS_SEGREDO}` };
+  const teste = { id: 'teste-portal', titulo: 'Enviar documento', pedido: 'Enviar o documento de teste', motivo: 'Conferir o pedido', status: 'aberta' };
+  r = await pedir('/api/pendencias/ponte', { metodo: 'PUT', json: teste, cabecalhos: ponte });
+  confere('a ponte cria a pendência com segredo', r.status === 200 && JSON.parse(r.texto).pendencia?.id === teste.id, `${r.status}`);
+  r = await pedir('/pendencias', { cookie: pessoa });
+  confere('a pessoa vê a pendência', r.status === 200 && r.texto.includes(teste.titulo), `${r.status}`);
+  const formulario = new FormData();
+  formulario.set('id', teste.id);
+  formulario.set('resposta', 'Segue o arquivo de teste.');
+  formulario.append('anexos', new File(['arquivo de teste'], 'documento.txt', { type: 'text/plain' }));
+  let resposta = await fetch(`${BASE}/api/pendencias/responder`, { method: 'POST', headers: { Cookie: pessoa, Origin: BASE }, body: formulario, redirect: 'manual' });
+  confere('a pessoa responde com anexo', resposta.status === 303, `${resposta.status}`);
+  r = await pedir('/pendencias', { cookie: pessoa });
+  confere('a resposta aparece na tela', r.status === 200 && r.texto.includes('Segue o arquivo de teste.') && r.texto.includes('documento.txt'), `${r.status}`);
+  r = await pedir('/api/pendencias/ponte?desde=0', { cabecalhos: ponte });
+  const recebidas = r.status === 200 ? JSON.parse(r.texto).respostas : [];
+  const recebida = recebidas.find((x) => x.pendenciaId === teste.id);
+  confere('a ponte lê texto, e-mail, hora e anexo', Boolean(recebida?.em && recebida.por === PESSOA.email && recebida.texto && recebida.anexos.length === 1), `${r.status}`);
+  resposta = await fetch(`${BASE}/api/pendencias/ponte/anexos/${recebida?.anexos[0]?.id}`, { headers: ponte });
+  confere('a ponte baixa o anexo', resposta.status === 200 && await resposta.text() === 'arquivo de teste', `${resposta.status}`);
+  r = await pedir('/api/pendencias/ponte/recebidas', { metodo: 'POST', json: { id: recebida?.id }, cabecalhos: ponte });
+  confere('a ponte marca a resposta recebida', r.status === 200 && Boolean(JSON.parse(r.texto).resposta?.recebidoEm), `${r.status}`);
+  r = await pedir(`/api/pendencias/ponte?desde=${recebida?.marcador}`, { cabecalhos: ponte });
+  confere('o marcador não repete a resposta', r.status === 200 && JSON.parse(r.texto).respostas.length === 0, `${r.status}`);
   r = await pedir('/admin', { cookie: pessoa });
   confere('a pessoa não entra na tela de administrador', r.status === 403, `${r.status}`);
   r = await pedir('/api/admin/usuarios', { metodo: 'POST', cookie: pessoa, form: { acao: 'criar', email: 'x@exemplo.com.br', senha: sorteio(18) } });

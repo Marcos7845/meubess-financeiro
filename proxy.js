@@ -5,8 +5,8 @@
 //
 //   sem login          → tela: vai para /entrar (e volta depois); API: 401
 //   logado, não admin  → /admin e /api/admin/*: 403
-//   livres             → /entrar e /api/entrar (é por onde se entra); /api/dfc nem passa aqui (ver `matcher`) e
-//                        tem o segredo próprio, para o PC
+//   livres             → /entrar e /api/entrar (é por onde se entra); /api/dfc e /api/pendencias/ponte
+//                        conferem seus segredos próprios; /api/pendencias/responder confere sessão e origem na rota
 //
 // As rotas de API conferem o login de novo por conta própria (o proxy não é a única tranca). Com
 // `MEUBESS_LOGIN=desligado` — só o `npm run local`, que atende 127.0.0.1 — tudo passa, como antes.
@@ -51,7 +51,8 @@ export function proxy(pedido) {
 
 export const config = {
   // Tudo, menos os arquivos do próprio Next, a pasta pública da marca (o logo aparece na tela de entrar) e
-  // `/api/dfc`: o proxy guardaria só os primeiros 10 MB do corpo (`proxyClientMaxBodySize`), e o envio do DFC é
-  // maior que isso. Ela não fica aberta: a própria rota exige o segredo do envio.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|marca/|api/dfc$).*)'],
+  // `/api/dfc` e `/api/pendencias/responder`: o proxy guardaria só os primeiros 10 MB do corpo
+  // (`proxyClientMaxBodySize`). As rotas conferem o segredo ou a sessão e origem por conta própria.
+  // `/api/pendencias/ponte` usa somente o segredo próprio, sem login de pessoa.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|marca/|api/dfc$|api/pendencias/ponte(?:/|$)|api/pendencias/responder$).*)'],
 };

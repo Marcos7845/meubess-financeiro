@@ -53,7 +53,8 @@ Nada aqui inclui, altera ou exclui no Omie, nem escreve nas planilhas do DFC. `l
 - Não enfraqueça nem contorne `eDeConsulta()`, não chame `Incluir…`/`Alterar…`/`Excluir…`, não abra o `.xlsx` para edição.
 - Método novo de leitura: passa por `lib/regras/omie-api.mjs` e entra em `lib/regras/omie-releitura.mjs`, com a fonte escrita
   antes em `docs/fontes.md`.
-- O único lugar onde o app escreve é o cache local `.cache/` (fora do git).
+- O app escreve somente no cache local `.cache/` e no armazenamento privado do servidor para usuários, DFC recebido e pendências (fora do git).
+- **Pendências do financeiro (decisão do dono, 02/10/2026):** a caixa `/pendencias` pode guardar pedido, resposta, datas, valores em reais e anexos apenas no armazenamento privado do volume (`MEUBESS_DADOS_DIR` ou `RAILWAY_VOLUME_MOUNT_PATH`; localmente `.cache/servidor`). Isso não altera a regra de consulta do Omie nem autoriza escrever nas planilhas. Qualquer usuário logado pode responder; a ponte da Central usa `PENDENCIAS_PONTE_SEGREDO` (Authorization Bearer), independente do login. Respostas seguem direto ao Gestor. Não grave esse conteúdo em Git, log, teste ou documento versionado.
 
 ## Regra 2 — valor em reais e nome de cliente não vão para arquivo versionado
 
@@ -83,7 +84,7 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 | `npm run testar-trava` | a trava de agosto para quando deve e passa a releitura retroativa (roda numa cópia do cache) | mexeu na trava ou em `scripts/numeros-das-telas.mjs` |
 | `npm run testar-detalhe-dre` | o que cada linha do DRE abre no clique soma o valor da linha, ao centavo, em cinco recortes (sem filtro, empresa 2, uma conta, dois meses, sem o Omie); usa `.cache/dfc-2026` se existir | mexeu em `lib/indicadores/tela-2.mjs`, em `app/linha-do-dre.js` ou numa regra que o DRE usa |
 | `npm run testar-detalhe-cartoes` | o que cada cartão das três telas (e o quadro "Fora do DRE") abre no clique soma o valor do cartão — lista ao centavo, conta pelas partes, razão pelo numerador ÷ denominador — e o número de itens é a contagem publicada, em quatro recortes; usa `.cache/dfc-2026` se existir | mexeu em `lib/indicadores/`, em `lib/indicadores/composicao.mjs`, em `app/cartao-explodivel.js` ou em `app/linha-do-dre.js` |
-| `npm run testar-login` | as três telas e as APIs recusam quem não entrou; `/admin` só para administrador; `/api/dfc` com segredo | mexeu em `proxy.js`, `lib/acesso/`, `/api/*` ou `/admin` |
+| `npm run testar-login` | as três telas, Pendências e as APIs de pessoa recusam quem não entrou; `/admin` só para administrador; `/api/dfc` e ponte de pendências com segredos próprios | mexeu em `proxy.js`, `lib/acesso/`, `/api/*` ou `/admin` |
 
 - Divergência é defeito do código ou da regra: **não edite o número esperado à mão** para o teste passar. A conferência
   lê o texto de `docs/conferencia.md` de propósito, para não comparar o código com ele mesmo.

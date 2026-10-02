@@ -25,7 +25,7 @@ export default async function Sessao() {
   if (!quem || quem.local) return null;
   return (
     <span className="sessao">
-      {quem.email}
+      {quem.email} · <a href="/pendencias">pendências</a>
       {quem.admin ? <> · <a href="/admin">pessoas com acesso</a></> : null}
       {' · '}
       <form action="/api/sair" method="post" className="sair"><button type="submit">sair</button></form>

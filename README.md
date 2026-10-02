@@ -18,6 +18,10 @@ filtro**, medido fase por fase e antes e depois da base local, está em [`docs/d
 
 ## As três telas
 
+### Pendências do financeiro
+
+`/pendencias` mostra pedidos em português simples para qualquer pessoa com login responder em texto e até cinco anexos de 15 MB cada. O pedido, a resposta, quem respondeu, a hora e os anexos ficam só no volume privado (`MEUBESS_DADOS_DIR` ou `RAILWAY_VOLUME_MOUNT_PATH`; localmente `.cache/servidor`). Pela decisão do dono em 02/10/2026, esse conteúdo pode incluir datas e valores em reais, mas não entra em Git, log ou documentação versionada. A Central busca as respostas e as entrega diretamente ao Gestor. A ponte exige `PENDENCIAS_PONTE_SEGREDO` em `Authorization: Bearer`; sem a variável, recusa tudo. O contrato de rotas e campos está em [`docs/ponte-pendencias.md`](docs/ponte-pendencias.md). `npm test` verifica a persistência e os anexos; `npm run testar-login` verifica as rotas com o servidor.
+
 As referências visuais ficam em [`docs/referencias/`](docs/referencias/) — elas dizem **quais blocos** cada tela tem.
 O que cada tela mostra e de onde vem cada número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
 indicador sem fonte escrita não entra na tela. **Como as telas são desenhadas** — a história de cada uma, o plano de

@@ -52,6 +52,18 @@ body {
 
 a { color: inherit; }
 
+.pendencias { max-width: 850px; margin: 24px auto; padding: 0 16px 40px; }
+.pendencias h1 { margin-bottom: 4px; }
+.pendencias h2 { margin-top: 28px; }
+.pendencia { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; margin: 12px 0; box-shadow: var(--sombra); }
+.pendencia h3 { margin: 0 0 12px; }
+.pendencia p { white-space: pre-wrap; }
+.pendencia-resposta { border-top: 1px solid var(--borda); padding-top: 12px; margin-top: 14px; }
+.pendencia-form { display: grid; gap: 8px; border-top: 1px solid var(--borda); padding-top: 14px; margin-top: 14px; }
+.pendencia-form textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--borda); border-radius: var(--raio); }
+.pendencia-form .botao { justify-self: start; }
+.pendencia-aviso { background: var(--cartao); border-left: 4px solid var(--positivo); padding: 10px; }
+
 /* ---------------------------------------------------------------- topo */
 .topo {
   display: flex; align-items: center; gap: 18px;

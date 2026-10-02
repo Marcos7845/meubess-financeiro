@@ -43,6 +43,7 @@ Só os nomes. Os valores ficam no painel do Railway (*Variables*), nunca em arqu
 |---|---|---|
 | `SESSAO_SEGREDO` | **sim** | assina o cookie da sessão; 32 caracteres ou mais, sorteados (trocá-la derruba todas as sessões) |
 | `DFC_ENVIO_SEGREDO` | **sim** | o segredo que o PC manda para `/api/dfc`; sem ela a rota recusa todo envio |
+| `PENDENCIAS_PONTE_SEGREDO` | **para a ponte** | segredo Bearer próprio da Central para publicar pendências e buscar respostas; sem ela as rotas da ponte recusam tudo |
 | `OMIE_MEUBESS_1_APP_KEY` | **sim** | a chave do Omie da empresa 1 (só consulta) |
 | `OMIE_MEUBESS_1_APP_SECRET` | **sim** | o segredo da mesma chave |
 | `OMIE_MEUBESS_2_APP_KEY` | **sim** | a chave do Omie da empresa 2 |

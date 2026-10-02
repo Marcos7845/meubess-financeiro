@@ -9,6 +9,8 @@ dist/
 .next/
 # build de prova, gravado fora do `.next` para não derrubar o app que o dono está usando (ver next.config.mjs)
 .next-prova/
+# build do teste do login (scripts/testar-login.mjs)
+.next-teste/
 graphify-out/cache/
 mapa-omie*.log
 
@@ -17,3 +19,8 @@ mapa-omie*.log
 
 # página do confronto DFC x Omie: traz valores em reais, é gerada localmente por scripts/confronto-dfc-omie.mjs e nunca entra em commit
 docs/confronto-dfc-omie.html
+
+# Auditoria: contém valores financeiros e extratos bancários locais.
+docs/auditoria-*.html
+extratos/*
+!extratos/.gitkeep

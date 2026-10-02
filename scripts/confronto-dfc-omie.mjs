@@ -42,6 +42,10 @@ import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
 
+// As linhas de uma aba saem da MESMA leitura das telas, que lê a célula vazia como vazia (até 29/09/2026 este script
+// tinha uma cópia própria dela, com o defeito da célula vazia que engolia a vizinha).
+import { lerAba } from "../lib/regras/xlsx.mjs";
+
 const ANO = 2026;
 const MESES = [1, 2, 3, 4, 5, 6, 7, 8, 9]; // meses fechados: o DFC só tem movimento até setembro
 const NOME_MES = ["", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -170,36 +174,6 @@ function abasDo(zip) {
   return lista;
 }
 
-const colDeRef = (r) => /^([A-Z]+)/.exec(r)?.[1] ?? "";
-
-// Linhas da aba, cada uma como { n, cel: Map(coluna -> {t?: texto, v?: número}) }.
-function lerAbaCompleta(zip, parte, ss) {
-  const b = zip.ler(parte);
-  if (!b) return null;
-  const xml = b.toString("utf8");
-  const linhas = [];
-  for (const mr of xml.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>|<row\b([^>]*)\/>/g)) {
-    const attrs = mr[1] ?? mr[3] ?? "";
-    const corpo = mr[2] ?? "";
-    const n = +(/r="(\d+)"/.exec(attrs)?.[1] ?? 0);
-    const cel = new Map();
-    for (const mc of corpo.matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>|<c\b([^>]*)\/>/g)) {
-      const ca = mc[1] ?? mc[3] ?? "";
-      const cc = mc[2] ?? "";
-      const col = colDeRef(/r="([A-Z]+\d+)"/.exec(ca)?.[1] ?? "");
-      if (!col) continue;
-      const tipo = /t="([^"]*)"/.exec(ca)?.[1] ?? "n";
-      const v = /<v>([\s\S]*?)<\/v>/.exec(cc)?.[1];
-      if (tipo === "s") { const t = (ss[+v] ?? "").trim(); if (t) cel.set(col, { t }); }
-      else if (tipo === "inlineStr") { const t = textoDosT(cc).trim(); if (t) cel.set(col, { t }); }
-      else if (tipo === "str") { const t = desescapar(v ?? "").trim(); if (t) cel.set(col, { t }); }
-      else if (v !== undefined && v !== "" && Number.isFinite(Number(v))) cel.set(col, { v: Number(v) });
-    }
-    if (cel.size) linhas.push({ n, cel });
-  }
-  return linhas;
-}
-
 const norm = (s) => String(s ?? "").toLocaleUpperCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
 // ---------------------------------------------------------------- as quatro pastas
@@ -289,7 +263,7 @@ function lerPasta(p) {
     abasPorArquivo.set(arq, lista.map((a) => a.nome.trim() + (a.estado !== "visible" ? " [oculta]" : "")));
     const aba = lista.find((a) => norm(a.nome) === "FLUXO DE CAIXA");
     if (!aba) { porArquivo.push({ arq, mes: mesArquivo, erro: "sem aba FLUXO DE CAIXA", linhas: 0, cabecalhos: 0, aproveitadas: 0 }); continue; }
-    const linhas = lerAbaCompleta(zip, aba.parte, ss);
+    const linhas = lerAba(zip, aba.parte, ss);
     let mapa = null;          // rótulo do cabeçalho -> coluna; o cabeçalho se repete, um bloco por banco
     let cabecalhos = 0, aproveitadas = 0, foraDoMes = 0, semData = 0, saldo = 0, provisao = 0, usouSaida = 0, sinalDiverge = 0, dataDeOutraColuna = 0;
     for (const l of linhas) {

@@ -60,15 +60,19 @@ import FiltroDeConta, { ExplicaConta } from '../conta.js';
 import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import Filtrado from '../filtrado.js';
+import Lancamentos from '../lancamentos.js';
+import LinhaDoDre from '../linha-do-dre.js';
+import CartaoExplodivel from '../cartao-explodivel.js';
 import { MargemNoAno, PesoNaReceita } from '../graficos.js';
 import { Kpi, Quadro } from '../quadro.js';
 import Suspensa from '../suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from '../ultima-leitura.js';
+import Sessao, { exigirLogin } from '../sessao.js';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'MeuBESS · Financeiro — DRE',
+  title: 'MeuBESS · Financeiro — DRE gerencial (regime de caixa)',
   description: 'Demonstrativo de resultados por mês, com análise horizontal e vertical.',
 };
 
@@ -123,59 +127,242 @@ function Celulas({ ponto, bom, comAh, comAv }) {
   );
 }
 
-// O MAPA DE CALOR DA VARIAÇÃO — uma célula por linha do DRE e por mês, com a MESMA análise horizontal que a tabela
-// mostra na coluna AH (plano em `docs/layout.md`: CATEGÓRICO com subgrupo → Heatmap).
-//
-// POR QUE ELE EXISTE. São doze colunas de variação percentual: em número, o olho não acha o pior mês. A mesma
-// variação em intensidade de cor, sim — e o número continua escrito na célula, então nada se perde no caminho.
-//
-// A COR NÃO NASCE AQUI. Cada célula recebe duas classes — o sentido (`bom` / `ruim`, que é a mesma leitura da seta da
-// coluna AH: subir receita é bom, subir despesa não é) e o degrau de intensidade (`g1` a `g4`) —, e quem diz que cor
-// é cada uma é `app/globals.css`. Os quatro degraus são de tamanho da variação, não de valor: até 10%, até 50%, até
-// 200% e acima disso.
-const degrauDa = (x) => {
-  const t = Math.abs(x);
-  if (t < 0.1) return 1;
-  if (t < 0.5) return 2;
-  if (t < 2) return 3;
-  return 4;
-};
+// O BLOCO "COMPROMISSOS" (decisão do dono, 29/09/2026) — o passivo, abaixo da tabela do DRE. Cinco números do mês da
+// URL — o quinto, as provisões por projeto da aba `PROVISÃO` do DFC, desde o fim do mesmo dia; o repasse da mesma aba vai no
+// quadro das obrigações com clientes, à parte —, e cada um abre as linhas de que saiu (`app/lancamentos.js`). Nenhum número nasce aqui: tudo chega pronto de
+// `lib/indicadores/tela-2.mjs`, que usa as regras de `lib/regras/passivo.mjs`.
+const COLUNAS_DA_DIVIDA = [
+  { rotulo: 'dia', chave: 'dia', tipo: 'num' }, { rotulo: 'fonte', chave: 'fonte' }, { rotulo: 'empresa', chave: 'empresa' },
+  { rotulo: 'categoria / SUB 2', chave: 'categoria' }, { rotulo: 'descrição', chave: 'descricao' },
+  { rotulo: 'título no DFC', chave: 'titulo' }, { rotulo: 'linha da planilha', chave: 'linhaDfc', tipo: 'num' },
+  { rotulo: 'valor', chave: 'valor', tipo: 'reais' },
+];
+const COLUNAS_DOS_SINAIS = [
+  { rotulo: 'pedido', chave: 'pedido' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'pago em', chave: 'pago' },
+  { rotulo: 'NF', chave: 'nf' }, { rotulo: '', chave: 'cancelado' }, { rotulo: 'valor', chave: 'valor', tipo: 'reais' },
+];
+const COLUNAS_DOS_CONTRATOS = [
+  { rotulo: 'banco', chave: 'banco' }, { rotulo: 'contrato', chave: 'contrato' }, { rotulo: 'tipo', chave: 'tipo' },
+  { rotulo: 'parcelas pagas', chave: 'pagas', tipo: 'num' }, { rotulo: 'de', chave: 'parcelas', tipo: 'num' },
+  { rotulo: 'saldo', chave: 'saldo', tipo: 'reais' }, { rotulo: 'vence em até 3 meses', chave: 'ate3', tipo: 'reais' },
+  { rotulo: '3 a 12 meses', chave: 'de3a12', tipo: 'reais' }, { rotulo: 'mais de 12', chave: 'mais12', tipo: 'reais' },
+];
+const COLUNAS_DOS_BANCOS = [{ rotulo: 'banco', chave: 'banco' }, { rotulo: 'último saldo do mês', chave: 'valor', tipo: 'reais' }];
+const COLUNAS_DAS_PROVISOES = [
+  { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' }, { rotulo: 'consultor', chave: 'consultor' },
+  { rotulo: 'frete', chave: 'frete', tipo: 'reais' }, { rotulo: 'comissão', chave: 'comissao', tipo: 'reais' },
+  { rotulo: 'comissão head', chave: 'comissaoHead', tipo: 'reais' }, { rotulo: 'compra', chave: 'compra', tipo: 'reais' },
+  { rotulo: 'soma', chave: 'total', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
+];
+const COLUNAS_DO_REPASSE = [
+  { rotulo: 'projeto', chave: 'projeto' }, { rotulo: 'cliente', chave: 'cliente' },
+  { rotulo: 'repasse', chave: 'valor', tipo: 'reais' }, { rotulo: 'linha da planilha', chave: 'linha', tipo: 'num' },
+];
 
-function MapaDaVariacao({ linhas, colunas, emFoco, bomSubir }) {
+// O REPASSE A CLIENTES (resposta do dono, 29/09/2026): pagamento que a MeuBESS ainda vai fazer a clientes, da aba
+// `PROVISÃO` do DFC. Fica junto das obrigações com clientes, como parte separada dos sinais do Omie — não soma com eles,
+// não soma nas provisões e não entra no resultado sem dinheiro de terceiros.
+function RepasseAClientes({ p }) {
+  if (p.valor === null) {
+    return <tr><th>repasse a clientes (aba PROVISÃO)</th><td className="num">—</td><td className="legenda">{p.semValor}</td></tr>;
+  }
   return (
-    <div className="rolagem">
-      <table className="mapa-ah">
-        <thead>
-          <tr>
-            <th className="linha-col">linha do DRE</th>
-            {colunas.map((c) => (
-              <th className={emFoco(c.mes) ? 'escolhido' : ''} key={c.mes}>{MESES_CURTOS[c.mes]}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((l) => (
-            <tr key={l.id}>
-              <th className="linha-col" title={l.rotulo}>{l.rotulo}</th>
-              {l.porMes.map((p) => {
-                if (p.ah === null || p.ah === undefined || !Number.isFinite(p.ah)) {
-                  return <td className="vazio" key={p.mes}>—</td>;
-                }
-                if (p.ah === 0) return <td className="neutra" key={p.mes}>{emPorcento(0)}</td>;
-                const bom = (p.ah > 0) === bomSubir(l);
-                return (
-                  <td className={`${bom ? 'bom' : 'ruim'} g${degrauDa(p.ah)}`} key={p.mes}>{emPorcento(p.ah)}</td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <tr>
+      <th>repasse a clientes, à parte (aba PROVISÃO{p.data ? `, ${p.data}` : ''})</th>
+      <td className="num">{emReais(p.repasse.total)}</td>
+      <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DO_REPASSE} linhas={p.repasse.projetos} /></td>
+    </tr>
+  );
+}
+
+// AS PROVISÕES POR PROJETO, o quadro que abre embaixo do bloco. Ele aparece também com a chave do Omie desligada: a aba
+// `PROVISÃO` é só do DFC (`livre`, de `lib/indicadores/tela-2.mjs`).
+function ProvisoesPorProjeto({ p }) {
+  return (
+    <div className="compromisso">
+      <h3>Provisões por projeto</h3>
+      <p className="fonte-do-quadro">{p.fonte}</p>
+      {p.valor === null
+        ? <p className="legenda"><strong>{p.semValor}</strong> — {p.porque}.</p>
+        : (
+          <>
+            <table className="conta-do-compromisso">
+              <tbody>
+                {p.porProvisao.map((x) => (
+                  <tr key={x.id}><th>{x.rotulo}</th><td className="num">{emReais(x.valor)}</td><td>{x.projetos} projetos</td></tr>
+                ))}
+                <tr className="total">
+                  <th>= {p.rotuloDoTotal}{p.data ? ` em ${p.data}` : ''}</th>
+                  <td className="num">{emReais(p.valor)}</td>
+                  <td><Lancamentos rotulo="projetos" um="projeto" colunas={COLUNAS_DAS_PROVISOES} linhas={p.projetos} /></td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="legenda">
+              o que o financeiro provisionou para pagar a terceiros por projeto já vendido: frete, comissão, comissão
+              head e compra. Toda linha da aba é ainda não paga: o financeiro a tira quando paga ou cancela. O imposto
+              da aba é crédito da empresa, não se paga, e fica fora. A compra conta zero enquanto a coluna
+              estiver vazia. O repasse é pagamento a clientes e está em &quot;Obrigações com clientes&quot;. Ver
+              <code> docs/fontes.md</code>.
+            </p>
+          </>
+        )}
     </div>
   );
 }
 
+function Compromissos({ c }) {
+  const item = (id) => c.itens.find((i) => i.id === id);
+  const giro = item('capital-de-giro'), obrig = item('obrigacoes-clientes');
+  const liquida = item('divida-liquida'), semTerceiros = item('resultado-sem-terceiros');
+  const prov = item('provisoes-projetos');
+  const pe = (i) => `${i.contagem.dfc !== null ? `${i.contagem.dfc} do DFC · ` : ''}${i.contagem.omie !== null ? `${i.contagem.omie} do Omie` : ''}`.replace(/ · $/, '');
+  return (
+    <section className="quadro detalhe compromissos">
+      <h2>Compromissos — {c.nomeDoMes} de {c.ano}</h2>
+      <p className="fonte-do-quadro">
+        o que a empresa deve e a quem, no fim do mês — fora do DRE: a parcela de empréstimo não é despesa e o sinal do
+        cliente já contou como receita no mês em que entrou. Cada número abre os lançamentos de que saiu.
+      </p>
+      {c.bloqueado && <p className="aviso leve"><strong>Sem números neste recorte:</strong> {c.bloqueado}.</p>}
+      <div className="kpis de-5">
+        <div className="kpi">
+          <div className="rotulo">{giro.nome}</div>
+          <div className="numero">{giro.valor === null ? '—' : emReais(giro.valor)}</div>
+          {!c.bloqueado && giro.semValor && <div className="pe"><strong>{giro.semValor}</strong></div>}
+          <div className="pe">{pe(giro)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{obrig.nome}</div>
+          <div className="numero">{emReais(obrig.valor)}</div>
+          <div className="pe">{obrig.contagem.omie} sinais em aberto, do Omie</div>
+          {prov.repasse && <div className="pe">+ repasse a clientes {emReais(prov.repasse.total)} em {prov.repasse.projetos.length} projetos, à parte</div>}
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{liquida.nome}</div>
+          <div className="numero">{liquida.valor === null ? '—' : emReais(liquida.valor)}</div>
+          {!c.bloqueado && liquida.semValor && <div className="pe"><strong>{liquida.semValor}</strong></div>}
+          <div className="pe">{pe(liquida)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{semTerceiros.nome}</div>
+          <div className="numero">{emReais(semTerceiros.valor)}</div>
+          <div className="pe">{pe(semTerceiros)}</div>
+        </div>
+        <div className="kpi">
+          <div className="rotulo">{prov.nome}</div>
+          <div className="numero">{prov.valor === null ? '—' : emReais(prov.valor)}</div>
+          {prov.livre && prov.semValor && <div className="pe"><strong>{prov.semValor}</strong></div>}
+          <div className="pe">{prov.contagem.dfc === null ? 'da aba PROVISÃO do DFC' : `${prov.contagem.dfc} projetos, da aba PROVISÃO do DFC`}</div>
+        </div>
+      </div>
+
+      {!c.bloqueado && (
+        <div className="compromissos-detalhe">
+          <div className="compromisso">
+            <h3>Capital de giro tomado</h3>
+            <p className="fonte-do-quadro">{giro.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                {giro.fluxo.map((g) => (
+                  <tr key={g.id}>
+                    <th>{g.rotulo} no mês</th>
+                    <td className="num">{emReais(g.valor)}</td>
+                    <td><Lancamentos colunas={COLUNAS_DA_DIVIDA} linhas={g.lancamentos} /></td>
+                  </tr>
+                ))}
+                <tr className="total">
+                  <th>saldo devedor no fim do mês</th>
+                  <td className="num">{giro.valor === null ? '—' : emReais(giro.valor)}</td>
+                  <td>{giro.valor === null
+                    ? <span className="legenda">{giro.semValor} — {giro.porque}</span>
+                    : <Lancamentos rotulo="contratos" um="contrato" colunas={COLUNAS_DOS_CONTRATOS} linhas={giro.contratos} />}</td>
+                </tr>
+                {giro.faixas && (
+                  <tr>
+                    <th>vencimentos, pelo valor das parcelas</th>
+                    <td colSpan="2">
+                      até 3 meses <b>{emReais(giro.faixas.ate3)}</b> · 3 a 12 meses <b>{emReais(giro.faixas.de3a12)}</b>
+                      {' '}· mais de 12 meses <b>{emReais(giro.faixas.mais12)}</b>
+                      {giro.antecipacao ? <> · antecipação de recebíveis no saldo <b>{emReais(giro.antecipacao)}</b></> : null}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <p className="legenda">
+              o mesmo pagamento no Omie e no DFC (mesmo sentido, mesmo dia, mesmo valor) conta uma vez: foram{' '}
+              {giro.contagem.extras.pares} neste mês. Juros e IOF continuam no resultado financeiro do DRE; aqui eles só
+              aparecem.{giro.origem ? ` O saldo sai da planilha ${giro.arquivo}, lida da ${giro.origem}: principal mais juros já corridos pela taxa da planilha, parcela vencida até o fim do mês contada como paga.` : ''}{giro.recusados?.length ? ` ${giro.recusados.length} linha(s) da planilha de contratos ficaram de fora por falta de ${[...new Set(giro.recusados.flatMap((r) => r.faltam))].join(', ')}.` : ''}
+            </p>
+          </div>
+
+          <div className="compromisso">
+            <h3>Obrigações com clientes</h3>
+            <p className="fonte-do-quadro">{obrig.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>no começo do mês</th><td className="num">{emReais(obrig.inicio)}</td><td>{obrig.contagem.extras.noInicio} sinais</td></tr>
+                <tr><th>+ sinais novos</th><td className="num">{emReais(obrig.novos)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.novos} /></td></tr>
+                <tr><th>− baixados com a NF</th><td className="num">{emReais(obrig.baixados)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.baixados} /></td></tr>
+                <tr className="total"><th>= no fim do mês</th><td className="num">{emReais(obrig.valor)}</td><td><Lancamentos rotulo="sinais" um="sinal" colunas={COLUNAS_DOS_SINAIS} linhas={obrig.lancamentos.saldo} /></td></tr>
+                <RepasseAClientes p={prov} />
+              </tbody>
+            </table>
+            <p className="legenda">
+              {obrig.contagem.extras.pedidoCancelado} dos {obrig.contagem.omie} sinais em aberto são de pedido que o Omie
+              marca como cancelado, sem NF — o dinheiro entrou e nenhuma devolução está registrada, e eles continuam no
+              saldo até o financeiro confirmar a devolução. O repasse vem da planilha, não do Omie, e não soma com os
+              sinais: são duas obrigações diferentes com clientes.
+            </p>
+          </div>
+
+          <div className="compromisso">
+            <h3>Dívida líquida</h3>
+            <p className="fonte-do-quadro">{liquida.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>capital de giro tomado</th><td className="num">{liquida.saldoDevedor === null ? '—' : emReais(liquida.saldoDevedor)}</td><td>{liquida.saldoDevedor === null ? <span className="legenda">{liquida.semValor}</span> : null}</td></tr>
+                <tr><th>− saldo dos bancos</th><td className="num">{emReais(liquida.saldoDosBancos)}</td><td><Lancamentos rotulo="bancos" um="banco" colunas={COLUNAS_DOS_BANCOS} linhas={liquida.bancos} /></td></tr>
+                <tr className="total"><th>= dívida líquida</th><td className="num">{liquida.valor === null ? '—' : emReais(liquida.valor)}</td><td /></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="compromisso">
+            <h3>Resultado sem dinheiro de terceiros</h3>
+            <p className="fonte-do-quadro">{semTerceiros.fonte}</p>
+            <table className="conta-do-compromisso">
+              <tbody>
+                <tr><th>lucro líquido do DRE (caixa)</th><td className="num">{emReais(semTerceiros.partes.lucro)}</td><td>a linha &quot;(=) Lucro líquido&quot;, acima</td></tr>
+                <tr><th>− variação dos sinais em aberto</th><td className="num">{emReais(semTerceiros.partes.variacaoObrigacoes)}</td><td>sinais recebidos de pedidos sem NF {emReais(semTerceiros.partes.novos)} − sinais baixados {emReais(semTerceiros.partes.baixados)}</td></tr>
+                <tr><td colSpan={3} className="legenda">empréstimo, captação e amortização não entram: já estão fora do DRE; o repasse a clientes da aba PROVISÃO também não</td></tr>
+                <tr className="total"><th>= resultado sem dinheiro de terceiros</th><td className="num">{emReais(semTerceiros.valor)}</td><td /></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ProvisoesPorProjeto p={prov} />
+        </div>
+      )}
+
+      {/* Com a chave do Omie desligada, só as provisões e o repasse ficam: eles são do DFC. */}
+      {c.bloqueado && prov.livre && (
+        <div className="compromissos-detalhe">
+          <div className="compromisso">
+            <h3>Obrigações com clientes — só o repasse</h3>
+            <p className="fonte-do-quadro">os sinais são do Omie e saem com a chave desligada; o repasse é da aba PROVISÃO do DFC</p>
+            <table className="conta-do-compromisso"><tbody><RepasseAClientes p={prov} /></tbody></table>
+          </div>
+          <ProvisoesPorProjeto p={prov} />
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
@@ -240,11 +427,11 @@ export default async function Pagina({ searchParams }) {
     <div className="tela">
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
-        <span className="titulo">DRE — Demonstrativo de Resultados</span>
+        <span className="titulo">DRE gerencial (regime de caixa)</span>
         <nav className="abas">
           <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
           <span className="ativa">DRE</span>
-          <a href={`/receber?ano=${ano}&mes=${mes}${paraOutraTela}`}>Contas a Receber</a>
+          <a href={`/fluxo-de-caixa?ano=${ano}&mes=${mes}${paraOutraTela}`}>Fluxo de Caixa</a>
         </nav>
       </header>
 
@@ -280,7 +467,7 @@ export default async function Pagina({ searchParams }) {
         &quot;Receita total&quot; e &quot;Custos e despesas&quot; — e três linhas da tabela,
         &quot;(−) Deduções&quot;, &quot;(−) Custos de vendas&quot; e &quot;(−) Impostos pagos (guias)&quot;, com o
         valor de cada mês e a coluna <strong>Total</strong> inteiros: as cinco são do DFC.
-        {' '}<strong>O que sai:</strong> as outras nove linhas, os três últimos cartões, os três gráficos, a coluna
+        {' '}<strong>O que sai:</strong> as outras nove linhas, os três últimos cartões, os dois gráficos, a coluna
         <strong> AV</strong> de todas as linhas — ela é a linha sobre a receita líquida, e a receita líquida mistura as
         duas fontes — e a contagem &quot;do Omie&quot; de cada indicador e de cada coluna. As linhas
         &quot;(=)&quot; saem porque somam as DUAS fontes: escrever só a metade do DFC daria um EBITDA que não é o
@@ -398,10 +585,12 @@ export default async function Pagina({ searchParams }) {
           a frase de 5 segundos fala; o que o destaca é o corpo do número, não a posição. */}
       <section className="kpis de-5">
         {d.cartoes.map((c) => (
-          <Kpi c={c} destaque={c.id === 'cartao-lucro-liquido'} key={c.id}
-            texto={c.tipo === 'percentual' ? emPorcento(c.valor) : null}>
-            <Fita serie={c.serie} />
-          </Kpi>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} key={c.id}>
+            <Kpi c={c} destaque={c.id === 'cartao-lucro-liquido'}
+              texto={c.tipo === 'percentual' ? emPorcento(c.valor) : null}>
+              <Fita serie={c.serie} />
+            </Kpi>
+          </CartaoExplodivel>
         ))}
       </section>
 
@@ -422,15 +611,6 @@ export default async function Pagina({ searchParams }) {
           {pesos.length === 0 && <p className="legenda">não há receita líquida nesta coluna para repartir.</p>}
         </Quadro>
 
-        <Quadro className="larga" titulo="Qual linha explica a variação de cada mês"
-          fonte="a mesma análise horizontal da coluna AH da tabela — quanto cada linha variou contra o mês anterior —, com a intensidade da cor no lugar do tamanho do número">
-          <MapaDaVariacao linhas={d.tabela} colunas={colunas} emFoco={emFoco} bomSubir={bomSubir} />
-          <p className="legenda">
-            verde é a variação que joga a favor do resultado e vermelho a que joga contra — a mesma leitura da seta da
-            coluna AH: receita que sobe é bom, despesa que sobe não é. A primeira coluna não tem mês anterior dentro do
-            recorte, e sai “—”.
-          </p>
-        </Quadro>
       </div>
 
       {/* 6. A TABELA DE DETALHE: o DRE inteiro, linha por linha e mês a mês. É a mesma tabela de sempre; o que mudou
@@ -479,8 +659,11 @@ export default async function Pagina({ searchParams }) {
                       <td colSpan={1 + colunas.length * porColuna + 1 + (comAv ? 1 : 0)}>{linha.grupo}</td>
                     </tr>
                   )}
-                  <tr className={linha.total ? 'linha-total' : (linha.foraDoTotal ? 'linha-fora' : '')}>
+                  {/* CADA LINHA ABRE O QUE ELA SOMA (30/09/2026), no clique: ver `app/linha-do-dre.js`. */}
+                  <LinhaDoDre className={linha.total ? 'linha-total' : (linha.foraDoTotal ? 'linha-fora' : '')}
+                    colunas={1 + colunas.length * porColuna + 1 + (comAv ? 1 : 0)} composicao={linha.composicao}>
                     <th className="grupo-col" title={linha.nota ?? linha.rotulo}>
+                      {linha.composicao && <span className="seta">▸</span>}
                       {linha.rotulo}
                       <Filtrado i={linha} />
                     </th>
@@ -489,7 +672,7 @@ export default async function Pagina({ searchParams }) {
                     ))}
                     <td className="num total">{emReais(linha.total)}</td>
                     {comAv && <td className="num av-col total">{emPorcento(linha.totalAv)}</td>}
-                  </tr>
+                  </LinhaDoDre>
                   {linha.detalhe.map((det) => (
                     <tr className="linha-detalhe" key={det.chave}>
                       <th className="grupo-col">{det.rotulo}</th>
@@ -524,7 +707,20 @@ export default async function Pagina({ searchParams }) {
           <strong>AH</strong> = variação contra o mês anterior. <strong>AV</strong> = a linha como fatia da receita
           líquida do próprio mês. As duas são leitura desta tela, não regra de <code>docs/fontes.md</code>: saem dos
           valores que as regras já calcularam. A linha <strong>(=) sem conta</strong> fica fora dos totalizadores, de
-          propósito — é o alarme de lançamento em categoria sem conta do DRE.
+          propósito — é o alarme de lançamento em categoria sem conta do DRE: esses lançamentos já estão, pela regra de
+          cada um, em outra linha (ou só no confronto do Omie), e ela avisa que a categoria não tem conta do DRE no
+          cadastro do Omie. Ver <code>docs/fontes.md</code>.
+        </p>
+        <p className="legenda rodape-tabela">
+          <strong>Retirada de sócio</strong> fica abaixo do lucro líquido e também fora dos totalizadores (decisão do
+          dono, 01/10/2026): é o lucro que vai para o sócio, e não um gasto para fazê-lo — nem o EBITDA nem o lucro
+          líquido a descontam. Até 30/09/2026 ela estava dentro de &quot;(−) Despesas gerais&quot;.
+        </p>
+        <p className="legenda rodape-tabela">
+          <strong>Clique numa linha para ver o que ela soma</strong>{' '}
+          {fMeses.ativo ? 'nos meses escolhidos' : `em ${NOMES_DOS_MESES[mes]}`}, com os filtros desta tela: as linhas
+          &quot;(=)&quot; abrem as linhas que as somam; as outras abrem a soma por categoria e cada lançamento — fonte,
+          empresa, data, categoria, código e valor. O total do que abre é o valor da linha.
         </p>
         <p className="legenda rodape-tabela">
           <strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números
@@ -534,6 +730,39 @@ export default async function Pagina({ searchParams }) {
         </p>
       </section>
 
+      {/* 6b. FORA DO DRE, À PARTE (decisão do dono, 01/10/2026): o que a regra tira do DRE, com o valor, para a conta do
+          mês fechar com o caixa. Cada linha abre o que soma, como as da tabela. */}
+      {d.foraDoDre.length > 0 && (
+        <section className="quadro detalhe tabela-dre">
+          <h2>Fora do DRE — {fMeses.ativo ? 'nos meses escolhidos' : `${NOMES_DOS_MESES[mes]} de ${ano}`}</h2>
+          <p className="fonte-do-quadro">
+            não entram em linha nenhuma da tabela acima; ficam aqui com o valor, para a conta do mês fechar com o caixa
+          </p>
+          <div className="rolagem">
+            <table className="dre-tabela">
+              <thead><tr><th className="grupo-col">o quê</th><th className="num">valor</th><th className="num">lançamentos</th></tr></thead>
+              <tbody>
+                {d.foraDoDre.map((f) => (
+                  <LinhaDoDre className="linha-fora" colunas={3} composicao={f.composicao} key={f.id}>
+                    <th className="grupo-col" title={f.nota}>
+                      {f.composicao && <span className="seta">▸</span>}
+                      {f.rotulo}
+                      <Filtrado i={f} />
+                    </th>
+                    <td className="num">{emReais(f.valor)}</td>
+                    <td className="num">{f.contagem.omie === null ? 'sem o Omie' : f.contagem.omie}</td>
+                  </LinhaDoDre>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {d.foraDoDre.map((f) => <p className="legenda rodape-tabela" key={f.id}><strong>{f.rotulo}:</strong> {f.nota}.</p>)}
+        </section>
+      )}
+
+      {/* 7. OS COMPROMISSOS (decisão do dono, 29/09/2026): o passivo, abaixo do DRE e fora dele. */}
+      <Compromissos c={d.compromissos} />
+
       <footer className="rodape">
         <Atualizar ano={ano} />
         <span>
@@ -541,6 +770,7 @@ export default async function Pagina({ searchParams }) {
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo} (${d.dfc.mesesLidos.length} dos 12 meses do ano lidos).` : ''}
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
+        <Sessao />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </div>

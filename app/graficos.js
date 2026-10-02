@@ -30,9 +30,32 @@
 // captura entrar no repositório.
 
 import {
-  Bar, BarChart, CartesianGrid, LabelList, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, ComposedChart, LabelList, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis,
 } from 'recharts';
+import { useEffect, useRef, useState } from 'react';
+
 import { emPorcento, emReais } from './dinheiro.js';
+
+// A LARGURA DE VERDADE DO GRÁFICO (correção de 28/09/2026: o dono passava o mouse e não via os valores). O gráfico é
+// desenhado no SERVIDOR com largura fixa — `scripts/capturar-tela.mjs` joga fora todo `<script>`, e a captura precisa do
+// SVG pronto — e o CSS o esticava até a largura do quadro. Esticado, o Recharts lê o mouse na escala errada: medido,
+// numa janela de 1280 px o mouse na barra do dia 12 mostrava o dia 14, e numa de 1920 px não mostrava nada. Agora, no
+// navegador, cada gráfico mede o quadro e se redesenha naquela largura, e o mouse cai no ponto certo. No servidor (e na
+// captura) continua a largura fixa de sempre, e a primeira pintura é idêntica — sem diferença de hidratação.
+function useLargura(padrao) {
+  const ref = useRef(null);
+  const [largura, setLargura] = useState(padrao);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const medir = () => { const w = Math.round(el.getBoundingClientRect().width); if (w > 0) setLargura(w); };
+    medir();
+    const obs = new ResizeObserver(medir);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, largura };
+}
 
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -55,18 +78,19 @@ const DICA = {
 // de "direct labeling", e é a razão de a margem da direita deste gráfico ser tão larga.
 // O `desvio` afasta um nome do outro: em dezembro as duas linhas podem estar no mesmo ponto — as duas em zero, por
 // exemplo —, e aí os dois nomes sairiam um em cima do outro.
-function PontaDaLinha({ x, y, index, ultimo, texto, desvio }) {
+function PontaDaLinha({ x, y, index, ultimo, texto, desvio, classe = 'ponta-da-linha', dx = 9, ancora }) {
   if (index !== ultimo) return null;
-  return <text x={x + 9} y={y} dy={desvio} className="ponta-da-linha">{texto}</text>;
+  return <text x={x + dx} y={y} dy={desvio} className={classe} textAnchor={ancora}>{texto}</text>;
 }
 
 export function AnoInteiro({ meses, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = meses.map((m) => ({ rotulo: MESES_CURTOS[m.mes], receita: m.entradas, despesa: m.gastos }));
   const ultimo = dados.length - 1;
   const foco = MESES_CURTOS[mesEmFoco];
   return (
-    <div className="grafico">
-      <LineChart width={760} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <LineChart width={medida.largura} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_VALOR} />
@@ -95,10 +119,11 @@ export function AnoInteiro({ meses, mesEmFoco }) {
 // COLUNAS, E NÃO LINHA (a troca está justificada em `docs/layout.md`): pagamento e recebimento acontecem em dias
 // certos, e boa parte dos dias é zero. Uma linha ligaria o dia 3 ao dia 9 como se houvesse fluxo no meio.
 export function DiaADia({ dias, mes, ano }) {
+  const medida = useLargura(760);
   const dados = dias.map((d) => ({ rotulo: String(d.dia), receita: d.entradas, despesa: d.gastos }));
   return (
-    <div className="grafico">
-      <BarChart width={760} height={220} data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 4 }} barGap={1}>
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={220} data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 4 }} barGap={1}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 8.5 }} />
         <YAxis {...EIXO_VALOR} />
@@ -118,10 +143,11 @@ export function DiaADia({ dias, mes, ano }) {
 const corta = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 function Ranking({ dados, serie, tick }) {
+  const medida = useLargura(430);
   const altura = Math.max(120, 30 * dados.length + 16);
   return (
-    <div className="grafico">
-      <BarChart width={430} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 96, left: 0, bottom: 4 }}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="chave" width={148} {...EIXO_ROTULO} tick={tick} interval={0} />
@@ -179,12 +205,13 @@ const EIXO_PORCENTO = {
 // a única referência que não inventa número: abaixo dela o mês deu prejuízo. A tracejada no mês em foco é a mesma da
 // Tela 1, e pelo mesmo motivo — põe o mês escolhido dentro do ano sem precisar de um segundo gráfico.
 export function MargemNoAno({ serie, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = serie.map((x) => ({ rotulo: MESES_CURTOS[x.mes], margem: x.valor }));
   const ultimo = dados.length - 1;
   const foco = MESES_CURTOS[mesEmFoco];
   return (
-    <div className="grafico">
-      <LineChart width={760} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <LineChart width={medida.largura} height={286} data={dados} margin={{ top: 22, right: 74, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_PORCENTO} />
@@ -210,6 +237,7 @@ export function MargemNoAno({ serie, mesEmFoco }) {
 // e ordenar por tamanho, como se faz num ranking, desmontaria a conta. O valor vai na ponta, como nos rankings da
 // Tela 1: ler o número é a tarefa.
 export function PesoNaReceita({ linhas }) {
+  const medida = useLargura(430);
   const dados = linhas.map((l, n) => ({ chave: String(n), rotulo: l.rotulo, valor: l.av }));
   const altura = Math.max(120, 26 * dados.length + 16);
   const tick = ({ x, y, payload }) => {
@@ -217,8 +245,8 @@ export function PesoNaReceita({ linhas }) {
     return <text x={x - 6} y={y} dy={3.5} textAnchor="end" className="rotulo-eixo">{corta(String(i.rotulo ?? ''), 26)}</text>;
   };
   return (
-    <div className="grafico">
-      <BarChart width={430} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 78, left: 0, bottom: 4 }}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="chave" width={158} {...EIXO_ROTULO} tick={tick} interval={0} />
@@ -256,6 +284,7 @@ const FAIXAS_DA_TELA_3 = [
 // E O NOME DO CLIENTE sai num `text` com `class="cliente"` e `data-codigo`, a mesma marca da Tela 1, para
 // `scripts/capturar-tela.mjs` trocar o nome pelo código antes de a captura entrar no repositório.
 export function PorClienteEStatus({ clientes }) {
+  const medida = useLargura(760);
   const dados = clientes.map((c, n) => ({
     chave: String(n), nome: c.nome ?? `cliente ${c.codigo}`, codigo: c.codigo,
     ...Object.fromEntries(FAIXAS_DA_TELA_3.map((f) => [f.chave, c[f.chave]])),
@@ -270,8 +299,8 @@ export function PorClienteEStatus({ clientes }) {
     );
   };
   return (
-    <div className="grafico">
-      <BarChart width={760} height={altura} data={dados} layout="vertical"
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={altura} data={dados} layout="vertical"
         margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} horizontal={false} vertical />
         <XAxis type="number" {...EIXO_VALOR} height={22} />
@@ -296,6 +325,7 @@ export function PorClienteEStatus({ clientes }) {
 // O EIXO É CONTAGEM DE TÍTULOS, e não dinheiro: é o que este bloco sempre mostrou ("Qtde Lançamentos"), e é a
 // contagem que `docs/conferencia.md` confere.
 export function PorMesEStatus({ porMes, mesEmFoco }) {
+  const medida = useLargura(760);
   const dados = porMes.map((x) => ({
     rotulo: MESES_CURTOS[x.mes], total: x.total,
     ...Object.fromEntries(FAIXAS_DA_TELA_3.map((f) => [f.chave, x[f.chave]])),
@@ -303,8 +333,8 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
   const foco = MESES_CURTOS[mesEmFoco];
   const ultima = FAIXAS_DA_TELA_3.length - 1;
   return (
-    <div className="grafico">
-      <BarChart width={760} height={230} data={dados} margin={{ top: 22, right: 8, left: 0, bottom: 4 }}>
+    <div className="grafico" ref={medida.ref}>
+      <BarChart width={medida.largura} height={230} data={dados} margin={{ top: 22, right: 8, left: 0, bottom: 4 }}>
         <CartesianGrid {...GRADE} />
         <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} />
         <YAxis {...EIXO_ROTULO} width={34} allowDecimals={false} />
@@ -323,6 +353,99 @@ export function PorMesEStatus({ porMes, mesEmFoco }) {
           </Bar>
         ))}
       </BarChart>
+    </div>
+  );
+}
+
+// ================================================================ TELA 3 — FLUXO DE CAIXA
+//
+// O MÊS DIA A DIA: o que já foi (consolidado) e o que ainda vem (previsão), num gráfico só. Entrada para cima e saída
+// para baixo, cada dia uma coluna; a parte prevista é a mesma cor, mais clara (`.previsao`). A linha é o acumulado do
+// mês — consolidado até hoje, e daí em diante somando a previsão. A marca tracejada é hoje. Nenhum número nasce aqui:
+// cada dia chega pronto de `lib/indicadores/fluxo-de-caixa.mjs`.
+//
+// PARA FUNCIONAR IMPRESSO EM CINZA (29/09/2026): a cor sozinha não separa a linha das colunas — `--marca` contra
+// `--marca-escura` dá 1,75 para 1. Então a linha leva um CONTORNO da cor do fundo (`.contorno-da-posicao`, uma segunda
+// linha por baixo dela) e o NOME NA PONTA, e a previsão leva um contorno tracejado (`.serie-previsao`, em
+// `app/globals.css`). As duas coisas são forma, e forma sobrevive ao cinza.
+export function DiaADiaDoFluxo({ dias, hoje }) {
+  const medida = useLargura(1100);
+  const dados = dias.map((d) => ({
+    // Um mês: o dia ("12"). Vários meses (o período do dono, 29/09/2026): dia e mês ("12/05"), para cada ponto ser único.
+    rotulo: d.rotulo ?? String(d.dia),
+    // Zero vira `null`: a dica do mouse mostra só o que aconteceu naquele dia, e não quatro linhas de "R$ 0".
+    entrou: d.entrou || null, aReceber: d.aReceber || null, saiu: d.saiu ? -d.saiu : null, aPagar: d.aPagar ? -d.aPagar : null,
+    // A posição em duas séries: a consolidada (cheia, na cor da marca) até hoje e a prevista (cinza, tracejada) de hoje
+    // em diante. Hoje entra nas duas, para a linha não se partir.
+    posicao: d.fase === 'previsao' ? null : d.acumulado,
+    posicaoPrevista: d.fase === 'consolidado' ? null : d.acumulado,
+  }));
+  // Sem mês em andamento não há "hoje": num mês à frente tudo é previsão, e a linha inteira fica cinza.
+  if (!hoje && dados.length && dias.every((d) => d.fase === 'previsao')) for (const x of dados) x.posicao = null;
+  // ONDE O NOME DA LINHA VAI (rotulagem direta): na ponta de cada uma. A consolidada termina em "hoje", e aí o nome sai
+  // para a esquerda e para cima, para não cair em cima da parte prevista.
+  const ultimoCom = (k) => dados.reduce((u, x, i) => (x[k] !== null ? i : u), -1);
+  const fimDaPosicao = ultimoCom('posicao');
+  const fimDaPrevista = ultimoCom('posicaoPrevista');
+  const posicaoVaiAteOFim = fimDaPosicao === dados.length - 1;
+  // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
+  // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
+  // versão tirava o sinal de tudo, e uma posição negativa aparecia positiva).
+  const dica = { ...DICA, formatter: (v, n) => [emReais(n.startsWith('posição de caixa') ? v : Math.abs(v)), n] };
+  return (
+    <div className="grafico" ref={medida.ref}>
+      <ComposedChart width={medida.largura} height={320} data={dados} margin={{ top: 22, right: 100, left: 0, bottom: 4 }}
+        stackOffset="sign" barCategoryGap={2}>
+        {/* A PREVISÃO EM DEGRADÊ CINZA (pedido do dono, 28/09/2026): o que ainda não aconteceu não usa as cores de
+            entrou e saiu. Mais escuro perto do zero, mais claro na ponta — o degradê é por barra, e não por valor. */}
+        <defs>
+          <linearGradient id="previsao-entrada" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" className="previsao-escuro" />
+            <stop offset="100%" className="previsao-claro" />
+          </linearGradient>
+          <linearGradient id="previsao-saida" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="previsao-escuro" />
+            <stop offset="100%" className="previsao-claro" />
+          </linearGradient>
+        </defs>
+        <CartesianGrid {...GRADE} />
+        {/* Num período de vários meses são mais de cem dias: o eixo escreve o mês no dia 1 e o dia de cinco em cinco. */}
+        <XAxis dataKey="rotulo" {...EIXO_ROTULO} interval={0} tick={{ fontSize: 9.5 }}
+          tickFormatter={dados.length > 31 ? (v) => {
+            const [dd, mm] = String(v).split('/');
+            return dd === '1' ? MESES_CURTOS[Number(mm)] : Number(dd) % 5 === 0 ? dd : '';
+          } : undefined} />
+        {/* UM EIXO SÓ, para colunas e linha (correção de 28/09/2026). Com dois, o zero de um ficava noutra altura que o
+            do outro, e o dono leu uma posição positiva, desenhada no eixo da direita, como negativa no da
+            esquerda. Com o caixa partindo da abertura dos bancos, linha e colunas são da mesma ordem de grandeza. */}
+        <YAxis yAxisId="dia" {...EIXO_VALOR} />
+        <ReferenceLine yAxisId="dia" y={0} className="linha-zero" />
+        {hoje && (
+          <ReferenceLine yAxisId="dia" x={String(hoje)} className="marca-do-mes"
+            label={{ value: 'hoje', position: 'top', className: 'marca-do-mes-texto' }} />
+        )}
+        <Tooltip {...dica} labelFormatter={(d) => `dia ${d}`} />
+        <Bar yAxisId="dia" dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-entrada)" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor" isAnimationActive={false} />
+        <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-previsao" fill="url(#previsao-saida)" isAnimationActive={false} />
+        {/* O CONTORNO: a mesma linha, mais grossa e na cor do fundo, por baixo. Fora da dica e da legenda. */}
+        <Line yAxisId="dia" type="linear" dataKey="posicao" className="contorno-da-posicao" stroke="currentColor"
+          strokeWidth={5} dot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
+        <Line yAxisId="dia" type="linear" dataKey="posicaoPrevista" className="contorno-da-posicao" stroke="currentColor"
+          strokeWidth={5} dot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
+        <Line yAxisId="dia" type="linear" dataKey="posicao" name="posição de caixa" className="serie-saldo" stroke="currentColor"
+          strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false}>
+          <LabelList dataKey="posicao" content={(p) => (posicaoVaiAteOFim
+            ? <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={4} classe="rotulo-da-linha" />
+            : <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={-9} dx={-6} ancora="end" classe="rotulo-da-linha" />)} />
+        </Line>
+        <Line yAxisId="dia" type="linear" dataKey="posicaoPrevista" name="posição de caixa (prevista)" className="serie-previsao-linha"
+          stroke="currentColor" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} connectNulls={false}>
+          <LabelList dataKey="posicaoPrevista" content={(p) => (
+            <PontaDaLinha {...p} ultimo={fimDaPrevista} texto="posição prevista" desvio={4} classe="rotulo-da-linha" />)} />
+        </Line>
+      </ComposedChart>
     </div>
   );
 }

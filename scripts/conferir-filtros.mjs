@@ -311,7 +311,7 @@ const t2Dois = MES_ANTES
   ? await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc(), filtro: { meses: [MES_ANTES, MES] } })
   : null;
 
-const indicadoresT2 = (t) => [...t.cartoes, ...t.tabela];
+const indicadoresT2 = (t) => [...t.cartoes, ...t.tabela, ...(t.foraDoDre ?? [])];
 const contagensIguais = (a, b) => indicadoresT2(a).every((i) => {
   const j = indicadoresT2(b).find((x) => x.id === i.id);
   return j && i.contagem.dfc === j.contagem.dfc && i.contagem.omie === j.contagem.omie;
@@ -320,7 +320,7 @@ const contagensIguais = (a, b) => indicadoresT2(a).every((i) => {
 conferir({
   tela: 'Tela 2',
   filtro: `meses = só ${NOMES_DOS_MESES[MES]}`,
-  onde: 'os 5 cartões do topo, as 12 linhas da tabela e a coluna Total — a tela inteira é por mês',
+  onde: 'os 5 cartões do topo, as 13 linhas da tabela, o quadro "Fora do DRE" e a coluna Total — a tela inteira é por mês',
   caso: `os ${indicadoresT2(t2So).length} indicadores da tela com o filtro em ${NOMES_DOS_MESES[MES]} sozinho batem, um a um, com os mesmos ${indicadoresT2(t2Sem).length} da tela sem filtro no mesmo mês — que são os que \`docs/conferencia.md\` publica e \`scripts/conferir-telas.mjs\` confere contra o arquivo`,
   naTela: indicadoresT2(t2So).filter((i) => {
     const j = indicadoresT2(t2Sem).find((x) => x.id === i.id);
@@ -368,7 +368,7 @@ const omieDoMes = (t) => t.cobertura.find((c) => c.mes === MES).omie;
 conferir({
   tela: 'Tela 2',
   filtro: 'empresa = 1 e empresa = 2, somadas',
-  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela',
+  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "Retirada de sócio", "(=) sem conta", o quadro "Fora do DRE" — e toda contagem do Omie da tela',
   caso: `a coluna de ${NOMES_DOS_MESES[MES]} tem ${num(omieDoMes(t2Sem))} lançamentos do Omie sem filtro, ${num(omieDoMes(t2Emp1))} com a empresa 1 e ${num(omieDoMes(t2Emp2))} com a empresa 2; os ${idsT2.length} indicadores somam as duas empresas um a um, e a contagem do DFC de cada um fica igual nas três telas — é o filtro não alcançando o DFC, como \`docs/filtros.md\` diz`,
   naTela: somaPorEmpresa,
   naFonte: idsT2.length,
@@ -676,7 +676,7 @@ const contaBateNaT2 = idsT2.filter((id) => {
 conferir({
   tela: 'Tela 2',
   filtro: `conta bancária = as ${contasDaMeuBess.length} contas de uma vez, e depois só ${contaEscolhida}`,
-  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "(=) sem conta" — e toda contagem do Omie da tela',
+  onde: 'as linhas e os cartões de fonte Omie — "(+) Receitas", "(=) Receita bruta", "(−) Despesas gerais", "(+/−) Resultado financeiro", "Retirada de sócio", "(=) sem conta", o quadro "Fora do DRE" — e toda contagem do Omie da tela',
   caso: `a coluna de ${NOMES_DOS_MESES[MES]} tem ${num(omieDoMes(t2Sem))} lançamentos do Omie sem filtro e os mesmos ${num(omieDoMes(t2Contas))} com as ${contasDaMeuBess.length} contas escolhidas; com só ${contaEscolhida} ela cai para ${num(omieDoMes(t2UmaConta))}, e a contagem do DFC de cada um dos ${idsT2.length} indicadores fica igual nas três leituras — é o filtro não alcançando o DFC, como \`docs/filtros.md\` diz. As duas contagens de cadastro do DRE também não mudam, e a linha "(=) Receita bruta" diz isso na tela`,
   naTela: contaBateNaT2,
   naFonte: idsT2.length,

@@ -207,9 +207,12 @@ cliente trocado pelo código.
   aqui" vira "os meses escolhidos", que é exatamente o que a coluna Total passa a ser.
 - **As perguntas que a tela responde:**
   1. Em que mês a margem caiu (ou subiu)?
-  2. Qual linha do DRE explica a variação — é receita que caiu ou custo que subiu?
-  3. Quanto cada linha pesa sobre a receita do mês (a análise vertical)?
-  4. O ano está melhorando ou piorando?
+  2. Quanto cada linha pesa sobre a receita do mês (a análise vertical)?
+  3. O ano está melhorando ou piorando?
+
+  **Saiu em 29/09/2026, a pedido do dono:** a pergunta "qual linha do DRE explica a variação?" e o mapa de calor que
+  a respondia ("Qual linha explica a variação de cada mês"). O dono o achou confuso e sem utilidade. A variação contra
+  o mês anterior continua na coluna **AH** da tabela, que é de onde o mapa tirava os números.
 
 ## O plano de gráficos
 
@@ -217,7 +220,6 @@ cliente trocado pelo código.
 |---|---|---|---|
 | "Quanto é a receita, o custo, o EBITDA, o lucro e a margem?" | não passa pela árvore: é um número por vez | fila de 5 números, cada um com a fita dos 12 meses embaixo | é o que a tela já tem; a fita é um gráfico de linha miúdo, e a skill aceita isso como contexto do número. O "Lucro líquido" sai maior porque é dele que a frase de 5 segundos fala |
 | "Em que mês a margem caiu?" | TIME SERIES → 1 série → **Linha** | linha da margem nos meses do ano, com a linha do zero como referência e a tracejada no mês dos cartões | a margem já é calculada mês a mês (é o que a fita do cartão "Margem de lucro" desenha); promovê-la a gráfico próprio responde a pergunta sem criar número. É o gráfico **principal**: o maior e no canto de cima à esquerda |
-| "Qual linha do DRE explica a variação?" | CATEGÓRICO 2+ → subgrupo (linha do DRE × mês) → **Heatmap** | a análise horizontal vira um mapa de calor: uma célula por linha do DRE e por mês | são doze colunas de variação percentual; em número, o olho não acha o pior mês. A mesma variação em intensidade de cor, sim. O número continua escrito na célula, e a coluna AH continua na tabela — o mapa é outra leitura dos mesmos números, não a troca deles |
 | "Quanto cada linha pesa sobre a receita?" | NUMÉRICO + CATEGÓRICO → uma observação por grupo → 1 numérico → **Barra** | barra deitada da análise vertical do mês escolhido (ou da coluna Total, quando há meses escolhidos) | AV é uma proporção sobre a receita líquida; barra deitada a partir do zero é a leitura mais direta disso. A ordem é a do DRE e não a do tamanho: aqui a cascata é o sentido |
 | "Quero o número exato de cada linha e de cada mês" | não é gráfico: é a "tabela de detalhe" que fecha o F | a tabela do DRE de hoje, inteira | ela já é a tabela de detalhe: fica igual, e só perde a moldura |
 
@@ -225,7 +227,7 @@ cliente trocado pelo código.
 
 De cima para baixo: o título e a frase de 5 segundos; o recorte (os quatro filtros, numa faixa só, com o que cada um
 alcança num bloco que abre e fecha); a fila de 5 números; o gráfico principal, o maior, no canto de cima à esquerda;
-o de apoio à direita; o mapa de calor na largura inteira; a tabela do DRE; e o rodapé com a fonte, o período e a hora
+o de apoio à direita; a tabela do DRE; e o rodapé com a fonte, o período e a hora
 da leitura. É a mesma ordem da Tela 1, com as mesmas peças (`app/quadro.js`, `app/graficos.js`, `app/globals.css`).
 
 **A frase de "o filtro não vale" NÃO entrou no bloco que abre e fecha:** ela é parte do número, e continua dentro do
@@ -250,17 +252,15 @@ notas que ficavam soltas no topo (a da depreciação e a de janeiro a março) e 
   título, em corpo maior que o resto — *"o lucro líquido do ano até aqui é X, e a margem é Y%"* —, e a linha logo
   abaixo dela diz de quantos meses é essa soma e que ela é a coluna Total da tabela.
 - [x] **Cada gráfico responde a uma pergunta específica?** Sim, e o título de cada um é a pergunta respondida, não a
-  descrição do desenho: "Em que mês a margem caiu", "Quanto cada linha pesa sobre a receita em agosto", "Qual linha
-  explica a variação de cada mês". A tabela de amarração está acima.
+  descrição do desenho: "Em que mês a margem caiu" e "Quanto cada linha pesa sobre a receita em agosto". A tabela de
+  amarração está acima.
 - [x] **Há hierarquia visual clara?** Sim: frase > número do "Lucro líquido" (28px) > os outros quatro (20px) >
-  gráfico principal (duas colunas de três) > o de apoio > mapa de calor > tabela do DRE (11,5px). **O destaque não é o
+  gráfico principal (duas colunas de três) > o de apoio > tabela do DRE (11,5px). **O destaque não é o
   primeiro número da fila, e é de propósito:** a ordem dos cinco é a cascata do DRE — receita, custo, EBITDA, lucro,
   margem —, e é dela que vem o sentido da leitura; trocar a ordem para pôr o lucro na frente desmontaria a conta. O
   que destaca é o corpo do número.
 - [x] **Funcionaria impresso em cinza?** Em parte, e o que não funcionaria tem o número escrito junto. A linha da
-  margem é uma série só — não há cor para confundir. No mapa de calor, verde e vermelho viram o mesmo tom em cinza, e
-  é exatamente por isso que **o número continua escrito dentro de cada célula**: a cor acelera a leitura, não a
-  carrega sozinha. O vermelho do número negativo continua tendo o sinal "−" na frente.
+  margem é uma série só — não há cor para confundir. O vermelho do número negativo continua tendo o sinal "−" na frente.
 - [x] **Há linha de referência e a fonte dos dados?** Linha de referência: a **linha do zero** no gráfico da margem
   (abaixo dela o mês deu prejuízo) e a **tracejada no mês dos cartões**. **Não pus média, meta nem benchmark**, pelo
   mesmo motivo da Tela 1: seriam números novos. Fonte: cada gráfico diz a sua numa linha embaixo do título, a tabela
@@ -268,23 +268,180 @@ notas que ficavam soltas no topo (a da depreciação e a de janeiro a março) e 
   duas leituras.
 - [x] **A paleta é consistente e tem significado?** Sim, e a regra é a mesma das três telas: a margem e a análise
   vertical não são entrada nem saída de dinheiro — são razão —, e levam a cor do número de destaque da marca
-  (`--marca`), a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. O mapa de calor usa as duas cores de leitura de
-  número que já existiam (`--positivo` e `--negativo`) em quatro transparências, e verde quer dizer sempre "joga a
-  favor do resultado", que é a mesma leitura da seta da coluna AH. Nenhuma cor está escrita em `app/graficos.js` nem
+  (`--marca`), a mesma do "Saldo" da Tela 1 e a mesma do mês em foco. Nenhuma cor está escrita em `app/graficos.js` nem
   em `app/dre/page.js`.
 - [x] **A narrativa desce de contexto para ação?** Sim: contexto (quanto sobrou no ano e qual a margem) → tensão (em
-  que mês a margem caiu) → o que explica (o peso de cada linha sobre a receita, e qual linha variou em que mês) →
+  que mês a margem caiu) → o que explica (o peso de cada linha sobre a receita; a variação de cada linha está na coluna AH) →
   prova (o DRE inteiro, linha por linha e mês a mês).
 
 **A captura** está lá em cima, logo abaixo do título desta tela: [`tela-2-captura.html`](tela-2-captura.html), gerada
 por `node scripts/capturar-tela.mjs --tela 2`, de 08/2026 e com a análise vertical ligada, com todo valor em dinheiro
-trocado por "—".
+trocado por "—". O bloco "Compromissos" de setembro, o primeiro mês com as provisões por projeto da aba `PROVISÃO`,
+está em [`tela-2-captura-setembro.html`](tela-2-captura-setembro.html) (`--mes 9 --nome setembro`).
 
 ---
 
-# Tela 3 — Contas a Receber
+# Tela 3 — Fluxo de Caixa (desde 28/09/2026)
 
 <!-- captura 3 -->
+
+## A história (escrita pelo dono, 28/09/2026)
+
+A tela "Contas a Receber" foi redefinida pelo dono: novo nome, novo propósito.
+
+- **Para quem é:** o dono da empresa e os membros do departamento financeiro.
+- **Que decisão ela ajuda a tomar:** a **estratégia de venda** — com os números apresentados, identificar que decisão
+  precisa ser tomada em relação ao setor comercial.
+- **A mensagem de 5 segundos:** *quanto entrou, quanto saiu e como vamos fechar o mês: com lucro ou prejuízo?* Na
+  tela: "Entrou X, saiu Y e o mês caminha para fechar com lucro (ou prejuízo) de Z", em que Z é o cartão "Projeção do
+  mês", em verde ou vermelho.
+- **As perguntas que a tela responde:**
+  1. O caixa do mês fechou positivo ou negativo, e quanto entrou e saiu? — os cartões Entrou, Saiu e Saldo.
+  2. Para onde foi a despesa? — **todas** as despesas classificadas como fixa, com o total, para visão geral e controle.
+  3. De quem veio a receita? — **indiferente**, sem detalhamento (decisão do dono): a tela não quebra a receita.
+  4. Este mês foi típico ou ficou fora da curva? — o gráfico do ano, com a média dos meses anteriores.
+  5. Quanto ainda está por pagar, e quanto as despesas fixas consomem da receita líquida? — os cartões "Ainda a pagar",
+     "Ainda a receber", "Despesas fixas pagas" e "Fixas / receita líquida", e a projeção do fechamento.
+  6. De onde saiu cada número? — "de onde saiu", embaixo de cada cartão, com as linhas da planilha.
+
+## O plano de gráficos
+
+| A pergunta | Gráfico | Por quê |
+|---|---|---|
+| "Quanto entrou, saiu, e como fecha?" | duas filas de 4 números: o caixa do mês (Entrou, Saiu, **Resultado do mês em destaque**, Projeção do mês) e o que falta (a pagar, a receber, fixas, peso das fixas, este em **uma casa decimal**, como a tabela das fixas) | é um número por vez; o resultado é o número da frase num mês fechado, e com o mês em andamento a frase traz também a projeção |
+| "Como o caixa anda dia a dia no mês?" (pedido do dono, 28/09/2026) | **colunas por dia**, entrada para cima e saída para baixo; o consolidado em cor cheia e a previsão em **degradê cinza com contorno tracejado**; a **linha da posição de caixa** do mês, com **contorno branco e o nome na ponta**; a marca "hoje" separando as duas partes. O título muda com o mês: com previsão, "o que já foi e o que ainda vem"; sem ela (mês fechado ou sem o Omie), "como o caixa andou" | num gráfico só, como o dono pediu. Coluna porque cada dia é um evento; a linha mostra onde o caixa do mês termina. Contorno e nome existem para o gráfico funcionar impresso em cinza (ver o checklist) |
+| "Este mês foi típico?" | **sem gráfico** (o gráfico do ano saiu em 29/09/2026: o dono o achou "meio sem propósito"): quatro frases, uma por série — entrou, saiu, resultado, despesas fixas —, cada uma "dentro do normal" ou "fora da curva" da média dos meses anteriores | a conta é a mesma (`d.serie.comparacao`); em frase ela diz o que a linha tracejada dizia, sem desenhar o que já está no dia a dia |
+| "Para onde foi a despesa fixa?" | **tabela** com todas as contas fixas, conta por conta, com uma barrinha de CSS em cada linha (pago, % da receita líquida, linhas); com o filtro "período", uma coluna por mês | o dono pediu todas, não as dez maiores; com 33 contas o gráfico de barras do Recharts ficou ilegível, e a barrinha de CSS não estica o texto |
+| "De onde saiu cada número?" | não é gráfico: "de onde saiu" fechado embaixo de cada cartão | a origem está junto do número, e abre só quando alguém quer conferir |
+
+### A ordem da página (o "F" da skill)
+
+Escrita a partir de `app/fluxo-de-caixa/page.js` e da captura, em 29/09/2026. De cima para baixo:
+
+1. **O título e a frase de 5 segundos** (`page.js:151-171`): o mês e o ano, a frase *"Entrou X e saiu Y: o mês fechou
+   com lucro (ou prejuízo) de Z"* e, embaixo, em corpo pequeno, o "para decidir a estratégia de venda". Com o mês em
+   andamento a frase ganha uma segunda metade, a projeção do fechamento (`page.js:160-163`).
+2. **O recorte** (`page.js:180-199`): os filtros numa faixa só — ano, período (dia a dia e fixas), mês, empresa e a chave
+   do Omie, mais o botão "aplicar" —, com o que cada um alcança num bloco que abre e fecha. Os avisos do Omie
+   (`page.js:173-177`) só aparecem quando a leitura pede.
+3. **A fila de números, em duas filas de 4** (`page.js:203-219`): o caixa do mês (Entrou, Saiu, Resultado do mês,
+   Projeção do mês) e o que falta (Venceu no mês e não foi pago, A receber do mês, Despesas fixas pagas, Fixas / receita
+   líquida, em uma casa decimal, `page.js:215`). O "Resultado do mês" é o maior (`page.js:206`). Embaixo de cada número, o
+   "de onde saiu", fechado.
+4. **O gráfico principal, na largura inteira** (`page.js:228-318`): o mês dia a dia, com o consolidado e a previsão, a
+   linha da posição de caixa (com contorno e o nome na ponta, `graficos.js:433-447`) e a conferência dia a dia com a
+   planilha, fechada. O título diz "como o caixa andou" quando não há previsão (`page.js:230-231`).
+5. **Este mês contra a média dos anteriores** (`page.js:325-336`): quatro frases, sem gráfico.
+6. **Para onde foi a despesa fixa** (`page.js:338-408`): a tabela conta por conta, com a barrinha de CSS em cada linha,
+   que fecha o F como tabela de detalhe.
+7. **O rodapé** (`page.js:411-421`): a fonte, o recorte de empresas, a hora das duas leituras e de onde vieram os números.
+
+**O que mudou depois do plano de 28/09/2026** (já está na tabela acima, e fica aqui para o dono ver de onde veio):
+
+- **O destaque é o "Resultado do mês"** (`page.js:206`), e não a "Projeção do mês": a frase só traz a projeção com o mês em
+  andamento, e num mês fechado o número dela é o resultado.
+- **O gráfico do ano saiu em 29/09/2026** (`page.js:322-324`). A pergunta "este mês foi típico?" é respondida só pelas
+  frases de `Curva` (`page.js:76-86`). `FluxoNoAno`, que o desenhava, foi **tirado de `app/graficos.js`** em 29/09/2026,
+  porque nenhuma tela o usava.
+- **A previsão é cinza em degradê** (pedido do dono, 28/09/2026; `app/globals.css:25-28`) e, desde 29/09/2026, tem
+  contorno tracejado (`app/globals.css:453`).
+- **As fixas são uma tabela com barrinha de CSS** (`page.js:338-341`), e aceitam vários meses (`page.js:342-378`).
+
+**A frase de "o filtro não vale" NÃO entrou no bloco que abre e fecha:** ela é parte do número, e continua dentro do
+cartão (`app/quadro.js`, `Filtrado`), como `docs/filtros.md` manda.
+
+## O que ficou de fora, e por quê
+
+- **A receita por cliente**: o dono disse que é indiferente.
+- **A despesa fixa ainda a pagar**: o que falta pagar vem do Omie, e o Omie não tem o `SUB 2` do DFC — os dois
+  vocabulários não têm de-para (`docs/fontes.md`). A tela mostra o total a pagar do mês, e as fixas pagas.
+- **A lista de títulos a receber, um a um, e o "para quem ligar"**: eram o propósito da antiga tela, que saiu da
+  navegação. O cálculo dela continua, e volta como tela se o dono pedir.
+
+## O checklist da fase 5 da skill, respondido
+
+Conferido em 29/09/2026 contra `app/fluxo-de-caixa/page.js`, `app/graficos.js`, `app/globals.css` e a captura
+[`tela-3-captura.html`](tela-3-captura.html) (agosto de 2026, mês **fechado**). O que só existe com o mês em andamento
+(a marca "hoje", a previsão, o nome "posição prevista", a projeção) está conferido no código e no HTML que a tela serve
+para setembro de 2026, e **não aparece na captura**. Cada item leva `[x]` (a tela cumpre) ou, onde não cumprisse, uma
+caixa vazia e o que falta; hoje os sete estão cumpridos. O item de cinza foi o único que não estava, no commit c33b7f3, e
+foi corrigido em 29/09/2026.
+
+- [x] **Dá para entender a mensagem principal em 5 segundos?** Sim: `<p class="frase">` embaixo do título (`page.js:153-165`),
+  em 16,5px (`globals.css:260`), diz na captura *"Entrou — e saiu —: o mês fechou com lucro de —."*, com o lucro em
+  verde e o prejuízo em vermelho (`globals.css:427-429`) e o número dela no cartão "Resultado do mês", o único em 28px
+  (`globals.css:402`). Duas ressalvas: o título do mês (19px, `globals.css:257`) é maior que a frase; e, com o mês em
+  andamento, a frase traz dois números (o resultado até aqui e a projeção), enquanto o cartão em destaque é só o
+  resultado.
+- [x] **Cada gráfico responde a uma pergunta específica?** Sim: a tela tem **um** gráfico, o dia a dia
+  (`page.js:228-318`, `app/graficos.js:371-451`), e ele responde a "como o caixa anda no mês". O título acompanha o que o
+  gráfico tem: com previsão, *"setembro dia a dia: o que já foi e o que ainda vem"*; sem previsão — mês fechado ou Omie
+  desligado —, *"agosto dia a dia: como o caixa andou"*, que é o que a captura traz (`page.js:230-231`, que usa o mesmo
+  `temPrevisao` da legenda, `page.js:234`). Os outros dois quadros não são gráficos: "Agosto contra a média dos meses
+  anteriores" são quatro frases (`page.js:325-336`) e "Para onde foi a despesa fixa" é uma tabela (`page.js:380-407`).
+- [x] **Há hierarquia visual clara?** Sim: o cartão "Resultado do mês" em 28px (`globals.css:402`) > os outros sete em
+  20px (`globals.css:396`) > o gráfico na largura inteira (`page.js:229`, `className="larga"`) > a tabela das fixas em
+  11px (`globals.css:455`); os oito "de onde saiu" ficam fechados (`page.js:54`). Ressalva: são oito números em duas
+  filas, mais o aviso do vencido (`page.js:220-225`), antes do gráfico; não medi se o gráfico aparece na primeira tela.
+  O "Fixas / receita líquida" sai com uma casa decimal (`page.js:215`, 6,1% na captura), a mesma da tabela logo abaixo
+  (`page.js:405`, "Total — 6,1%"), e não mais "6%" contra "6,1%".
+- [x] **Funcionaria impresso em cinza?** Sim, com forma onde a cor não separa. Luminância relativa (WCAG) das variáveis de
+  `globals.css`; **não imprimi**, calculei. A linha "posição de caixa" e a previsão a pagar eram os dois pares que
+  falhavam, e cada um foi resolvido assim:
+  - **A linha da posição** (`--marca`, `#004888`, L = 0,064; `globals.css:424`) contra as colunas "entrou"
+    (`--marca-escura`, `#102040`, L = 0,015; `globals.css:422`) continua em **1,75 para 1** — a cor sozinha não a separa.
+    O que a separa é o **contorno**: por baixo dela vai uma segunda linha, mais grossa (5px contra 2px), na cor do
+    fundo (`--cartao`, `#ffffff`, L = 1; `.contorno-da-posicao`, `globals.css:451`, `graficos.js:433-436`). Onde a linha
+    cruza uma coluna, cada borda tem contraste alto: **linha contra o contorno, 9,20 para 1; contorno contra "entrou",
+    16,12 para 1; contorno contra "saiu" (`#0079cb`), 4,57 para 1** — todos acima de 3 para 1.
+  - **O nome na ponta** (`posição de caixa`, `graficos.js:437-441`; `.rotulo-da-linha`, `globals.css:452`): em `--marca`
+    com o mesmo contorno de `--cartao` no texto, 9,20 para 1. Com o mês em andamento a consolidada termina em "hoje" e
+    o nome sai à esquerda e para cima da ponta, para não cair na parte prevista; a prevista tem o seu, "posição prevista"
+    (`graficos.js:442-447`). Assim a linha se lê sem a legenda.
+  - **A previsão a pagar** (degradê `#8a929c` → `#d9dde2`, L = 0,284 → 0,720; `globals.css:27-28`) contra o "saiu"
+    (`#0079cb`, L = 0,180): **1,45 para 1** no lado escuro, que é o que encosta no "saiu", e 3,35 para 1 no lado claro.
+    O preenchimento não chega a 3 para 1 no lado que encosta, e não foi trocado (o degradê cinza é pedido do dono,
+    28/09/2026, e o cinza não é cor da marca). Por isso a previsão ganhou um **contorno tracejado em `--marca-escura`**
+    (`#102040`; `.serie-previsao .recharts-rectangle`, `globals.css:453`): **3,53 para 1 contra o "saiu", 5,12 contra o
+    lado escuro do degradê e 11,82 contra o claro**. A separação é a borda tracejada, e não o preenchimento; a legenda
+    leva a mesma borda (`.chave.previsao`, `globals.css:444`).
+  - O que já funcionava: "entrou" contra "saiu" dá 3,53 para 1 e, além disso, entrada é para cima e saída para baixo do
+    zero; a previsão se separa do consolidado pela marca "hoje"; lucro e prejuízo estão escritos por extenso na frase.
+  - Limite: o contorno tracejado da previsão tem 1px, e não vi a página impressa.
+- [x] **Há linha de referência e a fonte dos dados?** Linha de referência: a **linha do zero** (`graficos.js:422`;
+  `linha-zero` no SVG da captura) e, com o mês em andamento, a **marca "hoje"** (`graficos.js:424-427`), que a captura
+  não mostra por ser agosto. **Não pus média, meta nem benchmark**, pela regra 6 das adaptações; a média dos meses
+  anteriores aparece só escrita, em `Curva` (`page.js:76-86`), depois que o gráfico do ano saiu. Fonte: cada quadro
+  diz a sua embaixo do título (`page.js:231`, `326`, `382-383`, `fonte-do-quadro` na captura), e o rodapé diz o regime,
+  as empresas somadas e a hora das duas leituras (`page.js:411-420`; na captura, "Última leitura — Omie: 29/09, 15:21").
+  O período está no título da tela e do gráfico (`page.js:152`, `229-231`), não no rodapé.
+- [x] **A paleta é consistente e tem significado?** Sim: escuro é receita (`--marca-escura`, `globals.css:422`) e claro é
+  despesa (`--destaque`, `globals.css:423`), como na Tela 1, e as duas chaves estão nos cartões "Entrou" e "Saiu"
+  (`page.js:206`); a barrinha das fixas, que é despesa, usa `--destaque` (`globals.css:470`); a posição é `--marca`
+  (`globals.css:424`); a previsão é cinza (`globals.css:25-28`) com contorno em `--marca-escura`; o contorno da linha é
+  a cor de fundo do cartão (`--cartao`), que não é série nenhuma; lucro e prejuízo são `--positivo` e `--negativo`.
+  Nenhuma cor nova entrou, e nenhuma está escrita em `page.js` nem em `graficos.js` (busca por `#rrggbb` nos dois: nada);
+  os `#ccc` e `#666` que aparecem no SVG da captura são o padrão do Recharts e o CSS os cobre (`globals.css:481` e
+  `484`, `.eixo text`). Ressalva: o mesmo resultado positivo é verde na frase (`--positivo`) e azul no cartão
+  (`--marca`, `globals.css:402`).
+- [x] **A narrativa desce de contexto para ação?** Sim: contexto (a frase, `page.js:153-165`) → os oito números
+  (`page.js:203-219`) → o mês dia a dia (`page.js:228-318`) → este mês foi típico? (`page.js:325-336`) → para onde foi a
+  despesa fixa (`page.js:338-408`) → ação (o "para decidir a estratégia de venda", `page.js:166-170`). A prova ("de onde
+  saiu", `page.js:51-73`, e a conferência dia a dia, `page.js:284-315`) está fechada junto do número, e não no fim.
+  Ressalva: a ação é uma frase fixa, condicional em palavras ("se o mês fecha no prejuízo…"); ela não muda com o número.
+
+**A captura** está lá em cima, logo abaixo do título desta tela: [`tela-3-captura.html`](tela-3-captura.html), gerada por
+`node scripts/capturar-tela.mjs --tela 3`, de 08/2026, com todo valor em dinheiro trocado por "—". Foi regerada em
+29/09/2026 duas vezes: a primeira porque a anterior era mais velha que a página (trazia o gráfico do ano que já tinha
+saído, as fixas sem casa decimal e nenhum filtro "período"), e a segunda com o contorno e o nome na linha, o título
+"como o caixa andou" e o peso das fixas em 6,1%.
+
+**O que a Tela 3 não cumpre hoje:** nada que o checklist aponte. O que não foi visto está dito acima: a página impressa, e a
+previsão na captura (que é de um mês fechado).
+
+---
+
+# Tela 3 — Contas a Receber (até 28/09/2026; substituída pelo Fluxo de Caixa)
 
 ## A história (escrita por mim; corrigida pelo dono em 28/09/2026)
 

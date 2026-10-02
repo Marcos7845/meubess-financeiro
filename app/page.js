@@ -46,8 +46,10 @@ import FiltroDeEmpresa, { ExplicaEmpresa } from './empresa.js';
 import Filtrado from './filtrado.js';
 import { AnoInteiro, DeQuemVeioAReceita, DiaADia, ParaOndeFoiADespesa } from './graficos.js';
 import { Kpi, Quadro } from './quadro.js';
+import CartaoExplodivel from './cartao-explodivel.js';
 import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
+import Sessao, { exigirLogin } from './sessao.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
 export const dynamic = 'force-dynamic';
@@ -55,6 +57,7 @@ export const dynamic = 'force-dynamic';
 const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export default async function Pagina({ searchParams }) {
+  await exigirLogin();
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
@@ -116,9 +119,8 @@ export default async function Pagina({ searchParams }) {
         <nav className="abas">
           <span className="ativa">Dashboard</span>
           <a href={`/dre?ano=${ano}&mes=${mes}${paraOutraTela}`}>DRE</a>
-          <a href={`/receber?ano=${ano}&mes=${mes}${paraOutraTela}`}>Contas a Receber</a>
+          <a href={`/fluxo-de-caixa?ano=${ano}&mes=${mes}${paraOutraTela}`}>Fluxo de Caixa</a>
           <span>Centro de Custo</span>
-          <span>Fluxo de caixa</span>
         </nav>
       </header>
 
@@ -350,10 +352,14 @@ export default async function Pagina({ searchParams }) {
       </section>
 
       {/* 3. A FILA DE NÚMEROS DO TOPO. Os 7 cartões de sempre, na ordem de sempre; o "Saldo" é o primeiro e o maior
-          porque é dele que a frase de 5 segundos fala. */}
+          porque é dele que a frase de 5 segundos fala. Cada um abre, no clique, o que soma (01/10/2026). */}
       <section className="kpis">
         {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
-          .map((id, n) => <Kpi c={cartao(id)} destaque={n === 0} key={id} />)}
+          .map((id, n) => (
+            <CartaoExplodivel nome={cartao(id).nome} composicao={cartao(id).composicao} key={id}>
+              <Kpi c={cartao(id)} destaque={n === 0} />
+            </CartaoExplodivel>
+          ))}
       </section>
 
       {/* 4 e 5. O GRÁFICO PRINCIPAL E OS DE APOIO. */}
@@ -421,6 +427,7 @@ export default async function Pagina({ searchParams }) {
           {d.dfc.ok ? ` DFC: ${d.dfc.fonte}, ${d.dfc.arquivo}.` : ''}
         </span>
         <UltimaLeitura leituras={d.leituras} dfc={d.dfc} />
+        <Sessao />
         <span>{d.doCache ? 'números do guardado desta hora' : 'números lidos agora das fontes'}</span>
       </footer>
     </div>

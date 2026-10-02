@@ -4,6 +4,6 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
-EXPOSE 4781
-ENV HOSTNAME 0.0.0.0
-CMD ["npm", "run", "start"]
+# `npm run servidor` (scripts/subir-servidor.mjs) sobe em 0.0.0.0, na porta de $PORT, COM LOGIN.
+# Nunca `npm run start`: ele desliga o login e só atende 127.0.0.1.
+CMD ["npm", "run", "servidor"]

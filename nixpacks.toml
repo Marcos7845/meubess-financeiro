@@ -1,5 +1,0 @@
-[build]
-cmds = ["node scripts/subir-local.mjs --so-build"]
-
-[start]
-cmd = "node scripts/subir-local.mjs --sem-build"

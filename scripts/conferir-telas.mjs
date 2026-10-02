@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
+import { calcularFluxoDeCaixa } from '../lib/indicadores/fluxo-de-caixa.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 
@@ -124,9 +125,62 @@ const EXTRATORES = {
     },
   },
   'dre-lucro-liquido': { dfc: null, omie: /^([\d.]+) lançamentos do mês, que passam/ },
+  // A retirada de sócio (linha própria) e a implantação de saldos (fora do DRE), desde 01/10/2026.
+  'dre-retirada-socio': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      titulos1: /— ([\d.]+) títulos \+/, baixas1: /títulos \+ ([\d.]+) baixas de parcial/,
+      avulsos1: /baixas de parcial \+ ([\d.]+) avulsos na empresa 1/,
+      titulos2: /na empresa 1 e ([\d.]+) \+ [\d.]+ \+ [\d.]+ na 2/,
+      baixas2: /na empresa 1 e [\d.]+ \+ ([\d.]+) \+ [\d.]+ na 2/,
+      avulsos2: /na empresa 1 e [\d.]+ \+ [\d.]+ \+ ([\d.]+) na 2/,
+    },
+  },
+  'fora-implantacao-de-saldos': {
+    dfc: null, omie: /^([\d.]+) lançamentos —/,
+    extras: {
+      titulos: /— ([\d.]+) títulos \+/, baixas: /títulos \+ ([\d.]+) baixas de parcial/,
+      avulsos: /baixas de parcial \+ ([\d.]+) avulsos/,
+    },
+  },
   'dre-sem-conta': {
     dfc: null, omie: /^([\d.]+) lançamentos —/,
     extras: { empresa1: /— ([\d.]+) na empresa 1/, empresa2: /na empresa 1 e ([\d.]+) na 2/ },
+  },
+
+  // ---------------------------------------------------------------- Tela 2, o bloco "Compromissos" (29/09/2026)
+  'capital-de-giro': {
+    dfc: /do Omie e ([\d.]+) linhas? do DFC no fluxo do mês/, omie: /^([\d.]+) lançamentos? do Omie e/,
+    extras: {
+      pares: /no fluxo do mês, ([\d.]+) deles o mesmo pagamento/, lancamentos: /— ([\d.]+) pagamentos?:/,
+      captado: /captado ([\d.]+)/, amortizado: /amortizado ([\d.]+)/, juros: /juros ([\d.]+)/, iof: /IOF ([\d.]+)/,
+      contratos: /; ([\d.]+) contratos? na planilha de contratos/,
+    },
+  },
+  'obrigacoes-clientes': {
+    dfc: null, omie: /^([\d.]+) sina(?:l|is) `ADVR` em aberto/,
+    extras: {
+      pedidoCancelado: /, ([\d.]+) deles de pedido cancelado/, noInicio: /; ([\d.]+) no fim do mês anterior/,
+      novos: /, ([\d.]+) sina(?:l novo|is novos) no mês/, baixados: /e ([\d.]+) baixados com a NF/,
+    },
+  },
+  'divida-liquida': {
+    dfc: /^([\d.]+) blocos? de banco/, omie: null,
+    extras: { contratos: /; ([\d.]+) contratos? na planilha de contratos/ },
+  },
+  'resultado-sem-terceiros': {
+    dfc: null, omie: /^([\d.]+) lançamentos do mês do lucro líquido/,
+    extras: { sinais: /e ([\d.]+) sina(?:l|is) que mexeram/ },
+  },
+  // As provisões por projeto (aba `PROVISÃO` do DFC, com as respostas do dono de 29 e 30/09/2026). A contagem é de
+  // LINHAS DE PROJETO — toda linha da aba é ainda não paga —, e os extras são quantos projetos têm cada provisão maior
+  // que zero e quantos têm repasse (que vai para as obrigações com clientes). O imposto é crédito e não é contado.
+  'provisoes-projetos': {
+    dfc: /^([\d.]+) projetos? na aba `PROVISÃO`/, omie: null,
+    extras: {
+      frete: /— frete em ([\d.]+)/, comissao: /, comissão em ([\d.]+)/, comissaoHead: /comissão head em ([\d.]+)/,
+      compra: /, compra em ([\d.]+)/, repasse: /; repasse a clientes em ([\d.]+)/,
+    },
   },
 
   // ---------------------------------------------------------------- Tela 3
@@ -189,9 +243,43 @@ const EXTRATORES = {
     dfc: null, omie: /^([\d.]+) títulos na rosca/,
     extras: { pago: /— pago ([\d.]+),/, atrasado: /, atrasado ([\d.]+),/, aberto: /, em aberto ([\d.]+)/ },
   },
+
+  // ---------------------------------------------------------------- Tela 3, os números do Fluxo de Caixa
+  // Estes quatro são de fonte DFC (a projeção soma o Omie por cima, e num mês fechado não há projeção: o lado do Omie
+  // é 0 e a própria frase da conferência diz por quê).
+  fixas: {
+    dfc: /^([\d.]+) linhas? de saída fixas? no mês/, omie: null,
+    extras: {
+      contasFixasNoMes: /em ([\d.]+) contas? fixas? distintas?/,
+      contasDaGestora: /distintas? das ([\d.]+) que a gestora marcou/,
+      ausentesDaResposta: /; ([\d.]+) contas? de despesa não voltar(?:am|ou) na resposta dela/,
+    },
+  },
+  'peso-fixas': {
+    // O numerador é a contagem que o cartão publica; o denominador e as deduções são a repartição, e entram como extras.
+    dfc: /^([\d.]+) linhas? fixas? no numerador/, omie: null,
+    extras: { receita: /e ([\d.]+) linhas? de receita no denominador/, deducoes: /menos ([\d.]+) linhas? de dedução/ },
+  },
+  // O extrator do Omie só casa quando a conferência publica um NÚMERO. Num mês fechado ela escreve "sem título do
+  // Omie", porque a tela também não mostra contagem ali — e uma ausência não se compara com zero.
+  projecao: { dfc: /^([\d.]+) linhas? do `FLUXO DE CAIXA` no mês do lado do DFC/, omie: /; ([\d.]+) títulos do Omie/ },
+  'dia-a-dia': {
+    dfc: /^([\d.]+) linhas? do `FLUXO DE CAIXA` no mês no consolidado/, omie: /; ([\d.]+) títulos de previsão/,
+    extras: {
+      diasComMovimento: /em ([\d.]+) dias? com movimento/,
+      bancos: /; ([\d.]+) blocos? de banco,/,
+      bancosQueFecham: /, ([\d.]+) em que o saldo corrido anda exatamente com o movimento,/,
+      linhasNaoBaixadasNoSaldo: /, ([\d.]+) linhas? que o saldo já desconta e não est(?:á|ão) baixada/,
+      bancosComLancamentoDepoisDoSaldo: /e ([\d.]+) bancos? em que a planilha lançou depois de parar de escrever o saldo/,
+      // A PONTE COM OS BANCOS, como veredito e não como valor: a conferência escreve "fecha sem sobra" ou "não fecha",
+      // e a tela calcula a mesma ponte. `true` dos dois lados é o que o dono pediu para conferir.
+      ponteFecha: (entram) => (/a ponte com os bancos fecha sem sobra/.test(entram) ? true
+        : /a ponte com os bancos não fecha/.test(entram) ? false : null),
+    },
+  },
 };
 
-// Lê `docs/conferencia.md`: a ordem dos 36 indicadores e, de cada um, o trecho "**Entram:** …".
+// Lê `docs/conferencia.md`: a ordem dos indicadores e, de cada um, o trecho "**Entram:** …".
 function lerConferencia() {
   if (!fs.existsSync(CONFERENCIA)) {
     console.error(`não achei ${CONFERENCIA}.\nRode antes: node scripts/numeros-das-telas.mjs`);
@@ -219,6 +307,10 @@ if (doConferencia.length === 0) {
 const tela1 = await calcularTela1({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const tela2 = await calcularTela2({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const tela3 = await calcularTela3({ raiz: RAIZ, ano: ANO, mes: MES });
+// A TELA 3 SÃO DOIS CÁLCULOS DESDE 28/09/2026. `calcularTela3` é a carteira de contas a receber, que virou o cálculo de
+// onde sai o "ainda a receber"; `calcularFluxoDeCaixa` é a tela de verdade, e é dela que vêm os quatro números que
+// nasceram no Fluxo de Caixa. Os dois entram em `daTela`, e nenhum id se repete entre eles.
+const telaFluxo = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES, fonte: fonteDoDfc() });
 const TELAS = { 'Tela 1': tela1, 'Tela 2': tela2, 'Tela 3': tela3 };
 
 // A ÚNICA JANELA QUE NÃO É A DO MÊS: a faixa "em aberto" do cartão "Valor pendente" da Tela 3.
@@ -244,9 +336,32 @@ if (!linhaPendente) {
   }
 }
 
-const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela,
-  ...tela3.cartoes, ...tela3.blocos].map((i) => [i.id, i]));
+// O MÊS DAS PROVISÕES POR PROJETO da Tela 2. Desde as respostas do dono de 29/09/2026 a conferência lê a aba
+// `PROVISÃO` do próprio mês conferido (mês sem o quadro sai "0 projetos"), e diz na própria linha de que mês leu ("na
+// aba `PROVISÃO` do mês MM/AAAA"). O teste continua lendo esse mês DO ARQUIVO e, se ele não for o conferido (uma
+// conferência gravada pela regra antiga), pede à mesma camada de dados a Tela 2 nele.
+const linhaProvisao = doConferencia.find((i) => i.tela === 'Tela 2' && i.nome === 'Provisões por projeto');
+const mesDaProvisao = linhaProvisao && /na aba `PROVISÃO` do mês (\d{2})\/(\d{4})/.exec(linhaProvisao.entram);
+let provisao = null, motivoProvisao = null, janelaProvisao = null;
+if (linhaProvisao && !mesDaProvisao) {
+  motivoProvisao = 'não achei na linha da conferência de que mês ela leu a aba PROVISÃO';
+} else if (mesDaProvisao) {
+  janelaProvisao = { mes: Number(mesDaProvisao[1]), ano: Number(mesDaProvisao[2]) };
+  const t2 = janelaProvisao.mes === MES && janelaProvisao.ano === ANO
+    ? tela2
+    : await calcularTela2({ raiz: RAIZ, ano: janelaProvisao.ano, mes: janelaProvisao.mes, fonte: fonteDoDfc() });
+  provisao = t2.compromissos.itens.find((i) => i.id === 'provisoes-projetos') ?? null;
+  if (!provisao) motivoProvisao = 'a Tela 2 não devolveu o item das provisões por projeto';
+}
+
+const daTela = new Map([...tela1.cartoes, ...tela1.blocos, ...tela2.cartoes, ...tela2.tabela, ...tela2.foraDoDre, ...tela2.compromissos.itens,
+  ...tela3.cartoes, ...tela3.blocos,
+  // Só os quatro que nasceram no Fluxo de Caixa: os outros seis cartões dele são cartões das Telas 1 e 3 pelo mesmo
+  // cálculo, e já estão comparados pelo id de lá.
+  ...telaFluxo.cartoes.filter((c) => ['fixas', 'peso-fixas', 'projecao'].includes(c.id)), ...telaFluxo.blocos,
+].map((i) => [i.id, i]));
 if (pendente) daTela.set('valor-pendente', pendente);
+if (provisao) daTela.set('provisoes-projetos', provisao);
 
 // Casa o indicador da tela com a linha da conferência pelo nome que a conferência usa. Uma tabela por tela: o mesmo
 // nome pode voltar noutra tela querendo dizer outra coisa.
@@ -281,7 +396,15 @@ const NOME_NA_CONFERENCIA = {
     'dre-resultado-financeiro': '(+/−) Resultado financeiro: receitas e despesas financeiras',
     'dre-impostos': '(−) Impostos pagos (guias)',
     'dre-lucro-liquido': '(=) Lucro líquido',
+    'dre-retirada-socio': 'Retirada de sócio',
+    'fora-implantacao-de-saldos': 'Fora do DRE: implantação de saldos',
     'dre-sem-conta': '(=) sem conta',
+    // O bloco "Compromissos", abaixo do DRE (decisão do dono, 29/09/2026).
+    'capital-de-giro': 'Capital de giro tomado',
+    'obrigacoes-clientes': 'Obrigações com clientes',
+    'divida-liquida': 'Dívida líquida',
+    'resultado-sem-terceiros': 'Resultado sem dinheiro de terceiros',
+    'provisoes-projetos': 'Provisões por projeto',
   },
   'Tela 3': {
     'valor-previsto': 'Valor previsto',
@@ -292,6 +415,11 @@ const NOME_NA_CONFERENCIA = {
     'por-cliente-e-status': 'Valor previsto por cliente e status',
     'lista-de-titulos': 'Lista de títulos',
     'por-status': 'Lançamentos por status',
+    // Os quatro que nasceram no Fluxo de Caixa (28/09/2026).
+    fixas: 'Despesas fixas pagas',
+    'peso-fixas': 'Fixas / receita líquida',
+    projecao: 'Projeção do mês',
+    'dia-a-dia': 'O mês dia a dia',
   },
 };
 const idPorNome = new Map(Object.entries(NOME_NA_CONFERENCIA).flatMap(([tela, mapa]) =>
@@ -308,6 +436,10 @@ for (const ind of doConferencia) {
   // A faixa "em aberto" do "Valor pendente" só pode ser comparada se a janela que a conferência usou foi lida.
   if (id === 'valor-pendente' && motivoPendente) {
     linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** ${motivoPendente}.`);
+    continue;
+  }
+  if (id === 'provisoes-projetos' && motivoProvisao) {
+    linhas.push(`- a conferir: **${ind.tela} — ${ind.nome}.** **Motivo:** ${motivoProvisao}.`);
     continue;
   }
   const naTela = id ? daTela.get(id) : null;
@@ -383,6 +515,53 @@ if (nConferidos + nDivergentes + nAConferir !== linhas.length) {
   process.exit(1);
 }
 
+// ANTES E DEPOIS DA CORREÇÃO DO LEITOR (29/09/2026) — registro fixo, e não medido a cada rodada.
+//
+// A leitura de planilha deixava a célula vazia engolir a vizinha (ver `linhasCruas` em `lib/regras/xlsx.mjs`). A
+// correção foi medida uma vez: cada indicador das três telas, com o DFC de agosto de 2026 (e o de setembro, para as
+// provisões), antes e depois, pela mesma camada de dados que esta página confere. Como o resto da página, a tabela
+// traz só contagem e motivo; o valor em reais de antes e de depois ficou na resposta ao dono, não em arquivo versionado.
+const ANTES_E_DEPOIS_DO_LEITOR = `## Antes e depois da correção do leitor
+
+Medido em 29/09/2026, com as planilhas do DFC de 2026 e o mesmo cache do Omie nas duas rodadas: primeiro com o leitor
+antigo, depois com o corrigido (\`lerAba\`, o único leitor de planilha do repositório — ver \`linhasCruas\` em
+[\`lib/regras/xlsx.mjs\`](../lib/regras/xlsx.mjs)). "Linha" é a linha da planilha, na aba \`FLUXO DE CAIXA\` do arquivo
+do mês. Nenhuma regra de indicador mudou; mudou o que a leitura entrega às regras.
+
+| tela | indicador | o que mudou | linha da planilha que causou | motivo |
+|---|---|---|---|---|
+| Tela 2 | (−) Custos de vendas | agosto: **62 → 68** linhas do DFC; e as colunas de maio (+9 linhas), junho (+1) e setembro (+6) | agosto: 117, 197, 221, 257, 260 e 262; maio: 242 e 245 a 252; junho: 261; setembro: 46, 47, 48, 137, 226 e 234 | a \`CLASS. CONTABIL\` (\`FORNECEDORES COGS\`, e na 226 de setembro \`COMPRA DE MERCADORIA\`) era engolida pela célula vazia de \`TITULO\`, ao lado. A regra do custo pede a classe **e** a \`SUB 2\`, e a linha ficava fora |
+| Tela 2 | (=) Lucro bruto, (=) EBITDA e (=) Lucro líquido | as mesmas colunas (maio, junho, agosto e setembro) e o total; contagem do Omie igual | as mesmas do custo de vendas | são subtotais abaixo do custo de vendas |
+| Tela 2 | cartões EBITDA, Lucro líquido e Margem de lucro | o número de agosto e a série; contagens iguais | as 6 de agosto do custo de vendas | idem |
+| Tela 2 | Resultado sem dinheiro de terceiros (Compromissos) | o número de agosto; contagens iguais | as 6 de agosto do custo de vendas | parte do lucro líquido do mês |
+| Tela 2 | cartão Receita total | a coluna de abril da série; contagem de agosto igual | abril: 544 | a \`SUB 2\` (\`RECEITA COM VENDAS\`) se perdia, e a linha não entrava na receita |
+| Tela 2 | cartão Custos e despesas | a coluna de julho da série (+8 linhas); contagem de agosto igual | julho: 678, 680, 683, 688, 691, 697, 711 e 713 | no cabeçalho do bloco da STONE de julho (linha 671), a célula vazia \`J\` engolia o rótulo \`ENTRADA\`, ao lado; sem ele, a leitura tomava a \`SAIDA\` como movimento — e a \`SAIDA\` vazia, pelo mesmo defeito, trazia o \`SALDO\`. As 8 saídas (transferências) sumiam |
+| Tela 2 | Dívida líquida (Compromissos) | o saldo dos bancos que o item mostra; o número do item segue vazio (não há contrato), e a contagem, 5 blocos, é a mesma | agosto, bloco da STONE: 401, 404, 408 e 409 | a \`SAIDA\` das 3 primeiras era engolida, e o último saldo escrito parecia ser o da 400; lida certa, a STONE escreve o saldo até a 409 |
+| Tela 3 | O mês dia a dia | linhas que o saldo desconta e não estão baixadas: **1 → 4**; bancos que lançam depois do último saldo: **2 → 1**; linhas do consolidado (388), dias com movimento (21) e bancos que fecham (5) iguais, e a ponte com os bancos continua fechando | agosto: 401, 404, 408 e 409 | as mesmas da dívida líquida: as 3 saídas sem \`PAGAMENTO\` passaram a ser lidas |
+| Tela 3 | Agosto contra a média dos meses anteriores | a média e a variação típica de Entrou, Saiu, Resultado e Despesas fixas; o veredito de cada uma (fora da curva ou não) é o mesmo | abril: 396; julho: 674 a 710 (22 entradas) e as 8 saídas do cartão Custos e despesas | a 396 perdia a \`SUB 2\` (\`TARIFAS BANCARIAS\`, uma fixa); as 22 de julho saíam com o saldo corrido no lugar do valor, pelo cabeçalho da linha 671 |
+| Tela 1 | Top 10 despesas | **22 → 24** classes distintas nas mesmas 281 linhas; a barra "(vazio)" sai, e as classes voltam para as suas barras (a lista do filtro de classe também perde o "(vazio)") | as 39 linhas de agosto que perdiam a classe (entre elas as 6 de custo e as 2 de pessoal, 3 e 309) | classe engolida pela célula vazia de \`TITULO\` |
+| Tela 1 | filtro por classe (\`docs/filtros.md\`) | agosto, classe \`RECEITA DE CLIENTE\`: **90 → 91** linhas; as 388 linhas do mês passam de 22 a 26 classes distintas | agosto: 409 | idem; o filtro confere igual dos dois lados (19 de 19) |
+
+**As 8 linhas de agosto numa classe de custo ou de pessoal:** as 6 de custo (117, 197, 221, 257, 260 e 262) mudaram o
+custo de vendas; as 2 de pessoal (3 e 309, \`FOLHA, IMPOSTOS E ADIANTAMENTOS\`) **não mudaram número nenhum** — elas já
+entravam pela \`SUB 2\` \`DESPESAS CLT\`, que a regra de pessoal aceita sozinha.
+
+**O que não mudou:** Saldo, Receitas, Despesas, Despesas pagas, Despesas pendentes, Despesas com funcionários, o
+percentual de funcionários, Top 10 receitas e os dois gráficos de receita × despesa da Tela 1; na Tela 2, (+) Receitas,
+Receita bruta, Deduções, Receita líquida, Despesas gerais, Resultado financeiro, Impostos, "sem conta", Capital de giro
+tomado, Obrigações com clientes e Provisões por projeto (esta já usava o leitor certo); na Tela 3, todos os indicadores
+do Omie e os cartões Entrou, Saiu, Despesas fixas pagas, Fixas / receita líquida e Projeção do mês.
+
+**As duas compensações do defeito saíram.** A data de uma linha era procurada também em \`TIPO\`, que só tinha data
+porque a célula vazia dele engolia a de \`VENCIMENTO\` (8 linhas de abril); lida certa, \`TIPO\` não tem data em linha
+nenhuma dos doze arquivos, e a data é \`DIA PG\` ou \`VENCIMENTO\`. E o saldo corrido era aceito em \`SAIDA\` (L) ou em
+\`SALDO\` (M); lido certo, \`ENTRADA\` só traz número positivo, \`SAIDA\` só negativo, nunca os dois na mesma linha, e o
+saldo é sempre \`SALDO\`.
+
+**A linha vazia \`<row …/>\` existe de fato** nas planilhas (68 na primeira aba dos arquivos de abril a julho, 287 na \`BASE\` de abril, e outras nas
+abas de cartão, comissão e vendas PJ), mas em nenhuma aba que as telas leem ela mudou um número: o \`FLUXO DE CAIXA\` não
+tem nenhuma, e o quadro \`Inicial\` / \`Entradas\` / \`Gastos\` / \`Final\` da primeira aba saiu igual nos doze meses.`;
+
 const md = `# As telas conferidas contra a conferência — ${NOMES_DOS_MESES[MES]} de ${ANO}
 
 Gerado por [\`scripts/conferir-telas.mjs\`](../scripts/conferir-telas.mjs), só leitura. Uma linha por indicador das 3
@@ -421,12 +600,19 @@ ${nAConferir === 0
 A **Tela 3 fica no Omie inteira** (\`docs/fontes.md\`): ela é a carteira de títulos a receber, e o DFC, que é caixa,
 não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas dela trazem só o lado do Omie.
 
-**Um indicador não é de ${NOMES_DOS_MESES[MES]}, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+${(() => {
+    const provFora = janelaProvisao && (janelaProvisao.mes !== MES || janelaProvisao.ano !== ANO);
+    const nFora = 1 + (provFora ? 1 : 0);
+    return `**${nFora === 1 ? 'Um indicador não é' : 'Dois indicadores não são'} de ${NOMES_DOS_MESES[MES]}, e a regra de cada um explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado — os quatro \`cStatus\` dela são os de um título que ainda
 não venceu, e num mês fechado todo título já venceu. \`docs/conferencia.md\` mede essa faixa noutra janela de
 vencimento${janelaPendente ? `, ${janelaPendente[0]} a ${janelaPendente[1]}` : ''}, e diz na própria linha qual foi;
-este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
-Os outros ${doConferencia.length - 1} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.
+este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.${provFora ? `
+E as **provisões por projeto** da Tela 2 são de ${NOMES_DOS_MESES[janelaProvisao.mes]} de ${janelaProvisao.ano}: o quadro por
+projeto da aba \`PROVISÃO\` do DFC começa no arquivo desse mês (antes dele a aba é um razão, sem projeto), e a
+conferência diz na própria linha de que mês leu; este teste lê o mês **do arquivo** e pede a mesma Tela 2 nele.` : ''}
+Os outros ${doConferencia.length - nFora} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.`;
+  })()}
 
 ${tela1.dfc.ok
     ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`
@@ -435,6 +621,8 @@ ${tela1.dfc.ok
 ## Os indicadores
 
 ${linhas.join('\n')}
+
+${ANTES_E_DEPOIS_DO_LEITOR}
 `;
 
 // A MESMA TRAVA DE `numeros-das-telas.mjs`: esta página não pode ganhar dinheiro nem nome de pessoa.

@@ -54,10 +54,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { dadosDaTela1, dadosDaTela2, dadosDaTela3, ultimasFases } from '../lib/dados.mjs';
+import { dadosDaTela1, dadosDaTela2, dadosDoFluxoDeCaixa, ultimasFases } from '../lib/dados.mjs';
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
-import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
+import { calcularFluxoDeCaixa } from '../lib/indicadores/fluxo-de-caixa.mjs';
 import { novaBase } from '../lib/regras/base-local.mjs';
 import { carimboDaLeitura } from '../lib/regras/cache-omie.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
@@ -128,19 +128,16 @@ const TELAS = [
   },
   {
     n: 3,
-    nome: 'Tela 3 — Contas a receber',
-    rota: '/receber',
-    calcular: calcularTela3,
-    dados: dadosDaTela3,
-    filtroDaQuery: (q) => ({
-      de: q.de ?? null, ate: q.ate ?? null, status: lista(q.status), cliente: q.cliente ?? null,
-      categoria: q.categoria ?? null, empresa: lista(q.empresa), conta: lista(q.conta),
-    }),
+    // A Tela 3 virou o Fluxo de Caixa em 28/09/2026 (pedido do dono): os filtros dela são o mês e a empresa.
+    nome: 'Tela 3 — Fluxo de Caixa',
+    rota: '/fluxo-de-caixa',
+    calcular: calcularFluxoDeCaixa,
+    dados: dadosDoFluxoDeCaixa,
+    filtroDaQuery: (q) => ({ empresa: lista(q.empresa) }),
     cliques: [
-      { rotulo: 'status atrasado', q: { status: 'atrasado' } },
       { rotulo: 'empresa 2', q: { empresa: '2' } },
-      { rotulo: 'conta Caixinha', q: { conta: 'Caixinha' } },
-      { rotulo: 'status pago', q: { status: 'pago' } },
+      { rotulo: 'empresa 1', q: { empresa: '1' } },
+      { rotulo: 'as duas', q: {} },
     ],
   },
 ];

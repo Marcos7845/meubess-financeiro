@@ -166,18 +166,18 @@
     }
   },
   "fases": {
-    "em": "2026-09-28T02:10:53.244Z",
+    "em": "2026-09-29T05:19:13.544Z",
     "ano": 2026,
     "mes": 8,
     "carimbo": {
-      "id": "04b01bfcb247",
-      "arquivos": 357,
-      "gravadoEm": "2026-09-28T01:00:00.613Z",
-      "okEm": "2026-09-28T01:00:01.830Z",
+      "id": "f650b50ab90b",
+      "arquivos": 359,
+      "gravadoEm": "2026-09-29T05:12:26.225Z",
+      "okEm": "2026-09-29T05:12:27.434Z",
       "estado": "ok",
       "paginas": 287
     },
-    "omie": "forcar",
+    "omie": "normal",
     "antes": [
       {
         "tela": 1,
@@ -186,48 +186,48 @@
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 8027.025299999999,
-          "planilhas": 7474.2163,
-          "cacheOmie": 150.60590000000047,
-          "calculo": 61.39990000000034,
-          "total": 15713.2474
+          "omie": 0.8328999999999951,
+          "planilhas": 7046.1774,
+          "cacheOmie": 175.5368,
+          "calculo": 41.07669999999948,
+          "total": 7263.623799999999
         },
         "cliques": [
           {
             "rotulo": "empresa 2",
             "q": "ano=2026&mes=8&empresa=2",
-            "omie": 8012.290400000002,
-            "planilhas": 7175.724199999997,
-            "cacheOmie": 134.60479999999734,
-            "calculo": 53.38100000000486,
-            "total": 15376.0004
+            "omie": 1.2064000000000306,
+            "planilhas": 7724.262499999996,
+            "cacheOmie": 169.5699999999997,
+            "calculo": 23.392900000004374,
+            "total": 7918.4318
           },
           {
             "rotulo": "centro de custo TI",
             "q": "ano=2026&mes=8&cc=TI",
-            "omie": 8002.802099999997,
-            "planilhas": 7143.064700000003,
-            "cacheOmie": 136.09960000000137,
-            "calculo": 47.11409999999887,
-            "total": 15329.0805
+            "omie": 1.2934000000004744,
+            "planilhas": 7332.813900000005,
+            "cacheOmie": 159.09000000000015,
+            "calculo": 37.171599999994214,
+            "total": 7530.3688999999995
           },
           {
             "rotulo": "situação recebido",
             "q": "ano=2026&mes=8&situacao=recebido",
-            "omie": 8013.858700000004,
-            "planilhas": 7322.81519999999,
-            "cacheOmie": 120.26740000000427,
-            "calculo": 43.8379000000059,
-            "total": 15500.779200000004
+            "omie": 1.9241999999976542,
+            "planilhas": 7513.354500000005,
+            "cacheOmie": 153.15110000000277,
+            "calculo": 49.278199999993376,
+            "total": 7717.707999999999
           },
           {
             "rotulo": "conta Caixinha",
             "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 8011.033700000007,
-            "planilhas": 7257.445300000007,
-            "cacheOmie": 135.27739999999176,
-            "calculo": 57.04969999998866,
-            "total": 15460.806099999994
+            "omie": 1.9756000000015774,
+            "planilhas": 7463.563599999987,
+            "cacheOmie": 156.82410000000164,
+            "calculo": 42.686400000013236,
+            "total": 7665.049700000003
           }
         ]
       },
@@ -238,100 +238,91 @@
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 8015.687000000005,
-          "planilhas": 7165.293499999985,
-          "cacheOmie": 123.05190000000584,
-          "calculo": 532.5717000000004,
-          "total": 15836.604099999997
+          "omie": 1.3210999999937485,
+          "planilhas": 7693.5381000000125,
+          "cacheOmie": 165.63620000000083,
+          "calculo": 479.73669999998674,
+          "total": 8340.232099999994
         },
         "cliques": [
           {
             "rotulo": "meses 7 e 8",
             "q": "ano=2026&mes=8&meses=7%2C8",
-            "omie": 8002.861699999994,
-            "planilhas": 6951.483699999997,
-            "cacheOmie": 147.23219999999856,
-            "calculo": 562.5232000000105,
-            "total": 15664.1008
+            "omie": 1.1091000000014901,
+            "planilhas": 7513.069700000007,
+            "cacheOmie": 153.75129999999626,
+            "calculo": 561.9991000000009,
+            "total": 8229.929200000006
           },
           {
             "rotulo": "empresa 1",
             "q": "ano=2026&mes=8&empresa=1",
-            "omie": 8004.337599999999,
-            "planilhas": 7233.8465,
-            "cacheOmie": 115.7439000000013,
-            "calculo": 198.0454000000027,
-            "total": 15551.973400000003
+            "omie": 2.037499999998545,
+            "planilhas": 7550.634300000005,
+            "cacheOmie": 160.1244000000006,
+            "calculo": 249.38179999999556,
+            "total": 7962.178
           },
           {
             "rotulo": "conta Caixinha",
             "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 8005.222800000003,
-            "planilhas": 7043.503899999952,
-            "cacheOmie": 117.0969000000041,
-            "calculo": 587.0972000000475,
-            "total": 15752.920800000007
+            "omie": 1.5350999999936903,
+            "planilhas": 7197.453000000016,
+            "cacheOmie": 151.2876000000033,
+            "calculo": 548.4983999999895,
+            "total": 7898.774100000002
           },
           {
             "rotulo": "mês 8 só",
             "q": "ano=2026&mes=8&meses=8",
-            "omie": 8015.3364,
-            "planilhas": 7245.846100000024,
-            "cacheOmie": 131.44099999999162,
-            "calculo": 569.2277999999933,
-            "total": 15961.85130000001
+            "omie": 2.1365000000078,
+            "planilhas": 7730.462799999979,
+            "cacheOmie": 161.20109999999113,
+            "calculo": 503.2808000000223,
+            "total": 8397.0812
           }
         ]
       },
       {
         "tela": 3,
-        "nome": "Tela 3 — Contas a receber",
-        "rota": "/receber",
+        "nome": "Tela 3 — Fluxo de Caixa",
+        "rota": "/fluxo-de-caixa",
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 8015.178799999994,
-          "planilhas": 0,
-          "cacheOmie": 132.63370000000577,
-          "calculo": 9.246400000003632,
-          "total": 8157.058900000004
+          "omie": 2.4389000000082888,
+          "planilhas": 7430.217699999994,
+          "cacheOmie": 157.2783999999956,
+          "calculo": 79.66270000000077,
+          "total": 7669.597699999998
         },
         "cliques": [
           {
-            "rotulo": "status atrasado",
-            "q": "ano=2026&mes=8&status=atrasado",
-            "omie": 8012.912300000025,
-            "planilhas": 0,
-            "cacheOmie": 137.83900000000722,
-            "calculo": 6.097199999989243,
-            "total": 8156.848500000022
-          },
-          {
             "rotulo": "empresa 2",
             "q": "ano=2026&mes=8&empresa=2",
-            "omie": 8011.655799999979,
-            "planilhas": 0,
-            "cacheOmie": 130.89410000000498,
-            "calculo": 3.8721000000077765,
-            "total": 8146.421999999991
+            "omie": 1.2684000000008382,
+            "planilhas": 7594.3747,
+            "cacheOmie": 149.44160000000556,
+            "calculo": 31.747399999992922,
+            "total": 7776.8321
           },
           {
-            "rotulo": "conta Caixinha",
-            "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 8005.3973000000115,
-            "planilhas": 0,
-            "cacheOmie": 124.87450000000536,
-            "calculo": 2.980599999980768,
-            "total": 8133.252399999998
+            "rotulo": "empresa 1",
+            "q": "ano=2026&mes=8&empresa=1",
+            "omie": 1.3755000000091968,
+            "planilhas": 7638.41889999999,
+            "cacheOmie": 155.8015000000014,
+            "calculo": 48.65690000000177,
+            "total": 7844.252800000002
           },
           {
-            "rotulo": "status pago",
-            "q": "ano=2026&mes=8&status=pago",
-            "omie": 8015.151199999993,
-            "planilhas": 0,
-            "cacheOmie": 128.726800000004,
-            "calculo": 3.506599999993341,
-            "total": 8147.38459999999
+            "rotulo": "as duas",
+            "q": "ano=2026&mes=8",
+            "omie": 1.5099000000045635,
+            "planilhas": 7201.8445000000065,
+            "cacheOmie": 158.07710000000952,
+            "calculo": 53.31559999997262,
+            "total": 7414.747099999993
           }
         ]
       }
@@ -344,11 +335,11 @@
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 0.47879999998258427,
-          "planilhas": 7088.933100000111,
-          "cacheOmie": 120.41219999999157,
-          "calculo": 43.69759999989765,
-          "total": 7254.080000000016,
+          "omie": 4.2084000000031665,
+          "planilhas": 7188.189000000028,
+          "cacheOmie": 157.1768000000011,
+          "calculo": 51.69609999997192,
+          "total": 7402.957200000004,
           "doCache": false,
           "baseNova": true
         },
@@ -356,44 +347,44 @@
           {
             "rotulo": "empresa 2",
             "q": "ano=2026&mes=8&empresa=2",
-            "omie": 0.172099999996135,
+            "omie": 0.8698999999905936,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 37.235599999985425,
-            "total": 37.7326999999932,
+            "calculo": 21.53859999999986,
+            "total": 23.44430000000284,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "centro de custo TI",
             "q": "ano=2026&mes=8&cc=TI",
-            "omie": 0.07809999998426065,
+            "omie": 0.6058000000048196,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 33.44700000001467,
-            "total": 33.89199999999255,
+            "calculo": 36.799399999988964,
+            "total": 38.45079999999143,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "situação recebido",
             "q": "ano=2026&mes=8&situacao=recebido",
-            "omie": 0.15129999999771826,
+            "omie": 0.4173000000009779,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 38.271999999997206,
-            "total": 38.67960000000312,
+            "calculo": 25.246899999998277,
+            "total": 26.37380000000121,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "conta Caixinha",
             "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 0.0734000000229571,
+            "omie": 0.4020999999920605,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 37.298899999965215,
-            "total": 37.663999999989755,
+            "calculo": 30.018100000015693,
+            "total": 31.49099999999453,
             "doCache": false,
             "baseNova": false
           }
@@ -406,11 +397,11 @@
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 0.08919999998761341,
+          "omie": 0.41219999999157153,
           "planilhas": 0,
           "cacheOmie": 0,
-          "calculo": 574.7412000000186,
-          "total": 575.1362000000081,
+          "calculo": 427.43360000000393,
+          "total": 429.1799000000028,
           "doCache": false,
           "baseNova": false
         },
@@ -418,44 +409,44 @@
           {
             "rotulo": "meses 7 e 8",
             "q": "ano=2026&mes=8&meses=7%2C8",
-            "omie": 0.062400000024354085,
+            "omie": 0.49710000000777654,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 600.7363999999652,
-            "total": 601.0840000000026,
+            "calculo": 611.0745999999926,
+            "total": 612.8271999999997,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "empresa 1",
             "q": "ano=2026&mes=8&empresa=1",
-            "omie": 0.07439999998314306,
+            "omie": 0.467400000008638,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 225.01990000001388,
-            "total": 225.4672000000137,
+            "calculo": 225.41979999998875,
+            "total": 227.16820000000007,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "conta Caixinha",
             "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 0.14700000002630986,
+            "omie": 0.4220000000059372,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 511.4690999999584,
-            "total": 511.86999999999534,
+            "calculo": 481.2537999999913,
+            "total": 483.2636999999959,
             "doCache": false,
             "baseNova": false
           },
           {
             "rotulo": "mês 8 só",
             "q": "ano=2026&mes=8&meses=8",
-            "omie": 0.07360000000335276,
+            "omie": 0.6336000000010245,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 628.4398999999685,
-            "total": 628.7946000000229,
+            "calculo": 578.7217999999993,
+            "total": 581.0051999999996,
             "doCache": false,
             "baseNova": false
           }
@@ -463,62 +454,51 @@
       },
       {
         "tela": 3,
-        "nome": "Tela 3 — Contas a receber",
-        "rota": "/receber",
+        "nome": "Tela 3 — Fluxo de Caixa",
+        "rota": "/fluxo-de-caixa",
         "abertura": {
           "rotulo": "abertura, sem filtro",
           "q": "ano=2026&mes=8",
-          "omie": 0.08199999999487773,
+          "omie": 1.165099999998347,
           "planilhas": 0,
           "cacheOmie": 0,
-          "calculo": 3.619700000010198,
-          "total": 3.982799999997951,
+          "calculo": 34.35719999999856,
+          "total": 36.39319999999134,
           "doCache": false,
           "baseNova": false
         },
         "cliques": [
           {
-            "rotulo": "status atrasado",
-            "q": "ano=2026&mes=8&status=atrasado",
-            "omie": 0.06480000002193265,
-            "planilhas": 0,
-            "cacheOmie": 0,
-            "calculo": 1.7516999999934342,
-            "total": 1.9266999999817926,
-            "doCache": false,
-            "baseNova": false
-          },
-          {
             "rotulo": "empresa 2",
             "q": "ano=2026&mes=8&empresa=2",
-            "omie": 0.05910000001313165,
+            "omie": 0.891299999988405,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 2.66549999997369,
-            "total": 2.8286000000080094,
+            "calculo": 30.134600000004866,
+            "total": 31.667499999995925,
             "doCache": false,
             "baseNova": false
           },
           {
-            "rotulo": "conta Caixinha",
-            "q": "ano=2026&mes=8&conta=Caixinha",
-            "omie": 0.05689999999594875,
+            "rotulo": "empresa 1",
+            "q": "ano=2026&mes=8&empresa=1",
+            "omie": 0.3323999999993248,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 0.4717999999993481,
-            "total": 0.6016999999992549,
+            "calculo": 19.57140000000072,
+            "total": 20.868399999992107,
             "doCache": false,
             "baseNova": false
           },
           {
-            "rotulo": "status pago",
-            "q": "ano=2026&mes=8&status=pago",
-            "omie": 0.053099999990081415,
+            "rotulo": "as duas",
+            "q": "ano=2026&mes=8",
+            "omie": 0.42320000000472646,
             "planilhas": 0,
             "cacheOmie": 0,
-            "calculo": 2.1762000000162516,
-            "total": 2.319900000002235,
-            "doCache": false,
+            "calculo": 0,
+            "total": 0.7497000000003027,
+            "doCache": true,
             "baseNova": false
           }
         ]

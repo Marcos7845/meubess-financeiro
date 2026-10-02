@@ -4,7 +4,12 @@ Dashboards do departamento financeiro da MeuBESS, usados pela equipe **fora da C
 acesso próprio). Não se mistura com o Painel Logístico (`meubess_dashboard`), com a plataforma da MeuBESS nem com o
 Lovable.
 
-**Estado:** as **três telas** — Gestão de Contas, DRE e Contas a Receber — estão construídas e rodando localmente.
+**Estado:** as **três telas** — Gestão de Contas, DRE e **Fluxo de Caixa** — estão construídas e rodando localmente.
+A Tela 3 era Contas a Receber até 28/09/2026, quando o dono a redefiniu como Fluxo de Caixa (`docs/layout.md`), e a
+classificação de despesa fixa da gestora chegou no mesmo dia (33 fixas, 21 variáveis, 3 contas de despesa em aberto).
+O que essa tela ainda espera de resposta do dono ou da gestora, cada ponto com a pergunta e a recomendação, está em
+[`docs/passagem-fluxo-de-caixa.md`](docs/passagem-fluxo-de-caixa.md) — o registro vivo dela, e o primeiro arquivo a ler
+quem for continuar o trabalho.
 As fontes de cada número estão fechadas em [`docs/fontes.md`](docs/fontes.md), conferidas em
 [`docs/conferencia.md`](docs/conferencia.md) e comparadas com o que a tela mostra em
 [`docs/telas-conferidas.md`](docs/telas-conferidas.md). Os **filtros** de cada tela — onde valem e onde não valem, com um
@@ -12,6 +17,10 @@ caso real conferido para cada um — estão em [`docs/filtros.md`](docs/filtros.
 filtro**, medido fase por fase e antes e depois da base local, está em [`docs/desempenho.md`](docs/desempenho.md).
 
 ## As três telas
+
+### Pendências do financeiro
+
+`/pendencias` mostra pedidos em português simples para qualquer pessoa com login responder em texto e até cinco anexos de 15 MB cada. O pedido, a resposta, quem respondeu, a hora e os anexos ficam só no volume privado (`MEUBESS_DADOS_DIR` ou `RAILWAY_VOLUME_MOUNT_PATH`; localmente `.cache/servidor`). Pela decisão do dono em 02/10/2026, esse conteúdo pode incluir datas e valores em reais, mas não entra em Git, log ou documentação versionada. A Central busca as respostas e as entrega diretamente ao Gestor. A ponte exige `PENDENCIAS_PONTE_SEGREDO` em `Authorization: Bearer`; sem a variável, recusa tudo. O contrato de rotas e campos está em [`docs/ponte-pendencias.md`](docs/ponte-pendencias.md). `npm test` verifica a persistência e os anexos; `npm run testar-login` verifica as rotas com o servidor.
 
 As referências visuais ficam em [`docs/referencias/`](docs/referencias/) — elas dizem **quais blocos** cada tela tem.
 O que cada tela mostra e de onde vem cada número fica em [`docs/fontes.md`](docs/fontes.md) — é o contrato do projeto:
@@ -66,6 +75,14 @@ gravar a captura. Quatro desenhos continuam sendo CSS ou SVG escrito à mão, po
 biblioteca: a fita dos doze meses do cartão da Tela 2, a rosca por status da Tela 3 e as barras do "o que cada filtro
 alcança".
 
+### No Railway, com login (desde 29/09/2026)
+
+O app está pronto para rodar no Railway — e **não foi publicado**. Lá ele sobe por `npm run servidor`, em `0.0.0.0` e
+na porta `$PORT`, e **tudo exige login** por e-mail e senha (as três telas, a tela de administrador `/admin` e toda
+rota de API, inclusive o `POST /api/atualizar`). O DFC chega do PC do dono por `npm run financeiro-enviar-dfc`. As
+variáveis de ambiente (só os nomes), o volume, o primeiro administrador e o envio do DFC estão em
+[`docs/deploy-railway.md`](docs/deploy-railway.md). A prova do login é `npm run testar-login`.
+
 ### Subir o app neste computador
 
 ```
@@ -95,7 +112,7 @@ Cada tela abre no **mês corrente**, e as três têm seletor de mês e o botão 
 |---|---|
 | **Tela 1 — Gestão de Contas** | <http://127.0.0.1:4781/?ano=2026&mes=8> |
 | **Tela 2 — DRE** | <http://127.0.0.1:4781/dre?ano=2026&mes=8> |
-| **Tela 3 — Contas a Receber** | <http://127.0.0.1:4781/receber?ano=2026&mes=8> |
+| **Tela 3 — Fluxo de Caixa** | <http://127.0.0.1:4781/fluxo-de-caixa?ano=2026&mes=8> |
 
 As **empresas 1 e 2 entram somadas** — e, desde 27/09/2026, o **filtro de empresa** (`?empresa=1`, `?empresa=2` ou as
 duas) escolhe quais das duas entram na soma, nas três telas. O recorte é o da MeuBESS.
@@ -124,13 +141,18 @@ e fevereiro têm o DFC cheio e quase nenhum lançamento do Omie no recorte da Me
 dois meses misturam um lado cheio com outro vazio e a coluna não se lê como DRE. A leitura do Omie que está no cache
 vai de **01/01 a 30/09**; mês fora dessa janela não vira coluna.
 
-A **Tela 3 é a carteira de títulos a receber** e fica **no Omie inteira**: o DFC é caixa e não registra carteira em
-aberto nem tem cadastro de cliente. O seletor de mês é a **janela de vencimento** da consulta, e as três faixas
-(pago, atrasado, em aberto) são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. Num mês já
-fechado o cartão **Valor Pendente** é sempre zero — todo título que venceu está pago ou atrasado —, e a própria tela
-diz isso; escolha um mês à frente (por exemplo <http://127.0.0.1:4781/receber?ano=2026&mes=10>) para ver a carteira a
-vencer. O **nome do cliente** aparece na tela, vindo de `geral/clientes`, e **nunca** em arquivo versionado: a
-captura troca cada nome pelo código antes de gravar.
+A **Tela 3 é o Fluxo de Caixa** desde 28/09/2026, e mistura as duas fontes: o caixa do mês vem do DFC e o que falta
+pagar e receber vem do Omie. Ela tem oito cartões — seis são cartões que já existiam, pelo mesmo cálculo — e quatro
+números que nasceram nela: as **despesas fixas pagas** (pela lista que a gestora respondeu), o **peso delas na receita
+líquida**, a **projeção do mês** e o **mês dia a dia** num gráfico só, consolidado e previsão, partindo da posição de
+caixa real. Embaixo do gráfico diário a tela **confere a posição com o saldo dos bancos da planilha**, e a conta que
+fecha os dois está em [`docs/fontes.md`](docs/fontes.md); em setembro e em agosto de 2026 ela fecha sem sobra.
+
+A **carteira de títulos a receber** continua calculada em `lib/indicadores/tela-3.mjs` — é dela que sai o "ainda a
+receber no mês" —, mas não é mais uma tela: `/receber` leva para `/fluxo-de-caixa`. Ela fica **no Omie inteira** (o DFC
+é caixa e não registra carteira em aberto nem tem cadastro de cliente), e as três faixas (pago, atrasado, em aberto)
+são o de-para dos oito `cStatus` do Omie que o dono decidiu em 25/09/2026. O **nome do cliente** nunca entra em
+arquivo versionado: a captura troca cada nome pelo código antes de gravar.
 
 **As fontes são relidas de hora em hora** (decisão do dono, 25/09/2026), e "atualizar agora" força a releitura na
 hora. Desde 27/09/2026 reler o Omie quer dizer **ir à API do Omie**, não só reabrir o cache: a releitura busca as 22
@@ -158,7 +180,7 @@ total pode bater por acaso com a repartição errada. Os números esperados são
 `docs/conferencia.md`, não recalculados, para o teste não comparar o código com ele mesmo. O comando sai com erro se
 alguma linha ficar **divergente**.
 
-**Um indicador dos 36 não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
+**Um indicador não é de agosto, e a regra dele explica por quê.** A faixa "em aberto" do cartão
 "Valor pendente" da Tela 3 é vazia em qualquer mês fechado, porque os quatro `cStatus` dela são os de um título que
 ainda não venceu. `docs/conferencia.md` mede essa faixa noutra janela de vencimento e diz na própria linha qual foi;
 o teste **lê a janela do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
@@ -283,6 +305,9 @@ cada bloco de cada tela mostra sem o Omie está em [`docs/filtros.md`](docs/filt
 |---|---|
 | `lib/regras/` | **as regras, num lugar só.** O recorte da MeuBESS, os três baldes, as listas que o dono decidiu, o vocabulário do DFC e a leitura das planilhas. `scripts/numeros-das-telas.mjs` (a conferência) e o app importam **estes mesmos** arquivos — nenhuma regra é copiada de um lado para o outro. |
 | `lib/indicadores/` | cada tela: o valor que ela mostra e a contagem que a conferência confere, montados com as regras acima. |
+| `app/linha-do-dre.js` | a linha do DRE que **abre o que ela soma** no clique (30/09/2026): as "(=)" abrem as linhas que as somam; as outras, a soma por categoria e cada lançamento. Os itens vêm de `composicao`, em `lib/indicadores/tela-2.mjs`; `npm run testar-detalhe-dre` confere que o total é o valor da linha. O `Detalhamento` daqui é também o que os cartões abrem. |
+| `app/cartao-explodivel.js` | o cartão do topo que **abre o que ele soma** no clique, nas três telas (01/10/2026): lista, conta ou razão, numa faixa abaixo da fila de cartões. `npm run testar-detalhe-cartoes` confere que o total é o valor do cartão. |
+| `lib/indicadores/composicao.mjs` | o formato do "o que este número soma" (item do Omie, título em aberto, linha do DFC; lista, conta e razão), num lugar só para as linhas do DRE e os cartões. Não é regra: só devolve, item a item, o que o número já somou. |
 | `lib/dados.mjs` | a camada de dados do servidor: releitura de hora em hora e o "atualizar agora". |
 | `lib/regras/omie-releitura.mjs` | a releitura do Omie pelas telas: quais leituras, uma volta por vez, a hora da última. |
 | `lib/regras/omie-api.mjs` | a chamada ao Omie — endereço, credencial, tentativas, e o guarda do "só consulta". |
@@ -294,6 +319,11 @@ cada bloco de cada tela mostra sem o Omie está em [`docs/filtros.md`](docs/filt
 | `scripts/conferir-chave-omie.mjs` | confere a chave "incluir dados do Omie": ligada não muda nada, desligada o lado do DFC não se move e o do Omie sai como ausência (`null`), nunca como zero. |
 | `scripts/de-para-empresa-dfc.mjs` | o cruzamento que procurou o de-para da coluna `EMP.` do DFC com as filiais do Omie — e mostrou que ele não existe. |
 | `scripts/subir-local.mjs` | sobe o app em modo de produção, preso em 127.0.0.1:4781. |
+| `scripts/subir-servidor.mjs` | sobe o app no Railway: 0.0.0.0, `$PORT`, com login, e o `.cache/` no volume. |
+| `lib/acesso/` | o login: o cadastro de quem entra (`usuarios.mjs`, senha só em scrypt), a sessão por cookie assinado (`sessao.mjs`) e onde o servidor guarda o que sobrevive a um redeploy (`armazenamento.mjs`). |
+| `proxy.js` | a porta de todo pedido: sem login, tela vai para `/entrar` e API dá 401; `/admin` só para administrador. |
+| `lib/regras/dfc-guardado.mjs` | o DFC que o PC mandou, guardado no servidor, com a hora do envio. |
+| `scripts/financeiro-enviar-dfc.mjs` | lê as planilhas do DFC neste PC e manda para o servidor (endereço em `MEUBESS_SERVIDOR_URL`). |
 | `app/` | as telas. As **cores da marca ficam só em `app/globals.css`**, em variáveis — inclusive a cor de cada série de gráfico. |
 | `app/graficos.js` | os gráficos da Tela 1 (Recharts), desenhados no servidor. Sem cor e sem regra: chega o número pronto e sai o desenho. |
 | `app/dinheiro.js` | o formato do dinheiro e do percentual, num lugar só — é a forma que a trava da captura sabe apagar. |
@@ -307,8 +337,9 @@ achado pelo formato do nome ou vem de `DFC_DIR`, porque o caminho real tem nome 
 
 ### O que ainda não existe
 
-Login com a conta Microsoft e a lista de e-mails liberados pelo dono; o deploy na Vercel. Enquanto o login não
-existe, **o app roda só local**. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **fornecedor, conta
+O deploy: o app está pronto para o Railway, com login por e-mail e senha ([`docs/deploy-railway.md`](docs/deploy-railway.md)),
+mas nada foi publicado, e o envio do DFC pelo PC não está agendado. O login com a conta Microsoft e a leitura do DFC
+pelo Microsoft Graph, do plano da Vercel, não foram feitos. Dos filtros, existem os que `docs/fontes.md` registra e nada além: **fornecedor, conta
 corrente, categoria e situação nas Telas 1 e 2** e outros esperam decisão do dono (o de **empresa** existe desde
 27/09/2026, nas três telas). Também não existe o seletor **"ver por centro de custo
 (Omie)"** que `docs/fontes.md` descreve na linha do "Top 10 despesas" — ele trocaria as barras do DFC por barras do Omie

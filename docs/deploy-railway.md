@@ -6,11 +6,14 @@ servidor precisa (só **nomes** de variável, nunca valores) e onde ele guarda o
 
 ## O que o Railway roda
 
-Está em [`railway.json`](../railway.json), na raiz, que o Railway lê sozinho:
+O build é o [`Dockerfile`](../Dockerfile) da raiz, e só ele: o [`railway.json`](../railway.json) diz o mesmo
+(`builder: DOCKERFILE`), mas o Railway pode ignorá-lo (Config as Code está obsoleto; ver `docs/no-ar.md`), então o
+comando de início vale também pelo `CMD` do Dockerfile. No painel do serviço, *Custom Start Command* fica vazio ou
+`npm run servidor` — **nunca** `npm run start`, que desliga o login.
 
 | passo | comando | o que faz |
 |---|---|---|
-| build | `npm run build` | `next build` em modo de produção (`scripts/subir-local.mjs --so-build`, o mesmo build de sempre) |
+| build | `npm run build` (no Dockerfile) | `next build` em modo de produção (`scripts/subir-local.mjs --so-build`, o mesmo build de sempre) |
 | start | `npm run servidor` | `scripts/subir-servidor.mjs`: sobe o `next start` em **`0.0.0.0`** e na porta **`$PORT`** que o Railway manda, **com login** |
 | saúde | `GET /entrar` | a tela de entrar é a única página que responde 200 sem login |
 

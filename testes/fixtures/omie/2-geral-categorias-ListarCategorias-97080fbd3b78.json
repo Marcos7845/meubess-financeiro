@@ -1,0 +1,14 @@
+{
+ "pagina": 1,
+ "total_de_paginas": 1,
+ "categoria_cadastro": [
+  {
+   "codigo": "1.01.01",
+   "descricao": "Receita de teste"
+  },
+  {
+   "codigo": "1.04.97",
+   "descricao": "Outra receita de teste"
+  }
+ ]
+}

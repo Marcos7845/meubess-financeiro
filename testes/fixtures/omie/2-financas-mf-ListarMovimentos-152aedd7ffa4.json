@@ -1,0 +1,38 @@
+{
+ "nPagina": 1,
+ "nTotPaginas": 1,
+ "movimentos": [
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9101,
+    "nCodCC": 222,
+    "cNatureza": "R",
+    "cCodCateg": "1.04.97"
+   },
+   "resumo": {
+    "nValPago": 20
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9102,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01"
+   },
+   "resumo": {
+    "nValPago": 35
+   }
+  }
+ ]
+}

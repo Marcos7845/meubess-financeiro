@@ -1,0 +1,30 @@
+{
+  "_o_que_e": "fixture de teste: contas inventadas, sem relação com contas reais",
+  "recorte_das_telas": "MeuBESS",
+  "contas": [
+    {
+      "chave": "1|111",
+      "empresa": 1,
+      "nCodCC": 111,
+      "descricao": "BANCO A",
+      "negocio": "MeuBESS",
+      "dito_como": "Banco A"
+    },
+    {
+      "chave": "2|222",
+      "empresa": 2,
+      "nCodCC": 222,
+      "descricao": "BANCO A",
+      "negocio": "MeuBESS",
+      "dito_como": "Banco A"
+    },
+    {
+      "chave": "1|999",
+      "empresa": 1,
+      "nCodCC": 999,
+      "descricao": "BANCO Z",
+      "negocio": "Outro negócio",
+      "dito_como": "Banco Z"
+    }
+  ]
+}

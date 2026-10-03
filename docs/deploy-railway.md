@@ -98,12 +98,28 @@ aberta daquela pessoa. Todo mundo ativo vê as três telas; só administrador en
   [`proxy.js`](../proxy.js) (o antigo *middleware* do Next 16) e, de novo, dentro de cada rota e de cada tela. Livres
   só `/entrar` e `/api/entrar`. `/api/dfc` não usa login de pessoa: exige `DFC_ENVIO_SEGREDO`.
 - **E-mail sem cadastro, pessoa desativada e senha errada** recebem a mesma resposta. 8 erros em 15 minutos do mesmo
-  endereço para o mesmo e-mail travam as tentativas até a janela passar.
+  endereço para o mesmo e-mail, ou 20 para o mesmo e-mail de qualquer endereço, travam as tentativas até a janela passar.
 - Um POST vindo de outro site (cabeçalho `Origin` de outro endereço) é recusado.
 
-A prova: `npm run testar-login` sobe o app de verdade, com login, numa porta de teste, e confere 32 coisas —
+A prova: `npm run testar-login` sobe o app de verdade, com login, numa porta de teste, e confere 56 coisas —
 entre elas, que as telas e o `POST /api/atualizar` sem login são recusados, que com login passam e que um e-mail sem
 cadastro é barrado.
+
+## O que mudou em 03/10/2026: três brechas fechadas antes de publicar
+
+- **Limite de tentativas.** Antes, o endereço era o *primeiro* valor do `x-forwarded-for`, que o próprio cliente
+  escreve: trocar o cabeçalho a cada tentativa zerava o limite. Agora vale o **último salto** (o que o proxy do Railway
+  acrescenta), e há uma segunda contagem **só pelo e-mail**, 20 erros em 15 minutos, que nenhum cabeçalho zera. O preço:
+  quem errar 20 vezes um e-mail alheio trava esse e-mail por 15 minutos. Código em `app/api/entrar/route.js`.
+- **Teto do mapa de tentativas.** O mapa em memória (`lib/acesso/tentativas.mjs`) não passa de **5.000 entradas**:
+  poda as vencidas e, se ainda estiver cheio, descarta as mais antigas (a chave atacada agora é a última a sair).
+- **Zip descompactado.** Um `.xlsx` é um zip, e o limite de 60 MB do `PUT /api/dfc` é do comprimido. Agora o servidor
+  lê só o diretório central do zip, sem descompactar, e recusa com 413 o que somar mais de **200 MB descompactados**
+  (as planilhas do DFC de 2026 dão cerca de 61 MB cada), além de zip64 e do que não for zip. O leitor
+  (`lib/regras/xlsx.mjs`) também para de descompactar em 200 MB, se um diretório central mentir o tamanho. Os anexos
+  `.zip`, `.xlsx` e `.ods` das pendências passam pelo mesmo teto, porque a Central pode abri-los.
+
+O `npm run testar-login` prova as três: casos "x-forwarded-for", "teto do mapa" e "zip descompactado".
 
 ## O DFC, fora do OneDrive
 

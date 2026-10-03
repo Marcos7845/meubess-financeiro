@@ -13,6 +13,8 @@
 //     desativada, a sessão dela cai e ela não entra mais; um POST vindo de outro site é recusado;
 //   - /api/dfc: sem o segredo ou com o errado, 401; com o certo, guarda a planilha, fecha o envio e a tela mostra a
 //     hora do envio.
+//   - o limite de tentativas não zera trocando o x-forwarded-for, e o mapa de tentativas respeita o teto;
+//   - um zip descompactado acima do teto é recusado no /api/dfc e como anexo de pendência.
 //
 // ISOLADO DE TUDO O QUE É DE VERDADE: o cadastro e o DFC vão para uma pasta temporária (`MEUBESS_DADOS_DIR`),
 // apagada no fim; os segredos e a senha do administrador de teste são sorteados na hora e não são impressos;
@@ -26,6 +28,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import zlib from 'node:zlib';
+import { criarLimite } from '../lib/acesso/tentativas.mjs';
+import { TETO_DESCOMPACTADO } from '../lib/regras/xlsx.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT = path.join(RAIZ, 'node_modules', 'next', 'dist', 'bin', 'next');
@@ -93,6 +98,23 @@ async function pedir(caminho, { metodo = 'GET', cookie, form, json, cabecalhos =
   return { status: r.status, local: r.headers.get('location'), texto, setCookie, cookie: setCookie ? setCookie.split(';')[0] : null };
 }
 
+// Um zip de um arquivo só, comprimido (deflate). `declarado` troca o tamanho descompactado que o diretório central
+// anuncia, para provar que a recusa lê só o diretório.
+function zipCom(nome, conteudo, { declarado = conteudo.length } = {}) {
+  const n = Buffer.from(nome), comp = zlib.deflateRawSync(conteudo), crc = zlib.crc32(conteudo);
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(8, 8);
+  local.writeUInt32LE(crc, 14); local.writeUInt32LE(comp.length, 18); local.writeUInt32LE(conteudo.length, 22); local.writeUInt16LE(n.length, 26);
+  const central = Buffer.alloc(46);
+  central.writeUInt32LE(0x02014b50, 0); central.writeUInt16LE(20, 4); central.writeUInt16LE(20, 6); central.writeUInt16LE(8, 10);
+  central.writeUInt32LE(crc, 16); central.writeUInt32LE(comp.length, 20); central.writeUInt32LE(declarado, 24); central.writeUInt16LE(n.length, 28);
+  const inicioCentral = local.length + n.length + comp.length;
+  const fim = Buffer.alloc(22);
+  fim.writeUInt32LE(0x06054b50, 0); fim.writeUInt16LE(1, 8); fim.writeUInt16LE(1, 10);
+  fim.writeUInt32LE(central.length + n.length, 12); fim.writeUInt32LE(inicioCentral, 16);
+  return Buffer.concat([local, n, comp, central, n, fim]);
+}
+
 async function entrar({ email, senha }) { return pedir('/api/entrar', { metodo: 'POST', form: { email, senha, volta: '/dre' } }); }
 
 let falhas = 0, total = 0;
@@ -144,6 +166,28 @@ try {
   const flags = r.setCookie ? r.setCookie.split(';').slice(1).map((s) => s.trim().split('=')[0]).join(', ') : '';
   confere('o administrador entra (primeiro admin veio do ambiente)', r.status === 303 && r.local === '/dre' && Boolean(r.cookie), `${r.status} → ${r.local}, cookie com ${flags}`);
   const admin = r.cookie;
+
+  console.log('\nlimite de tentativas');
+  // E-mails sem cadastro, só deste teste, para não travar o administrador nem a pessoa.
+  const errarCom = (email, xff) => pedir('/api/entrar', { metodo: 'POST', form: { email, senha: 'senha-errada-longa', volta: '/dre' }, cabecalhos: { 'X-Forwarded-For': xff } });
+  const alvo1 = 'alvo-1-de-teste@exemplo.com.br', alvo2 = 'alvo-2-de-teste@exemplo.com.br';
+  for (let i = 0; i < 8; i++) await errarCom(alvo1, `198.51.100.${i}, 203.0.113.9`);
+  r = await errarCom(alvo1, '198.51.100.99, 203.0.113.9');
+  confere('x-forwarded-for: trocar o primeiro valor não zera o limite (vale o último salto)', r.local?.startsWith('/entrar?erro=espera'), `9ª tentativa → ${r.local}`);
+  for (let i = 0; i < 20; i++) await errarCom(alvo2, `198.51.100.${i}`);
+  r = await errarCom(alvo2, '198.51.100.250');
+  confere('x-forwarded-for: trocar o cabeçalho inteiro a cada tentativa não zera o limite (teto por e-mail)', r.local?.startsWith('/entrar?erro=espera'), `21ª tentativa → ${r.local}`);
+  r = await errarCom(alvo1.replace('1', '3'), '198.51.100.1');
+  confere('x-forwarded-for: outro e-mail segue livre', r.local?.startsWith('/entrar?erro=1'), `→ ${r.local}`);
+
+  {
+    const limite = criarLimite({ janelaMs: 1000, teto: 50 });
+    for (let i = 0; i < 500; i++) { limite.errou(`chave-${i}`, 0); if (i % 5 === 0) limite.errou('atacada', 0); }
+    confere('teto do mapa: 500 chaves num mapa de teto 50 deixam 50 entradas', limite.tamanho === 50, `${limite.tamanho} entradas`);
+    confere('teto do mapa: a chave atacada agora continua contada e travada', limite.bloqueado('atacada', 8, 0), `travada: ${limite.bloqueado('atacada', 8, 0)}`);
+    limite.errou('depois-da-janela', 2000);
+    confere('teto do mapa: as entradas vencidas são podadas', limite.tamanho === 1, `${limite.tamanho} entrada depois da janela`);
+  }
 
   console.log('\ncom login');
   for (const tela of ['/', '/dre', '/fluxo-de-caixa']) {
@@ -208,8 +252,8 @@ try {
   confere('a senha é guardada só embaralhada (scrypt)', !cadastro.includes(ADMIN.senha) && !cadastro.includes(outra) && (cadastro.match(/"scrypt\$/g) ?? []).length === 2, 'nenhuma senha em claro no usuarios.json');
 
   console.log('\no DFC mandado pelo PC');
-  // Uma planilha de mentira: basta começar como um zip. A tela não consegue abri-la, e diz isso junto da hora.
-  const planilha = Buffer.concat([Buffer.from('PK\x03\x04'), crypto.randomBytes(64)]);
+  // Uma planilha de mentira: um zip válido sem planilha dentro. A tela não consegue abri-la, e diz isso junto da hora.
+  const planilha = zipCom('xl/workbook.xml', crypto.randomBytes(64));
   const sha = crypto.createHash('sha256').update(planilha).digest('hex');
   const lista = { arquivos: [{ nome: '09 - DFC - SET2026.xlsx', sha256: sha }] };
   const comSegredo = (s) => ({ Authorization: `Bearer ${s}` });
@@ -226,6 +270,22 @@ try {
   confere('POST /api/dfc fecha o envio e grava a hora', gravado.ok === true && fs.existsSync(path.join(dados, 'dfc', 'envio.json')), `${r.status}, ${gravado.arquivos} arquivo`);
   r = await pedir('/', { cookie: admin });
   confere('a tela mostra a hora do último envio do PC', r.status === 200 && /envio do PC em|enviado pelo PC em/.test(r.texto), `${r.status}`);
+
+  console.log('\nzip descompactado');
+  // Uma bomba de verdade: zeros que descompactam acima do teto e, comprimidos, ocupam poucas centenas de KB.
+  const bomba = zipCom('xl/worksheets/sheet1.xml', Buffer.alloc(TETO_DESCOMPACTADO + 1024 * 1024));
+  r = await fetch(`${BASE}/api/dfc`, { method: 'PUT', headers: comSegredo(DFC_SEGREDO), body: bomba }).then(async (x) => ({ status: x.status, j: await x.json() }));
+  confere(`zip descompactado acima do teto é recusado no /api/dfc (${Math.round(bomba.length / 1024)} KB comprimidos)`, r.status === 413 && !fs.readdirSync(path.join(dados, 'dfc', 'pedacos')).some((f) => f.startsWith(crypto.createHash('sha256').update(bomba).digest('hex'))), `${r.status} ${r.j.erro}`);
+  const mentirosa = zipCom('xl/workbook.xml', Buffer.from('pouco'), { declarado: 0xfffffff0 });
+  r = await fetch(`${BASE}/api/dfc`, { method: 'PUT', headers: comSegredo(DFC_SEGREDO), body: mentirosa }).then(async (x) => ({ status: x.status, j: await x.json() }));
+  confere('zip descompactado: o tamanho declarado no diretório central basta para recusar', r.status === 413, `${r.status} ${r.j.erro}`);
+  const comBomba = new FormData();
+  comBomba.set('id', teste.id);
+  comBomba.set('resposta', 'Resposta com anexo grande demais.');
+  comBomba.append('anexos', new File([bomba], 'planilha.xlsx'));
+  resposta = await fetch(`${BASE}/api/pendencias/responder`, { method: 'POST', headers: { Cookie: admin, Origin: BASE }, body: comBomba, redirect: 'manual' });
+  const recusa = await resposta.text();
+  confere('zip descompactado acima do teto é recusado como anexo de pendência', resposta.status === 400 && recusa.includes('teto'), `${resposta.status}`);
 } catch (e) {
   confere('o teste rodou até o fim', false, e.message);
 }

@@ -17,6 +17,7 @@
 import crypto from 'node:crypto';
 import { fecharEnvio, guardarPedaco, ultimoEnvio } from '../../../lib/regras/dfc-guardado.mjs';
 import { esquecerSemIrAoOmie } from '../../../lib/dados.mjs';
+import { zipDentroDoTeto } from '../../../lib/regras/xlsx.mjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,9 @@ export async function PUT(pedido) {
   }
   const conteudo = Buffer.from(await pedido.arrayBuffer());
   if (conteudo.length > LIMITE_BYTES) return Response.json({ ok: false, erro: 'planilha grande demais' }, { status: 413 });
+  // O limite acima é do comprimido; o zip descompactado tem teto próprio, lido do diretório central.
+  const zip = zipDentroDoTeto(conteudo);
+  if (!zip.ok) return Response.json({ ok: false, erro: zip.motivo }, { status: zip.soma ? 413 : 400 });
   try { return Response.json({ ok: true, sha256: guardarPedaco(conteudo) }); }
   catch (e) { return Response.json({ ok: false, erro: e.message }, { status: 400 }); }
 }

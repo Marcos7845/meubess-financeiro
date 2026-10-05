@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fechamento de Saídas e DFC por unidade — setembro de 2026</title>
+  <style>
+    body{font:16px/1.5 system-ui,sans-serif;max-width:860px;margin:40px auto;padding:0 24px;color:#183045;background:#f6f8fa}
+    main{background:white;padding:32px;border:1px solid #d8e1e8;border-radius:12px}
+    h1{line-height:1.2}h2{margin-top:32px}code{background:#eef3f6;padding:2px 5px;border-radius:4px}
+    table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #d8e1e8;padding:10px;text-align:left}
+    .pendente{color:#925600}.ok{color:#196241}
+  </style>
+</head>
+<body><main>
+  <h1>Saídas e DFC por unidade · setembro de 2026</h1>
+  <p>O cartão Saídas da Tela 3 mostra o total de todas as contas e o recorte Itaú quando a unidade B3W e a situação Pago estão selecionadas. O filtro de banco continua na URL; A pagar usa títulos em aberto do Omie.</p>
+  <h2>Conferência local</h2>
+  <p class="ok">A cópia isolada em <code>.cache/reconciliacao-setembro-2026</code> passou na comparação do cartão Pago com a coluna L crua da B3W, inclusive nas linhas 3–371 do Itaú. O comando foi <code>DFC_DIR=.cache/reconciliacao-setembro-2026 node scripts/conferir-dfc-consolidado.mjs --mes 9 --telas</code>. Valores em reais permanecem somente no terminal e na tela.</p>
+  <table><thead><tr><th>Unidade</th><th>Arquivo de setembro na cópia local</th><th>Estado</th></tr></thead><tbody>
+    <tr><td>3N</td><td>não encontrado</td><td class="pendente">Conferência pendente</td></tr>
+    <tr><td>B3N</td><td>não encontrado</td><td class="pendente">Conferência pendente</td></tr>
+    <tr><td>B3W</td><td><code>09 - DFC SETEMBRO 2026.xlsx</code></td><td class="ok">Tela 1, Tela 2 e Tela 3 conferidas na cópia local</td></tr>
+    <tr><td>N3</td><td>não encontrado</td><td class="pendente">Conferência pendente</td></tr>
+  </tbody></table>
+  <p>A pasta sincronizada real não foi listada: a instrução da tarefa proíbe buscar ou ler dentro de pastas sincronizadas. Os arquivos ausentes acima referem-se somente à cópia local isolada. O consolidado das quatro unidades permanece sem conferência.</p>
+  <h2>Teste</h2>
+  <p><code>npm test</code> passou com 60 testes. O teste de Saídas verifica Pago em todas as contas, recorte Itaú e outro banco da B3W, além da situação A pagar pelo Omie.</p>
+</main></body></html>

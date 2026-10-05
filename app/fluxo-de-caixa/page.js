@@ -237,7 +237,12 @@ export default async function Pagina({ searchParams }) {
       </section>
       <section className="kpis">
         <CartaoExplodivel nome={saidas.nome} composicao={saidas.composicao} depois={<Origem c={saidas} />}>
-          <Kpi c={saidas} pe={pe(saidas)} tom="serie-despesa" />
+          <Kpi c={saidas} pe={pe(saidas)} tom="serie-despesa">
+            {saidas.recorteB3W && <div className="saidas-recortes">
+              <span>Todas as contas (B3W): <strong>{emReais(-saidas.recorteB3W.todas)}</strong></span>
+              {saidas.recorteB3W.itau !== null && <span>Itaú (B3W): <strong>{emReais(-saidas.recorteB3W.itau)}</strong></span>}
+            </div>}
+          </Kpi>
         </CartaoExplodivel>
       </section>
       {comOmie && d.vencidoAReceber.valor > 0 && (

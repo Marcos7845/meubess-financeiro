@@ -408,6 +408,8 @@ a { color: inherit; }
 .kpi .numero { font-size: 20px; font-weight: 700; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .kpi .numero.neg { color: var(--negativo); }
 .kpi .pe { font-size: 10.5px; color: var(--texto-fraco); margin-top: 3px; }
+.saidas-recortes { display: grid; gap: 3px; margin-top: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.saidas-recortes span { display: flex; justify-content: space-between; gap: 12px; }
 .kpi .sem-filtro { white-space: normal; }
 /* O "Saldo" é o primeiro e o maior porque é dele que a frase de 5 segundos fala. */
 .kpi.destaque .rotulo { color: var(--marca); }

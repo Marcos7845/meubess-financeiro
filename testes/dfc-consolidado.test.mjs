@@ -56,7 +56,9 @@ const arquivos = new Map([
   ['B3N__08 - DFC - AGOSTO2026.xlsx', arquivo([
     ['BANCO ITAÚ', [['fora', -20]]], ['BANCO SICOOB', [['fica', -30], ['Itaú no histórico', -40]]],
   ])],
-  ['B3W__08 - DFC AGOSTO 2026.xlsx', arquivo([['BANCO ITAÚ', [['igual', -50], ['igual', -50]]]])],
+  ['B3W__08 - DFC AGOSTO 2026.xlsx', arquivo([
+    ['BANCO ITAÚ', [['igual', -50], ['igual', -50]]], ['BANCO DO BRASIL', [['outra conta', -15]]],
+  ])],
   ['N3__DFC AGOSTO2026.xlsx', arquivo([['BANCO BRADESCO', [['igual', -50], ['igual', -50], ['igual', -50], ['outro', -60]]]])],
 ]);
 const fonte = { disponivel: () => true, arquivos: async () => [...arquivos.keys()], ler: async (nome) => arquivos.get(nome) };
@@ -80,22 +82,27 @@ test('filtro de unidade conserva só as linhas exclusivas da origem física', as
   const consolidado = await base.dfc({ mes: 8 });
   const n3 = await base.porUnidade('N3').dfc({ mes: 8 });
   const b3n = await base.porUnidade('B3N').dfc({ mes: 8 });
-  assert.equal(consolidado.linhas.length, 7);
+  assert.equal(consolidado.linhas.length, 8);
   assert.equal(n3.linhas.length, 2);
   assert.equal(b3n.linhas.length, 2);
   assert.ok(n3.linhas.every((l) => l.unidade === 'N3'));
 });
 
-test('Saídas pagas filtra banco sobre todas as unidades', async () => {
+test('Saídas: PAGO soma todas as contas e recorta Itaú da B3W; A PAGAR usa Omie', async () => {
   const r = await lerDfc({ fonte, ano: 2026, mes: 8, comSerie: false });
-  assert.equal(saidasPagasDoDfc(r.linhas).length, 7);
+  assert.equal(saidasPagasDoDfc(r.linhas).length, 8);
   assert.equal(saidasPagasDoDfc(r.linhas, 'BANCO SICOOB').length, 2);
   assert.equal(saidasPagasDoDfc(r.linhas, 'BANCO ITAÚ').length, 2);
+  const b3w = r.porUnidade.B3W.linhas;
+  assert.equal(selecionarSaidas({ linhas: b3w }).valor, 11500);
+  assert.equal(selecionarSaidas({ linhas: b3w, banco: 'BANCO ITAÚ' }).valor, 10000);
+  assert.equal(selecionarSaidas({ linhas: b3w, banco: 'BANCO DO BRASIL' }).valor, 1500);
   const pago = selecionarSaidas({ linhas: r.linhas, banco: 'BANCO SICOOB' });
   assert.equal(pago.fonte, 'DFC');
   assert.equal(pago.contagem, 2);
+  assert.equal(pago.valor, 7000);
   const aPagar = selecionarSaidas({ situacao: 'a-pagar', linhas: r.linhas,
-    pendentes: { valor: 123, contagem: { omie: 1 } } });
+    banco: 'ITAU', pendentes: { valor: 123, contagem: { omie: 1 } } });
   assert.deepEqual({ fonte: aPagar.fonte, valor: aPagar.valor, contagem: aPagar.contagem },
     { fonte: 'Omie', valor: 123, contagem: 1 });
 });

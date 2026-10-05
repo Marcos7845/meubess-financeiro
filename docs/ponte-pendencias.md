@@ -5,6 +5,7 @@ A Central chama o portal por HTTPS com `Authorization: Bearer <PENDENCIAS_PONTE_
 | Chamada | Corpo / resposta | Uso pela Central |
 |---|---|---|
 | `PUT /api/pendencias/ponte` | JSON `{ "id": "id-estavel", "titulo": "...", "pedido": "...", "motivo": "...", "status": "aberta" }`; status `aberta` ou `encerrada`. Resposta `{ok, pendencia}`. | Criar ou atualizar pelo mesmo `id`. Não apaga respostas anteriores. Escrever para a equipe em português simples, sem nome interno de sistema. |
+| `GET /api/pendencias/ponte/listar` | `{ok, pendencias:[{id,titulo,status,pedido,motivo}]}`. | Ler o estado atual de todas as pendências, inclusive encerradas, sem respostas ou anexos. |
 | `GET /api/pendencias/ponte?desde=0` | `{ok, marcador, respostas:[{id,pendenciaId,texto,por,em,marcador,recebidoEm,anexos:[{id,nome,tamanho}]}]}`. | Buscar respostas com marcador maior que `desde`, entregar diretamente ao Gestor e guardar o novo marcador só após processar. `por` é o e-mail do login; `em` é ISO 8601. Repetir a consulta é seguro. |
 | `GET /api/pendencias/ponte/anexos/{id}` | Bytes do arquivo, com `Content-Disposition: attachment`. | Baixar cada anexo usando o `id` devolvido na resposta. |
 | `POST /api/pendencias/ponte/recebidas` | JSON `{ "id": "id-da-resposta" }`; retorna `{ok,resposta:{id,recebidoEm}}`. | Marcar depois que a resposta e os anexos estiverem salvos pelo Gestor. Repetir não muda a hora do recebimento. |

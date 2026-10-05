@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { publicarPendencia, listarPendencias, responderPendencia, respostasDesde, obterAnexo, marcarRecebida } from '../lib/pendencias.mjs';
+import { GET as listarNaPonte } from '../app/api/pendencias/ponte/listar/route.js';
 
 const dados = fs.mkdtempSync(path.join(os.tmpdir(), 'meubess-pendencias-'));
 process.env.MEUBESS_DADOS_DIR = dados;
@@ -36,4 +37,23 @@ test('recusa caminho, tipo, tamanho, excesso de anexos e pendência encerrada', 
   await assert.rejects(() => responderPendencia({ ...base, anexos: [new File([new Uint8Array(15 * 1024 * 1024 + 1)], 'a.txt')] }), /grande/);
   await publicarPendencia({ id: 'caso-1', titulo: 'Encerrada', pedido: 'Pedido', motivo: 'Motivo', status: 'encerrada' });
   await assert.rejects(() => responderPendencia({ ...base, anexos: [] }), /não está aberta/);
+});
+
+test('GET da ponte exige Bearer e lista apenas o estado das pendências', async () => {
+  const segredoAnterior = process.env.PENDENCIAS_PONTE_SEGREDO;
+  process.env.PENDENCIAS_PONTE_SEGREDO = 'segredo-de-teste';
+  try {
+    const semToken = await listarNaPonte(new Request('http://localhost/api/pendencias/ponte/listar'));
+    assert.equal(semToken.status, 401);
+    const comToken = await listarNaPonte(new Request('http://localhost/api/pendencias/ponte/listar', {
+      headers: { Authorization: 'Bearer segredo-de-teste' },
+    }));
+    assert.equal(comToken.status, 200);
+    assert.deepEqual(await comToken.json(), { ok: true, pendencias: [{
+      id: 'caso-1', titulo: 'Encerrada', status: 'encerrada', pedido: 'Pedido', motivo: 'Motivo',
+    }] });
+  } finally {
+    if (segredoAnterior === undefined) delete process.env.PENDENCIAS_PONTE_SEGREDO;
+    else process.env.PENDENCIAS_PONTE_SEGREDO = segredoAnterior;
+  }
 });

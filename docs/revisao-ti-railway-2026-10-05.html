@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revisão TI — origem e início do MeuBESS Financeiro no Railway</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; background: #f4f6fa; color: #182536; }
+    body { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 8px; }
+    h2 { font-size: 1.2rem; margin: 0 0 12px; }
+    p { margin: 8px 0; }
+    .sub { color: #54657b; margin-bottom: 24px; }
+    .card { background: white; border: 1px solid #dbe2ea; border-radius: 12px; padding: 20px 24px; margin: 16px 0; box-shadow: 0 2px 8px #1825360a; }
+    .ok { border-left: 5px solid #15845f; }
+    .note { border-left: 5px solid #3269ba; }
+    code, pre { font: .91rem/1.5 ui-monospace, Consolas, monospace; }
+    code { overflow-wrap: anywhere; }
+    pre { white-space: pre-wrap; background: #eef2f7; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid #dbe2ea; }
+    th { width: 26%; color: #44546a; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Revisão TI do Railway</h1>
+    <p class="sub">MeuBESS · Financeiro · consulta e correção local em 05/10/2026</p>
+  </header>
+
+  <section class="card ok">
+    <h2>O que está publicado</h2>
+    <table>
+      <tr><th>Serviço</th><td><code>meubess-financeiro</code>, ambiente <code>production</code></td></tr>
+      <tr><th>Repositório</th><td><code>Marcos7845/meubess-financeiro</code> (remote local <code>ti</code>)</td></tr>
+      <tr><th>Branch</th><td><code>master</code></td></tr>
+      <tr><th>Commit ativo</th><td><code>b576ab5af78aa5521b79e9ede94ca5dcb170dcc2</code></td></tr>
+      <tr><th>Revisão 6ec4275</th><td>Já está na história da branch publicada: <code>git merge-base --is-ancestor 6ec4275 ti/master</code> retornou 0.</td></tr>
+    </table>
+    <p>Entre <code>6ec4275</code> e <code>b576ab5</code> há um commit que troca <code>RAILPACK</code> por <code>DOCKERFILE</code>, aponta para <code>Dockerfile</code> e atualiza a documentação. O Dockerfile já tinha <code>CMD ["npm", "run", "servidor"]</code> em <code>6ec4275</code>.</p>
+  </section>
+
+  <section class="card note">
+    <h2>Provas de leitura</h2>
+    <pre>railway status --json
+meta.branch: master
+meta.repo: Marcos7845/meubess-financeiro
+meta.commitHash: b576ab5af78aa5521b79e9ede94ca5dcb170dcc2
+serviceManifest.build.builder: DOCKERFILE
+serviceManifest.deploy.startCommand: npm run servidor
+status: SUCCESS</pre>
+    <pre>git ls-remote ti refs/heads/master refs/heads/claude/integra-login
+b576ab5af78aa5521b79e9ede94ca5dcb170dcc2  refs/heads/claude/integra-login
+b576ab5af78aa5521b79e9ede94ca5dcb170dcc2  refs/heads/master</pre>
+    <pre>curl.exe -sS -o NUL -D - https://financeiro.meubess.com.br/
+HTTP/1.1 307 Temporary Redirect
+location: /entrar?volta=%2F</pre>
+    <p>A requisição pública sem sessão confirma que a página inicial exige entrada no deploy ativo.</p>
+  </section>
+
+  <section class="card ok">
+    <h2>Entrega local</h2>
+    <p>Branch <code>codex/railway-dockerfile-6ec4275</code>, criada a partir de <code>6ec4275</code>. Commit <code>0459653145f1203d50aa11931c0e7a7d321cec99</code>: <code>railway.json</code> define apenas o builder <code>DOCKERFILE</code> e o caminho <code>Dockerfile</code>; o Dockerfile conserva o <code>CMD</code> com <code>npm run servidor</code> e esclarece o início da imagem sem comando externo. Não existe <code>nixpacks.toml</code> nessa branch.</p>
+    <table>
+      <tr><th>Comando</th><th>Resultado</th></tr>
+      <tr><td><code>npm test</code></td><td>28 testes passaram; 0 falharam.</td></tr>
+      <tr><td><code>npm run testar-login</code></td><td>47 verificações passaram; 0 falharam.</td></tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Passo restante</h2>
+    <p>A correção funcional já está na <code>master</code> publicada pelo TI. Para incorporar também o hash local <code>0459653</code>, o dono ou o TI pode executar <code>git push ti codex/railway-dockerfile-6ec4275</code> e integrar essa branch na <code>master</code> de <code>Marcos7845/meubess-financeiro</code>. Nenhum push ou deploy foi feito nesta revisão.</p>
+  </section>
+</body>
+</html>

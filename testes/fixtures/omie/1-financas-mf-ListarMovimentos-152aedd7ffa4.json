@@ -1,0 +1,214 @@
+{
+ "nPagina": 1,
+ "nTotPaginas": 1,
+ "movimentos": [
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 1,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_A_RECEBER",
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01",
+    "nValorTitulo": 100
+   },
+   "resumo": {
+    "nValPago": 100
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 1,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9001,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01"
+   },
+   "resumo": {
+    "nValPago": 100
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9002,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01"
+   },
+   "resumo": {
+    "nValPago": 30
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 2,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_A_RECEBER",
+    "nCodCC": 999,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01",
+    "nValorTitulo": 70
+   },
+   "resumo": {
+    "nValPago": 70
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9003,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.05.01"
+   },
+   "resumo": {
+    "nValPago": 40
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9004,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.04.97"
+   },
+   "resumo": {
+    "nValPago": 15
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "CANCELADO",
+    "cOrigem": "",
+    "nCodTitulo": 3,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_A_RECEBER",
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01",
+    "nValorTitulo": 60
+   },
+   "resumo": {
+    "nValPago": 60
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "ADCR",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_PAG",
+    "nCodMovCC": 9005,
+    "nCodCC": 111,
+    "cNatureza": "P",
+    "cCodCateg": "2.01.01"
+   },
+   "resumo": {
+    "nValPago": 25
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "ADCP",
+    "nCodTitulo": 10,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_A_PAGAR",
+    "nCodCC": 111,
+    "cNatureza": "P",
+    "cCodCateg": "2.01.01",
+    "nValorTitulo": 80
+   },
+   "resumo": {
+    "nValPago": 80
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "BAIXA",
+    "nCodTitulo": 10,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_PAG",
+    "nCodMovCC": 9006,
+    "nCodCC": 111,
+    "cNatureza": "P",
+    "cCodCateg": "2.01.01"
+   },
+   "resumo": {
+    "nValPago": 80
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 11,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_A_PAGAR",
+    "nCodCC": 111,
+    "cNatureza": "P",
+    "cCodCateg": "2.01.01",
+    "nValorTitulo": 45
+   },
+   "resumo": {
+    "nValPago": 45
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 12,
+    "dDtPagamento": "05/08/2026",
+    "cGrupo": "CONTA_CORRENTE_PAG",
+    "nCodMovCC": 9007,
+    "nCodCC": 111,
+    "cNatureza": "P",
+    "cCodCateg": "2.01.01"
+   },
+   "resumo": {
+    "nValPago": 12
+   }
+  },
+  {
+   "detalhes": {
+    "cStatus": "PAGO",
+    "cOrigem": "",
+    "nCodTitulo": 0,
+    "dDtPagamento": "05/07/2026",
+    "cGrupo": "CONTA_CORRENTE_REC",
+    "nCodMovCC": 9008,
+    "nCodCC": 111,
+    "cNatureza": "R",
+    "cCodCateg": "1.01.01"
+   },
+   "resumo": {
+    "nValPago": 9
+   }
+  }
+ ]
+}

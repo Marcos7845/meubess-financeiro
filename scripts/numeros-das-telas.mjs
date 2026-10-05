@@ -123,7 +123,7 @@ const falhar = (m) => { console.error(m); process.exit(1); };
 // de `--hoje`.
 
 const JANELAS_ABERTO = { corrente: JANELA_CORRENTE, seguinte: JANELA_SEGUINTE };
-const OMIE = abrirCacheOmie({ raiz: RAIZ, ano: ANO, janelasAberto: JANELAS_ABERTO, aoFaltar: falhar });
+const OMIE = abrirCacheOmie({ raiz: RAIZ, ano: ANO, janelasAberto: JANELAS_ABERTO, aoFaltar: falhar, hoje: HOJE });
 const { EMPRESAS, arqCache, arquivosDoCache, paginas, movimentos, titulosR, titulosP, categorias,
   departamentos, pedidos, cpVenc, comDep, clientes, contasDre, titulosAberto } = OMIE;
 // O CARIMBO: de que leitura do Omie são os números desta rodada. Nasce em `lib/regras/cache-omie.mjs` e vai para as

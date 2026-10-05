@@ -6,10 +6,13 @@
 // Este script faz essas leituras e grava no mesmo cache, com a mesma chave (empresa + serviço + método +
 // sha1 dos parâmetros), para que o outro script as ache sozinho.
 //
-// SÓ LEITURA. Cinco leituras, todas por método de consulta, nenhum que inclua, altere ou exclua:
+// SÓ LEITURA. Seis leituras, todas por método de consulta, nenhum que inclua, altere ou exclua:
+//   0. `financas/mf` → `ListarMovimentos` SEM `cTpLancamento` por data de pagamento (01/01 a 31/12 do ano; as telas
+//      cortam o que vem depois de hoje), a leitura que `docs/fontes.md` conta. Entrou aqui em 05/10/2026, quando a
+//      faixa deixou de terminar em 30/09 e a chave dela mudou.
 //   1. `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"` por VENCIMENTO (01/01 a 31/12 do ano)
 //      — "Despesas pendentes" da Tela 1.
-//   2. `financas/mf` → `ListarMovimentos` SEM `cTpLancamento` por data de pagamento (01/01 a 30/09), a mesma
+//   2. `financas/mf` → `ListarMovimentos` SEM `cTpLancamento` por data de pagamento (01/01 a 31/12), a mesma
 //      leitura que `docs/fontes.md` conta, mas COM `cExibirDepartamentos: "S"` — "Top 10 despesas" da Tela 1.
 //   3. `geral/clientes` → `ListarClientesResumido` — o eixo do "Valor previsto por cliente" da Tela 3.
 //   4. `geral/dre` → `ListarCadastroDRE` — o `totalizaDRE` da "Receita bruta" da Tela 2.
@@ -84,10 +87,11 @@ async function todasAsPaginas(emp, servico, call, param, campo, rotulo) {
   return itens;
 }
 
-// ---------------------------------------------------------------- as cinco leituras
+// ---------------------------------------------------------------- as seis leituras
 //
 // TODAS SAEM DE `leiturasDe()` em `lib/regras/cache-omie.mjs`, que é o arquivo por onde as telas ACHAM cada leitura
 // no cache. Por isso o que este script grava cai exatamente na chave que a tela vai abrir.
+//   0. `MF`       — a leitura de caixa que `docs/fontes.md` conta (de 01/01 a 31/12; as telas cortam em hoje).
 //   1. `CP_VENC`  — títulos a pagar em aberto por VENCIMENTO, o "Despesas pendentes" da Tela 1.
 //   2. `MF_DEP`   — a leitura de caixa que `docs/fontes.md` conta, COM o rateio por departamento.
 //   3. `CLIENTES` — o cadastro de clientes, resumido.
@@ -101,6 +105,7 @@ async function principal() {
 
   for (const emp of EMPRESAS) {
     console.log(`  empresa ${emp}`);
+    await todasAsPaginas(emp, 'financas/mf', 'ListarMovimentos', L.MF, 'movimentos', 'caixa por data de pagamento');
     await todasAsPaginas(emp, 'financas/mf', 'ListarMovimentos', L.CP_VENC, 'movimentos', 'títulos a pagar por vencimento (CP)');
     await todasAsPaginas(emp, 'financas/mf', 'ListarMovimentos', L.MF_DEP, 'movimentos', 'caixa com departamentos');
     await todasAsPaginas(emp, 'geral/clientes', 'ListarClientesResumido', L.CLIENTES, 'clientes_cadastro_resumido', 'clientes (resumido)');

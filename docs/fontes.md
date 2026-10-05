@@ -363,6 +363,68 @@ O que o pedido **não** é: não traz data de pagamento nem quanto já foi receb
 `ListarMovimentos` nos números (o regime de caixa continua no título). Ele entra só onde o título não responde —
 descrição e produto — e essas linhas dizem "pedido de venda" na coluna de filtro.
 
+### A janela da leitura de caixa e o mês que as telas abrem (decisão do dono, 05/10/2026)
+
+**O mês de abertura é o corrente.** Sem `?mes=` na URL, as três telas abrem no mês de hoje, pelo relógio do servidor
+(`mesCorrente()` em `lib/dados.mjs`; a decisão é de 25/09/2026 e o dono a reafirmou em 05/10/2026). O DRE (Tela 2)
+segue sem coluna de janeiro a março e abre no mês corrente a partir de abril.
+
+**A leitura de caixa vai até hoje.** Até 04/10/2026 as duas leituras por data de pagamento — `financas/mf` →
+`ListarMovimentos` sem `cTpLancamento` (a que conta) e a mesma com `cExibirDepartamentos: "S"` (rateio por centro de
+custo) — eram pedidas com `dDtPagtoAte` fixo em **30/09** do ano. Por isso o mês corrente, outubro, abria sem nenhum
+movimento do Omie. A partir de 05/10/2026:
+
+- a pergunta ao Omie vai de `01/01` a **`31/12`** do ano (`leiturasDe()` em `lib/regras/cache-omie.mjs`). O fim do ano,
+  e não a data do dia, mantém a **mesma chave de cache o ano inteiro**. Com a data do dia, a chave mudaria à meia-noite,
+  e a tela ficaria sem leitura até a primeira releitura do dia terminar;
+- ao abrir o cache, **o movimento com `detalhes.dDtPagamento` depois de hoje fica de fora** (`abrirCacheOmie`, no mesmo
+  arquivo). O que as telas e a conferência contam é, portanto, o pago e o recebido **de 01/01 até hoje**. Num ano já
+  encerrado, isso dá o ano inteiro;
+- a releitura de hora em hora (`lib/regras/omie-releitura.mjs`) e `scripts/ler-omie-faltante.mjs` pedem essa mesma
+  pergunta, só por método de consulta, e gravam em cima da mesma chave. Nada muda nas outras leituras: os títulos por
+  vencimento (`TIT_R`, `TIT_P`, `CP_VENC`) já iam até `31/12`.
+
+**O que as telas mostram de um mês ainda aberto** (o mês corrente):
+
+- **lado do Omie:** o caixa do mês **de 1º até hoje**, parcial por natureza. Os indicadores por vencimento ("Despesas
+  pendentes", "Valor pendente", "Ainda a receber/pagar") seguem a própria regra e incluem o que vence até o fim do mês;
+- **lado do DFC:** o arquivo do mês, enquanto o financeiro não baixa linhas, **só tem provisão**: linhas `A PAGAR`,
+  nenhuma receita e nenhum pagamento baixado (medido em 29/09/2026, "Outubro, novembro e dezembro só têm as contas
+  fixas já provisionadas", mais abaixo). Os indicadores de caixa que vêm do DFC contam só linha baixada, então, **num
+  mês sem baixa, a contagem do DFC é zero e a tela não tem número de DFC para mostrar**. Nenhum número é estimado no
+  lugar. O que vem da aba `PROVISÃO` e das contas fixas provisionadas continua aparecendo. O selo de confronto
+  DFC × Omie segue só de janeiro a setembro;
+- **conferência:** o mês aberto é conferido como qualquer outro, por `node scripts/numeros-das-telas.mjs --mes <mês>`.
+  A contagem dele é **publicação, não trava**: muda a cada releitura e a cada envio do DFC. A trava continua sendo agosto
+  de 2026 (`docs/trava-agosto-2026.json`). Os indicadores sem fonte no mês aberto estão em "Outubro de 2026 até hoje: o
+  que tem fonte" (abaixo, no fim desta seção).
+
+#### Outubro de 2026 até hoje: o que tem fonte
+
+Medido em 05/10/2026 com `node scripts/numeros-das-telas.mjs --mes 10` (Omie relido nesse dia, só consulta; DFC da
+cópia local `.cache/dfc-2026`, de 29/09/2026) e `node scripts/conferir-telas.mjs --mes 10`. Resultado de
+`docs/conferencia.md`: 26 conferidos, 3 divergentes e 18 a conferir, de 47. As telas contra a conferência deram 47 de
+47 (`docs/telas-conferidas.md`).
+
+- **Sem fonte do DFC em outubro, porque o arquivo do mês só tem provisão** e nenhuma linha baixada no `FLUXO DE
+  CAIXA`. O DFC é a fonte principal destes indicadores, e eles ficam **sem número de DFC** até o financeiro baixar
+  linhas e o PC reenviar o arquivo. O lado do Omie deles tem contagem e aparece. Tela 1: Saldo, Receitas, Despesas,
+  Despesas pagas, Despesas com funcionários, % desp. funcionários / receita líquida, Top 10 despesas. Tela 2: Receita
+  total, Custos e despesas, (−) Deduções, (−) Custos de vendas, (−) Impostos pagos (guias). Tela 3 (Fluxo de Caixa):
+  Despesas fixas pagas, Fixas / receita líquida, Projeção do mês, O mês dia a dia.
+- **Sem caso real porque nada entrou ainda no mês** (a regra está certa e a linha fica zerada): Fora do DRE
+  (implantação de saldos), (=) sem conta, (+/−) Resultado financeiro e Capital de giro tomado. As parcelas 6 das CCBs
+  4528305982 e 4528550256 vencem em 19/10 e 28/10/2026, ainda sem linha de dívida no DFC do mês. A conferência marca as
+  duas últimas como "divergente" só porque não acha caso; não é número errado.
+- **Achado de cadastro:** 2 códigos de cliente com título a receber em outubro estão sem nome em `geral/clientes`
+  (empresa 2, códigos 5303264527 e 5303734386). O gráfico por cliente fica sem rótulo neles até alguém preencher o
+  cadastro no Omie.
+- **Cache velho achado e relido:** a Tela 3 prefere a leitura exata da janela de vencimento do mês, quando o cache a
+  tem, à leitura do ano (`lib/indicadores/tela-3.mjs`). A janela 01/10–31/10 deste PC era de 30/09/2026, 23h40, e a
+  releitura de hora em hora não a renova. Com ela, a tela contava 23 títulos e a conferência 33. Depois de reler a
+  janela e as faixas do ano juntas, só por consulta, as duas deram 34. No servidor essa janela não existe, porque
+  nenhum script a grava lá.
+
 <!-- CONTAGENS-JAN-SET:INICIO -->
 ### As contagens de jan–set desta leitura (bloco gerado — não edite à mão)
 
@@ -370,7 +432,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `8ec0ec042059` — 368 arquivos no cache local, o mais novo gravado em 01/10/2026 às 07h32; a última releitura do app que trouxe dado do Omie foi em 30/09/2026 às 20h41 (ok, 292 páginas).
+**De que leitura são as contagens desta tabela:** leitura `8007241cb75f` — 504 arquivos no cache local, o mais novo gravado em 05/10/2026 às 11h03; a última releitura do app que trouxe dado do Omie foi em 01/10/2026 às 16h41 (ok, 292 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -380,18 +442,18 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`8ec0ec042059`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`8007241cb75f`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
-| total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 168 | 9, 0, 162 | **não** — a releitura mexeu |
-| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 292 | 809, 9, 276 | **não** — a releitura mexeu |
-| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 550, 26, 620 | 536, 25, 611 | **não** — a releitura mexeu |
-| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 567, 3, 571 | 556, 3, 547 | **não** — a releitura mexeu |
+| total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 175 | 9, 0, 162 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 293 | 809, 9, 276 | **não** — a releitura mexeu |
+| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 555, 29, 619 | 536, 25, 611 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 567, 3, 576 | 556, 3, 547 | **não** — a releitura mexeu |
 | custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 68, 1, 27, 458, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
-| resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2), sem o `2.04.91` da empresa 2 desde 29/09/2026 | 55, 11, 99, 31 | 55, 11, 98, 31 | **não** — a releitura mexeu |
-| pessoal pago, jan–set (empresa 1, empresa 2) | 256, 332 | 253, 322 | **não** — a releitura mexeu |
+| resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2), sem o `2.04.91` da empresa 2 desde 29/09/2026 | 56, 11, 100, 31 | 55, 11, 98, 31 | **não** — a releitura mexeu |
+| pessoal pago, jan–set (empresa 1, empresa 2) | 256, 337 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
 | códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` e o `1.04.03` desde 29/09/2026 | 24, 26 | 24, 26 | sim |
-| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
+| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em outubro) | 53, 0 | 53, 1 | **não** — a releitura mexeu |
 
 <!-- CONTAGENS-JAN-SET:FIM -->
 

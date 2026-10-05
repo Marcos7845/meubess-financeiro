@@ -53,9 +53,10 @@ import React from 'react';
 
 import { dadosDaTela2, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
-import { comoLista } from '../../lib/regras/filtros.mjs';
+import { comoLista, comoTexto } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
 import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
+import FiltroDeUnidade from '../unidade.js';
 import FiltroDeConta, { ExplicaConta } from '../conta.js';
 import { emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
@@ -369,6 +370,7 @@ export default async function Pagina({ searchParams }) {
   // A tela só tem coluna de abril em diante (decisão do dono, 27/09/2026; ver a nota abaixo do topo e
   // `lib/indicadores/tela-2.mjs`); um `mes` de janeiro a março na URL cai em abril.
   const mes = Math.max(4, Number(q?.mes ?? corrente.mes));
+  const unidade = comoTexto(q?.unidade);
   // AS DUAS LEITURAS DA TABELA, lidas como lista porque agora elas vêm de caixa de marcar: o formulário manda sempre
   // o `ah=0` e o `av=0`, e a caixa marcada acrescenta o `1`. Sem nada na URL, a AH vem ligada e a AV desligada — é o
   // que `?ah=1` e `?ah=0` sempre quiseram dizer, e um link antigo continua abrindo a mesma tela.
@@ -383,7 +385,7 @@ export default async function Pagina({ searchParams }) {
     // `lib/regras/filtros.mjs`, e sem nada na URL ela está LIGADA — a tela é a de sempre.
     filtro: {
       meses: comoLista(q?.meses), empresa: comoLista(q?.empresa), conta: comoLista(q?.conta),
-      omie: comoLista(q?.omie),
+      omie: comoLista(q?.omie), unidade,
     },
   });
   const fMeses = d.filtros.meses;
@@ -409,6 +411,7 @@ export default async function Pagina({ searchParams }) {
   // E A CHAVE DO OMIE TAMBÉM: ela vale nas três telas, e trocar de tela não pode religá-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
+    + `${unidade ? `&unidade=${encodeURIComponent(unidade)}` : ''}`
     + `${comOmie ? '' : '&omie=0'}`;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
@@ -481,6 +484,9 @@ export default async function Pagina({ searchParams }) {
           abaixo; o lado do Omie segue valendo.
         </p>
       )}
+      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
+        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
+      </p>}
 
       {fMeses.semColuna.length > 0 && (
         <p className="aviso">
@@ -508,6 +514,7 @@ export default async function Pagina({ searchParams }) {
           <FiltroDeEmpresa f={femp} />
 
           <FiltroDeConta f={fconta} />
+          <FiltroDeUnidade escolhida={unidade} />
 
           <ChaveDoOmie ligado={comOmie} />
 

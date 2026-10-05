@@ -23,7 +23,8 @@ import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
 import { calcularFluxoDeCaixa } from '../lib/indicadores/fluxo-de-caixa.mjs';
-import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
+import { fonteDoDfc, fonteDaPastaSincronizada } from '../lib/regras/dfc-fonte.mjs';
+import { lerDfc } from '../lib/regras/dfc.mjs';
 import { NOMES_DOS_MESES } from '../lib/regras/periodo.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -562,6 +563,29 @@ saldo é sempre \`SALDO\`.
 abas de cartão, comissão e vendas PJ), mas em nenhuma aba que as telas leem ela mudou um número: o \`FLUXO DE CAIXA\` não
 tem nenhuma, e o quadro \`Inicial\` / \`Entradas\` / \`Gastos\` / \`Final\` da primeira aba saiu igual nos doze meses.`;
 
+async function provaFisica(mes, diretorio) {
+  if (!diretorio) return `- ${String(mes).padStart(2, '0')}/${ANO}: a conferir; cópia local de unidades não indicada.`;
+  const anterior = process.env.DFC_DIR;
+  process.env.DFC_DIR = diretorio;
+  try {
+    const r = await lerDfc({ fonte: fonteDaPastaSincronizada(), ano: ANO, mes, comSerie: false });
+    if (!r.ok) return `- ${String(mes).padStart(2, '0')}/${ANO}: a conferir; ${r.motivo}.`;
+    return ['3N', 'B3N', 'B3W', 'N3'].map((u) => {
+      const p = r.porUnidade[u];
+      if (!p) return `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: a conferir; sem cópia local.`;
+      const efetivas = r.linhas.filter((l) => l.unidade === u);
+      const caso = efetivas[0];
+      return `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: fonte \`${p.arquivo}\`, aba \`FLUXO DE CAIXA\`; ${efetivas.length} linhas efetivas; caso real linha ${caso?.linha ?? '—'}, dia ${caso?.dia ?? '—'}, pagamento ${caso?.pagamento ?? '—'}.`;
+    }).join('\n') + (r.porUnidade.N3 ? `\n- N3 deduzido em ${String(mes).padStart(2, '0')}/${ANO}: ${r.repetidasN3} linhas repetidas por data, valor e histórico.` : '');
+  } finally {
+    if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
+  }
+}
+const PROVA_FISICA = [
+  await provaFisica(8, process.env.DFC_PROVA_UNIDADES_DIR),
+  await provaFisica(9, process.env.DFC_PROVA_SETEMBRO_DIR),
+].join('\n');
+
 const md = `# As telas conferidas contra a conferência — ${NOMES_DOS_MESES[MES]} de ${ANO}
 
 Gerado por [\`scripts/conferir-telas.mjs\`](../scripts/conferir-telas.mjs), só leitura. Uma linha por indicador das 3
@@ -619,6 +643,12 @@ ${tela1.dfc.ok
     : `O DFC **não foi lido** nesta rodada: ${tela1.dfc.motivo}.`}
 
 ## Os indicadores
+
+### Fonte física e caso conferido por unidade
+
+${PROVA_FISICA}
+
+As contagens acima vêm da cópia local indicada na geração. Os valores em reais são impressos apenas por \`scripts/conferir-dfc-consolidado.mjs\` no terminal.
 
 ${linhas.join('\n')}
 

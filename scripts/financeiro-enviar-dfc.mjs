@@ -30,6 +30,10 @@ const fonte = fonteDaPastaSincronizada();
 if (!fonte.disponivel()) falhar(fonte.descrever(), 2);
 const nomes = await fonte.arquivos();
 if (!nomes.length) falhar('a pasta do DFC não tem nenhum .xlsx', 2);
+const porUnidade = Object.fromEntries(['3N', 'B3N', 'B3W', 'N3'].map((u) =>
+  [u, nomes.filter((nome) => nome.startsWith(`${u}__`) && /DFC/i.test(nome)).length]));
+if (Object.values(porUnidade).some((n) => n === 0)) falhar('o envio exige DFC das quatro unidades (3N, B3N, B3W, N3)', 2);
+console.log(`fontes DFC por unidade: ${Object.entries(porUnidade).map(([u, n]) => `${u}=${n}`).join(', ')}.`);
 
 const arquivos = [];
 for (const nome of nomes) {

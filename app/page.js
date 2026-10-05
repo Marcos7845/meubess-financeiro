@@ -50,6 +50,7 @@ import CartaoExplodivel from './cartao-explodivel.js';
 import Suspensa from './suspensa.js';
 import UltimaLeitura, { AvisoDoOmie } from './ultima-leitura.js';
 import Sessao, { exigirLogin } from './sessao.js';
+import FiltroDeUnidade from './unidade.js';
 
 // Sem cache do Next: quem decide quando reler é `lib/dados.mjs`, de hora em hora.
 export const dynamic = 'force-dynamic';
@@ -73,10 +74,11 @@ export default async function Pagina({ searchParams }) {
   const classe = comoLista(q?.classe);
   const categoria = comoLista(q?.categoria);
   const fornecedor = comoTexto(q?.fornecedor);
+  const unidade = comoTexto(q?.unidade);
   // A CHAVE "INCLUIR DADOS DO OMIE" (decisão do dono, 28/09/2026). Vai crua, como os filtros: quem a lê é
   // `lib/regras/filtros.mjs`, e sem nada na URL ela está LIGADA — a tela é a de sempre.
   const omie = comoLista(q?.omie);
-  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa, conta, situacao, classe, categoria, fornecedor, omie } });
+  const d = await dadosDaTela1({ ano, mes, filtro: { cc, empresa, conta, situacao, classe, categoria, fornecedor, unidade, omie } });
   const fcc = d.filtros.cc;
   const femp = d.filtros.empresa;
   const fconta = d.filtros.conta;
@@ -109,6 +111,7 @@ export default async function Pagina({ searchParams }) {
   // E A CHAVE DO OMIE TAMBÉM ATRAVESSA AS ABAS: ela vale nas três telas, e trocar de tela não pode religá-la.
   const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
     + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
+    + `${unidade ? `&unidade=${encodeURIComponent(unidade)}` : ''}`
     + `${comOmie ? '' : '&omie=0'}`;
 
   return (
@@ -158,6 +161,9 @@ export default async function Pagina({ searchParams }) {
           aparecem zerados; o lado do Omie segue valendo.
         </p>
       )}
+      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
+        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
+      </p>}
 
       {fcc.faltaLeitura.length > 0 && fcc.escolhidos.length > 0 && (
         <p className="aviso">
@@ -209,6 +215,7 @@ export default async function Pagina({ searchParams }) {
           <FiltroDeEmpresa f={femp} />
 
           <FiltroDeConta f={fconta} />
+          <FiltroDeUnidade escolhida={unidade} />
 
           <ChaveDoOmie ligado={comOmie} />
 

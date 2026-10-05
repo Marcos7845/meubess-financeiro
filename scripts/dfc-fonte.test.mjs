@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { acharPasta } from '../lib/regras/dfc-fonte.mjs';
+import { acharPasta, acharPastas } from '../lib/regras/dfc-fonte.mjs';
 
 // Árvore de mentira, só com nomes e arquivos vazios; nenhum caminho real entra aqui.
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'meubess-dfc-fonte-'));
@@ -37,6 +37,14 @@ test('acha a pasta do ano em nível fundo e prefere a que numera mais planilhas'
   assert.equal(r.numerados, 12);
 });
 
+test('descobre as quatro pastas anuais e aceita o nome mensal de cada unidade', () => {
+  const raiz = 'raiz-unidades';
+  for (const u of ['3N', 'B3N', 'B3W', 'N3']) criar(`${raiz}/${u}/DFC/2026`, [`DFC AGOSTO 2026.xlsx`]);
+  const pastas = semDfcDir(() => acharPastas([path.join(base, raiz)]));
+  assert.deepEqual([...pastas.keys()], ['3N', 'B3N', 'B3W', 'N3']);
+  assert.ok([...pastas.values()].every((p) => p.numerados === 1));
+});
+
 test('o resultado não depende da ordem do disco: empate vai para a cópia sem sufixo e depois para o nome', () => {
   const raiz = 'raiz2';
   criar(`${raiz}/a/DFC 2026 (1)`, mensais(3));
@@ -45,11 +53,11 @@ test('o resultado não depende da ordem do disco: empate vai para a cópia sem s
   assert.equal(semDfcDir(() => acharPasta([path.join(base, raiz)])).caminho, sem);
 });
 
-test('pasta funda demais ou sem planilha numerada não conta; sem candidata devolve null', () => {
+test('pasta funda demais não conta; nomes mensais sem número são aceitos', () => {
   const raiz = 'raiz3';
   criar(`${raiz}/n1/n2/n3/n4/n5/n6/n7/2026`, mensais(12));
   criar(`${raiz}/n1/2026`, ['DFC AGOSTO 2026.xlsx']);
-  assert.equal(semDfcDir(() => acharPasta([path.join(base, raiz)])), null);
+  assert.equal(semDfcDir(() => acharPasta([path.join(base, raiz)])).numerados, 1);
   assert.equal(semDfcDir(() => acharPasta([path.join(base, 'não-existe')])), null);
 });
 

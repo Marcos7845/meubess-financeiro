@@ -19,9 +19,10 @@ import React from 'react';
 
 import { dadosDoFluxoDeCaixa, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
-import { comoLista } from '../../lib/regras/filtros.mjs';
+import { comoLista, comoTexto } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
 import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
+import FiltroDeUnidade from '../unidade.js';
 import { emPorcento, emReais } from '../dinheiro.js';
 import FiltroDeEmpresa, { ExplicaEmpresa } from '../empresa.js';
 import { comCodigo } from '../filtrado.js';
@@ -92,17 +93,20 @@ export default async function Pagina({ searchParams }) {
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
   const mes = Number(q?.mes ?? corrente.mes);
+  const unidade = comoTexto(q?.unidade);
   // OS MESES DO GRÁFICO DIA A DIA (pedido do dono, 29/09/2026: "abril a agosto"): `?meses=4,5,6,7,8`. Sem nada, ou com um
   // mês só, o gráfico é o do mês escolhido. Os cartões de cima são sempre do mês escolhido.
   const mesesDoDia = comoLista(q?.meses).map(Number).filter((m) => m >= 1 && m <= 12);
-  const d = await dadosDoFluxoDeCaixa({ ano, mes, filtro: { empresa: comoLista(q?.empresa), omie: comoLista(q?.omie), mesesDoDia } });
+  const d = await dadosDoFluxoDeCaixa({ ano, mes, filtro: { empresa: comoLista(q?.empresa), omie: comoLista(q?.omie), unidade,
+    saidas: comoTexto(q?.saidas), banco: comoTexto(q?.banco), mesesDoDia } });
   const femp = d.filtros.empresa;
   const comOmie = d.filtros.omie.ligado;
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   const entrou = cartao('entrou'), saiu = cartao('saiu'), resultado = cartao('resultado');
   const projecao = cartao('projecao'), fixas = cartao('fixas'), peso = cartao('peso-fixas');
+  const saidas = cartao('saidas');
   const anos = [2026];
-  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}${comOmie ? '' : '&omie=0'}`;
+  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}${unidade ? `&unidade=${encodeURIComponent(unidade)}` : ''}${comOmie ? '' : '&omie=0'}`;
   // LUCRO OU PREJUÍZO SAI DO RESULTADO (entrou − saiu), e só dele: se entrou mais do que saiu, é lucro. A projeção, que
   // soma o que ainda vence no mês, aparece junto só com o mês em andamento.
   const veredito = (v) => (v === null ? null : v >= 0 ? 'lucro' : 'prejuizo');
@@ -172,6 +176,9 @@ export default async function Pagina({ searchParams }) {
       </section>
 
       {comOmie && <AvisoDoOmie leituras={d.leituras} />}
+      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
+        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
+      </p>}
       <AvisoSemOmie ligado={comOmie}>
         <strong>Sem o Omie, sobra o caixa do DFC:</strong> entrou, saiu, o resultado e as despesas fixas continuam. O que
         falta pagar e receber no mês é do Omie, e sem ele não há projeção do fechamento.
@@ -187,6 +194,18 @@ export default async function Pagina({ searchParams }) {
           <Suspensa nome="mês" campo="mes" unica
             opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
           <FiltroDeEmpresa f={femp} />
+          <FiltroDeUnidade escolhida={unidade} />
+          <label className="campo-filtro"><span>Saídas: situação</span>
+            <select name="saidas" defaultValue={d.saidasFiltro.situacao}>
+              <option value="pago">Pago · DFC</option><option value="a-pagar">A pagar · Omie</option>
+            </select>
+          </label>
+          <label className="campo-filtro"><span>Saídas: banco</span>
+            <select name="banco" defaultValue={d.saidasFiltro.banco ?? ''}>
+              <option value="">todos os bancos</option>
+              {d.saidasFiltro.bancos.map((b) => <option value={b} key={b}>{b}</option>)}
+            </select>
+          </label>
           <ChaveDoOmie ligado={comOmie} />
           <button className="botao filtro" type="submit">aplicar</button>
         </form>
@@ -215,6 +234,11 @@ export default async function Pagina({ searchParams }) {
             <Kpi c={c} pe={pe(c)} texto={c.id === 'peso-fixas' ? pct1(c.valor) : null} />
           </CartaoExplodivel>
         ))}
+      </section>
+      <section className="kpis">
+        <CartaoExplodivel nome={saidas.nome} composicao={saidas.composicao} depois={<Origem c={saidas} />}>
+          <Kpi c={saidas} pe={pe(saidas)} tom="serie-despesa" />
+        </CartaoExplodivel>
       </section>
       {comOmie && d.vencidoAReceber.valor > 0 && (
         <p className="aviso leve">

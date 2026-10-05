@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DFC consolidado — conferência de 05/10/2026</title>
+  <style>
+    body{font:16px/1.55 system-ui,sans-serif;color:#17212b;background:#f4f7f9;margin:0}
+    main{max-width:960px;margin:40px auto;padding:0 20px 60px}
+    h1{font-size:2rem;margin-bottom:4px}h2{margin-top:38px}
+    .nota{color:#4d5a65}.caixa{background:white;border:1px solid #d8e0e5;border-radius:10px;padding:22px;margin-top:22px}
+    table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;padding:10px;border-bottom:1px solid #d8e0e5}th{background:#eaf0f4}
+    code{background:#eaf0f4;padding:2px 4px;border-radius:3px}strong{color:#103b5c}
+  </style>
+</head>
+<body><main>
+  <h1>DFC consolidado</h1>
+  <p class="nota">Conferência local em 05/10/2026. Esta página contém somente contagens, fontes e estado da prova; os valores ficam no terminal e nas telas.</p>
+  <div class="caixa"><strong>Agosto fechado.</strong> A trava foi refixada pelo mecanismo do projeto. A conferência das telas encontrou 47 indicadores conferidos, sem divergência, usando a cópia local B3W. A leitura separada das quatro unidades está disponível para agosto.</div>
+  <h2>Quatro fontes de agosto</h2>
+  <table><thead><tr><th>Unidade</th><th>Arquivo anual local</th><th>Linhas efetivas</th><th>Caso na planilha</th></tr></thead><tbody>
+    <tr><td>3N</td><td><code>DFC AGOSTO 2026.xlsx</code></td><td>23</td><td>linha 5, dia 16</td></tr>
+    <tr><td>B3N</td><td><code>08 - DFC - AGOSTO2026.xlsx</code></td><td>72</td><td>linha 9, dia 3; bloco Sicoob</td></tr>
+    <tr><td>B3W</td><td><code>08 - DFC AGOSTO 2026.xlsx</code></td><td>388</td><td>linha 3, dia 3</td></tr>
+    <tr><td>N3</td><td><code>DFC AGOSTO2026.xlsx</code></td><td>3</td><td>linha 7, dia 7</td></tr>
+    <tr><th>Consolidado</th><th>3N + B3N + B3W + N3</th><th>486</th><th>8 repetições N3 deduzidas</th></tr>
+  </tbody></table>
+  <p>A dedução compara data efetiva, valor com sinal em centavos e histórico normalizado, com multiplicidade. O bloco B3N iniciado por <code>BANCO ITAÚ</code> fica fora; o Sicoob permanece. A regra e o caso estão em <code>docs/fontes.md</code>.</p>
+  <h2>Setembro</h2>
+  <div class="caixa">A cópia local atualizada da B3W foi conferida diretamente na coluna L da aba <code>FLUXO DE CAIXA</code>. O recorte Itaú das linhas 3–371 e o total da coluna L coincidem com o cartão Saídas/PAGO ao centavo. Foram lidas 399 linhas efetivas da B3W. As cópias locais de setembro de 3N, B3N e N3 não foram encontradas fora da nuvem; o consolidado de setembro segue a conferir.</div>
+  <h2>Comandos de prova</h2>
+  <p><code>npm test</code>: 60 testes passaram. <code>npm run conferir-telas</code>: 47 indicadores conferidos. <code>npm run conferir-filtros</code>: 17 filtros conferidos. <code>npm run financeiro-enviar-dfc -- --seco</code> com a cópia de agosto: quatro fontes identificadas, cinco planilhas lidas, nenhum envio.</p>
+  <p>O acesso ao portal, o POST remoto e o resultado da tarefa agendada exigem conferência no ambiente publicado. Nenhuma ação de deploy ou escrita no Omie foi feita nesta passagem.</p>
+</main></body></html>

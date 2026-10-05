@@ -453,7 +453,7 @@ do mês.
 | pessoal pago, jan–set (empresa 1, empresa 2) | 256, 337 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
 | códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` e o `1.04.03` desde 29/09/2026 | 24, 26 | 24, 26 | sim |
-| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em outubro) | 53, 0 | 53, 1 | **não** — a releitura mexeu |
+| títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
 
 <!-- CONTAGENS-JAN-SET:FIM -->
 
@@ -1479,3 +1479,12 @@ Nenhum dos dois cobre a tela. Ver "O que o DFC pode alimentar e o que fica no Om
 |---|---|---|---|---|
 | Valor pendente | Omie | a mesma consulta, títulos da faixa **em aberto** (`cStatus` `EMABERTO`, `AVENCER`, `VENCEHOJE` ou `PAGTO_PARCIAL`, decisão do dono, 25/09/2026); soma `resumo.nValAberto` | faixa em aberto | |
 | Valor vencido | Omie | a mesma consulta, títulos da faixa **atrasado** (`cStatus = "ATRASADO"`); soma `resumo.nValAberto` | faixa atrasado | |
+# Decisões de 05/10/2026 — DFC por unidade e Saídas
+
+O DFC consolidado soma as pastas anuais das unidades `3N`, `B3N`, `B3W` e `N3`. O filtro `?unidade=` escolhe a origem física da planilha, não a coluna `EMP.` e não a filial do Omie. A B3W fornece a aba `PROVISÃO` e o quadro mensal já usado pelo app. Na B3N, o bloco delimitado pelo cabeçalho `BANCO ITAÚ` fica fora do fluxo e dos saldos; o bloco Sicoob continua. A exclusão é pelo cabeçalho do bloco, nunca por qualquer texto que contenha “Itaú”.
+
+O N3 entra uma vez: para cada mês, a chave de repetição é **data efetiva do lançamento, valor em centavos com sinal e histórico normalizado** (maiúsculas, sem acento e espaços repetidos). O histórico vem da coluna `HISTORICO`/`HISTÓRICO` quando existir; nas planilhas de agosto, que não a têm, vem de `TITULO` (H). Compara-se o N3 às linhas da B3W como multiconjuntos: cada linha da B3W elimina no máximo uma linha igual do N3. Linhas iguais adicionais do N3 permanecem. A dedução precede o filtro de unidade, portanto o recorte N3 mostra apenas suas linhas exclusivas. A contagem mensal de repetições depende das quatro cópias locais e é publicada pela conferência quando elas estiverem disponíveis.
+
+**Caso real de agosto na cópia local de quatro unidades:** o N3 tem 11 linhas baixadas, das quais 8 repetem B3W pela chave estrita e 3 ficam como exclusivas. A linha 10 do N3 casa com a 169 da B3W, pelo dia, valor e histórico. A B3N deixa 72 linhas do Sicoob após excluir o bloco `BANCO ITAÚ`. Esses são códigos e contagens de fonte, sem valor em reais; setembro segue sem as três cópias locais adicionais.
+
+No cartão **Saídas**, `PAGO` soma as saídas baixadas do `FLUXO DE CAIXA` do DFC de todas as contas; `A PAGAR` soma o saldo dos títulos em aberto do Omie por vencimento, conforme a regra de “Desp. Pendentes” abaixo. O filtro de banco do DFC usa o cabeçalho do bloco bancário da planilha; o filtro de conta do Omie usa `nCodCC`. Não há de-para comprovado entre ambos, portanto cada lado indica qual filtro o alcança. O recorte físico `B3W`, banco Itaú, linhas 3–371, e o total B3W de setembro foram confrontados em 05/10/2026 na cópia local atualizada por `scripts/conferir-dfc-consolidado.mjs --mes 9`: o cartão PAGO e a coluna L crua bateram ao centavo nos dois cortes. Valores em reais ficam apenas no terminal e na tela.

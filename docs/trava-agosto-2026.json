@@ -2,18 +2,18 @@
   "mes": "08/2026",
   "o-que-e": "o que agosto de 2026 deu na leitura abaixo. scripts/numeros-das-telas.mjs compara com isto antes de gravar e para se algo mudou; refixar é --refazer-trava. Só contagem e campo de cadastro: nenhum valor em dinheiro, nenhum nome.",
   "da-leitura": {
-    "id": "8ec0ec042059",
-    "gravadoEm": "2026-10-01T10:32:31.278Z",
-    "okEm": "2026-09-30T23:41:21.972Z",
+    "id": "8007241cb75f",
+    "gravadoEm": "2026-10-05T14:03:53.337Z",
+    "okEm": "2026-10-01T19:41:29.903Z",
     "paginas": 292,
-    "arquivos": 368
+    "arquivos": 504
   },
   "baldes": {
     "1": {
       "R": [
         0,
         0,
-        10
+        16
       ],
       "P": [
         102,
@@ -43,8 +43,8 @@
   },
   "digitais": {
     "empresa-1-entradas": {
-      "lancamentos": 10,
-      "digital": "1bae2dbd55df"
+      "lancamentos": 16,
+      "digital": "87085518ddbb"
     },
     "empresa-1-saidas": {
       "lancamentos": 167,

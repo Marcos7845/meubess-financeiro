@@ -726,7 +726,7 @@ export default async function Pagina({ searchParams }) {
           <strong>A última linha diz de quanta leitura cada coluna saiu</strong>, dos dois lados. Onde os dois números
           estiverem muito distantes, os totalizadores daquele mês misturam um lado cheio com outro quase vazio, e a
           coluna não se lê como DRE — é por isso que <strong>janeiro a março</strong> não têm coluna aqui. A leitura do
-          Omie que está no cache vai de <strong>01/01 a 30/09</strong>: mês fora dessa janela também não tem coluna.
+          Omie que está no cache vai de <strong>01/01 até hoje</strong>: mês depois de hoje também não tem coluna.
         </p>
       </section>
 

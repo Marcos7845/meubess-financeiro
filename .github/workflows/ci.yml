@@ -1,0 +1,23 @@
+# A bancada de testes em cada push e pull request: `npm ci` e `npm test`, Node 22, sem segredo nenhum.
+# `npm test` só usa fixtures versionadas (testes/fixtures/): não lê .env, não abre .cache/ nem a pasta do DFC, não
+# chama o Omie. Os testes que precisam deles (testar-login, testar-detalhe-*, conferências) ficam nos scripts próprios.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

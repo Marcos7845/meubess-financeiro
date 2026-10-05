@@ -1,0 +1,23 @@
+{
+ "pagina": 1,
+ "total_de_paginas": 1,
+ "categoria_cadastro": [
+  {
+   "codigo": "1.01.01",
+   "descricao": "Receita de teste"
+  },
+  {
+   "codigo": "1.05.01",
+   "descricao": "Transferência marcada",
+   "transferencia": "S"
+  },
+  {
+   "codigo": "1.04.97",
+   "descricao": "Transferência sem marca"
+  },
+  {
+   "codigo": "2.01.01",
+   "descricao": "Despesa de teste"
+  }
+ ]
+}

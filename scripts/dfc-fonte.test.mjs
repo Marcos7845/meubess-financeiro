@@ -73,3 +73,15 @@ test('DFC_DIR manda e não se procura em mais lugar nenhum', () => {
     if (antes === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = antes;
   }
 });
+
+test('segue atalho (link simbólico ou junção) para a pasta compartilhada', (t) => {
+  const alvo = criar('alvo-compartilhado/DFC/2026', mensais(12));
+  const raiz = path.join(base, 'raiz7');
+  fs.mkdirSync(raiz, { recursive: true });
+  try { fs.symlinkSync(path.join(base, 'alvo-compartilhado'), path.join(raiz, 'atalho'), 'junction'); }
+  catch { t.skip('este sistema não deixou criar o atalho'); return; }
+  const r = semDfcDir(() => acharPasta([raiz]));
+  assert.equal(r.caminho, path.join(raiz, 'atalho', 'DFC', '2026'));
+  assert.equal(r.arquivos.length, 12);
+  assert.ok(fs.existsSync(alvo));
+});

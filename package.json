@@ -6,7 +6,7 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "test": "node --test testes/regras.test.mjs scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/pendencias.test.mjs scripts/testar-cache-omie.mjs",
+    "test": "node --test testes/regras.test.mjs scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/pendencias.test.mjs scripts/pendencias-ponte.test.mjs scripts/testar-cache-omie.mjs",
     "dev": "next dev -H 127.0.0.1 -p 4781",
     "build": "node scripts/subir-local.mjs --so-build",
     "start": "node scripts/subir-local.mjs --sem-build",

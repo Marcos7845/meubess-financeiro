@@ -2,8 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { UNIDADES } from '../lib/regras/dfc-fonte.mjs';
 
-// Usa exatamente os arquivos selecionados para o envio. A origem é só lida.
+// Confere a lista completa da fonte anual após o envio confirmado. Um recorte
+// passado pelo chamador não pode truncar o espelho histórico. A origem é só lida.
 export async function espelharDfc({ fonte, nomes, destino }) {
+  const atuais = await fonte.arquivos();
+  if (nomes.length !== atuais.length || nomes.some((nome, i) => nome !== atuais[i])) {
+    throw new Error('a lista de planilhas mudou ou foi recortada após o envio; espelho não atualizado');
+  }
   const contagem = Object.fromEntries(UNIDADES.map((unidade) => [unidade, 0]));
   for (const nome of nomes) {
     const match = /^(3N|B3N|B3W|N3)__(.+\.xlsx)$/i.exec(nome);

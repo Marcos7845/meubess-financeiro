@@ -47,11 +47,7 @@ O DFC desta rodada saiu de **cópia local indicada por `DFC_DIR`**, só para lei
 
 ### Fonte física e caso conferido por unidade
 
-- 08/2026, 3N: fonte `3N__DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 23 linhas efetivas; caso real linha 5, dia 16, pagamento RECEBIDO.
-- 08/2026, B3N: fonte `B3N__08 - DFC - AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 72 linhas efetivas; caso real linha 9, dia 3, pagamento RECEBIDO.
-- 08/2026, B3W: fonte `B3W__08 - DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 395 linhas efetivas; caso real linha 3, dia 3, pagamento PAGO.
-- 08/2026, N3: fonte `N3__DFC AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 3 linhas efetivas; caso real linha 7, dia 7, pagamento PAGO.
-- N3 deduzido em 08/2026: 8 linhas repetidas por data, valor e histórico.
+- 08/2026: a conferir; cópia local de unidades não indicada.
 - 09/2026: a conferir; cópia local de unidades não indicada.
 
 As contagens acima vêm da cópia local indicada na geração. Os valores em reais são impressos apenas por `scripts/conferir-dfc-consolidado.mjs` no terminal.
@@ -127,7 +123,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** contasFixasNoMes 29, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
 - **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 143, deducoes 2. **Fonte:** DFC nas duas pontas.
 - **Tela 3 — Projeção do mês.** **Na tela:** DFC 484. **Na conferência:** DFC 484. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 22, bancos 7, bancosQueFecham 7, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 7, bancosQueFecham 7, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
 
 ## Antes e depois da correção do leitor
 

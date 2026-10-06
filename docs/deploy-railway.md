@@ -141,7 +141,9 @@ de 0 em qualquer falha.
 **Decisão de 06/10/2026:** o script `scripts/instalar-agendamento-dfc.ps1` cria ou atualiza a tarefa
 `financeiro-enviar-dfc` para **10:00 e 18:00 de Brasília**, diariamente, na conta do dono. A tarefa não foi alterada
 automaticamente. Após cada envio confirmado, o script atualiza `.cache/dfc-2026/<unidade>/`, preservando a data de
-modificação das planilhas, e registra sucesso ou falha em `.cache/logs/envio-dfc.log`. O espelho pode ser lido por agentes
+modificação das planilhas. Ele relê a lista completa das pastas anuais e espelha todos os meses de 2026 que existirem
+em cada uma das quatro unidades (3N, B3N, B3W, N3), não apenas o mês do envio. A origem é só lida. O script registra
+sucesso ou falha em `.cache/logs/envio-dfc.log`. O espelho pode ser lido por agentes
 com `DFC_DIR=.cache/dfc-2026`, sem tocar a origem sincronizada.
 
 Os números não mudam por vir do servidor: são os mesmos bytes, lidos pelo mesmo `lib/regras/dfc.mjs`. Conferido em

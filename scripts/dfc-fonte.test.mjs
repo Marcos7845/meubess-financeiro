@@ -96,18 +96,20 @@ test('segue atalho (link simbólico ou junção) para a pasta compartilhada', (t
   assert.ok(fs.existsSync(alvo));
 });
 
-test('espelho copia as quatro unidades, sobrescreve, preserva mtime e deixa a origem intacta', async () => {
+test('espelho copia os 12 meses de cada unidade, sobrescreve, preserva mtime e deixa a origem intacta', async () => {
   const origem = path.join(base, 'origem-espelho');
   const destino = path.join(base, 'destino-espelho');
   const data = new Date('2026-09-15T12:00:00.000Z');
   for (const unidade of ['3N', 'B3N', 'B3W', 'N3']) {
     const pasta = path.join(origem, unidade, 'DFC', '2026');
     fs.mkdirSync(pasta, { recursive: true });
-    const arquivo = path.join(pasta, '09 - DFC SETEMBRO 2026.xlsx');
-    fs.writeFileSync(arquivo, `fixture-${unidade}`);
-    fs.utimesSync(arquivo, data, data);
+    for (let mes = 1; mes <= 12; mes++) {
+      const arquivo = path.join(pasta, `${String(mes).padStart(2, '0')} - DFC MES ${mes} 2026.xlsx`);
+      fs.writeFileSync(arquivo, `fixture-${unidade}-${mes}`);
+      fs.utimesSync(arquivo, data, data);
+    }
     fs.mkdirSync(path.join(destino, unidade), { recursive: true });
-    fs.writeFileSync(path.join(destino, unidade, path.basename(arquivo)), 'antigo');
+    fs.writeFileSync(path.join(destino, unidade, '09 - DFC MES 9 2026.xlsx'), 'antigo');
   }
   const anterior = process.env.DFC_DIR;
   let fonte;
@@ -118,22 +120,28 @@ test('espelho copia as quatro unidades, sobrescreve, preserva mtime e deixa a or
     if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
   }
   const nomes = await fonte.arquivos();
-  assert.equal(nomes.length, 4);
-  assert.deepEqual(await espelharDfc({ fonte, nomes, destino }), { '3N': 1, B3N: 1, B3W: 1, N3: 1 });
+  assert.equal(nomes.length, 48);
+  await assert.rejects(espelharDfc({ fonte, nomes: nomes.filter((n) => n.includes('__09 -')), destino }), /recortada/);
+  assert.deepEqual(await espelharDfc({ fonte, nomes, destino }), { '3N': 12, B3N: 12, B3W: 12, N3: 12 });
   for (const unidade of ['3N', 'B3N', 'B3W', 'N3']) {
-    const relativo = path.join(unidade, '09 - DFC SETEMBRO 2026.xlsx');
-    const arquivo = path.join(origem, unidade, 'DFC', '2026', '09 - DFC SETEMBRO 2026.xlsx');
-    const copia = path.join(destino, relativo);
-    assert.equal(fs.readFileSync(arquivo, 'utf8'), `fixture-${unidade}`);
-    assert.equal(fs.readFileSync(copia, 'utf8'), `fixture-${unidade}`);
-    assert.equal(fs.statSync(arquivo).mtimeMs, data.getTime());
-    assert.equal(fs.statSync(copia).mtimeMs, data.getTime());
+    for (let mes = 1; mes <= 12; mes++) {
+      const nome = `${String(mes).padStart(2, '0')} - DFC MES ${mes} 2026.xlsx`;
+      const arquivo = path.join(origem, unidade, 'DFC', '2026', nome);
+      const copia = path.join(destino, unidade, nome);
+      assert.equal(fs.readFileSync(arquivo, 'utf8'), `fixture-${unidade}-${mes}`);
+      assert.equal(fs.readFileSync(copia, 'utf8'), `fixture-${unidade}-${mes}`);
+      assert.equal(fs.statSync(arquivo).mtimeMs, data.getTime());
+      assert.equal(fs.statSync(copia).mtimeMs, data.getTime());
+    }
   }
   try {
     process.env.DFC_DIR = destino;
     const espelho = fonteDaPastaSincronizada();
     assert.deepEqual((await espelho.arquivos()).sort(), nomes.sort());
-    for (const nome of nomes) assert.equal((await espelho.ler(nome)).toString(), `fixture-${nome.split('__')[0]}`);
+    for (const nome of nomes) {
+      const [, unidade, mes] = /^(\w+)__(\d+) -/.exec(nome);
+      assert.equal((await espelho.ler(nome)).toString(), `fixture-${unidade}-${Number(mes)}`);
+    }
   } finally {
     if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
   }

@@ -484,7 +484,11 @@ for (const ind of doConferencia) {
   for (const [nome, re] of Object.entries(ex.extras ?? {})) {
     const esp = achar(re);
     if (esp === null) continue;
-    const obt = obtido.extras?.[nome];
+    // Para o dia a dia, o dia só conta se o gráfico mostra Entrou ou Saiu.
+    // Uma transferência recebida isolada segue na posição, mas não nos cartões.
+    const obt = id === 'dia-a-dia' && nome === 'diasComMovimento'
+      ? telaFluxo.diaADia.dias.filter((d) => d.linhasEntrou + d.linhasSaiu > 0).length
+      : obtido.extras?.[nome];
     if (obt === null || obt === undefined) {
       difs.push(`a tela não produziu "${nome}", e a conferência diz ${esp}`);
       continue;

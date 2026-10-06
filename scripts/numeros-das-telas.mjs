@@ -1680,7 +1680,10 @@ if (!FIXAS.respondido) {
 {
   const bancos = MOTIVO_DFC ? [] : (DFC.saldosPorBanco ?? []);
   const rDia = MOTIVO_DFC ? null : conferirDfc(() => true);
-  const dias = MOTIVO_DFC ? null : new Set(DFC.linhas.map((l) => l.dia)).size;
+  // A transferência recebida não entra em Entrou. Em agosto, 3N linha 5 é a única
+  // linha baixada do dia 16: há 22 dias com linha, mas 21 com Entrou ou Saiu.
+  const dias = MOTIVO_DFC ? null : new Set(DFC.linhas
+    .filter((l) => l.natureza === 'P' || eReceitaTela1Dfc(l)).map((l) => l.dia)).size;
   const naoBaixado = bancos.reduce((t, b) => t + (b.naoBaixado ?? 0), 0);
   const nNaoBaixado = bancos.reduce((t, b) => t + (b.linhasNaoBaixado ?? 0), 0);
   const fecham = bancos.filter((b) => b.fecha).length;
@@ -1701,7 +1704,7 @@ if (!FIXAS.respondido) {
     contagem: MOTIVO_DFC
       ? 'as planilhas não foram lidas nesta rodada'
       : `${pl(rDia.quantas, 'linha do `FLUXO DE CAIXA` no mês', 'linhas do `FLUXO DE CAIXA` no mês')} no consolidado, em ${pl(dias, 'dia com movimento', 'dias com movimento')}; sem título de previsão, porque ${NOME_DO_MES} é mês fechado; ${pl(bancos.length, 'bloco de banco', 'blocos de banco')}, ${fecham} em que o saldo corrido anda exatamente com o movimento, ${pl(nNaoBaixado, 'linha que o saldo já desconta e não está baixada', 'linhas que o saldo já desconta e não estão baixadas')} e ${pl(nDepoisDoSaldo, 'banco em que a planilha lançou depois de parar de escrever o saldo', 'bancos em que a planilha lançou depois de parar de escrever o saldo')}; a ponte com os bancos ${ponteFecha ? 'fecha sem sobra' : 'não fecha'}`,
-    estado: MOTIVO_DFC ? 'a-conferir' : (rDia.vazio ? 'a-conferir' : (rDia.ok && ponteFecha ? 'conferido' : 'divergente')),
+    estado: MOTIVO_DFC || n3SemSaldo ? 'a-conferir' : (rDia.vazio ? 'a-conferir' : (rDia.ok && ponteFecha ? 'conferido' : 'divergente')),
     motivo: MOTIVO_DFC ? `a fonte do consolidado é o DFC e as planilhas não foram lidas nesta rodada — ${MOTIVO_DFC}`
       : (rDia.vazio ? 'nenhuma linha no mês, então não há caso real para conferir'
         : (!rDia.ok ? `a linha do DFC não conferiu: ${rDia.dif.join('; ')}`

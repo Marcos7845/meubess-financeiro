@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reconciliação dos 11 cartões DFC — agosto de 2026</title>
+<style>
+  :root{font-family:system-ui,Arial,sans-serif;color:#162435;background:#f3f6f8}body{max-width:1120px;margin:auto;padding:32px 20px 60px}h1{font-size:2rem;margin:0 0 8px}h2{margin-top:36px}p{line-height:1.55}.lead{color:#425467}.verdict{background:#e4f3e8;border-left:6px solid #267342;padding:16px 20px;border-radius:8px;margin:24px 0}.caution{background:#fff4dd;border-left:6px solid #ad740c;padding:14px 18px;border-radius:8px}.table-wrap{overflow:auto;background:#fff;border:1px solid #d9e2e8;border-radius:10px}table{border-collapse:collapse;width:100%;min-width:850px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid #e4e9ed;vertical-align:top}th{background:#eaf0f4}tr:last-child td{border:0}code{font-size:.92em;background:#eef2f5;padding:2px 4px;border-radius:3px}.mono{font-variant-numeric:tabular-nums;white-space:nowrap}.small{font-size:.92rem;color:#4c5c6a}ul{line-height:1.6}
+</style>
+</head>
+<body>
+<h1>Reconciliação dos 11 cartões DFC</h1>
+<p class="lead">Agosto de 2026 · filtro de unidade vazio · cópias locais do DFC · conferência em 06/10/2026</p>
+<div class="verdict"><strong>Documento envelhecido; os 11 cartões do portal coincidem com o cálculo local.</strong> A API da ponte e as funções das três páginas produziram os mesmos valores ao centavo e as mesmas contagens. O documento antigo usava 388 linhas da B3W; o recorte atual tem 493 linhas consolidadas.</div>
+<h2>Contagens do DFC</h2>
+<div class="table-wrap"><table><thead><tr><th>Cartão</th><th>Documento</th><th>Portal</th><th>Local</th><th>Filtro e linha conferida</th></tr></thead><tbody>
+<tr><td>1 · Saldo</td><td class="mono">388</td><td class="mono">493</td><td class="mono">493</td><td>Todos os movimentos; B3W, Stone, linha 401, receita baixada.</td></tr>
+<tr><td>1 · Receitas</td><td class="mono">101</td><td class="mono">157</td><td class="mono">157</td><td>Entradas sem transferências recebidas; B3N, Sicoob, linha 9.</td></tr>
+<tr><td>1 · Despesas</td><td class="mono">281</td><td class="mono">327</td><td class="mono">327</td><td>Todas as saídas; B3W, Stone, linha 403, transferência paga.</td></tr>
+<tr><td>1 · Desp. Pagas</td><td class="mono">281</td><td class="mono">326</td><td class="mono">326</td><td>Saídas com <code>PAGO</code>; B3W linha 403 entra. B3N linha 64 está marcada <code>CARTAO DE CREDITO</code> e fica fora.</td></tr>
+<tr><td>1 · Desp. Funcionários</td><td class="mono">109</td><td class="mono">121</td><td class="mono">121</td><td>Classe ou <code>SUB 2</code> de pessoal; N3, Itaú, linha 7, <code>DESPESAS PJ</code>.</td></tr>
+<tr><td>1 · % Func/Rec</td><td class="mono">109</td><td class="mono">121</td><td class="mono">121</td><td>Pessoal da N3 linha 7 sobre receita líquida, com B3N linha 9 no denominador.</td></tr>
+<tr><td>2 · Receita total</td><td class="mono">101</td><td class="mono">143</td><td class="mono">143</td><td>Entradas das classes de receita do DRE; B3N linha 9. A 3N linha 5 é transferência e fica fora.</td></tr>
+<tr><td>2 · Custos e despesas</td><td class="mono">281</td><td class="mono">327</td><td class="mono">327</td><td>Todas as saídas; B3W linha 403.</td></tr>
+<tr><td>3 · Projeção</td><td class="mono">382</td><td class="mono">484</td><td class="mono">484</td><td>Contagem de Entrou + Saiu; B3W linhas 401 e 403. O cartão não apresenta valor para mês fechado.</td></tr>
+<tr><td>3 · Fixas pagas</td><td class="mono">119</td><td class="mono">150</td><td class="mono">150</td><td>Saídas em <code>dados/despesas-fixas.json</code>; N3 linha 7.</td></tr>
+<tr><td>3 · Fixas/receita</td><td class="mono">119</td><td class="mono">150</td><td class="mono">150</td><td>Fixas da N3 linha 7 sobre receita líquida, com B3N linha 9 no denominador.</td></tr>
+</tbody></table></div>
+<p class="small">Todas as linhas citadas pertencem à aba <code>FLUXO DE CAIXA</code> da cópia de agosto da unidade indicada. O documento publica contagens, sem valores financeiros; a comparação dos valores foi feita diretamente entre portal e cálculo local.</p>
+<h2>De onde veio a diferença</h2>
+<ul><li>B3W passou de 388 para 395 linhas efetivas: oito lançamentos Stone entraram e um saiu entre as duas cópias locais.</li><li>As unidades adicionais trazem 23 linhas da 3N, 72 da B3N e 3 da N3. O consolidado atual soma 493 linhas após a dedução das repetições da N3 na B3W.</li><li>As 11 contagens do Omie que têm lado Omie permaneceram iguais ao documento.</li></ul>
+<div class="caution"><strong>Limite da conferência geral:</strong> <code>npm run testar-trava</code> terminou com 3 casos esperados e 0 inesperados, sem refixar. <code>npm run conferir-telas</code> registrou 46 indicadores conferidos e 1 divergente: o gráfico “O mês dia a dia” tem 21 dias com movimento na tela e 22 na conferência. Essa divergência é externa aos 11 cartões acima.</div>
+</body></html>

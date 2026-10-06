@@ -621,8 +621,8 @@ ${nAConferir === 0
     ? 'As três telas estão construídas e nenhum indicador ficou de fora.'
     : `${nAConferir} indicador(es) não puderam ser comparados nesta rodada; o motivo está no fim de cada linha.`}
 
-A **Tela 3 fica no Omie inteira** (\`docs/fontes.md\`): ela é a carteira de títulos a receber, e o DFC, que é caixa,
-não registra carteira em aberto nem tem cadastro de cliente. Por isso as linhas dela trazem só o lado do Omie.
+A antiga carteira de títulos a receber, ainda conferida nas linhas "Valor previsto" a "Lançamentos por status",
+vem do Omie. Os cartões novos do Fluxo de Caixa combinam o DFC baixado com os títulos em aberto do Omie.
 
 ${(() => {
     const provFora = janelaProvisao && (janelaProvisao.mes !== MES || janelaProvisao.ano !== ANO);
@@ -639,7 +639,7 @@ Os outros ${doConferencia.length - nFora} indicadores são de ${NOMES_DOS_MESES[
   })()}
 
 ${tela1.dfc.ok
-    ? `O DFC desta rodada saiu de **${tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`
+    ? `O DFC desta rodada saiu de **${process.env.DFC_DIR ? 'cópia local indicada por \`DFC_DIR\`' : tela1.dfc.fonte}**, só para leitura: a Tela 1 leu \`${tela1.dfc.arquivo}\`, e a Tela 2, que tem uma coluna por mês, leu ${tela2.dfc.mesesLidos.length} dos 12 arquivos do ano.`
     : `O DFC **não foi lido** nesta rodada: ${tela1.dfc.motivo}.`}
 
 ## Os indicadores
@@ -649,6 +649,31 @@ ${tela1.dfc.ok
 ${PROVA_FISICA}
 
 As contagens acima vêm da cópia local indicada na geração. Os valores em reais são impressos apenas por \`scripts/conferir-dfc-consolidado.mjs\` no terminal.
+
+### Os 11 cartões do DFC confrontados com o portal em 06/10/2026
+
+Em todos, a fonte física é a aba \`FLUXO DE CAIXA\` das cópias locais de agosto listadas acima. O filtro de unidade está
+vazio: a leitura soma 3N, B3N, B3W e N3, deduzindo as repetições de N3 na B3W. \`PAGAMENTO\` baixado, movimento não
+nulo e data em agosto selecionam as linhas. O caso de cada cartão abaixo está na fonte atual e não constava no recorte
+B3W antigo de 388 linhas, seja pela unidade adicional, seja pela revisão da Stone.
+
+| Cartão | filtro adicional e caso real na aba \`FLUXO DE CAIXA\` |
+|---|---|
+| Tela 1 Saldo | Todos os movimentos com sinal; B3W linha 401, Stone, \`RECEBIDO\`, \`SUB 2\` = \`RECEITA COM VENDAS\`. |
+| Tela 1 Receitas | \`ENTRADA\`, exceto \`SUB 2\` = \`TRANSFERENCIAS BANCARIAS - RECEITA\`; B3N linha 9, Sicoob, \`RECEITA COM SERVICOS\`. |
+| Tela 1 Despesas | Toda \`SAIDA\`, inclusive transferência; B3W linha 403, Stone, \`PAGO\`, \`TRANSFERENCIAS BANCARIAS - CUSTO\`. |
+| Tela 1 Despesas pagas | \`SAIDA\` com \`PAGO\`; B3W linha 403. B3N linha 64, Sicoob, \`PAGAMENTO\` = \`CARTAO DE CREDITO\`, entra em Despesas e fica fora de Pagas. |
+| Tela 1 Desp. Funcionários | \`SAIDA\` cuja \`CLASS. CONTABIL\` ou \`SUB 2\` está na lista de pessoal; N3 linha 7, Itaú, \`DESPESAS PJ\`, \`PAGO\`. |
+| Tela 1 % D. Func. / Rec. Líquida | Numerador: mesmo pessoal, N3 linha 7; denominador: receitas do DFC menos deduções, B3N linha 9. |
+| Tela 2 Receita total | \`ENTRADA\` com \`SUB 2\` da lista de receita do DRE; B3N linha 9, \`RECEITA COM SERVICOS\`. A 3N linha 5, transferência, fica fora. |
+| Tela 2 Custos e despesas | Toda \`SAIDA\`; B3W linha 403, Stone, transferência paga. |
+| Tela 3 Projeção do mês | Contagem de Entrou + Saiu; B3W linhas 401 e 403. Agosto está fechado, portanto o valor é vazio. |
+| Tela 3 Despesas fixas pagas | \`SAIDA\` cuja \`SUB 2\` consta em \`dados/despesas-fixas.json\`; N3 linha 7, \`DESPESAS PJ\`. |
+| Tela 3 Fixas / receita líquida | Numerador: fixas, N3 linha 7; denominador: receita menos deduções, B3N linha 9. |
+
+A cópia B3W anterior ainda guardada no cache tinha 388 linhas; a atual tem 395. Comparando os lançamentos por banco,
+dia, sentido, classificação e valor, entraram oito linhas da Stone e saiu uma. As demais linhas que mudaram de número
+na planilha não são novos lançamentos. As contagens do Omie não mudaram neste confronto.
 
 ${linhas.join('\n')}
 

@@ -16,9 +16,9 @@ import React, { useState } from 'react';
 
 import { Detalhamento } from './linha-do-dre.js';
 
-export default function CartaoExplodivel({ nome, composicao, depois = null, children }) {
+export default function CartaoExplodivel({ nome, composicao, depois = null, aviso = null, children }) {
   const [aberto, setAberto] = useState(false);
-  if (!composicao) return <div className="cartao-explodivel parado">{children}{depois}</div>;
+  if (!composicao) return <div className="cartao-explodivel parado">{children}{aviso && <p className="aviso-do-cartao">{aviso}</p>}{depois}</div>;
   const alternar = () => setAberto((x) => !x);
   return (
     <>
@@ -28,6 +28,7 @@ export default function CartaoExplodivel({ nome, composicao, depois = null, chil
           title={aberto ? 'fechar o detalhamento' : 'ver o que este número soma'}>
           {children}
         </div>
+        {aviso && <p className="aviso-do-cartao">{aviso}</p>}
         {depois}
       </div>
       {aberto && (

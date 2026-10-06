@@ -133,6 +133,7 @@ export default async function Pagina({ searchParams }) {
         <p className="frase">
           O caixa do mês fechou em <b>{emReais(saldo.valor)}</b>.
         </p>
+        {d.dfc.aviso && <p className="aviso">{d.dfc.aviso}</p>}
         <p className="para-que">
           Para decidir o que pagar, o que segurar e onde cortar neste mês. Cada número diz, embaixo, quantos
           lançamentos entraram nele; onde um filtro não alcança a fonte, o número diz isso ali mesmo.
@@ -161,9 +162,6 @@ export default async function Pagina({ searchParams }) {
           aparecem zerados; o lado do Omie segue valendo.
         </p>
       )}
-      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
-        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
-      </p>}
 
       {fcc.faltaLeitura.length > 0 && fcc.escolhidos.length > 0 && (
         <p className="aviso">
@@ -363,7 +361,8 @@ export default async function Pagina({ searchParams }) {
       <section className="kpis">
         {['saldo', 'receitas', 'despesas', 'despesas-pagas', 'despesas-pendentes', 'despesas-funcionarios', 'percentual-funcionarios']
           .map((id, n) => (
-            <CartaoExplodivel nome={cartao(id).nome} composicao={cartao(id).composicao} key={id}>
+            <CartaoExplodivel nome={cartao(id).nome} composicao={cartao(id).composicao}
+              aviso={cartao(id).contagem?.dfc != null ? d.dfc.aviso : null} key={id}>
               <Kpi c={cartao(id)} destaque={n === 0} />
             </CartaoExplodivel>
           ))}

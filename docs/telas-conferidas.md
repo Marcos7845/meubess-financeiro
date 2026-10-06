@@ -41,14 +41,21 @@ vencimento, 01/11/2026 a 30/11/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
 Os outros 46 indicadores são de agosto de 2026.
 
-O DFC desta rodada saiu de **cópia local indicada por `DFC_DIR`**, só para leitura: a Tela 1 leu `B3W__08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 1 dos 12 arquivos do ano.
+O DFC desta rodada saiu de **cópia local indicada por `DFC_DIR`**, só para leitura: a Tela 1 leu `B3W__08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 12 dos 12 arquivos do ano.
 
 ## Os indicadores
 
 ### Fonte física e caso conferido por unidade
 
-- 08/2026: a conferir; cópia local de unidades não indicada.
-- 09/2026: a conferir; cópia local de unidades não indicada.
+- 08/2026, 3N: fonte `3N__DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 23 linhas efetivas; caso real linha 5, dia 16, pagamento RECEBIDO.
+- 08/2026, B3N: fonte `B3N__08 - DFC - AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 72 linhas efetivas; caso real linha 9, dia 3, pagamento RECEBIDO.
+- 08/2026, B3W: fonte `B3W__08 - DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 395 linhas efetivas; caso real linha 3, dia 3, pagamento PAGO.
+- 08/2026, N3: fonte `N3__DFC AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 3 linhas efetivas; caso real linha 7, dia 7, pagamento PAGO.
+- N3 deduzido em 08/2026: 8 linhas repetidas por data, valor e histórico.
+- 09/2026, 3N: fonte `3N__DFC SETEMBRO 2026.xlsx`, aba `FLUXO DE CAIXA`; 33 linhas efetivas; caso real linha 3, dia 4, pagamento PAGO.
+- 09/2026, B3N: fonte `B3N__09 - DFC - SETEMBRO2026.xlsx`, aba `FLUXO DE CAIXA`; 83 linhas efetivas; caso real linha 9, dia 1, pagamento RECEBIDO.
+- 09/2026, B3W: fonte `B3W__09 - DFC SETEMBRO 2026.xlsx`, aba `FLUXO DE CAIXA`; 399 linhas efetivas; caso real linha 3, dia 1, pagamento PAGO.
+- 09/2026, N3: sem planilha da N3 neste mês; números sem ela; nenhuma linha atribuída à unidade ausente.
 
 As contagens acima vêm da cópia local indicada na geração. Os valores em reais são impressos apenas por `scripts/conferir-dfc-consolidado.mjs` no terminal.
 
@@ -87,7 +94,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 1 — Top 10 despesas.** **Na tela:** DFC 327 e Omie 299. **Na conferência:** DFC 327 e Omie 299. **Fonte:** DFC (principal) / Omie recortado por centro de custo (confronto).
 - **Tela 1 — Top 10 receitas.** **Na tela:** Omie 126. **Na conferência:** Omie 126. **Fonte:** Omie recortado (principal) / DFC (confronto).
 - **Tela 1 — Receita × despesa por dia.** **Na tela:** DFC 31 e Omie 425. **Na conferência:** DFC 31 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Receita × despesa por mês.** **Na tela:** DFC 1 e Omie 425. **Na conferência:** DFC 1 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Receita × despesa por mês.** **Na tela:** DFC 12 e Omie 425. **Na conferência:** DFC 12 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — Receita total.** **Na tela:** DFC 143 e Omie 126. **Na conferência:** DFC 143 e Omie 126. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — Custos e despesas.** **Na tela:** DFC 327 e Omie 299. **Na conferência:** DFC 327 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — EBITDA.** **Na tela:** Omie 425. **Na conferência:** Omie 425. **Também conferido:** receita 126, despesa 299. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
@@ -109,7 +116,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 2 — (=) sem conta.** **Na tela:** Omie 21. **Na conferência:** Omie 21. **Também conferido:** empresa1 21, empresa2 0. **Fonte:** Omie recortado.
 - **Tela 2 — Capital de giro tomado.** **Na tela:** DFC 2 e Omie 3. **Na conferência:** DFC 2 e Omie 3. **Também conferido:** pares 2, lancamentos 3, captado 0, amortizado 3, juros 0, iof 0, contratos 3. **Fonte:** fluxo do mês: Omie recortado + DFC por `SUB 2`, sem duplicar pagamentos; saldo: CCBs Itaú pelo Anexo I e planilha para contrato sem CCB legível.
 - **Tela 2 — Obrigações com clientes.** **Na tela:** Omie 78. **Na conferência:** Omie 78. **Também conferido:** pedidoCancelado 37, noInicio 58, novos 45, baixados 25. **Fonte:** Omie, sinais `ADVR` recebidos de pedidos ainda sem NF, pelo valor nominal; à parte, o repasse a clientes da aba `PROVISÃO` do DFC.
-- **Tela 2 — Dívida líquida.** **Na tela:** DFC 7. **Na conferência:** DFC 7. **Também conferido:** contratos 3. **Fonte:** capital de giro tomado (CCBs Itaú e planilha) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
+- **Tela 2 — Dívida líquida.** **Na tela:** DFC 6. **Na conferência:** DFC 6. **Também conferido:** contratos 3. **Fonte:** capital de giro tomado (CCBs Itaú e planilha) − saldo dos bancos da Tela 3 (DFC, `FLUXO DE CAIXA` do mês).
 - **Tela 2 — Resultado sem dinheiro de terceiros.** **Na tela:** Omie 425. **Na conferência:** Omie 425. **Também conferido:** sinais 70. **Fonte:** lucro líquido do DRE do mês − variação dos sinais em aberto (sinais recebidos de pedidos sem NF − sinais baixados).
 - **Tela 2 — Provisões por projeto.** **Na tela:** DFC 4. **Na conferência:** DFC 4. **Também conferido:** frete 0, comissao 0, comissaoHead 0, compra 4, repasse 0. **Fonte:** DFC, aba `PROVISÃO` do arquivo do mês: frete, comissão, comissão head e compra de cada projeto vendido (toda linha da aba é ainda não paga; o imposto é crédito e fica fora).
 - **Tela 3 — Valor previsto.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** empresa1 0, empresa2 128, cancelados 15. **Fonte:** Omie, títulos a receber por vencimento.
@@ -123,7 +130,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** contasFixasNoMes 29, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
 - **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 143, deducoes 2. **Fonte:** DFC nas duas pontas.
 - **Tela 3 — Projeção do mês.** **Na tela:** DFC 484. **Na conferência:** DFC 484. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 7, bancosQueFecham 7, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 6, bancosQueFecham 6, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
 
 ## Antes e depois da correção do leitor
 

@@ -168,6 +168,7 @@ export default async function Pagina({ searchParams }) {
                 : <> Sem o Omie não dá para projetar o fechamento.</>)}
             </>}
         </p>
+        {d.dfc.aviso && <p className="aviso">{d.dfc.aviso}</p>}
         <p className="para-que">
           Para decidir a estratégia de venda: se o mês fecha no prejuízo, ou as despesas fixas pesam demais na receita,
           o comercial precisa trazer mais receita. Cada número tem, embaixo, &quot;de onde saiu&quot; — a fonte, o
@@ -176,9 +177,6 @@ export default async function Pagina({ searchParams }) {
       </section>
 
       {comOmie && <AvisoDoOmie leituras={d.leituras} />}
-      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
-        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
-      </p>}
       <AvisoSemOmie ligado={comOmie}>
         <strong>Sem o Omie, sobra o caixa do DFC:</strong> entrou, saiu, o resultado e as despesas fixas continuam. O que
         falta pagar e receber no mês é do Omie, e sem ele não há projeção do fechamento.
@@ -222,21 +220,24 @@ export default async function Pagina({ searchParams }) {
           falta pagar, e como o mês fecha). */}
       <section className="kpis de-4">
         {[entrou, saiu, resultado, projecao].map((c) => (
-          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />} key={c.id}>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />}
+            aviso={c.contagem?.dfc != null ? d.dfc.aviso : null} key={c.id}>
             <Kpi c={c} destaque={c.id === 'resultado'} pe={pe(c)} tom={c.id === 'entrou' ? 'serie-receita' : c.id === 'saiu' ? 'serie-despesa' : null} />
           </CartaoExplodivel>
         ))}
       </section>
       <section className="kpis de-4">
         {[cartao('a-pagar'), cartao('a-receber'), fixas, peso].map((c) => (
-          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />} key={c.id}>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />}
+            aviso={c.contagem?.dfc != null ? d.dfc.aviso : null} key={c.id}>
             {/* O peso das fixas sai com UMA casa decimal, a mesma da coluna "% rec. líq." da tabela logo abaixo (6,1%). */}
             <Kpi c={c} pe={pe(c)} texto={c.id === 'peso-fixas' ? pct1(c.valor) : null} />
           </CartaoExplodivel>
         ))}
       </section>
       <section className="kpis">
-        <CartaoExplodivel nome={saidas.nome} composicao={saidas.composicao} depois={<Origem c={saidas} />}>
+        <CartaoExplodivel nome={saidas.nome} composicao={saidas.composicao} depois={<Origem c={saidas} />}
+          aviso={saidas.contagem?.dfc != null ? d.dfc.aviso : null}>
           <Kpi c={saidas} pe={pe(saidas)} tom="serie-despesa">
             {saidas.recorteB3W && <div className="saidas-recortes">
               <span>Todas as contas (B3W): <strong>{emReais(-saidas.recorteB3W.todas)}</strong></span>

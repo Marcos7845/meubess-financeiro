@@ -30,8 +30,8 @@ const celula = (col, n, v) => typeof v === 'number'
   : `<c r="${col}${n}" t="inlineStr"><is><t>${esc(v)}</t></is></c>`;
 const cabecalho = ['BANCO', 'PAGAMENTO', 'VENCIMENTO', 'DIA PG', 'FORNECEDOR / CLIENTE', 'TITULO', 'CLASS. CONTABIL', 'SUB 2', 'ENTRADA', 'SAIDA', 'SALDO'];
 const cols = 'CDEFGHIJKLM';
-const dia = 46238; // 05/08/2026, serial Excel
-function arquivo(blocos, { saldoFinal = false } = {}) {
+function arquivo(blocos, { saldoFinal = false, mes = 8 } = {}) {
+  const dia = Math.round((Date.UTC(2026, mes - 1, 5) - Date.UTC(1899, 11, 30)) / 86400000);
   let n = 1;
   const rows = [];
   for (const [banco, movimentos] of blocos) {
@@ -67,7 +67,61 @@ const arquivos = new Map([
   ])],
   ['N3__DFC AGOSTO2026.xlsx', arquivo([['BANCO BRADESCO', [['igual', -50], ['igual', -50], ['igual', -50], ['outro', -60]]]])],
 ]);
+for (const mes of [1, 2, 3, 4, 5, 6, 7, 9]) {
+  for (const unidade of ['3N', 'B3N', 'B3W']) {
+    arquivos.set(`${unidade}__${String(mes).padStart(2, '0')} - DFC 2026.xlsx`,
+      arquivo([['BANCO TESTE', [[`${unidade}-${mes}`, -10]]]], { mes }));
+  }
+}
 const fonte = { disponivel: () => true, arquivos: async () => [...arquivos.keys()], ler: async (nome) => arquivos.get(nome) };
+
+test('janeiro a julho: três unidades, N3 ainda inexistente e nenhum aviso', async () => {
+  for (let mes = 1; mes <= 7; mes++) {
+    const r = await lerDfc({ fonte, ano: 2026, mes, comSerie: false });
+    assert.equal(r.ok, true);
+    assert.deepEqual(Object.keys(r.porUnidade), ['3N', 'B3N', 'B3W']);
+    assert.equal(r.linhas.length, 3);
+    assert.deepEqual(r.unidadesFaltantes, []);
+    assert.equal(r.aviso, null);
+  }
+  const base = novaBase({ raiz: process.cwd(), ano: 2026, fonte });
+  for (const unidade of ['3N', 'B3N', 'B3W']) {
+    const escolhida = await base.porUnidade(unidade).dfc({ mes: 7 });
+    assert.equal(escolhida.ok, true);
+    assert.deepEqual(escolhida.linhas.map((l) => l.unidade), [unidade]);
+    assert.equal(escolhida.aviso, null);
+  }
+  assert.equal((await base.porUnidade('N3').dfc({ mes: 7 })).ok, false);
+});
+
+test('agosto: quatro unidades e dedução N3 preservadas', async () => {
+  const r = await lerDfc({ fonte, ano: 2026, mes: 8, comSerie: false });
+  assert.deepEqual(Object.keys(r.porUnidade), ['3N', 'B3N', 'B3W', 'N3']);
+  assert.equal(r.linhas.length, 8);
+  assert.equal(r.repetidasN3, 2);
+  assert.deepEqual(r.unidadesFaltantes, []);
+  assert.equal(r.aviso, null);
+});
+
+test('setembro: consolida as três planilhas disponíveis e avisa falta da N3', async () => {
+  const base = novaBase({ raiz: process.cwd(), ano: 2026, fonte });
+  const r = await base.dfc({ mes: 9 });
+  assert.equal(r.ok, true);
+  assert.deepEqual(Object.keys(r.porUnidade), ['3N', 'B3N', 'B3W']);
+  assert.deepEqual(Object.fromEntries(['3N', 'B3N', 'B3W'].map((u) => [u, r.linhas.filter((l) => l.unidade === u).length])),
+    { '3N': 1, B3N: 1, B3W: 1 });
+  assert.deepEqual(r.unidadesFaltantes, ['N3']);
+  assert.equal(r.aviso, 'sem planilha da N3 neste mês; números sem ela');
+  for (const unidade of ['3N', 'B3N', 'B3W']) {
+    const escolhida = await base.porUnidade(unidade).dfc({ mes: 9 });
+    assert.equal(escolhida.ok, true);
+    assert.deepEqual(escolhida.linhas.map((l) => l.unidade), [unidade]);
+    assert.equal(escolhida.aviso, null);
+  }
+  const escolhida = await base.porUnidade('N3').dfc({ mes: 9 });
+  assert.equal(escolhida.ok, false);
+  assert.match(escolhida.motivo, /sem planilha da N3/);
+});
 
 test('caso da Projeção do mês acha entrada por conteúdo entre unidades com a mesma linha', async () => {
   const copias = new Map([

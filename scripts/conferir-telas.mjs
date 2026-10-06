@@ -576,7 +576,9 @@ async function provaFisica(mes, diretorio) {
     if (!r.ok) return `- ${String(mes).padStart(2, '0')}/${ANO}: a conferir; ${r.motivo}.`;
     return ['3N', 'B3N', 'B3W', 'N3'].map((u) => {
       const p = r.porUnidade[u];
-      if (!p) return `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: a conferir; sem cópia local.`;
+      if (!p) return r.unidadesFaltantes.includes(u)
+        ? `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: ${r.aviso}; nenhuma linha atribuída à unidade ausente.`
+        : `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: a conferir; sem cópia local.`;
       const efetivas = r.linhas.filter((l) => l.unidade === u);
       const caso = efetivas[0];
       return `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: fonte \`${p.arquivo}\`, aba \`FLUXO DE CAIXA\`; ${efetivas.length} linhas efetivas; caso real linha ${caso?.linha ?? '—'}, dia ${caso?.dia ?? '—'}, pagamento ${caso?.pagamento ?? '—'}.`;

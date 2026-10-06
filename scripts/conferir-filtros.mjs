@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { calcularTela1 } from '../lib/indicadores/tela-1.mjs';
 import { calcularTela2 } from '../lib/indicadores/tela-2.mjs';
 import { calcularTela3 } from '../lib/indicadores/tela-3.mjs';
-import { abrirCacheOmie, pastaDoCacheOmie } from '../lib/regras/cache-omie.mjs';
+import { abrirCacheOmie, arqCacheOmie, leiturasDe, pastaDoCacheOmie } from '../lib/regras/cache-omie.mjs';
 import { lerRecorte, lerContas, criarRegras } from '../lib/regras/movimentos.mjs';
 import { fonteDoDfc } from '../lib/regras/dfc-fonte.mjs';
 import { norm, cent } from '../lib/regras/dfc.mjs';
@@ -165,16 +165,22 @@ function departamentosDaFonte(emp) {
   return m;
 }
 
-// OS TÍTULOS A RECEBER, da fonte: a união de todas as janelas de `PesquisarLancamentos` que o cache tem, um título por
-// `nCodTitulo`. É o conjunto de onde a Tela 3 recorta, visto pelo outro lado. O `cNatureza: "R"` do próprio
-// `cabecTitulo` separa os títulos A RECEBER dos A PAGAR — o cache guarda as duas naturezas no mesmo serviço, e a Tela 3
-// é só a carteira a receber (`docs/fontes.md`).
+// Os títulos a receber vêm das duas janelas anuais que a Tela 3 usa. O cache também guarda consultas avulsas
+// com outra data de releitura; misturá-las aqui acrescentaria títulos que não estavam na leitura anual da tela.
+// Os JSONs são abertos diretamente, sem usar a montagem de `abrirCacheOmie` para fazer a comparação.
 function titulosDaFonte(emp) {
   const m = new Map();
-  for (const f of doPrefixo(emp, 'financas-pesquisartitulos-PesquisarLancamentos')) {
-    for (const t of abrir(f).titulosEncontrados ?? []) {
-      if (String(t.cabecTitulo?.cNatureza ?? '') !== 'R') continue;
-      m.set(String(t.cabecTitulo?.nCodTitulo), t);
+  const leitura = leiturasDe(ANO);
+  for (const [de, ate] of leitura.FAIXAS_TIT_R) {
+    let total = 1;
+    for (let n = 1; n <= total; n++) {
+      const f = arqCacheOmie(RAIZ, emp, 'financas/pesquisartitulos', 'PesquisarLancamentos', leitura.TIT_R(n, de, ate));
+      if (!fs.existsSync(f)) throw new Error(`falta a página ${n} da leitura anual de títulos da empresa ${emp}`);
+      const json = JSON.parse(fs.readFileSync(f, 'utf8'));
+      total = Number(json.nTotPaginas ?? json.total_de_paginas) || 1;
+      for (const t of json.titulosEncontrados ?? []) {
+        if (String(t.cabecTitulo?.cNatureza ?? '') === 'R') m.set(String(t.cabecTitulo?.nCodTitulo), t);
+      }
     }
   }
   return m;

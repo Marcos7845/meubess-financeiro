@@ -453,6 +453,7 @@ export default async function Pagina({ searchParams }) {
             : <>Sem o Omie não há lucro líquido nem margem: as duas descem de
               {' '}<b>&quot;(+) Receitas&quot;</b> e <b>&quot;(−) Despesas gerais&quot;</b>, que são do Omie.</>}
         </p>
+        {d.dfc.aviso && <p className="aviso">{d.dfc.aviso}</p>}
         <p className="para-que">
           Para ver em que linha do resultado o dinheiro está escapando, e desde quando. Os dois números da frase são a
           coluna <strong>Total</strong> da tabela lá embaixo — {mesesDaSoma.length}{' '}
@@ -484,9 +485,6 @@ export default async function Pagina({ searchParams }) {
           abaixo; o lado do Omie segue valendo.
         </p>
       )}
-      {d.dfc.ok && d.dfc.unidadesFaltantes?.length > 0 && <p className="aviso">
-        DFC parcial: faltam as planilhas de {d.dfc.unidadesFaltantes.join(', ')} neste mês. Os valores do DFC ainda não são o consolidado das quatro unidades.
-      </p>}
 
       {fMeses.semColuna.length > 0 && (
         <p className="aviso">
@@ -592,7 +590,8 @@ export default async function Pagina({ searchParams }) {
           a frase de 5 segundos fala; o que o destaca é o corpo do número, não a posição. */}
       <section className="kpis de-5">
         {d.cartoes.map((c) => (
-          <CartaoExplodivel nome={c.nome} composicao={c.composicao} key={c.id}>
+          <CartaoExplodivel nome={c.nome} composicao={c.composicao}
+            aviso={c.fonteDoValor !== 'omie' ? d.dfc.aviso : null} key={c.id}>
             <Kpi c={c} destaque={c.id === 'cartao-lucro-liquido'}
               texto={c.tipo === 'percentual' ? emPorcento(c.valor) : null}>
               <Fita serie={c.serie} />

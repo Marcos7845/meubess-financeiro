@@ -621,6 +621,7 @@ a { color: inherit; }
  * continuam na linha deles (`dense`). As tabelas de dentro são as mesmas da linha do DRE. */
 .kpis { grid-auto-flow: row dense; }
 .cartao-explodivel { min-width: 0; }
+.cartao-explodivel .aviso-do-cartao { margin: 5px 0 0; padding: 4px 6px; border-left: 2px solid var(--negativo); color: var(--negativo); font-size: 10.5px; line-height: 1.35; }
 .cartao-explodivel .kpi { border-left: 1px solid var(--borda); padding-left: 14px; }
 .kpis > .cartao-explodivel:first-child .kpi { border-left: 0; padding-left: 0; }
 .cartao-explodivel .abre-cartao { cursor: pointer; border-radius: 4px; }

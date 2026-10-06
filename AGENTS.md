@@ -14,6 +14,10 @@ Tudo abaixo é do projeto, não do Next. O `README.md` é o mapa completo; esta 
 precisa saber **antes** de tocar em qualquer arquivo. Onde houver conflito, vale o `docs/fontes.md` (o contrato dos
 números) e, sobre decisão do dono, o que está datado no `README.md`.
 
+> **Railway (06/10/2026):** o projeto antigo `meubess-financeiro` (`meubess-financeiro-production.up.railway.app`) está
+> abandonado — trial vencido, 404. O portal real é `financeiro.meubess.com.br`, projeto `meubess-calc-financ`, publicado
+> pelo envio à `master`. Os trechos de `docs/no-ar.md` sobre `railway up` e o projeto antigo são histórico.
+
 ## O que é o app
 
 Dashboards do financeiro da MeuBESS, para a equipe, **fora da Central de Comando** (app próprio, acesso próprio).

@@ -1,5 +1,11 @@
 # As três telas no Railway
 
+**Projeto antigo abandonado (06/10/2026):** o projeto `meubess-financeiro` do Railway, de endereço
+`meubess-financeiro-production.up.railway.app`, está **abandonado**: o teste gratuito venceu, o `railway up` é
+recusado ("Your trial has expired"), os deploys estão `REMOVED` e o endereço responde 404. **O portal real é
+`financeiro.meubess.com.br`, no projeto `meubess-calc-financ`, publicado pelo envio à `master` do GitHub** (não por
+`railway up`). O que está abaixo sobre o projeto antigo é histórico medido, mantido como estava.
+
 **Estado em 29/09/2026:** o app está **pronto** para rodar no Railway, e **nada foi publicado**. Não há conta, projeto,
 deploy nem rotina agendada — tudo o que está aqui foi feito e testado neste computador. Este documento lista o que o
 servidor precisa (só **nomes** de variável, nunca valores) e onde ele guarda o que tem de sobreviver a um redeploy.

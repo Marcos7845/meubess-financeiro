@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { acharPasta, acharPastas } from '../lib/regras/dfc-fonte.mjs';
+import { acharPasta, acharPastas, fonteDaPastaSincronizada } from '../lib/regras/dfc-fonte.mjs';
+import { espelharDfc } from './espelhar-dfc.mjs';
+import { registrarEnvio } from './envio-dfc-log.mjs';
 
 // Árvore de mentira, só com nomes e arquivos vazios; nenhum caminho real entra aqui.
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'meubess-dfc-fonte-'));
@@ -92,4 +94,82 @@ test('segue atalho (link simbólico ou junção) para a pasta compartilhada', (t
   assert.equal(r.caminho, path.join(raiz, 'atalho', 'DFC', '2026'));
   assert.equal(r.arquivos.length, 12);
   assert.ok(fs.existsSync(alvo));
+});
+
+test('espelho copia as quatro unidades, sobrescreve, preserva mtime e deixa a origem intacta', async () => {
+  const origem = path.join(base, 'origem-espelho');
+  const destino = path.join(base, 'destino-espelho');
+  const data = new Date('2026-09-15T12:00:00.000Z');
+  for (const unidade of ['3N', 'B3N', 'B3W', 'N3']) {
+    const pasta = path.join(origem, unidade, 'DFC', '2026');
+    fs.mkdirSync(pasta, { recursive: true });
+    const arquivo = path.join(pasta, '09 - DFC SETEMBRO 2026.xlsx');
+    fs.writeFileSync(arquivo, `fixture-${unidade}`);
+    fs.utimesSync(arquivo, data, data);
+    fs.mkdirSync(path.join(destino, unidade), { recursive: true });
+    fs.writeFileSync(path.join(destino, unidade, path.basename(arquivo)), 'antigo');
+  }
+  const anterior = process.env.DFC_DIR;
+  let fonte;
+  try {
+    process.env.DFC_DIR = origem;
+    fonte = fonteDaPastaSincronizada();
+  } finally {
+    if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
+  }
+  const nomes = await fonte.arquivos();
+  assert.equal(nomes.length, 4);
+  assert.deepEqual(await espelharDfc({ fonte, nomes, destino }), { '3N': 1, B3N: 1, B3W: 1, N3: 1 });
+  for (const unidade of ['3N', 'B3N', 'B3W', 'N3']) {
+    const relativo = path.join(unidade, '09 - DFC SETEMBRO 2026.xlsx');
+    const arquivo = path.join(origem, unidade, 'DFC', '2026', '09 - DFC SETEMBRO 2026.xlsx');
+    const copia = path.join(destino, relativo);
+    assert.equal(fs.readFileSync(arquivo, 'utf8'), `fixture-${unidade}`);
+    assert.equal(fs.readFileSync(copia, 'utf8'), `fixture-${unidade}`);
+    assert.equal(fs.statSync(arquivo).mtimeMs, data.getTime());
+    assert.equal(fs.statSync(copia).mtimeMs, data.getTime());
+  }
+  try {
+    process.env.DFC_DIR = destino;
+    const espelho = fonteDaPastaSincronizada();
+    assert.deepEqual((await espelho.arquivos()).sort(), nomes.sort());
+    for (const nome of nomes) assert.equal((await espelho.ler(nome)).toString(), `fixture-${nome.split('__')[0]}`);
+  } finally {
+    if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
+  }
+});
+
+test('DFC_DIR ainda aceita pasta plana da B3W', async () => {
+  const pasta = criar('plana', ['09 - DFC SETEMBRO 2026.xlsx']);
+  const anterior = process.env.DFC_DIR;
+  try {
+    process.env.DFC_DIR = pasta;
+    assert.deepEqual(await fonteDaPastaSincronizada().arquivos(), ['B3W__09 - DFC SETEMBRO 2026.xlsx']);
+  } finally {
+    if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
+  }
+});
+
+test('espelho por unidade prevalece sobre cópia plana antiga na mesma raiz', async () => {
+  const pasta = criar('plana-mista', ['08 - DFC AGOSTO 2026.xlsx']);
+  criar('plana-mista/B3W', ['09 - DFC SETEMBRO 2026.xlsx']);
+  criar('plana-mista/N3', ['DFC SETEMBRO 2026.xlsx']);
+  const anterior = process.env.DFC_DIR;
+  try {
+    process.env.DFC_DIR = pasta;
+    assert.deepEqual(await fonteDaPastaSincronizada().arquivos(), [
+      'B3W__09 - DFC SETEMBRO 2026.xlsx', 'N3__DFC SETEMBRO 2026.xlsx',
+    ]);
+  } finally {
+    if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
+  }
+});
+
+test('registro de falha traz hora, etapa e mensagem sem segredo', async () => {
+  const arquivo = path.join(base, 'logs-fixture', 'envio-dfc.log');
+  await registrarEnvio({ arquivo, resultado: 'erro', etapa: 'confirmação do envio',
+    erro: new Error('recusado\nsegredo-fixture'), segredos: ['segredo-fixture'] });
+  const linha = fs.readFileSync(arquivo, 'utf8');
+  assert.match(linha, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z resultado=erro etapa=confirmação do envio mensagem=recusado \[oculto\]\n$/);
+  assert.doesNotMatch(linha, /segredo-fixture/);
 });

@@ -135,11 +135,14 @@ npm run financeiro-enviar-dfc -- --seco  # só diz quantas planilhas mandaria
 
 O script pergunta ao servidor o que ele já tem (`GET /api/dfc`), manda só as planilhas que mudaram (`PUT`, pelo sha256)
 e fecha o envio com a lista inteira da pasta (`POST`), que grava a hora. As telas do servidor mostram no rodapé
-"DFC: enviado pelo PC em …". Termina com código 0 quando o servidor confirmou, e diferente de 0 em qualquer falha.
+"DFC: enviado pelo PC em …". Termina com código 0 quando o servidor confirmou e o espelho foi atualizado, e diferente
+de 0 em qualquer falha.
 
-**Está pronto para ser agendado de hora em hora e não está agendado.** Quando o dono quiser, no Agendador de Tarefas do
-Windows, uma tarefa de hora em hora com o programa `npm` e os argumentos `run financeiro-enviar-dfc`, iniciando na pasta
-do repositório.
+**Decisão de 06/10/2026:** o script `scripts/instalar-agendamento-dfc.ps1` cria ou atualiza a tarefa
+`financeiro-enviar-dfc` para **10:00 e 18:00 de Brasília**, diariamente, na conta do dono. A tarefa não foi alterada
+automaticamente. Após cada envio confirmado, o script atualiza `.cache/dfc-2026/<unidade>/`, preservando a data de
+modificação das planilhas, e registra sucesso ou falha em `.cache/logs/envio-dfc.log`. O espelho pode ser lido por agentes
+com `DFC_DIR=.cache/dfc-2026`, sem tocar a origem sincronizada.
 
 Os números não mudam por vir do servidor: são os mesmos bytes, lidos pelo mesmo `lib/regras/dfc.mjs`. Conferido em
 29/09/2026: com as doze planilhas mandadas por este script a um servidor local e `DFC_FONTE=servidor`,

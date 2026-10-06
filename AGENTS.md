@@ -91,8 +91,10 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
 - Mês conferido é **agosto de 2026**; o Omie recebe lançamento retroativo, então jan–set muda de contagem sozinho
   (é publicado, não travado). Refixar a trava é na mão, com `node scripts/numeros-das-telas.mjs --refazer-trava`, e só
   com o dono ciente.
-- Sem ler o OneDrive: `--sem-dfc` (linhas do DFC saem "a conferir:") ou `DFC_DIR=.cache/dfc-2026`, a cópia local das
-  planilhas. Não abra nem copie de pasta sincronizada com a nuvem: ler o arquivo o baixa e o Windows pede ao dono.
+- Agentes leem o DFC somente pelo espelho local `DFC_DIR=.cache/dfc-2026` (unidades `3N/`, `B3N/`, `B3W/`, `N3/`),
+  ou usam `--sem-dfc` (linhas do DFC saem "a conferir:"). O espelho é atualizado após o envio bem-sucedido pela tarefa
+  `financeiro-enviar-dfc`, às **10:00 e 18:00 de Brasília**; antes da primeira execução pode faltar uma unidade.
+  Não abra, liste nem copie de pasta sincronizada com a nuvem: ler o arquivo o baixa e o Windows pede ao dono.
 - Números com reais, só no terminal e nunca em arquivo: `scripts/diagnostico-dia-a-dia.mjs`,
   `scripts/confronto-dfc-omie.mjs`.
 
@@ -141,8 +143,9 @@ ficam em `app/globals.css`), gráfico desenhado no servidor.
 
 ## O que não fazer
 
-- **Não fazer deploy.** O app está pronto para o Railway e **nada foi publicado** (`docs/deploy-railway.md`). Não
-  crie conta, projeto, variável, cron nem agende o envio do DFC. Vercel também não: a decisão de 27/09/2026 é usar local.
+- **Não fazer deploy.** O app está pronto para o Railway (`docs/deploy-railway.md`). Não crie conta, projeto, variável
+  nem cron. O script `scripts/instalar-agendamento-dfc.ps1` configura o envio local quando o dono o executar; agentes não
+  devem executá-lo nem alterar o Agendador sem pedido explícito. Vercel também não: a decisão de 27/09/2026 é usar local.
 - **Não dar push**, nem `--force`, nem apagar branch. Commit só quando pedido, só com os arquivos do pedido.
 - **Não mexer no `.env`**, nem imprimir valor de chave, segredo ou senha. `.env.example` só tem nomes.
 - **Não chamar a API do Omie por conta própria** fora de `lib/regras/omie-api.mjs` e dos scripts que já existem,

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import zlib from 'node:zlib';
-import { lerDfc, deduzirN3, saidasPagasDoDfc } from '../lib/regras/dfc.mjs';
+import { lerDfc, deduzirN3, saidasPagasDoDfc, eReceitaTela1Dfc, conferirCasoDfc } from '../lib/regras/dfc.mjs';
 import { selecionarSaidas } from '../lib/regras/saidas.mjs';
 import { novaBase } from '../lib/regras/base-local.mjs';
 
@@ -31,7 +31,7 @@ const celula = (col, n, v) => typeof v === 'number'
 const cabecalho = ['BANCO', 'PAGAMENTO', 'VENCIMENTO', 'DIA PG', 'FORNECEDOR / CLIENTE', 'TITULO', 'CLASS. CONTABIL', 'SUB 2', 'ENTRADA', 'SAIDA', 'SALDO'];
 const cols = 'CDEFGHIJKLM';
 const dia = 46238; // 05/08/2026, serial Excel
-function arquivo(blocos) {
+function arquivo(blocos, { saldoFinal = false } = {}) {
   let n = 1;
   const rows = [];
   for (const [banco, movimentos] of blocos) {
@@ -42,6 +42,12 @@ function arquivo(blocos) {
         celula('C', n, banco.replace(/^BANCO /, '')), celula('D', n, 'PAGO'), celula('F', n, dia),
         celula('H', n, historico), celula('I', n, 'DESPESA PJ'), celula('J', n, 'DESPESAS PJ'),
         celula('L', n, valor),
+      ].join('')}</row>`);
+    }
+    if (saldoFinal) {
+      const saldo = movimentos.reduce((total, [, valor]) => total + valor, 0);
+      rows.push(`<row r="${++n}">${[
+        celula('J', n, 'SALDO FINAL'), celula('L', n, saldo), celula('M', n, saldo),
       ].join('')}</row>`);
     }
   }
@@ -62,6 +68,29 @@ const arquivos = new Map([
   ['N3__DFC AGOSTO2026.xlsx', arquivo([['BANCO BRADESCO', [['igual', -50], ['igual', -50], ['igual', -50], ['outro', -60]]]])],
 ]);
 const fonte = { disponivel: () => true, arquivos: async () => [...arquivos.keys()], ler: async (nome) => arquivos.get(nome) };
+
+test('caso da Projeção do mês acha entrada por conteúdo entre unidades com a mesma linha', async () => {
+  const copias = new Map([
+    ['B3N__08 - DFC AGOSTO 2026.xlsx', arquivo([['BANCO SICOOB', [['entrada', 25]]]])],
+    ['B3W__08 - DFC AGOSTO 2026.xlsx', arquivo([['BANCO ITAÚ', [['saída', -30]]]])],
+  ]);
+  const origem = { disponivel: () => true, arquivos: async () => [...copias.keys()], ler: async (nome) => copias.get(nome) };
+  const r = await lerDfc({ fonte: origem, ano: 2026, mes: 8, comSerie: false });
+  const caso = conferirCasoDfc(r.linhas, r.cruas, eReceitaTela1Dfc, 2026, 8);
+  assert.equal(caso.quantas, 1);
+  assert.equal(caso.linha.unidade, 'B3N');
+  assert.equal(caso.ok, true, caso.dif.join('; '));
+});
+
+test('SALDO FINAL que repete saldo em SAIDA não cria desvio nem movimento', async () => {
+  const nome = 'B3W__08 - DFC AGOSTO 2026.xlsx';
+  const origem = { disponivel: () => true, arquivos: async () => [nome],
+    ler: async () => arquivo([['BANCO SICOOB', [['pagamento', -10]]]], { saldoFinal: true }) };
+  const r = await lerDfc({ fonte: origem, ano: 2026, mes: 8, comSerie: false });
+  assert.equal(r.linhas.length, 1);
+  assert.equal(r.saldosPorBanco[0].desvios, 0);
+  assert.equal(r.saldosPorBanco[0].movimento, -1000);
+});
 
 test('B3N exclui somente o bloco do cabeçalho BANCO ITAÚ e conserva Sicoob', async () => {
   const r = await lerDfc({ fonte, ano: 2026, mes: 8, comSerie: false });

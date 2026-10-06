@@ -27,7 +27,7 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**47 indicadores**: 46 conferidos, 1 divergentes e 0 a conferir.
+**47 indicadores**: 47 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
@@ -127,7 +127,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** contasFixasNoMes 29, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
 - **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 143, deducoes 2. **Fonte:** DFC nas duas pontas.
 - **Tela 3 — Projeção do mês.** **Na tela:** DFC 484. **Na conferência:** DFC 484. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- divergente: **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 7, bancosQueFecham 6, linhasNaoBaixadasNoSaldo 2, bancosComLancamentoDepoisDoSaldo 1, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar"). **Motivo:** em "diasComMovimento" a tela conta 21 e a conferência diz 22.
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 22, bancos 7, bancosQueFecham 7, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
 
 ## Antes e depois da correção do leitor
 

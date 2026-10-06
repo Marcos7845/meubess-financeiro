@@ -432,7 +432,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `8007241cb75f` — 504 arquivos no cache local, o mais novo gravado em 05/10/2026 às 11h03; a última releitura do app que trouxe dado do Omie foi em 01/10/2026 às 16h41 (ok, 292 páginas).
+**De que leitura são as contagens desta tabela:** leitura `6b05acf1c30b` — 506 arquivos no cache local, o mais novo gravado em 06/10/2026 às 12h05; a última releitura do app que trouxe dado do Omie foi em 01/10/2026 às 16h41 (ok, 292 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -442,7 +442,7 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`8007241cb75f`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`6b05acf1c30b`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 175 | 9, 0, 162 | **não** — a releitura mexeu |
 | total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 293 | 809, 9, 276 | **não** — a releitura mexeu |
@@ -1264,6 +1264,13 @@ desligada, só as provisões por projeto e o repasse a clientes continuam, porqu
 saiu. Regras em `lib/regras/passivo.mjs` e, para as provisões, em `lib/regras/provisao.mjs`; listas em
 `lib/regras/listas.mjs`.
 
+**Captação de abril, conferida em 06/10/2026:** o contrato `4528305982` tem `DATA` 17/04/2026 na cópia local
+da planilha de contratos. A cópia local B3W de abril tem a entrada correspondente na linha 249 do
+`FLUXO DE CAIXA`, `SUB 2` = `EMPRESTIMO`, no mesmo dia e com o mesmo valor em centavos. O espelho local não
+tem as unidades 3N e N3 de abril; a leitura consolidada do mês falha por isso. Para comprovar a existência
+da captação histórica, a conferência pode usar o caso presente na unidade local, sem preencher ou supor
+movimentos das unidades ausentes. O fluxo mensal da tela continua exigindo o DFC consolidado.
+
 | indicador | fonte | tabela/aba e filtro | cálculo | conferido |
 |---|---|---|---|---|
 | Capital de giro tomado | **Omie + DFC** (fluxo) / **CCBs Itaú e planilha** (saldo) | Fluxo mensal: Omie `ListarMovimentos` e linhas `EMPRESTIMO` do DFC, casadas por sentido, dia e valor, conforme a regra de dívida acima. Saldo: CCBs Itaú `4528305982` e `4528550256`, total financiado e 57 parcelas do Anexo I lidos dos PDFs locais; planilha de contratos para o contrato sem CCB legível. | No corte, total financiado menos principal vencido, mais juros corridos desde o último vencimento; faixas pelo total nominal das parcelas futuras. Se uma CCB exigida faltar ou estiver ilegível, o saldo fica indisponível. | agosto/2026: parcelas de 17/08 e 28/08 são só juros, ambas casadas no extrato Itaú com o Anexo I; primeira amortização na parcela 9, nas duas CCBs. |
@@ -1386,9 +1393,20 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 Entrou, Saiu e as Telas 1 e 2 usam; nada disso mudou (conferido em 29/09/2026: as 4.694 linhas dos doze arquivos de
 2026 saem idênticas antes e depois). O que mudou é a leitura do **saldo corrido** (`saldosPorBanco` em `lerMesDoDfc`):
 ela só aceita um número como saldo quando ele é o **saldo anterior mais o movimento da linha**, e conta quantas vezes
-isso não aconteceu (`desvios`). Em 2026, nos seis meses em que não houve nenhum desvio (jan, fev, ago, set, nov, dez) a
-conferência da posição de caixa com os bancos fecha **sem um centavo de sobra**; nos seis em que houve (mar, abr, mai,
-jun, jul, out) ela não fecha, e a tela diz isso em vez de dar um veredito.
+isso não aconteceu (`desvios`). A ausência de desvio não basta para fechar a ponte: todos os movimentos do
+consolidado também precisam estar cobertos pelos blocos de saldo considerados. A medição de agosto em 06/10/2026,
+abaixo, mostra esse caso.
+
+Na B3N de agosto, a linha 81 tem `SUB 2` = `SALDO FINAL`: repete o saldo em `SAIDA` e em `SALDO`, sem `PAGAMENTO`.
+É totalizador do bloco Sicoob, não um segundo movimento. As linhas de `SALDO INICIAL` / `SALDO FINAL` (inclusive
+provisão) ficam fora do movimento da ponte; o saldo escrito dos lançamentos anteriores é o que se confere.
+
+**Conferência da ponte em 06/10/2026:** o fluxo consolidado de agosto contém 3 linhas exclusivas da N3, depois de
+deduzir 8 linhas repetidas na B3W. O bloco de saldo da N3 é omitido da soma dos bancos para não duplicar os saldos,
+mas suas 3 linhas exclusivas continuam na posição de caixa da tela. Assim, os 7 blocos bancários usados não cobrem
+todos os lançamentos do consolidado e a ponte do mês não fecha, embora cada saldo escrito ande com seu próprio
+movimento. A conferência deve usar as mesmas linhas da posição da tela e sinalizar essa falta de cobertura.
+Esta medição substitui a afirmação anterior desta seção de que a ponte de agosto fechava.
 
 **Os números que nascem aqui — todos contas simples dos de cima:**
 
@@ -1403,7 +1421,7 @@ jun, jul, out) ela não fecha, e a tela diz isso em vez de dar um veredito.
 
 > posição no último dia consolidado **+** o que o saldo já desconta e não está baixado **+** o baixado depois do corte **−** o que a planilha lançou depois de parar de escrever o saldo **=** o último saldo escrito, somado entre os bancos
 
-Os dois últimos termos existem porque a planilha faz as duas coisas: em setembro de 2026 há 14 linhas ainda `A PAGAR` (ou sem `PAGAMENTO`) que o saldo já desconta, e em agosto de 2026 a STONE tem 3 linhas sem `PAGAMENTO` (401, 404 e 408) que o saldo já desconta, e um dos cinco blocos (o segundo Itáu, na linha 452) **para de escrever o saldo** e segue lançando. (Até 29/09/2026 esta frase dizia que a STONE parava de escrever o saldo na linha 400: era o defeito do leitor, que perdia a `SAIDA` dessas 3 linhas; lida certa, ela escreve o saldo até a última linha dela, a 409.) Nos dois meses a ponte fecha em **R$ 0,00**. A tela só dá o veredito quando o saldo corrido da planilha andou exatamente com o movimento em todos os blocos; onde ele pula, ela diz que a conferência não pode ser feita naquele mês. O valor em reais dos dois lados sai só no terminal, em `node scripts/diagnostico-dia-a-dia.mjs --mes N --saldos`. **Por que não o quadro do caixa da aba do mês** (a primeira escolha, de 28/09/2026): o diagnóstico no computador do dono (`scripts/diagnostico-dia-a-dia.mjs`) mostrou que ele não é mantido — `Entradas` e `Gastos` quase sempre zero, o `Final` parado e o `Inicial` do dia 1 igual em agosto e setembro —, e a linha partia de um caixa que não existia. Sem saldo corrido na planilha, o quadro fica como reserva. Título a pagar que venceu antes de hoje sem baixa não tem dia previsto: fica fora do gráfico, e a tela diz quanto é — somado a ele, o fim da linha dá a "Projeção do mês" | DFC (consolidado) + Omie (previsão). A lista título a título sai dos mesmos cálculos dos dois cartões (`porVencimento` em `tela-1.mjs` e `tela-3.mjs`), que não mudaram de valor |
+Os dois últimos termos existem porque a planilha faz as duas coisas: em setembro de 2026 há 14 linhas ainda `A PAGAR` (ou sem `PAGAMENTO`) que o saldo já desconta, e em agosto de 2026 a STONE tem 3 linhas sem `PAGAMENTO` (401, 404 e 408) que o saldo já desconta, e um dos cinco blocos (o segundo Itáu, na linha 452) **para de escrever o saldo** e segue lançando. (Até 29/09/2026 esta frase dizia que a STONE parava de escrever o saldo na linha 400: era o defeito do leitor, que perdia a `SAIDA` dessas 3 linhas; lida certa, ela escreve o saldo até a última linha dela, a 409.) Na medição de 29/09/2026 os dois meses fechavam; a medição de 06/10/2026 acima substitui o veredito de agosto. A tela só dá o veredito quando o saldo corrido da planilha andou exatamente com o movimento em todos os blocos; onde ele pula, ela diz que a conferência não pode ser feita naquele mês. O valor em reais dos dois lados sai só no terminal, em `node scripts/diagnostico-dia-a-dia.mjs --mes N --saldos`. **Por que não o quadro do caixa da aba do mês** (a primeira escolha, de 28/09/2026): o diagnóstico no computador do dono (`scripts/diagnostico-dia-a-dia.mjs`) mostrou que ele não é mantido — `Entradas` e `Gastos` quase sempre zero, o `Final` parado e o `Inicial` do dia 1 igual em agosto e setembro —, e a linha partia de um caixa que não existia. Sem saldo corrido na planilha, o quadro fica como reserva. Título a pagar que venceu antes de hoje sem baixa não tem dia previsto: fica fora do gráfico, e a tela diz quanto é — somado a ele, o fim da linha dá a "Projeção do mês" | DFC (consolidado) + Omie (previsão). A lista título a título sai dos mesmos cálculos dos dois cartões (`porVencimento` em `tela-1.mjs` e `tela-3.mjs`), que não mudaram de valor |
 | Vários meses dia a dia (pedido do dono, 29/09/2026) | com `?meses=4,5,6,7,8` (a lista "dia a dia" do recorte), o gráfico dia a dia vira o período inteiro, os dias em sequência; cada mês pela mesma conta do mês sozinho (consolidado pelo `DIA PG`, previsão do Omie só nos meses que não fecharam). A linha recomeça, em cada mês, na abertura dos bancos daquele mês (`saldosPorBanco`, a leitura do saldo corrido descrita acima): se a planilha não fecha de um mês para o outro, aparece um degrau. Os cartões continuam sendo do mês do filtro "mês" | DFC + Omie, como o mês sozinho |
 | As fixas de um período e os lançamentos de cada conta (pedido do dono, 29/09/2026) | a escolha "período" do recorte (`?meses=…`) vale também para "Para onde foi a despesa fixa": uma coluna por mês, o total, o % da receita líquida do período (a soma das receitas líquidas de cada mês pela conta do cartão) e as linhas. Clicar numa conta abre os lançamentos que a compõem — mês e dia de `DIA PG`, `FORNECEDOR / CLIENTE` (G), `TITULO` (H), o número da linha no `FLUXO DE CAIXA` e o valor. Os nomes só aparecem depois do clique, no navegador: a captura não os tem | DFC, as mesmas linhas do cartão "Despesas fixas pagas" |
 | Fora da curva | o mês se afasta da média dos meses anteriores do mesmo ano mais que um desvio-padrão deles; só com 3 meses anteriores ou mais | a série do ano, acima. **A confirmar pelo dono:** a régua de um desvio-padrão |

@@ -97,7 +97,8 @@ Indicador sem fonte escrita em `docs/fontes.md` não entra na tela. Regra nova o
   com o dono ciente.
 - Agentes leem o DFC somente pelo espelho local `DFC_DIR=.cache/dfc-2026` (unidades `3N/`, `B3N/`, `B3W/`, `N3/`),
   ou usam `--sem-dfc` (linhas do DFC saem "a conferir:"). O espelho é atualizado após o envio bem-sucedido pela tarefa
-  `financeiro-enviar-dfc`, às **10:00 e 18:00 de Brasília**. Cada envio confirmado espelha todos os meses de 2026
+  `financeiro-enviar-dfc`, que roda **de hora em hora** (gatilho horário desde 30/09/2026, 20:00; conferido em
+  07/10/2026 com `schtasks /query /tn financeiro-enviar-dfc /v /fo list`). Cada envio confirmado espelha todos os meses de 2026
   disponíveis nas quatro pastas anuais; antes da primeira execução pode faltar uma unidade ou mês.
   Não abra, liste nem copie de pasta sincronizada com a nuvem: ler o arquivo o baixa e o Windows pede ao dono.
 - Números com reais, só no terminal e nunca em arquivo: `scripts/diagnostico-dia-a-dia.mjs`,

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fluxo de Caixa — correção do período</title>
+  <style>
+    :root{color-scheme:light;--fundo:#f5f7f5;--texto:#24352c;--verde:#176b50;--borda:#d7e2d9;--branco:#fff}
+    *{box-sizing:border-box}body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.55 system-ui,sans-serif}
+    main{max-width:820px;margin:48px auto;padding:0 20px}header{padding:28px;border-radius:14px;background:var(--verde);color:var(--branco)}
+    h1{margin:0;font-size:2rem;line-height:1.2}h2{font-size:1.15rem;margin:0 0 10px}p{margin:12px 0 0}
+    section{background:var(--branco);border:1px solid var(--borda);border-radius:12px;margin-top:16px;padding:22px}
+    code{font:0.92em ui-monospace,monospace;background:#edf2ee;padding:2px 5px;border-radius:4px}
+    ul{margin:8px 0 0;padding-left:22px}li+li{margin-top:7px}.selo{display:inline-block;margin-top:12px;background:#e4f4e9;color:#145338;padding:5px 10px;border-radius:999px;font-weight:700}
+  </style>
+</head>
+<body><main>
+  <header><h1>Fluxo de Caixa: um único período</h1><p>Correção dos filtros de tempo e dos totais da tela</p></header>
+  <section><h2>Causa</h2><p>O controle <strong>Período</strong> alimentava o gráfico diário e a tabela de despesas fixas, mas os cartões <strong>Entrou</strong> e <strong>Saiu</strong> continuavam lendo somente o parâmetro <code>mes</code>.</p></section>
+  <section><h2>Como funciona agora</h2><ul>
+    <li>O controle <strong>Período</strong> escolhe um ou vários meses e alimenta os cartões, o gráfico e a tabela.</li>
+    <li>Os cartões somam os mesmos lançamentos que cada mês já somava; a lista aberta no clique acompanha o período.</li>
+    <li>Links antigos, como <code>?ano=2026&amp;mes=9</code>, selecionam setembro sozinho.</li>
+    <li>O aviso identifica qualquer mês escolhido sem planilha de uma unidade, inclusive N3.</li>
+  </ul></section>
+  <section><h2>Conferência</h2><p>Com o espelho local do DFC, agosto e setembro foram calculados isoladamente e juntos. Para <strong>Entrou</strong> e <strong>Saiu</strong>, o total conjunto foi igual à soma dos dois meses; os dois totais mudaram ao ampliar o intervalo.</p><span class="selo">Igualdade verificada ao centavo</span><p>Os valores financeiros são mostrados somente no terminal e na resposta ao pedido, conforme a regra do projeto.</p></section>
+</main></body></html>

@@ -7,6 +7,7 @@
   },
   "scripts": {
     "test": "node --test testes/regras.test.mjs testes/dfc-consolidado.test.mjs scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/pendencias.test.mjs scripts/pendencias-ponte.test.mjs scripts/telas-no-ar.test.mjs scripts/dfc-fonte.test.mjs scripts/testar-cache-omie.mjs",
+    "typecheck": "node scripts/typecheck.mjs",
     "dev": "next dev -H 127.0.0.1 -p 4781",
     "build": "node scripts/subir-local.mjs --so-build",
     "start": "node scripts/subir-local.mjs --sem-build",
@@ -20,6 +21,7 @@
     "conferir-no-ar": "node scripts/conferir-no-ar.mjs",
     "testar-detalhe-dre": "node scripts/testar-detalhe-dre.mjs",
     "testar-detalhe-cartoes": "node scripts/testar-detalhe-cartoes.mjs",
+    "conferir-periodo-fluxo": "node scripts/conferir-periodo-fluxo.mjs",
     "auditar": "node scripts/auditar.mjs",
     "testar-auditoria": "node --test scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs",
     "testar-cache-omie": "node --test scripts/testar-cache-omie.mjs",

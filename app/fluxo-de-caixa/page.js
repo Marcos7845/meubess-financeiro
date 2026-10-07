@@ -19,7 +19,7 @@ import React from 'react';
 
 import { dadosDoFluxoDeCaixa, mesCorrente } from '../../lib/dados.mjs';
 import { NOMES_DOS_MESES } from '../../lib/regras/periodo.mjs';
-import { comoLista, comoTexto } from '../../lib/regras/filtros.mjs';
+import { comoLista, comoTexto, mesesDoFluxo } from '../../lib/regras/filtros.mjs';
 import Atualizar from '../atualizar.js';
 import ChaveDoOmie, { AvisoSemOmie } from '../chave-omie.js';
 import FiltroDeUnidade from '../unidade.js';
@@ -52,6 +52,7 @@ const MESES_CURTOS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'
 // com o número da linha na aba `FLUXO DE CAIXA`, para achar de volta na planilha. Fica fechada; abre com um clique.
 function Origem({ c }) {
   const linhas = c.linhas ?? [];
+  const temMes = linhas.some((l) => l.mes != null);
   return (
     <details className="origem">
       <summary>de onde saiu{linhas.length ? ` · ${linhas.length} ${linhas.length === 1 ? 'linha' : 'linhas'} do DFC` : ''}</summary>
@@ -59,11 +60,11 @@ function Origem({ c }) {
       {linhas.length > 0 && (
         <div className="rolagem-origem">
           <table>
-            <thead><tr><th>linha</th><th>dia</th><th>classificação</th><th>conta (SUB 2)</th><th className="num">valor</th></tr></thead>
+            <thead><tr>{temMes && <th>mês</th>}<th>linha</th><th>dia</th><th>classificação</th><th>conta (SUB 2)</th><th className="num">valor</th></tr></thead>
             <tbody>
               {linhas.map((l) => (
-                <tr key={l.linha}>
-                  <td>{l.linha}</td><td>{l.dia}</td><td>{l.classe}</td><td>{l.sub2}</td><td className="num">{emReais(l.valor)}</td>
+                <tr key={`${l.mes ?? ''}-${l.linha}`}>
+                  {temMes && <td>{l.mes}</td>}<td>{l.linha}</td><td>{l.dia}</td><td>{l.classe}</td><td>{l.sub2}</td><td className="num">{emReais(l.valor)}</td>
                 </tr>
               ))}
             </tbody>
@@ -92,11 +93,11 @@ export default async function Pagina({ searchParams }) {
   const q = await searchParams;
   const corrente = mesCorrente();
   const ano = Number(q?.ano ?? corrente.ano);
-  const mes = Number(q?.mes ?? corrente.mes);
+  const mesesDoDia = mesesDoFluxo(q, corrente.mes);
+  const mes = mesesDoDia.at(-1);
   const unidade = comoTexto(q?.unidade);
-  // OS MESES DO GRÁFICO DIA A DIA (pedido do dono, 29/09/2026: "abril a agosto"): `?meses=4,5,6,7,8`. Sem nada, ou com um
-  // mês só, o gráfico é o do mês escolhido. Os cartões de cima são sempre do mês escolhido.
-  const mesesDoDia = comoLista(q?.meses).map(Number).filter((m) => m >= 1 && m <= 12);
+  // O mesmo período alimenta os cartões, o gráfico e as despesas fixas.
+  // Links antigos com ?mes= continuam escolhendo um mês só.
   const d = await dadosDoFluxoDeCaixa({ ano, mes, filtro: { empresa: comoLista(q?.empresa), omie: comoLista(q?.omie), unidade,
     saidas: comoTexto(q?.saidas), banco: comoTexto(q?.banco), mesesDoDia } });
   const femp = d.filtros.empresa;
@@ -129,6 +130,8 @@ export default async function Pagina({ searchParams }) {
     ? `A conferência com os bancos não pode ser feita neste mês: o saldo corrido da planilha PULA — anda por um valor diferente do movimento da linha — em ${cb.naoFecham} ${cb.nBancos === 1 ? 'bloco de banco, o único que este arquivo tem' : `dos ${cb.nBancos} blocos de banco`}, e sem essa coluna mantida não há com o que comparar a posição de caixa. Nos meses em que a planilha a mantém — agosto e setembro de 2026, entre outros — a conferência fecha sem sobra.`
     : `Conferido com os bancos no dia ${cb.corte}: a linha dá ${emReais(cb.posicao)}; ${termo(cb.naoBaixado.valor, true)} que o saldo da planilha já conta e ainda não foi baixado (${cb.naoBaixado.n} ${cb.naoBaixado.n === 1 ? 'linha' : 'linhas'})${cb.baixadoDepois.n ? `, ${termo(cb.baixadoDepois.valor, true)} baixado depois do dia ${cb.corte}` : ''}${cb.depoisDoSaldo.n ? `, e ${termo(cb.depoisDoSaldo.valor, false)} que a planilha lançou depois de parar de escrever o saldo, em ${cb.depoisDoSaldo.n} ${cb.depoisDoSaldo.n === 1 ? 'banco' : 'bancos'}` : ''}, chega-se ao último saldo dos bancos, ${emReais(cb.final)}${cb.diferenca === 0 ? ' — sem um centavo de sobra' : `, com ${emReais(cb.diferenca)} sem explicação`}.`;
   const nomeDoMes = NOMES_DOS_MESES?.[mes] ?? MESES_CURTOS[mes];
+  const variosMeses = mesesDoDia.length > 1;
+  const nomeDoPeriodo = variosMeses ? mesesDoDia.map((m) => NOMES_DOS_MESES[m]).join(' + ') : nomeDoMes;
   // O PÉ DE CADA CARTÃO: quantas linhas do DFC e quantos títulos do Omie entraram nele — só a fonte que ele usa. Um
   // cartão só do DFC não escreve "sem o Omie", que daria a entender que faltou dado.
   const pe = (c) => [
@@ -154,16 +157,16 @@ export default async function Pagina({ searchParams }) {
 
       {/* 1. O TÍTULO E A FRASE DE 5 SEGUNDOS: quanto entrou, quanto saiu, e como o mês fecha. */}
       <section className="chamada">
-        <h1>{nomeDoMes} de {ano}{d.mesEmAndamento ? ' — mês em andamento' : ''}</h1>
+        <h1>{nomeDoPeriodo} de {ano}{d.mesEmAndamento ? ' — mês em andamento' : ''}</h1>
         <p className="frase">
           {!d.dfc.ok
-            ? <>Sem a planilha do DFC deste mês não há caixa para mostrar: {d.dfc.motivo}.</>
+            ? <>Faltam planilhas do DFC no período; os totais ficam incompletos: {d.dfc.motivo}.</>
             : <>
               {d.mesFechado ? 'Entrou' : 'Até agora entrou'} <b>{emReais(entrou.valor)}</b> e saiu <b>{emReais(saiu.valor)}</b>:{' '}
-              {d.mesFechado ? 'o mês fechou com' : 'até aqui,'}{' '}
+              {d.mesFechado ? (variosMeses ? 'o período fechou com' : 'o mês fechou com') : 'até aqui,'}{' '}
               <span className={`fluxo-veredito ${doResultado}`}>{nomeDo(doResultado)} de {emReais(Math.abs(resultado.valor))}</span>.
               {!d.mesFechado && (daProjecao
-                ? <> Com o que ainda vence no mês, deve fechar com{' '}
+                ? <> Com o que ainda vence no período, deve fechar com{' '}
                   <span className={`fluxo-veredito ${daProjecao}`}>{nomeDo(daProjecao)} de {emReais(Math.abs(projecao.valor))}</span>.</>
                 : <> Sem o Omie não dá para projetar o fechamento.</>)}
             </>}
@@ -187,10 +190,8 @@ export default async function Pagina({ searchParams }) {
         <form className="barra-filtros filtros-form" method="get" action="/fluxo-de-caixa">
           <Suspensa nome="ano" campo="ano" unica
             opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a), marcada: a === ano }))} />
-          <Suspensa nome="período (dia a dia e fixas)" campo="meses" vazio="o mês escolhido"
+          <Suspensa nome="Período" campo="meses"
             opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: mesesDoDia.includes(i + 1) }))} />
-          <Suspensa nome="mês" campo="mes" unica
-            opcoes={MESES_CURTOS.slice(1).map((m, i) => ({ valor: String(i + 1), rotulo: m, marcada: i + 1 === mes }))} />
           <FiltroDeEmpresa f={femp} />
           <FiltroDeUnidade escolhida={unidade} />
           <label className="campo-filtro"><span>Saídas: situação</span>
@@ -248,8 +249,8 @@ export default async function Pagina({ searchParams }) {
       </section>
       {comOmie && d.vencidoAReceber.valor > 0 && (
         <p className="aviso leve">
-          <strong>{emReais(d.vencidoAReceber.valor)}</strong> a receber deste mês já venceu e ainda não foi recebido
-          ({d.vencidoAReceber.contagem.omie} títulos){d.mesFechado ? '' : ': fica fora da projeção. Se entrar, o mês fecha melhor'}.
+          <strong>{emReais(d.vencidoAReceber.valor)}</strong> a receber {variosMeses ? 'deste período' : 'deste mês'} já venceu e ainda não foi recebido
+          ({d.vencidoAReceber.contagem.omie} títulos){d.mesFechado ? '' : `: fica fora da projeção. Se entrar, ${variosMeses ? 'o período' : 'o mês'} fecha melhor`}.
         </p>
       )}
 

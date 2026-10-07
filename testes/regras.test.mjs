@@ -16,7 +16,14 @@ process.env.OMIE_CACHE_DIR = path.join(FIXTURES, 'omie');
 
 const { abrirCacheOmie } = await import('../lib/regras/cache-omie.mjs');
 const { lerRecorte, lerContas, criarRegras, valorOmie, TRANSFERENCIA_SEM_MARCA } = await import('../lib/regras/movimentos.mjs');
-const { contasBancarias, filtroDeConta } = await import('../lib/regras/filtros.mjs');
+const { contasBancarias, filtroDeConta, mesesDoFluxo } = await import('../lib/regras/filtros.mjs');
+
+test('Fluxo: link antigo escolhe um mês e meses prevalece quando presente', () => {
+  assert.deepEqual(mesesDoFluxo({ ano: '2026', mes: '9' }, 8), [9]);
+  assert.deepEqual(mesesDoFluxo({ mes: '9', meses: '8,9' }, 7), [8, 9]);
+  assert.deepEqual(mesesDoFluxo({ meses: ['9', '8', '8'] }, 7), [8, 9]);
+  assert.deepEqual(mesesDoFluxo({}, 7), [7]);
+});
 const { lerDfc, eReceitaTela1Dfc, serieDoFluxo } = await import('../lib/regras/dfc.mjs');
 const { eDeConsulta, chamarOmie } = await import('../lib/regras/omie-api.mjs');
 const { leiturasDasTelas } = await import('../lib/regras/omie-releitura.mjs');

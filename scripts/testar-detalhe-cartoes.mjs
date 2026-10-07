@@ -99,5 +99,28 @@ await recorte('empresa 2', { empresa: ['2'] });
 await recorte('sem o Omie', { omie: ['0'] });
 await recorte(`Tela 2 com dois meses (${MES - 1} e ${MES})`, { meses: [String(MES - 1), String(MES)] }, { comFluxo: false });
 
+// O período da Tela 3 deve repetir a soma dos cartões mensais, inclusive no clique.
+const anterior = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES - 1, fonte,
+  filtro: { omie: ['0'] }, base });
+const atual = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES, fonte,
+  filtro: { omie: ['0'] }, base });
+const periodo = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES, fonte,
+  filtro: { omie: ['0'], mesesDoDia: [MES - 1, MES] }, base });
+if (anterior.dfc.ok && atual.dfc.ok) {
+  const de = (d, id) => d.cartoes.find((c) => c.id === id);
+  for (const id of ['entrou', 'saiu', 'resultado', 'fixas']) {
+    ok(de(periodo, id).valor === de(anterior, id).valor + de(atual, id).valor,
+      `Tela 3, ${id}: dois meses ≠ soma dos meses`);
+  }
+  ok(de(periodo, 'entrou').valor !== de(anterior, 'entrou').valor,
+    'Tela 3, Entrou não muda ao ampliar o período');
+  ok(de(periodo, 'saiu').valor !== de(anterior, 'saiu').valor,
+    'Tela 3, Saiu não muda ao ampliar o período');
+  cartoes('Tela 3, dois meses', periodo.cartoes);
+  const comOmie = await calcularFluxoDeCaixa({ raiz: RAIZ, ano: ANO, mes: MES, fonte,
+    filtro: { mesesDoDia: [MES - 1, MES] }, base });
+  cartoes('Tela 3, dois meses com Omie', comOmie.cartoes);
+}
+
 console.log(`\n${conferidas} conferências, ${falhas} diferente(s).`);
 process.exit(falhas ? 1 : 0);

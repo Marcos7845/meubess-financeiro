@@ -4,12 +4,10 @@
 
 import { exigirLogin } from '../sessao.js';
 import { listar, SENHA_MINIMA } from '../../lib/acesso/usuarios.mjs';
+import { diaEmBrasilia as dia } from '../horario-brasilia.mjs';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Pessoas com acesso · MeuBESS Financeiro' };
-
-const DIA = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-const dia = (iso) => (iso ? DIA.format(new Date(iso)) : '—');
 
 export default async function Admin({ searchParams }) {
   const quem = await exigirLogin({ admin: true });

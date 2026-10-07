@@ -9,11 +9,11 @@ $raiz = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $node = (Get-Command node.exe -ErrorAction Stop).Source
 $usuario = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $acao = New-ScheduledTaskAction -Execute $node -Argument 'scripts/financeiro-enviar-dfc.mjs' -WorkingDirectory $raiz
+# Gatilho horário, como a tarefa instalada (conferido em 07/10/2026): começa às 20:00 e repete a cada 1 hora, sem término.
 $gatilhos = @(
-  (New-ScheduledTaskTrigger -Daily -At '10:00')
-  (New-ScheduledTaskTrigger -Daily -At '18:00')
+  (New-ScheduledTaskTrigger -Once -At '20:00' -RepetitionInterval (New-TimeSpan -Hours 1))
 )
 $principal = New-ScheduledTaskPrincipal -UserId $usuario -LogonType Interactive -RunLevel Limited
 $configuracao = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
-Register-ScheduledTask -TaskName 'financeiro-enviar-dfc' -Action $acao -Trigger $gatilhos -Principal $principal -Settings $configuracao -Description 'Envia o DFC e atualiza o espelho local as 10:00 e 18:00 (Brasilia)' -Force | Out-Null
-Write-Host 'Tarefa financeiro-enviar-dfc atualizada: diariamente as 10:00 e 18:00 (Brasilia).'
+Register-ScheduledTask -TaskName 'financeiro-enviar-dfc' -Action $acao -Trigger $gatilhos -Principal $principal -Settings $configuracao -Description 'MeuBESS Financeiro: manda o DFC deste PC ao servidor do Railway, de hora em hora' -Force | Out-Null
+Write-Host 'Tarefa financeiro-enviar-dfc atualizada: de hora em hora, a partir das 20:00.'

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conferência da trava de agosto — Stone</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#202b38;background:#f4f6f8}
+    *{box-sizing:border-box}body{margin:0}main{max-width:950px;margin:auto;padding:32px 20px 56px}
+    h1{font-size:1.8rem;margin:0 0 8px}h2{font-size:1.15rem;margin:30px 0 10px}
+    p{line-height:1.55}.sub{color:#536170;margin:0 0 24px}.card{background:#fff;border:1px solid #d9e0e7;border-radius:10px;padding:18px 20px;margin:14px 0}
+    .alert{border-left:5px solid #a04d13}.ok{color:#17643b;font-weight:650}.fail{color:#99400c;font-weight:650}
+    .scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.93rem}th,td{text-align:left;border-bottom:1px solid #dfe5ea;padding:10px 9px;vertical-align:top}th{background:#eef2f5;white-space:nowrap}
+    code,pre{font-family:ui-monospace,Consolas,monospace}code{font-size:.9em}pre{white-space:pre-wrap;background:#edf1f4;border-radius:7px;padding:12px;font-size:.9rem;line-height:1.5}
+    ul{line-height:1.6;padding-left:22px}
+  </style>
+</head>
+<body><main>
+  <h1>Conferência da trava de agosto — Stone</h1>
+  <p class="sub">08/10/2026 · Empresa 1 · Leitura apenas do cache local e do espelho <code>.cache/dfc-2026</code></p>
+  <section class="card alert">
+    <strong>Trava não refixada nesta passagem.</strong>
+    <p>As seis entradas EXTR batem, uma a uma, com o comprovante da Stone por data e valor. Nenhuma tem correspondência individual por data e valor nas entradas Stone baixadas do DFC de agosto. A instrução deste pedido determina parar diante de qualquer diferença com o DFC.</p>
+  </section>
+  <h2>Seis conferências</h2>
+  <div class="card scroll"><table>
+    <thead><tr><th>Movimento</th><th>Data</th><th>Comprovante Stone</th><th>DFC B3W, entrada Stone na mesma data e valor</th><th>Conclusão</th></tr></thead>
+    <tbody>
+      <tr><td><code>6057683322</code></td><td>21/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+      <tr><td><code>6057683428</code></td><td>21/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+      <tr><td><code>6057682909</code></td><td>24/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+      <tr><td><code>6057683018</code></td><td>24/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+      <tr><td><code>6057681991</code></td><td>25/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+      <tr><td><code>6057682062</code></td><td>25/08</td><td class="ok">Bate</td><td>0 linhas</td><td class="fail">Não bate no DFC</td></tr>
+    </tbody>
+  </table></div>
+  <p>O DFC B3W tem uma entrada Stone baixada em 21/08 (linha 408), nenhuma em 24/08 e uma em 25/08 (linha 413). As linhas 408 e 413 não têm o valor de nenhum dos movimentos acima na respectiva data. O extrato convertido contém 22 transações de agosto e sua sequência de saldos confere; as seis linhas são créditos de recebimento de vendas. O cache dos movimentos registra conta <code>6033230714</code>, origem <code>EXTR</code>, natureza <code>R</code> e status <code>RECEBIDO</code> para os seis.</p>
+  <h2>Trava e histórico</h2>
+  <div class="card"><p>O indicador <code>baldes.1.R</code> da trava era <code>[0, 0, 10]</code> antes do commit <code>33f2f0a</code>, de 05/10/2026. Esse commit já o mudou para <code>[0, 0, 16]</code>, junto com a impressão digital de 10 para 16 lançamentos. Nesta passagem, o estado é <code>[0, 0, 16] → [0, 0, 16]</code>: nenhum novo refixamento foi feito.</p></div>
+  <h2>Comandos pedidos</h2>
+  <div class="card">
+    <p><code>DFC_DIR=.cache/dfc-2026 npm.cmd test</code> · código de saída <strong>0</strong></p>
+    <pre>ℹ tests 82
+ℹ pass 82
+ℹ fail 0</pre>
+    <p><code>DFC_DIR=.cache/dfc-2026 npm.cmd run typecheck</code> · código de saída <strong>0</strong></p>
+    <pre>✓ Compiled successfully in 4.1s
+Finished TypeScript in 8ms
+✓ Generating static pages using 19 workers (3/3) in 149ms
+Turbopack build encountered 1 warning: dynamic filesystem access in lib/regras/dfc-fonte.mjs:91</pre>
+    <p><code>DFC_DIR=.cache/dfc-2026 npm.cmd run conferir-telas</code> · código de saída <strong>0</strong></p>
+    <pre>gravado docs\telas-conferidas.md
+47 indicadores: 47 conferidos, 0 divergentes, 0 a conferir</pre>
+  </div>
+  <h2>Fontes e limite</h2>
+  <ul>
+    <li>Pendência <code>stone-agosto-2026-seis-entradas</code>, comprovante de extrato recebido em <code>.cache/pendencias-recebidas</code>; resposta descrita em <code>docs/pendencias-lidas-2026-10-08.md</code>.</li>
+    <li>Movimentos lidos apenas do cache local existente; planilha de agosto lida pelo leitor único do projeto via <code>DFC_DIR=.cache/dfc-2026</code>. Nenhuma consulta ao Omie foi feita.</li>
+    <li>A comparação com o DFC exigiu a mesma data e o mesmo valor em uma entrada baixada da conta Stone. Não avalia eventual conciliação por lotes entre vendas do DFC e créditos do extrato; isso exigiria outro recorte de conferência.</li>
+    <li>O comando <code>conferir-telas</code> regenerou a seção auxiliar de prova física sem as variáveis opcionais dessa seção. O arquivo gerado foi restaurado ao conteúdo versionado; o resultado de 47 indicadores acima é o retorno bruto do comando.</li>
+  </ul>
+</main></body></html>

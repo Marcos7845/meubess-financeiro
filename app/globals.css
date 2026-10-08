@@ -494,20 +494,51 @@ a { color: inherit; }
 .serie-atrasado { color: var(--negativo); }
 .serie-aberto { color: var(--destaque); }
 
-/* tinta de dado, e só: régua horizontal clara, sem moldura, sem eixo desenhado */
+/* ---------------------------------------------------------------- o estilo dos gráficos (08/10/2026)
+ * O modelo que o dono mandou (linha suave, sombra, degradê, fundo pontilhado, régua tracejada, ponto de destaque, dica em
+ * cartão), na paleta da marca. Tudo o que `app/graficos.js` desenha leva uma classe daqui; a cor da série vem de
+ * `.serie-*` (acima), e a sombra, o degradê e o ponto herdam dela. */
+/* tinta de dado, e só: régua tracejada `4 8` clara, sem moldura, sem eixo desenhado, sem linha vertical */
 .grade-grafico line { stroke: var(--borda); }
+/* O pontilhado do fundo e a sombra dos pontos. */
+.ponto-do-fundo { fill: var(--borda); fill-opacity: .9; }
+.sombra-ponto { flood-color: #0d2440; flood-opacity: .35; }
+/* A sombra de cada linha e o degradê sob ela, na cor da própria série. */
+.sombra-linha { flood-opacity: .38; }
+.sombra-linha.de-receita { flood-color: var(--marca-escura); }
+.sombra-linha.de-despesa { flood-color: var(--destaque); }
+.sombra-linha.de-margem, .sombra-linha.de-saldo { flood-color: var(--marca); }
+.sombra-linha.de-previsao { flood-color: var(--previsao-escuro); }
+.degrade.de-receita stop { stop-color: var(--marca-escura); }
+.degrade.de-despesa stop { stop-color: var(--destaque); }
+.degrade.de-margem stop, .degrade.de-saldo stop { stop-color: var(--marca); }
+.degrade.de-previsao stop { stop-color: var(--previsao-escuro); }
+/* O ponto de destaque (maior, menor, selecionado e o que segue o mouse): a cor da série, borda branca e sombra. */
+.ponto-destaque { fill: currentColor; stroke: var(--cartao); stroke-width: 2px; }
+/* O cursor da dica: tracejado nas linhas, faixa clara e arredondada nas barras. */
+.grafico .recharts-curve.recharts-tooltip-cursor { stroke: var(--texto-fraco); stroke-opacity: .55; }
+.grafico .recharts-rectangle.recharts-tooltip-cursor { fill: var(--fundo); fill-opacity: .7; stroke: none; }
 /* O `font-size` dos rótulos que ESTA tela desenha à mão (o do eixo dos dois rankings) tem de vir daqui: sem ele
  * o `<text>` herda os 14px do `body` e o nome comprido sai cortado na borda do SVG. */
 .eixo text { fill: var(--texto-fraco); }
-.rotulo-eixo { fill: var(--texto-fraco); font-size: 10.5px; }
-.rotulo-valor { fill: var(--texto); font-size: 10.5px; font-weight: 600; }
-.ponta-da-linha { fill: currentColor; font-size: 11.5px; font-weight: 600; }
+.rotulo-eixo { fill: var(--texto-fraco); font-size: 12px; }
+.rotulo-valor { fill: var(--texto); font-size: 11.5px; font-weight: 600; paint-order: stroke; stroke: var(--cartao); stroke-width: 3px; stroke-linejoin: round; }
+.ponta-da-linha { fill: currentColor; font-size: 12px; font-weight: 600; }
 .linha-zero line { stroke: var(--texto-fraco); }
-.marca-do-mes line { stroke: var(--marca-clara); stroke-dasharray: 3 3; }
-.marca-do-mes-texto { fill: var(--marca-clara); font-size: 10.5px; font-weight: 600; }
-.dica-grafico .recharts-default-tooltip {
-  border: 1px solid var(--borda) !important; border-radius: var(--raio); box-shadow: var(--sombra); font-size: 11.5px;
+.marca-do-mes line { stroke: var(--marca); stroke-opacity: .7; }
+.marca-do-mes-texto { fill: var(--marca); font-size: 11.5px; font-weight: 600; }
+/* A dica: cartão arredondado, o título e o valor em negrito. */
+.dica-grafico { z-index: 2; }
+.dica-cartao {
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 9px 12px;
+  box-shadow: 0 8px 24px rgba(13, 36, 64, .16); font-size: 12px; min-width: 128px; color: var(--texto);
 }
+.dica-titulo { font-weight: 700; margin-bottom: 5px; }
+.dica-linha { display: flex; align-items: center; gap: 7px; margin-top: 3px; white-space: nowrap; }
+.dica-nome { color: var(--texto-fraco); flex: 1; }
+.dica-valor { font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 10px; }
+.dica-chip { width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+.dica-chip.serie-previsao { background: linear-gradient(to top, var(--previsao-escuro), var(--previsao-claro)); }
 
 /* ---------------------------------------------------------------- 6. a tabela de detalhe */
 .quadro.detalhe { padding: 0 20px 24px; }

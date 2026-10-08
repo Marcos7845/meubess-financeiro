@@ -6,7 +6,7 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "test": "node --test testes/regras.test.mjs testes/dfc-consolidado.test.mjs testes/horario-brasilia.test.mjs scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/pendencias.test.mjs scripts/pendencias-ponte.test.mjs scripts/telas-no-ar.test.mjs scripts/dfc-fonte.test.mjs scripts/testar-cache-omie.mjs",
+    "test": "node --test testes/graficos-dados.test.mjs testes/regras.test.mjs testes/dfc-consolidado.test.mjs testes/horario-brasilia.test.mjs scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/pendencias.test.mjs scripts/pendencias-ponte.test.mjs scripts/telas-no-ar.test.mjs scripts/dfc-fonte.test.mjs scripts/testar-cache-omie.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "dev": "next dev -H 127.0.0.1 -p 4781",
     "build": "node scripts/subir-local.mjs --so-build",

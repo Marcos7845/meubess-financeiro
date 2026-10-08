@@ -134,7 +134,7 @@ try {
   }
 
   console.log('\nsem login');
-  for (const tela of ['/', '/dre', '/fluxo-de-caixa', '/pendencias', '/admin']) {
+  for (const tela of ['/', '/gestao-de-contas', '/dre', '/fluxo-de-caixa', '/pendencias', '/admin']) {
     const r = await pedir(tela);
     confere(`GET ${tela} sem login é recusado`, redirecionaParaEntrar(r), `${r.status} → ${r.local}`);
   }
@@ -190,10 +190,12 @@ try {
   }
 
   console.log('\ncom login');
-  for (const tela of ['/', '/dre', '/fluxo-de-caixa']) {
+  for (const tela of ['/gestao-de-contas', '/dre', '/fluxo-de-caixa']) {
     r = await pedir(tela, { cookie: admin });
-    confere(`GET ${tela} com login abre`, r.status === 200 && r.texto.includes('Gestão de Contas'), `${r.status}`);
+    confere(`GET ${tela} com login abre`, r.status === 200 && r.texto.includes('menu-topo'), `${r.status}`);
   }
+  r = await pedir('/?ano=2026&mes=8', { cookie: admin });
+  confere('GET / com login leva ao Fluxo de Caixa, com o mês', r.status === 307 && r.local === '/fluxo-de-caixa?ano=2026&mes=8', `${r.status} → ${r.local}`);
   r = await pedir('/api/atualizar', { metodo: 'POST', json: { ano: 2026 }, cookie: admin });
   confere('POST /api/atualizar com login passa', r.status === 200 && JSON.parse(r.texto).ok === true, `${r.status}`);
   r = await pedir('/admin', { cookie: admin });
@@ -268,7 +270,7 @@ try {
   r = await pedir('/api/dfc', { metodo: 'POST', json: lista, cabecalhos: comSegredo(DFC_SEGREDO) });
   const gravado = r.status === 200 ? JSON.parse(r.texto) : {};
   confere('POST /api/dfc fecha o envio e grava a hora', gravado.ok === true && fs.existsSync(path.join(dados, 'dfc', 'envio.json')), `${r.status}, ${gravado.arquivos} arquivo`);
-  r = await pedir('/', { cookie: admin });
+  r = await pedir('/gestao-de-contas', { cookie: admin });
   confere('a tela mostra a hora do último envio do PC', r.status === 200 && /envio do PC em|enviado pelo PC em/.test(r.texto), `${r.status}`);
 
   console.log('\nzip descompactado');

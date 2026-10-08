@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu do topo do portal — antes e depois (08/10/2026)</title>
+<style>
+:root {
+  /* marca */
+  --marca-escura: #102040;
+  --marca: #004888;
+  --marca-clara: #0060a8;
+  --destaque: #0079cb;
+  --destaque-escuro: #002242;
+
+  /* leitura de números */
+  /* A previsão do fluxo diário (pedido do dono, 28/09/2026: "um degradê cinza"): o que ainda não aconteceu não usa
+   * as cores da marca, que são o que já entrou e saiu. */
+  --previsao-escuro: #8a929c;
+  --previsao-claro: #d9dde2;
+  --positivo: #1c8f5a;
+  --negativo: #c4453b;
+
+  /* superfícies */
+  --fundo: #eef1f5;
+  --cartao: #ffffff;
+  --borda: #d5dbe4;
+  --texto: #16202e;
+  --texto-fraco: #5d6b7e;
+  --texto-claro: #ffffff;
+
+  --raio: 8px;
+  --sombra: 0 1px 3px rgba(13, 36, 64, .12);
+}
+
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundo); color: var(--texto); font: 14px/1.5 "Segoe UI", system-ui, Arial, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+h1 { margin: 0 0 4px; font-size: 24px; } h2 { margin: 34px 0 8px; font-size: 17px; }
+p { margin: 6px 0; } .nota { color: var(--texto-fraco); font-size: 12.5px; }
+.moldura { position: relative; background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; overflow: hidden; margin: 12px 0; box-shadow: var(--sombra); }
+.moldura.estreita { max-width: 380px; height: 250px; }
+.moldura.estreita .menu-topo { position: absolute; top: auto; bottom: 16px; }
+.moldura.estreita .menu-item { padding: 10px 24px; }
+.moldura.estreita .menu-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.moldura .menu-topo { position: absolute; }
+.logo-fic { font-weight: 700; letter-spacing: .3px; font-size: 15px; }
+.fic { padding: 22px 20px 28px; font-size: 15px; } .fic small { color: var(--texto-fraco); }
+.aviso-caixa { background: #fff6e3; border: 1px solid var(--destaque); border-radius: 8px; padding: 8px 11px; font-size: 12.5px; }
+ul { margin: 6px 0 6px 20px; padding: 0; } li { margin: 3px 0; }
+.rotulo-estado { font-size: 12px; color: var(--texto-fraco); margin: 14px 0 -6px; }
+/* ---------------------------------------------------------------- topo */
+.topo {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--marca-escura); color: var(--texto-claro);
+  padding: 0 16px; height: 46px;
+}
+.topo .logo { height: 24px; width: auto; display: block; filter: brightness(0) invert(1); }
+.topo .titulo {
+  font-size: 19px; font-weight: 600;
+  border-left: 1px solid rgba(255, 255, 255, .25); padding-left: 18px;
+}
+.abas { display: flex; gap: 6px; margin-left: auto; }
+.abas span, .abas a {
+  padding: 5px 14px; border-radius: var(--raio); font-size: 12.5px; text-decoration: none;
+  background: var(--marca); color: var(--texto-claro); opacity: .75;
+}
+.abas .ativa { background: var(--destaque); color: var(--marca-escura); font-weight: 600; opacity: 1; }
+
+/* ---------------------------------------------------------------- menu do topo (cápsula)
+ *
+ * Pedido do dono, 08/10/2026 (modelo "tubelight navbar"): cápsula de vidro centralizada sobre o topo, item ativo com
+ * fundo suave e uma luz no alto dele que desliza entre os itens. Os itens têm a mesma largura, então a lâmpada é só
+ * `translateX(--i * 100%)` — `--i` (item ativo) e `--n` (quantos itens) vêm de `app/menu-topo.js`. A cápsula rola
+ * junto com o topo da página (é `absolute`, não `fixed`) para não cobrir filtros e tabelas; abaixo de 768 px ela vira
+ * só ícones e desce para o pé da tela, como no modelo. */
+:root {
+  --menu-fundo: rgba(0, 34, 66, .92);              /* --destaque-escuro, com um pouco de vidro */
+  --menu-borda: rgba(255, 255, 255, .16);
+  --menu-sombra: 0 6px 18px rgba(0, 12, 30, .35);
+  --menu-texto: rgba(255, 255, 255, .72);
+  --menu-texto-ativo: var(--texto-claro);
+  --menu-lampada: linear-gradient(to bottom, rgba(0, 121, 203, .42), rgba(0, 121, 203, .12));
+  --menu-luz: var(--destaque);
+  --menu-luz-halo: rgba(0, 121, 203, .6);
+}
+.menu-topo { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 50; }
+.menu-trilho {
+  position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 3px; border-radius: 999px;
+  background: var(--menu-fundo); border: 1px solid var(--menu-borda); box-shadow: var(--menu-sombra);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.menu-item {
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 6px 18px; border-radius: 999px; white-space: nowrap;
+  font-size: 12.5px; font-weight: 600; text-decoration: none; color: var(--menu-texto);
+  transition: color .2s;
+}
+.menu-item:hover, .menu-item.ativo { color: var(--menu-texto-ativo); }
+.menu-item:focus-visible { outline: 2px solid var(--menu-luz); outline-offset: 1px; }
+.menu-lampada {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 999px; pointer-events: none;
+  width: calc((100% - 6px) / var(--n));
+  transform: translateX(calc(var(--i) * 100%));
+  background: var(--menu-lampada);
+  /* mola: passa um pouco do ponto e volta, como o "spring" do modelo */
+  transition: transform .55s cubic-bezier(.34, 1.35, .5, 1), opacity .2s;
+}
+.menu-trilho[data-sem-ativo] .menu-lampada { opacity: 0; }
+.menu-luz {
+  position: absolute; top: -4px; left: 50%; width: 30px; height: 4px; transform: translateX(-50%);
+  background: var(--menu-luz); border-radius: 4px 4px 0 0;
+}
+.menu-luz::before, .menu-luz::after {
+  content: ''; position: absolute; border-radius: 50%; background: var(--menu-luz-halo);
+}
+.menu-luz::before { width: 48px; height: 22px; left: -9px; top: -9px; filter: blur(8px); }
+.menu-luz::after { width: 26px; height: 14px; left: 2px; top: -4px; filter: blur(5px); }
+/* O título da tela divide o topo com a cápsula, que fica no meio: ele corta com reticências antes de encostar nela e
+ * some quando não sobra lugar. */
+.topo .titulo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(50vw - 390px); }
+@media (max-width: 1500px) { .topo .titulo { font-size: 16px; } }
+@media (max-width: 900px) { .topo .titulo { display: none; } }
+@media (max-width: 767px) {
+  .menu-topo { position: fixed; top: auto; bottom: 16px; }
+  .menu-item { padding: 10px 24px; }
+  .menu-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .menu-lampada, .menu-item { transition: none; } }
+@media print { .menu-topo { display: none; } }
+
+
+/* a cápsula da demonstração fica dentro da moldura, não da janela */
+.moldura .menu-topo { z-index: 5; }
+</style></head>
+<body><main>
+<h1>Menu do topo do portal — antes e depois</h1>
+<p class="nota">Página de demonstração com dados fictícios (nenhum valor nem nome reais). O CSS abaixo é o do portal, copiado de <code>app/globals.css</code>; a cápsula de "Depois" é a mesma marcação de <code>app/menu-topo.js</code>. Clique nos itens para ver a lâmpada deslizar.</p>
+
+<h2>Antes</h2>
+<p>Botões retangulares à direita; quatro itens, dois deles sem tela de verdade (Dashboard é a Gestão de Contas; Centro de Custo era só um rótulo sem link). A página inicial <code>/</code> era a Gestão de Contas.</p>
+<div class="moldura"><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">Gestão de Contas</span><nav class="abas"><span class="ativa">Dashboard</span><a href="#">DRE</a><a href="#">Fluxo de Caixa</a><span>Centro de Custo</span></nav></header><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div>
+<div class="moldura"><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">Fluxo de Caixa</span><nav class="abas"><a href="#">Dashboard</a><a href="#">DRE</a><span class="ativa">Fluxo de Caixa</span><span>Centro de Custo</span></nav></header><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div>
+
+<h2>Depois</h2>
+<p>Cápsula flutuante centralizada, com Fluxo de Caixa, DRE e Pendências, nessa ordem. O item ativo tem fundo suave e a "lâmpada" no alto, que desliza com efeito de mola. <code>/</code> abre o Fluxo de Caixa.</p>
+<p class="rotulo-estado">Demonstração interativa (clique nos itens):</p>
+<div id="demo"><div class="moldura "><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">Fluxo de Caixa</span></header><nav class="menu-topo" id="demo-nav" aria-label="Telas do portal"><div class="menu-trilho" style="--n:3;--i:0"><span class="menu-lampada" aria-hidden="true"><span class="menu-luz"></span></span><a href="#" class="menu-item ativo" aria-label="Fluxo de Caixa"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="menu-rotulo">Fluxo de Caixa</span></a><a href="#" class="menu-item" aria-label="DRE"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-9"/></svg><span class="menu-rotulo">DRE</span></a><a href="#" class="menu-item" aria-label="Pendências"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="menu-rotulo">Pendências</span></a></div></nav><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div></div>
+<p class="rotulo-estado">Fluxo de Caixa ativo</p><div class="moldura "><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">Fluxo de Caixa</span></header><nav class="menu-topo"  aria-label="Telas do portal"><div class="menu-trilho" style="--n:3;--i:0"><span class="menu-lampada" aria-hidden="true"><span class="menu-luz"></span></span><a href="#" class="menu-item ativo" aria-label="Fluxo de Caixa"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="menu-rotulo">Fluxo de Caixa</span></a><a href="#" class="menu-item" aria-label="DRE"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-9"/></svg><span class="menu-rotulo">DRE</span></a><a href="#" class="menu-item" aria-label="Pendências"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="menu-rotulo">Pendências</span></a></div></nav><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div>
+<p class="rotulo-estado">DRE ativo</p><div class="moldura "><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">DRE gerencial (regime de caixa)</span></header><nav class="menu-topo"  aria-label="Telas do portal"><div class="menu-trilho" style="--n:3;--i:1"><span class="menu-lampada" aria-hidden="true"><span class="menu-luz"></span></span><a href="#" class="menu-item" aria-label="Fluxo de Caixa"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="menu-rotulo">Fluxo de Caixa</span></a><a href="#" class="menu-item ativo" aria-label="DRE"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-9"/></svg><span class="menu-rotulo">DRE</span></a><a href="#" class="menu-item" aria-label="Pendências"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="menu-rotulo">Pendências</span></a></div></nav><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div>
+<p class="rotulo-estado">Pendências ativo</p><div class="moldura "><header class="topo"><span class="logo-fic">MeuBess</span><span class="titulo">Pendências</span></header><nav class="menu-topo"  aria-label="Telas do portal"><div class="menu-trilho" style="--n:3;--i:2"><span class="menu-lampada" aria-hidden="true"><span class="menu-luz"></span></span><a href="#" class="menu-item" aria-label="Fluxo de Caixa"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="menu-rotulo">Fluxo de Caixa</span></a><a href="#" class="menu-item" aria-label="DRE"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-9"/></svg><span class="menu-rotulo">DRE</span></a><a href="#" class="menu-item ativo" aria-label="Pendências"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="menu-rotulo">Pendências</span></a></div></nav><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div>
+<p class="rotulo-estado">Tela estreita (abaixo de 768 px): só ícones, e a cápsula desce para o pé da tela, como no modelo</p>
+<div style="max-width:380px"><div class="moldura estreita"><header class="topo"><span class="logo-fic">MeuBess</span></header><nav class="menu-topo"  aria-label="Telas do portal"><div class="menu-trilho" style="--n:3;--i:0"><span class="menu-lampada" aria-hidden="true"><span class="menu-luz"></span></span><a href="#" class="menu-item ativo" aria-label="Fluxo de Caixa"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="menu-rotulo">Fluxo de Caixa</span></a><a href="#" class="menu-item" aria-label="DRE"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-9"/></svg><span class="menu-rotulo">DRE</span></a><a href="#" class="menu-item" aria-label="Pendências"><svg class="menu-icone" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="menu-rotulo">Pendências</span></a></div></nav><div class="fic"><b>Entrou</b> R$ 000.000 · <b>Saiu</b> R$ 000.000 <small>(dados fictícios)</small></div></div></div>
+
+<h2>O que mudou e o que não mudou</h2>
+<ul>
+<li>Itens do menu: <b>Fluxo de Caixa</b>, <b>DRE</b>, <b>Pendências</b>. Saíram do menu o Dashboard (Gestão de Contas) e o Centro de Custo.</li>
+<li>A Gestão de Contas segue no ar, agora em <code>/gestao-de-contas</code>, sem botão. Centro de Custo nunca teve tela.</li>
+<li>O item ativo acompanha a rota (abrir por URL, clicar, voltar do navegador). Ano, mês, empresa, conta, unidade e a chave do Omie atravessam o menu, como antes.</li>
+<li>Sem dependência nova: a lâmpada é CSS (<code>transition</code> sobre <code>transform</code>) e os ícones são SVG escritos no projeto. Nenhum número, filtro ou gráfico mudou.</li>
+</ul>
+</main>
+<script>
+(() => {
+  const nav = document.getElementById('demo-nav'); if (!nav) return;
+  const trilho = nav.querySelector('.menu-trilho'); const itens = [...nav.querySelectorAll('.menu-item')];
+  itens.forEach((a, i) => a.addEventListener('click', (e) => { e.preventDefault(); trilho.style.setProperty('--i', i); itens.forEach((x, j) => x.classList.toggle('ativo', i === j)); }));
+})();
+</script>
+</body></html>

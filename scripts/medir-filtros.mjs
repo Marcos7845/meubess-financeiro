@@ -97,10 +97,10 @@ const TELAS = [
   {
     n: 1,
     nome: 'Tela 1 — Gestão de Contas',
-    rota: '/',
+    rota: '/gestao-de-contas',
     calcular: calcularTela1,
     dados: dadosDaTela1,
-    // O filtro do jeito que `app/page.js` o monta a partir da query.
+    // O filtro do jeito que `app/gestao-de-contas/page.js` o monta a partir da query.
     filtroDaQuery: (q) => ({
       cc: lista(q.cc), empresa: lista(q.empresa), conta: lista(q.conta), situacao: lista(q.situacao),
       classe: lista(q.classe), categoria: lista(q.categoria), fornecedor: q.fornecedor ?? null,

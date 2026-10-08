@@ -36,7 +36,6 @@ export default async function Pendencias({ searchParams }) {
     <header className="topo">
       <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
       <span className="titulo">Pendências</span>
-      <nav className="abas"><a href="/">Voltar às telas</a></nav>
     </header>
     <main className="pendencias">
       <h1>Pendências do financeiro</h1>

@@ -107,7 +107,6 @@ export default async function Pagina({ searchParams }) {
   const projecao = cartao('projecao'), fixas = cartao('fixas'), peso = cartao('peso-fixas');
   const saidas = cartao('saidas');
   const anos = [2026];
-  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}${unidade ? `&unidade=${encodeURIComponent(unidade)}` : ''}${comOmie ? '' : '&omie=0'}`;
   // LUCRO OU PREJUÍZO SAI DO RESULTADO (entrou − saiu), e só dele: se entrou mais do que saiu, é lucro. A projeção, que
   // soma o que ainda vence no mês, aparece junto só com o mês em andamento.
   const veredito = (v) => (v === null ? null : v >= 0 ? 'lucro' : 'prejuizo');
@@ -147,12 +146,6 @@ export default async function Pagina({ searchParams }) {
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">Fluxo de Caixa</span>
-        <nav className="abas">
-          <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
-          <a href={`/dre?ano=${ano}&mes=${mes}${paraOutraTela}`}>DRE</a>
-          <span className="ativa">Fluxo de Caixa</span>
-          <span>Centro de Custo</span>
-        </nav>
       </header>
 
       {/* 1. O TÍTULO E A FRASE DE 5 SEGUNDOS: quanto entrou, quanto saiu, e como o mês fecha. */}

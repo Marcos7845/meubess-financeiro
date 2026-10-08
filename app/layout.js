@@ -1,4 +1,5 @@
 import './globals.css';
+import MenuTopo from './menu-topo.js';
 
 export const metadata = {
   title: 'MeuBESS · Financeiro — Gestão de Contas',
@@ -8,7 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <MenuTopo />
+        {children}
+      </body>
     </html>
   );
 }

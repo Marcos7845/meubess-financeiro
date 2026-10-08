@@ -64,7 +64,7 @@ test('ponte/telas: com token, o mês e cada cartão das três telas batem com o 
   assert.equal(j.ok, true);
   assert.deepEqual({ ano: j.ano, mes: j.mes, mesPadrao: j.mesPadrao }, { ano: 2026, mes: 8, mesPadrao: false });
   assert.deepEqual(j.telas.map((t) => [t.tela, t.rota, t.ano, t.mes]),
-    [['Tela 1', '/', 2026, 8], ['Tela 2', '/dre', 2026, 8], ['Tela 3', '/fluxo-de-caixa', 2026, 8]]);
+    [['Tela 1', '/gestao-de-contas', 2026, 8], ['Tela 2', '/dre', 2026, 8], ['Tela 3', '/fluxo-de-caixa', 2026, 8]]);
 
   const base = () => novaBase({ raiz: FIXTURES, ano: 2026, fonte });
   const locais = [
@@ -123,7 +123,7 @@ test('conferir-no-ar: chama a rota com o segredo, imprime mês e fonte e compara
   assert.deepEqual({ ano: conferidas.ano, mes: conferidas.mes, linhas: conferidas.linhas.size }, { ano: 2026, mes: 8, linhas: 2 });
   const { texto, divergentes } = relatorio(r, conferidas);
   assert.equal(divergentes, 1);
-  assert.match(texto, /Tela 1 \(\/\) — mês exibido: agosto de 2026/);
+  assert.match(texto, /Tela 1 \(\/gestao-de-contas\) — mês exibido: agosto de 2026/);
   assert.match(texto, /Saldo: .+ \[DFC\] .+ conferido: bate/);
   assert.match(texto, /Receitas: .+ conferido: DIFERE \(documento: DFC 999, Omie 0\)/);
   assert.ok(!texto.includes(SEGREDO), 'o segredo nunca vai para a saída');

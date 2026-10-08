@@ -407,12 +407,6 @@ export default async function Pagina({ searchParams }) {
 
   // "(+) Receitas" sobe é bom; "(−) alguma coisa" sobe é ruim. As linhas "(=)" seguem o resultado.
   const bomSubir = (linha) => linha.sinal !== '−';
-  // A EMPRESA ESCOLHIDA ATRAVESSA AS ABAS: ela é o filtro das três telas, e trocar de tela não pode desfazê-la.
-  // E A CHAVE DO OMIE TAMBÉM: ela vale nas três telas, e trocar de tela não pode religá-la.
-  const paraOutraTela = `${femp.ativo ? `&empresa=${femp.escolhidas.join(',')}` : ''}`
-    + `${fconta.ativo ? `&conta=${encodeURIComponent(fconta.escolhidas.join(','))}` : ''}`
-    + `${unidade ? `&unidade=${encodeURIComponent(unidade)}` : ''}`
-    + `${comOmie ? '' : '&omie=0'}`;
 
   const cartao = (id) => d.cartoes.find((c) => c.id === id);
   // A SÉRIE DO GRÁFICO PRINCIPAL é a do cartão "Margem de lucro": a mesma que a fita dele desenha, mês a mês.
@@ -431,11 +425,6 @@ export default async function Pagina({ searchParams }) {
       <header className="topo">
         <img className="logo" src="/marca/logo-meubess.png" alt="MeuBESS" />
         <span className="titulo">DRE gerencial (regime de caixa)</span>
-        <nav className="abas">
-          <a href={`/?ano=${ano}&mes=${mes}${paraOutraTela}`}>Gestão de Contas</a>
-          <span className="ativa">DRE</span>
-          <a href={`/fluxo-de-caixa?ano=${ano}&mes=${mes}${paraOutraTela}`}>Fluxo de Caixa</a>
-        </nav>
       </header>
 
       {/* 1. O TÍTULO E A FRASE DE 5 SEGUNDOS. Os dois números dela são a coluna "Total" da tabela, logo abaixo. */}

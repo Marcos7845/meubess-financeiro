@@ -39,7 +39,7 @@ const NOME = arg('--nome', '');
 // Cada tela: a rota que a serve, o título da captura e a frase que explica o que sobrou de número.
 const TELAS = {
   1: {
-    rota: '/',
+    rota: '/gestao-de-contas',
     titulo: 'Tela 1 — Gestão de Contas',
     referencia: 'docs/referencias/tela-1-gestao-de-contas.jpg',
   },

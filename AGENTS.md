@@ -26,9 +26,11 @@ Três telas, todas com filtros na URL (`?ano=&mes=&empresa=`):
 
 | tela | rota | fonte principal |
 |---|---|---|
-| 1 — Gestão de Contas | `/` | DFC (planilhas) + Omie |
+| 1 — Gestão de Contas | `/gestao-de-contas` | DFC (planilhas) + Omie |
 | 2 — DRE, uma coluna por mês | `/dre` | DFC + Omie |
 | 3 — Fluxo de Caixa | `/fluxo-de-caixa` (`/receber` só redireciona) | caixa do DFC; o que falta pagar/receber, do Omie |
+
+**Menu do topo (08/10/2026, pedido do dono):** cápsula com lâmpada deslizante (`app/menu-topo.js`, no layout raiz), só com Fluxo de Caixa, DRE e Pendências, nessa ordem. A página inicial é o Fluxo de Caixa: `/` redireciona para ele (`app/page.js`). A Gestão de Contas saiu do menu e mudou de `/` para `/gestao-de-contas`; a tela segue no ar, sem botão. Centro de Custo nunca foi tela, só filtro da Tela 1.
 
 - **Omie** (ERP): 3 chaves no `.env`, uma por filial. As telas **somam as empresas 1 e 2**; a 3 fica fora. A chave
   `OMIE_MEUBESS_2` (CNPJ `/0002-23`) é a única com os pedidos/clientes/produtos da plataforma. Só entram contas

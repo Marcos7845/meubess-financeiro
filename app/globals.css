@@ -82,6 +82,69 @@ a { color: inherit; }
 }
 .abas .ativa { background: var(--destaque); color: var(--marca-escura); font-weight: 600; opacity: 1; }
 
+/* ---------------------------------------------------------------- menu do topo (cápsula)
+ *
+ * Pedido do dono, 08/10/2026 (modelo "tubelight navbar"): cápsula de vidro centralizada sobre o topo, item ativo com
+ * fundo suave e uma luz no alto dele que desliza entre os itens. Os itens têm a mesma largura, então a lâmpada é só
+ * `translateX(--i * 100%)` — `--i` (item ativo) e `--n` (quantos itens) vêm de `app/menu-topo.js`. A cápsula rola
+ * junto com o topo da página (é `absolute`, não `fixed`) para não cobrir filtros e tabelas; abaixo de 768 px ela vira
+ * só ícones e desce para o pé da tela, como no modelo. */
+:root {
+  --menu-fundo: rgba(0, 34, 66, .92);              /* --destaque-escuro, com um pouco de vidro */
+  --menu-borda: rgba(255, 255, 255, .16);
+  --menu-sombra: 0 6px 18px rgba(0, 12, 30, .35);
+  --menu-texto: rgba(255, 255, 255, .72);
+  --menu-texto-ativo: var(--texto-claro);
+  --menu-lampada: linear-gradient(to bottom, rgba(0, 121, 203, .42), rgba(0, 121, 203, .12));
+  --menu-luz: var(--destaque);
+  --menu-luz-halo: rgba(0, 121, 203, .6);
+}
+.menu-topo { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 50; }
+.menu-trilho {
+  position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 3px; border-radius: 999px;
+  background: var(--menu-fundo); border: 1px solid var(--menu-borda); box-shadow: var(--menu-sombra);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.menu-item {
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 6px 18px; border-radius: 999px; white-space: nowrap;
+  font-size: 12.5px; font-weight: 600; text-decoration: none; color: var(--menu-texto);
+  transition: color .2s;
+}
+.menu-item:hover, .menu-item.ativo { color: var(--menu-texto-ativo); }
+.menu-item:focus-visible { outline: 2px solid var(--menu-luz); outline-offset: 1px; }
+.menu-lampada {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 999px; pointer-events: none;
+  width: calc((100% - 6px) / var(--n));
+  transform: translateX(calc(var(--i) * 100%));
+  background: var(--menu-lampada);
+  /* mola: passa um pouco do ponto e volta, como o "spring" do modelo */
+  transition: transform .55s cubic-bezier(.34, 1.35, .5, 1), opacity .2s;
+}
+.menu-trilho[data-sem-ativo] .menu-lampada { opacity: 0; }
+.menu-luz {
+  position: absolute; top: -4px; left: 50%; width: 30px; height: 4px; transform: translateX(-50%);
+  background: var(--menu-luz); border-radius: 4px 4px 0 0;
+}
+.menu-luz::before, .menu-luz::after {
+  content: ''; position: absolute; border-radius: 50%; background: var(--menu-luz-halo);
+}
+.menu-luz::before { width: 48px; height: 22px; left: -9px; top: -9px; filter: blur(8px); }
+.menu-luz::after { width: 26px; height: 14px; left: 2px; top: -4px; filter: blur(5px); }
+/* O título da tela divide o topo com a cápsula, que fica no meio: ele corta com reticências antes de encostar nela e
+ * some quando não sobra lugar. */
+.topo .titulo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(50vw - 390px); }
+@media (max-width: 1500px) { .topo .titulo { font-size: 16px; } }
+@media (max-width: 900px) { .topo .titulo { display: none; } }
+@media (max-width: 767px) {
+  .menu-topo { position: fixed; top: auto; bottom: 16px; }
+  .menu-item { padding: 10px 24px; }
+  .menu-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .menu-lampada, .menu-item { transition: none; } }
+@media print { .menu-topo { display: none; } }
+
 /* ---------------------------------------------------------------- cartões */
 .cartoes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 12px; }
 .cartao {

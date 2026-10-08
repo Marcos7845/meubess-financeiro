@@ -27,7 +27,7 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**47 indicadores**: 47 conferidos, 0 divergentes e 0 a conferir.
+**48 indicadores**: 48 conferidos, 0 divergentes e 0 a conferir.
 
 As três telas estão construídas e nenhum indicador ficou de fora.
 
@@ -39,7 +39,7 @@ vem do Omie. Os cartões novos do Fluxo de Caixa combinam o DFC baixado com os t
 não venceu, e num mês fechado todo título já venceu. `docs/conferencia.md` mede essa faixa noutra janela de
 vencimento, 01/11/2026 a 30/11/2026, e diz na própria linha qual foi;
 este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 nela — a regra não muda, muda a janela.
-Os outros 46 indicadores são de agosto de 2026.
+Os outros 47 indicadores são de agosto de 2026.
 
 O DFC desta rodada saiu de **cópia local indicada por `DFC_DIR`**, só para leitura: a Tela 1 leu `B3W__08 - DFC AGOSTO 2026.xlsx`, e a Tela 2, que tem uma coluna por mês, leu 12 dos 12 arquivos do ano.
 
@@ -131,6 +131,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 143, deducoes 2. **Fonte:** DFC nas duas pontas.
 - **Tela 3 — Projeção do mês.** **Na tela:** DFC 484. **Na conferência:** DFC 484. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
 - **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 6, bancosQueFecham 6, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — A pagar.** **Na tela:** Omie 161. **Na conferência:** Omie 161. **Fonte:** Omie recortado (principal) / DFC (confronto).
 
 ## Antes e depois da correção do leitor
 

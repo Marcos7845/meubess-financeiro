@@ -17,12 +17,34 @@ process.env.OMIE_CACHE_DIR = path.join(FIXTURES, 'omie');
 const { abrirCacheOmie } = await import('../lib/regras/cache-omie.mjs');
 const { lerRecorte, lerContas, criarRegras, valorOmie, TRANSFERENCIA_SEM_MARCA } = await import('../lib/regras/movimentos.mjs');
 const { contasBancarias, filtroDeConta, mesesDoFluxo } = await import('../lib/regras/filtros.mjs');
+const { selecionarSaidas, titulosAPagarNoMes } = await import('../lib/regras/saidas.mjs');
 
 test('Fluxo: link antigo escolhe um mês e meses prevalece quando presente', () => {
   assert.deepEqual(mesesDoFluxo({ ano: '2026', mes: '9' }, 8), [9]);
   assert.deepEqual(mesesDoFluxo({ mes: '9', meses: '8,9' }, 7), [8, 9]);
   assert.deepEqual(mesesDoFluxo({ meses: ['9', '8', '8'] }, 7), [8, 9]);
   assert.deepEqual(mesesDoFluxo({}, 7), [7]);
+});
+
+test('A pagar: só CP do recorte, vencido no mês e sem baixa; Saiu segue as linhas pagas', () => {
+  const titulo = (id, { conta = 11, venc = '10/09/2026', status = 'EMABERTO', liquidado = 'N' } = {}) => ({
+    detalhes: { nCodTitulo: id, nCodCC: conta, dDtVenc: venc, cStatus: status, cCodCateg: '2.01' },
+    resumo: { cLiquidado: liquidado, nValAberto: 30 },
+  });
+  const movimentos = [titulo(1), titulo(2, { conta: 22 }), titulo(3, { venc: '10/10/2026' }),
+    titulo(4, { status: 'CANCELADO' }), titulo(5, { liquidado: 'S' }),
+    titulo(6, { status: 'PAGTOPARCIAL' })];
+  const filtrar = (empresa, conta) => titulosAPagarNoMes(movimentos, {
+    empresa, recorte: new Set(['1|11']), noMes: (d) => d.endsWith('/09/2026'),
+    conta: { pega: (_e, cod) => !conta || cod === conta },
+    categoria: { ativo: false }, fornecedor: { pega: () => true },
+  }).map((d) => d.nCodTitulo);
+  assert.deepEqual(filtrar('1'), [1, 6], 'o saldo de título pago em parte continua a pagar');
+  assert.deepEqual(filtrar('2'), []);
+  assert.deepEqual(filtrar('1', 22), []);
+  const pagas = [{ natureza: 'P', pagamento: 'PAGO', banco: 'ITAU', valor: -500, linha: 1 }];
+  assert.equal(selecionarSaidas({ linhas: pagas }).valor, 500);
+  assert.equal(selecionarSaidas({ situacao: 'a-pagar', linhas: pagas, pendentes: { valor: 3000, contagem: { omie: 1 } } }).valor, 3000);
 });
 const { lerDfc, eReceitaTela1Dfc, serieDoFluxo } = await import('../lib/regras/dfc.mjs');
 const { eDeConsulta, chamarOmie } = await import('../lib/regras/omie-api.mjs');

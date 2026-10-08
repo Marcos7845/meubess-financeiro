@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fluxo de Caixa — Saiu e A pagar</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #1b2a38; background: #f4f7fa; }
+    body { max-width: 900px; margin: auto; padding: 32px 22px 60px; line-height: 1.55; }
+    h1 { margin-bottom: 4px; } h2 { margin-top: 30px; }
+    .sub { color: #586675; margin-top: 0; }
+    .card { background: white; border: 1px solid #d8e0e8; border-radius: 10px; padding: 16px 19px; margin: 14px 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { padding: 9px 11px; border-bottom: 1px solid #d8e0e8; text-align: left; vertical-align: top; }
+    th { background: #eaf0f5; } code { overflow-wrap: anywhere; }
+    .ok { color: #176348; font-weight: 700; } .limite { color: #745100; }
+    @media (max-width: 650px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>“Saiu” e “A pagar” no Fluxo de Caixa</h1>
+  <p class="sub">Decisão A · 08/10/2026 · conferência sobre cache local, sem leitura do Omie</p>
+
+  <div class="grid">
+    <div class="card"><h2>Saiu</h2><p>Caixa baixado no DFC. Em setembro, 320 linhas no recorte padrão. O valor teve a mesma assinatura antes e depois da mudança.</p></div>
+    <div class="card"><h2>A pagar</h2><p>Títulos do Omie ainda sem baixa, pelo vencimento. Em setembro, 151 títulos no recorte padrão: 78 da empresa 1 e 73 da empresa 2. Os cartões são independentes.</p></div>
+  </div>
+
+  <h2>Fonte e recorte do A pagar</h2>
+  <div class="card">
+    <p>Cache de <code>financas/mf</code> → <code>ListarMovimentos</code>, <code>cTpLancamento: "CP"</code>, vencimentos de 01/01 a 31/12/2026, empresas 1 e 2. O mês escolhido recorta <code>detalhes.dDtVenc</code>. Saem os cancelados e os títulos com <code>resumo.cLiquidado</code> diferente de <code>"N"</code>. Só entram contas correntes marcadas <code>MeuBESS</code> em <code>dados/contas-correntes-por-negocio.json</code>. O cartão soma <code>resumo.nValAberto</code> e abre os títulos usados nessa soma.</p>
+    <p>Empresa e conta corrente do Omie aplicam seus respectivos códigos. Meses múltiplos somam os mesmos recortes mensais. O filtro de unidade pertence ao DFC e não existe nos títulos CP do Omie; o banco escrito no DFC também não identifica sem ambiguidade uma conta do Omie. A tela informa essas limitações.</p>
+  </div>
+
+  <h2>Caso real de setembro, relido no cache cru</h2>
+  <table><tbody>
+    <tr><th>Identidade</th><td>Empresa 2, <code>nCodTitulo 5209957578</code></td></tr>
+    <tr><th>Vencimento e estado</th><td>20/09/2026 · <code>ATRASADO</code> · <code>resumo.cLiquidado = "N"</code></td></tr>
+    <tr><th>Prova</th><td>Uma ocorrência na leitura crua; vencimento no mês, conta no recorte MeuBESS e campos do título iguais aos usados pela regra. O valor em aberto também coincide, sem o publicar aqui.</td></tr>
+  </tbody></table>
+
+  <h2>“Saiu” antes e depois</h2>
+  <p>Assinatura SHA-256 dos centavos do valor, truncada a 16 caracteres. Cada linha compara o mesmo recorte antes e depois.</p>
+  <table><thead><tr><th>Recorte</th><th>Linhas</th><th>Antes</th><th>Depois</th></tr></thead><tbody>
+    <tr><td>Setembro, padrão</td><td>320</td><td><code>e8742ffa83ecf283</code></td><td><code>e8742ffa83ecf283</code></td></tr>
+    <tr><td>Setembro, empresa 2</td><td>320</td><td><code>e8742ffa83ecf283</code></td><td><code>e8742ffa83ecf283</code></td></tr>
+    <tr><td>Setembro, unidade B3W</td><td>265</td><td><code>e8373599b7b95037</code></td><td><code>e8373599b7b95037</code></td></tr>
+    <tr><td>Agosto e setembro</td><td>647</td><td><code>9a49618c136a7dd9</code></td><td><code>9a49618c136a7dd9</code></td></tr>
+  </tbody></table>
+
+  <h2>Verificações</h2>
+  <div class="card">
+    <p><span class="ok">83 testes passaram</span> em <code>npm.cmd test</code>; <code>npm.cmd run typecheck</code> terminou com código 0; <code>npm.cmd run testar-detalhe-cartoes</code> fechou 437 verificações, 0 diferenças; <code>npm.cmd run conferir-chave-omie</code> fechou 18 afirmações, 0 divergentes; <code>npm.cmd run conferir-filtros</code> fechou 17 filtros, 0 divergentes. A conferência de agosto passou pela trava e fechou 47 indicadores, 0 divergentes e 2 “a conferir”. O conferidor das telas fechou 48 indicadores, 48 conferidos, 0 divergentes e 0 “a conferir”, incluindo o novo cartão.</p>
+    <p class="limite">As duas pendências da conferência são a janela atual de títulos a receber e a ponte dos saldos bancários de agosto; não são dados necessários ao cartão A pagar de setembro.</p>
+  </div>
+</body>
+</html>

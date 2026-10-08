@@ -508,6 +508,22 @@ for (const ind of doConferencia) {
   linhas.push(difs.length ? `- divergente: ${comum} **Motivo:** ${difs.join('; ')}.` : `- ${comum}`);
 }
 
+// A pagar do Fluxo usa a mesma leitura CP e o mesmo filtro do indicador Despesas pendentes da Tela 1.
+// A contagem esperada vem do texto independente da conferência, não de outro cartão calculado.
+{
+  const linhaFonte = doConferencia.find((i) => i.tela === 'Tela 1' && i.nome === 'Despesas pendentes');
+  const esperado = linhaFonte && EXTRATORES['despesas-pendentes'].omie.exec(linhaFonte.entram);
+  const cartao = telaFluxo.cartoes.find((c) => c.id === 'a-pagar');
+  if (!esperado || !cartao || cartao.contagem.omie == null) {
+    linhas.push('- a conferir: **Tela 3 — A pagar.** **Motivo:** falta a leitura CP por vencimento no cache ou a contagem de Despesas pendentes na conferência.');
+  } else {
+    const fonte = num(esperado[1]);
+    const tela = cartao.contagem.omie;
+    const comum = `**Tela 3 — A pagar.** **Na tela:** Omie ${tela}. **Na conferência:** Omie ${fonte}. **Fonte:** ${cartao.fonte}.`;
+    linhas.push(tela === fonte ? `- ${comum}` : `- divergente: ${comum} **Motivo:** a contagem de títulos CP em aberto difere.`);
+  }
+}
+
 // ================================================================ a saída
 //
 // O resumo é contado nas PRÓPRIAS linhas que vão para o arquivo, pelo começo de cada uma — não por uma variável
@@ -621,7 +637,7 @@ da conferência afirma e que a releitura não mexe: **todos os códigos de clien
 Linha que começa com **divergente:** quer dizer que os dois números não bateram; o motivo está no fim da linha. Linha
 que começa com **a conferir:** quer dizer que não deu para comparar; o motivo está no fim da linha.
 
-**${doConferencia.length} indicadores**: ${nConferidos} conferidos, ${nDivergentes} divergentes e ${nAConferir} a conferir.
+**${linhas.length} indicadores**: ${nConferidos} conferidos, ${nDivergentes} divergentes e ${nAConferir} a conferir.
 
 ${nAConferir === 0
     ? 'As três telas estão construídas e nenhum indicador ficou de fora.'
@@ -641,7 +657,7 @@ este teste lê a janela **do arquivo** e pede à camada de dados a mesma Tela 3 
 E as **provisões por projeto** da Tela 2 são de ${NOMES_DOS_MESES[janelaProvisao.mes]} de ${janelaProvisao.ano}: o quadro por
 projeto da aba \`PROVISÃO\` do DFC começa no arquivo desse mês (antes dele a aba é um razão, sem projeto), e a
 conferência diz na própria linha de que mês leu; este teste lê o mês **do arquivo** e pede a mesma Tela 2 nele.` : ''}
-Os outros ${doConferencia.length - nFora} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.`;
+Os outros ${linhas.length - nFora} indicadores são de ${NOMES_DOS_MESES[MES]} de ${ANO}.`;
   })()}
 
 ${tela1.dfc.ok
@@ -695,6 +711,6 @@ for (const [re, oque] of PROIBIDO) {
 
 fs.writeFileSync(SAIDA, md);
 console.log(`gravado ${path.relative(RAIZ, SAIDA)}`);
-console.log(`${doConferencia.length} indicadores: ${nConferidos} conferidos, ${nDivergentes} divergentes, ${nAConferir} a conferir`);
+console.log(`${linhas.length} indicadores: ${nConferidos} conferidos, ${nDivergentes} divergentes, ${nAConferir} a conferir`);
 for (const l of linhas.filter((x) => x.startsWith('- divergente: '))) console.log(`  ${l.slice(2, 160)}`);
 if (nDivergentes) process.exit(1);

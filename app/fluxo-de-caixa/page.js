@@ -213,7 +213,7 @@ export default async function Pagina({ searchParams }) {
       {/* 3. A FILA DE NÚMEROS: a pergunta 1 (o caixa fechou positivo ou negativo, e quanto entrou e saiu) e a 5 (quanto
           falta pagar, e como o mês fecha). */}
       <section className="kpis de-4">
-        {[entrou, saiu, resultado, projecao].map((c) => (
+        {[entrou, saiu, cartao('a-pagar'), resultado].map((c) => (
           <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />}
             aviso={c.contagem?.dfc != null ? d.dfc.aviso : null} key={c.id}>
             <Kpi c={c} destaque={c.id === 'resultado'} pe={pe(c)} tom={c.id === 'entrou' ? 'serie-receita' : c.id === 'saiu' ? 'serie-despesa' : null} />
@@ -221,7 +221,7 @@ export default async function Pagina({ searchParams }) {
         ))}
       </section>
       <section className="kpis de-4">
-        {[cartao('a-pagar'), cartao('a-receber'), fixas, peso].map((c) => (
+        {[projecao, cartao('a-receber'), fixas, peso].map((c) => (
           <CartaoExplodivel nome={c.nome} composicao={c.composicao} depois={<Origem c={c} />}
             aviso={c.contagem?.dfc != null ? d.dfc.aviso : null} key={c.id}>
             {/* O peso das fixas sai com UMA casa decimal, a mesma da coluna "% rec. líq." da tabela logo abaixo (6,1%). */}

@@ -1375,8 +1375,12 @@ mesmo filtro — a tela chama `calcularTela1` e `calcularTela3` e pega o cartão
 |---|---|---|
 | Entrou | Tela 1, "Receitas" | DFC, `FLUXO DE CAIXA`, o valor com sinal positivo pelo mês de `DIA PG` (F), fora `SUB 2` = `TRANSFERENCIAS BANCARIAS - RECEITA` |
 | Saiu | Tela 1, "Despesas" | DFC, `FLUXO DE CAIXA`, o valor com sinal negativo pelo mês de `DIA PG` (F) |
-| Ainda a pagar no mês | Tela 1, "Desp. Pendentes" | Omie, títulos a pagar com vencimento no mês e sem baixa |
+| A pagar | Tela 1, "Desp. Pendentes" | Cache do Omie, `financas/mf` → `ListarMovimentos` com `cTpLancamento: "CP"`, por `detalhes.dDtVenc`, sem baixa (`resumo.cLiquidado = "N"`); soma `resumo.nValAberto` |
 | Ainda a receber no mês | antiga Tela 3, "Valor Pendente" | Omie, títulos a receber com vencimento no mês, faixa EM ABERTO |
+
+**A pagar ao lado de Saiu (decisão do dono, 08/10/2026, opção A):** são dois cartões independentes, sem total combinado. `Saiu` continua sendo o caixa baixado do DFC. `A pagar` lê somente o cache completo das empresas 1 e 2 da consulta `financas/mf` → `ListarMovimentos`, `cTpLancamento: "CP"`, `dDtVencDe`/`dDtVencAte` de 01/01 a 31/12 do ano. A tela corta `detalhes.dDtVenc` pelo mês ou pelos meses escolhidos, exclui `detalhes.cStatus = "CANCELADO"`, exige `resumo.cLiquidado = "N"` e conta apenas `detalhes.nCodCC` marcado `MeuBESS` em `dados/contas-correntes-por-negocio.json`. O valor é `resumo.nValAberto` e o clique abre os mesmos títulos. Empresa escolhe a filial da leitura; a conta do Omie, quando escolhida, usa o `nCodCC` das filiais agrupado pelo `dito_como` do dono. O filtro `Saídas: situação` controla o cartão detalhado `Saídas` abaixo, sem alterar `Saiu` nem `A pagar`.
+
+O filtro de unidade recorta o DFC, mas não os títulos do Omie, que não têm unidade do DFC. O banco escrito no DFC não identifica sem ambiguidade uma conta corrente do Omie; o seletor `Saídas: banco` aplica o banco ao DFC quando está em `Pago · DFC` e a conta do Omie quando está em `A pagar · Omie`, e cada fonte indica quando esse recorte não vale. Se a leitura `CP` por vencimento estiver incompleta no cache de alguma filial escolhida, `A pagar` fica sem número e informa a leitura faltante; zero só significa que a leitura completa não encontrou título no recorte.
 
 **As três colunas de dinheiro do `FLUXO DE CAIXA` não são "entrada, saída e saldo" — medido neste computador em
 29/09/2026.** `ENTRADA` (K), `SAIDA` (L) e `SALDO` (M) foram lidas assim até 28/09/2026, e a planilha não é isso:

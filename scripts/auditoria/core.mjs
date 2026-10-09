@@ -333,3 +333,23 @@ export function estado(expected, shown, motivo = null, tolerancia = 0) {
   const diferenca = shown - expected;
   return { estado: Math.abs(diferenca) <= tolerancia ? 'conferido' : 'divergente', diferenca, motivo: null };
 }
+
+// Linhas repetidas do DFC (mesma conta, dia, valor e SUB 2) contra a conciliação da conta. Cada grupo recebe um veredito:
+// "transação própria" quando cada linha casou com uma transação só dela no extrato (não é dobra); "casadas em grupo"
+// quando todas casaram, mas dividindo transações (lote); "possível dobra" quando alguma linha não tem par no extrato;
+// "sem extrato" quando a conta não tem extrato.
+export function repetidasComProva(dfc, conciliacao) {
+  const grupos = new Map();
+  for (const l of dfc?.linhas ?? []) {
+    const k = `${normal(l.conta)}|${l.data?.d}|${l.movimento}|${l.sub2}`;
+    grupos.set(k, [...(grupos.get(k) ?? []), l]);
+  }
+  return [...grupos.values()].filter((g) => g.length > 1).map((g) => {
+    const conta = normal(g[0].conta), pares = g.map((l) => conciliacao?.casadas.get(l.n) ?? null);
+    const ids = pares.flat().filter(Boolean);
+    const veredito = !conciliacao?.porConta.has(conta) ? 'sem extrato'
+      : pares.some((p) => !p?.length) ? 'possível dobra'
+        : pares.every((p) => p.length === 1) && new Set(ids).size === g.length ? 'transação própria' : 'casadas em grupo';
+    return { conta, dia: g[0].data?.d, sub2: g[0].sub2, linhas: g.map((l) => l.n), transacoes: [...new Set(ids)], veredito };
+  });
+}

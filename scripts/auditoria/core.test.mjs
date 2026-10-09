@@ -188,3 +188,13 @@ test('saldo da CCB: principal vencido sai, juros correm desde a última parcela'
   assert.equal(saldoCcb(c, Date.UTC(2026, 8, 1)), 50000);
   assert.equal(saldoCcb(c, Date.UTC(2026, 6, 1)), null);
 });
+
+test('repetidas: transação própria, possível dobra e sem extrato', async () => {
+  const { repetidasComProva } = await import('./core.mjs');
+  const l = (n) => ({ n, conta: 'BANCO SAFRA--1', data: { a: 2026, m: 8, d: 20 }, movimento: 500, sub2: 'RECEITA EM SERVICOS' });
+  const dfc = { linhas: [l(10), l(11)], brutas: [{ conta: 'BANCO SAFRA--1', sub2: 'SALDO INICIAL', saldo: 0, movimento: 0 }] };
+  const t = (id) => ({ conta: 'BANCO SAFRA--1', data: '2026-08-20', valor: 500, id });
+  assert.deepEqual(repetidasComProva(dfc, reconciliar(dfc, [t('a'), t('b')])).map((g) => g.veredito), ['transação própria']);
+  assert.deepEqual(repetidasComProva(dfc, reconciliar(dfc, [t('a')])).map((g) => g.veredito), ['possível dobra']);
+  assert.deepEqual(repetidasComProva(dfc, null).map((g) => g.veredito), ['sem extrato']);
+});

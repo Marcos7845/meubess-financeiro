@@ -5,15 +5,17 @@
 #
 #   python scripts/auditoria/extrato-pdf.py --modelo itau --mes 2026-08 --conta "ITAU--1" --pdf <cópia local do PDF>
 #
-# Modelos: itau, bb, santander e stone ("Extrato de conta corrente" da Stone em PDF; o xlsx do "Comprovante de Extrato"
-# tem o seu conversor, extrato-stone.mjs).
+# Modelos: itau, bb, santander, stone ("Extrato de conta corrente" da Stone em PDF; o xlsx do "Comprovante de Extrato"
+# tem o seu conversor, extrato-stone.mjs), safra ("Extrato de Movimentação" do Safra, conta do DFC da 3N) e sicoob
+# ("Extrato de conta corrente" do Sicoob/SISBR, conta do DFC da B3N). Os CSV das unidades separadas vão para
+# extratos/<UNIDADE>/ (--saida), para não entrarem na conciliação do DFC B3W.
 #
 # Requer PyMuPDF (pymupdf). O PDF deve estar em .cache/, nunca na pasta sincronizada.
 import argparse, json, os, re, sys
 import pymupdf
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--modelo', required=True, choices=['itau', 'bb', 'santander', 'stone'])
+ap.add_argument('--modelo', required=True, choices=['itau', 'bb', 'santander', 'stone', 'safra', 'sicoob'])
 ap.add_argument('--mes', required=True)
 ap.add_argument('--conta', required=True)
 ap.add_argument('--pdf', required=True)
@@ -73,6 +75,36 @@ def lancamentos_stone():
         yield l['d'], ' '.join(l['texto']), l['dinheiro'][0].replace(' ', '').replace('R$', ''), l['dinheiro'][1].replace(' ', '').replace('R$', '')
 
 
+def registros(dt, fim_de_registro, inicio=None, pula=None):
+    """Extratos em que cada lançamento é uma sequência de linhas de texto que começa pela data (dd/mm) e termina no
+    valor. Entrega (data dd/mm, linhas de texto, valor). `inicio` é a linha que abre a lista; `pula`, rodapé que fecha
+    um registro aberto sem valor (a quebra de página)."""
+    aberto, atual = inicio is None, None
+    for p in doc:
+        for linha in (l.strip() for l in p.get_text().split('\n')):
+            if not aberto:
+                aberto = linha.startswith(inicio)
+                continue
+            if pula and pula.match(linha):
+                atual = None
+                continue
+            if dt.match(linha):
+                if atual:
+                    falhar(f'lançamento de {atual[0]} sem valor')
+                atual = [linha, []]
+                continue
+            if atual is None:
+                continue
+            v = fim_de_registro.match(linha)
+            if v:
+                yield atual[0], atual[1], v
+                atual = None
+            else:
+                atual[1].append(linha)
+    if atual:
+        falhar(f'lançamento de {atual[0]} sem valor')
+
+
 def falhar(msg):
     print(f'extrato-pdf: {msg}; nada gravado', file=sys.stderr)
     sys.exit(1)
@@ -120,6 +152,75 @@ elif a.modelo == 'bb':
         tx.append((iso(d), cent(valor), saldo, texto))
     if saldo != fechamento:
         falhar('saldo final não fecha com as transações')
+elif a.modelo == 'safra':
+    # Safra, "Extrato de Movimentação": ordem cronológica; cada lançamento é data, lançamento, complemento, documento e
+    # valor assinado; "SALDO TOTAL" fecha cada dia com o saldo. O primeiro SALDO TOTAL dá a abertura (menos o que veio
+    # antes dele no mesmo dia); os seguintes são os pontos de conferência.
+    ano = a.mes[:4]
+    saldo = abertura = None
+    antes = []
+    for d, texto, v in registros(re.compile(r'\d{2}/\d{2}$'), re.compile(r'(-?[\d.]+,\d{2})$'),
+                                 inicio='LANÇAMENTOS REALIZADOS', pula=re.compile(r'Banco Safra S/A')):
+        data, valor = f'{ano}-{d[3:5]}-{d[0:2]}', cent(v.group(1))
+        if texto and texto[0].startswith('SALDO TOTAL'):
+            if saldo is None:
+                abertura = valor - sum(x[1] for x in antes)
+                saldo = abertura
+                for x in antes:
+                    saldo += x[1]
+                    tx.append((x[0], x[1], saldo, x[2]))
+            elif valor != saldo:
+                falhar(f'saldo do dia {d} não fecha com as transações')
+            else:
+                pontos += 1
+            continue
+        if saldo is None:
+            antes.append((data, valor, ' '.join(texto)))
+            continue
+        saldo += valor
+        tx.append((data, valor, saldo, ' '.join(texto)))
+    if saldo is None:
+        falhar('sem SALDO TOTAL')
+    fechamento = saldo
+    tx = [t for t in tx if t[0][:7] == a.mes]
+elif a.modelo == 'sicoob':
+    # Sicoob (SISBR), "Extrato de conta corrente": do mais recente ao mais antigo; cada dia traz os lançamentos e
+    # termina em "SALDO DO DIA"; "SALDO ANTERIOR" (último do arquivo) é a abertura. Valor "R$ 1,00C" (crédito) ou
+    # "R$ 1,00D" (débito); "SALDO BLOQUEADO ANTERIOR" (marca "*") fica fora, contado em `excluidos`. A ordem dentro do dia
+    # não é garantida pelo PDF: o saldo de cada transação é refeito na ordem inversa da impressa, e só o saldo do dia é
+    # conferido.
+    ano = a.mes[:4]
+    dias, movs, abertura = [], [], None
+    for d, texto, v in registros(re.compile(r'\d{2}/\d{2}$'), re.compile(r'R\$\s*([\d.]+,\d{2})([CD*])$')):
+        data, valor = f'{ano}-{d[3:5]}-{d[0:2]}', cent(v.group(1)) * (-1 if v.group(2) == 'D' else 1)
+        rotulo = texto[-1] if texto else ''
+        if v.group(2) == '*' or 'SALDO BLOQUEADO' in ' '.join(texto):
+            excluidos['saldo bloqueado'] = excluidos.get('saldo bloqueado', 0) + 1
+            continue
+        if rotulo == 'SALDO ANTERIOR':
+            abertura = valor
+            continue
+        if rotulo == 'SALDO DO DIA':
+            dias.append((data, movs, valor))
+            movs = []
+            continue
+        movs.append((data, valor, ' '.join(texto)))
+    if movs:
+        falhar('lançamentos depois do último SALDO DO DIA')
+    if abertura is None:
+        falhar('sem SALDO ANTERIOR')
+    saldo = abertura
+    for data, ms, fim_do_dia in reversed(dias):
+        for d, valor, historico in reversed(ms):
+            if d != data:
+                falhar(f'lançamento de {d} no dia {data}')
+            saldo += valor
+            tx.append((d, valor, saldo, historico))
+        if saldo != fim_do_dia:
+            falhar(f'saldo do dia {data} não fecha com as transações')
+        pontos += 1
+    fechamento = saldo
+    tx = [t for t in tx if t[0][:7] == a.mes]
 else:
     # Santander Empresas e Stone: mais recente primeiro, cada linha com o saldo após ela. Refaz em ordem cronológica e confere
     # linha a linha (saldo anterior + valor = saldo).
@@ -143,7 +244,7 @@ if not tx and fechamento is None:
     falhar('sem transação nem saldo no mês')
 datas = [t[0] for t in tx]
 texto = doc[0].get_text()
-periodo = re.search(r'(\d{2}/\d{2}/\d{4})\s*(?:a|at.)\s*(\d{2}/\d{2}/\d{4})', texto)
+periodo = re.search(r'(\d{2}/\d{2}/\d{4})\s*(?:a|at.%s)\s*(\d{2}/\d{2}/\d{4})' % ('|-' if a.modelo == 'sicoob' else ''), texto)
 inicio = iso(periodo.group(1)) if periodo else (min(datas) if datas else None)
 fim = iso(periodo.group(2)) if periodo else (max(datas) if datas else None)
 if a.modelo == 'bb':
@@ -158,11 +259,20 @@ with open(base + '.csv', 'w', encoding='utf-8', newline='\n') as f:
         historico = ' '.join(historico.replace(';', ' ').replace('"', ' ').split())
         f.write(f'{d};{v / 100:.2f};{s / 100:.2f};pdf-{i + 1};{historico}\n')
 ultimo = int(fim[8:10]) if fim else 0
+# Período que começa depois do dia 1 só porque os primeiros dias do mês são sábado e domingo (o Safra de agosto/2026
+# abre em 03/08, segunda-feira) cobre o mês: sem dia útil antes, não há lançamento a perder. Fica anotado na prova.
+inicio_util = inicio
+if inicio and inicio[:7] == a.mes and inicio > f'{a.mes}-01':
+    import datetime
+    d0 = datetime.date(int(a.mes[:4]), int(a.mes[5:7]), 1)
+    if all((d0 + datetime.timedelta(days=i)).weekday() >= 5 for i in range(int(inicio[8:10]) - 1)):
+        inicio_util = f'{a.mes}-01'
 prova = {
     'pdf': os.path.basename(a.pdf), 'modelo': a.modelo, 'conta': a.conta, 'mes': a.mes,
     'transacoes': len(tx), 'saldosConferidos': pontos, 'excluidos': excluidos,
     'cnpjDoTitular': titular.group(0) if titular else None, 'periodoDoPdf': [inicio, fim],
-    'cobreMesInteiro': bool(inicio and fim and inicio <= f'{a.mes}-01' and fim[:7] >= a.mes and (fim[:7] > a.mes or ultimo >= 28)),
+    'inicioNoFimDeSemana': inicio_util != inicio,
+    'cobreMesInteiro': bool(inicio_util and fim and inicio_util <= f'{a.mes}-01' and fim[:7] >= a.mes and (fim[:7] > a.mes or ultimo >= 28)),
 }
 with open(base + '.json', 'w', encoding='utf-8') as f:
     json.dump(prova, f, ensure_ascii=False, indent=1)

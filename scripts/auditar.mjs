@@ -14,7 +14,7 @@ import { dreIndependente, maioresReceitas } from './auditoria/dre.mjs';
 import { sinaisDeClientes, saldoDeContratos } from './auditoria/compromissos.mjs';
 import * as documentos from './auditoria/documentos.mjs';
 import { lerZip, sharedStrings, abasDo, lerAba } from '../lib/regras/xlsx.mjs';
-import { centavos, normal, soma, lerDfcBruto, indicadoresDfc, lerCsvExtrato, lerOfxExtrato, reconciliar, aberturasDfc, estado } from './auditoria/core.mjs';
+import { centavos, normal, soma, lerDfcBruto, indicadoresDfc, lerCsvExtrato, lerOfxExtrato, reconciliar, aberturasDfc, estado, repetidasComProva } from './auditoria/core.mjs';
 import { LIMIAR_PADRAO, sugerirClassificacoes, compararComDfc } from './auditoria/jev.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -37,6 +37,11 @@ const pastaMaster = opt('master-dir', null);
 // com --master-dir, cada arquivo da cópia é comparado por SHA-256 com o da master.
 const pastaCopia = path.resolve(opt('copia-master', path.join(raiz, '.cache', `master-${periodo}`)));
 const pastaExtratos = path.join(raiz, 'extratos');
+// Unidades com DFC e contas próprias, fora do DFC B3W: os extratos delas ficam em extratos/<UNIDADE>/ e são conciliados
+// só contra o DFC da unidade (seção "Unidades separadas"), nunca contra o B3W. O DFC vem do espelho local
+// (--dfc-unidades, padrão .cache/dfc-AAAA/<UNIDADE>/).
+const UNIDADES_SEPARADAS = ['3N', 'B3N'];
+const pastaDfcUnidades = path.resolve(opt('dfc-unidades', path.join(raiz, '.cache', `dfc-${ano}`)));
 const htmlSaida = path.join(raiz, 'docs', `auditoria-${periodo}.html`);
 const pastaCacheOmie = path.join(raiz, '.cache', 'omie');
 const ultimaRespostaNoCache = fs.existsSync(pastaCacheOmie)
@@ -245,13 +250,13 @@ function calcularOmie(cru) {
   return out;
 }
 
-function lerExtratos(p) {
+function lerExtratos(p, raizExtratos = pastaExtratos, pular = new Set(UNIDADES_SEPARADAS)) {
   const encontrados = [], erros = [], provas = new Map();
-  if (!fs.existsSync(pastaExtratos)) return { encontrados, erros: ['pasta extratos/ ausente'], provas };
+  if (!fs.existsSync(raizExtratos)) return { encontrados, erros: [`pasta ${path.relative(raiz, raizExtratos)}/ ausente`], provas };
   const visitar = (dir) => {
     for (const nome of fs.readdirSync(dir)) {
       const arq = path.join(dir, nome);
-      if (fs.statSync(arq).isDirectory()) { visitar(arq); continue; }
+      if (fs.statSync(arq).isDirectory()) { if (!(dir === raizExtratos && pular.has(nome))) visitar(arq); continue; }
       if (!/\.(csv|ofx)$/i.test(nome)) continue;
       const match = /^(\d{4}-\d{2})__(.+)\.(csv|ofx)$/i.exec(nome);
       if (!match) { erros.push(`nome inválido: ${nome}`); continue; }
@@ -266,7 +271,7 @@ function lerExtratos(p) {
       } catch (e) { erros.push(`${nome}: ${e.message}`); }
     }
   };
-  visitar(pastaExtratos);
+  visitar(raizExtratos);
   return { encontrados, erros, provas };
 }
 
@@ -895,6 +900,49 @@ ${docs.servicos.map((s) => `<tr><td>FISCAL/${mm}-${ano}/${esc(s.onde)}/${esc(s.a
 <p>Notas de prestadores PJ do mês: ${docs.notasPj.length} PDF(s) lidos, ${docs.notasPj.filter((n) => n.valores.length).length} com valor impresso. Comprovantes: a pasta CPA 2026 da master vai até ${esc(resumoMaster?.ultimos?.cpa?.n ?? 'mês não identificado')} e a C. RECEBER 2026 até ${esc(resumoMaster?.ultimos?.cr?.n ?? 'mês não identificado')}; não há pasta de ${esc(periodo)} em nenhuma das duas. Extratos em PDF/imagem na pasta do mês: ${esc(docs.extratosPdf.join('; '))}.</p></section>
 <section><h2>Amostra de cada tela até o documento</h2><table><thead><tr><th>Tela e número</th><th>Cadeia</th><th>O que falta</th></tr></thead><tbody>${amostras.map((a) => `<tr class="${a.cadeia.length ? 'ok' : 'na'}"><td>${esc(a.tela)}</td><td>${a.cadeia.length ? esc(a.cadeia.join(' → ')) : '—'}</td><td>${esc(a.falta)}</td></tr>`).join('')}</tbody></table></section>`;
 })();
+// ---------------------------------------------------------------- unidades separadas (3N, B3N) × extratos
+const NOMES_MES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+const unidadesSeparadas = UNIDADES_SEPARADAS.map((sigla) => {
+  const dir = path.join(pastaDfcUnidades, sigla);
+  const arq = fs.existsSync(dir) ? fs.readdirSync(dir).find((n) => /\.xlsx$/i.test(n)
+    && normal(n).replace(/\s/g, '').includes(NOMES_MES[mes - 1]) && n.includes(String(ano))) : null;
+  if (!arq) return { sigla, erro: `DFC de ${sigla} do mês ausente em ${path.relative(raiz, dir) || dir}` };
+  let dfc;
+  try { dfc = lerDfcBruto(fs.readFileSync(path.join(dir, arq)), ano, mes); } catch (e) { return { sigla, erro: `DFC de ${sigla}: ${e.message}` }; }
+  const ex = lerExtratos(periodo, path.join(pastaExtratos, sigla), new Set());
+  const conc = ex.encontrados.length && !ex.erros.length ? reconciliar(dfc, ex.encontrados, { provas: ex.provas }) : null;
+  const contas = [...new Set(dfc.linhas.map((l) => normal(l.conta)))];
+  return { sigla, arquivo: arq, dfc, conc, erros: ex.erros, contas, repetidas: repetidasComProva(dfc, conc),
+    // Mesmo dia e mesmo valor absoluto entre a unidade e o DFC B3W: um movimento entre contas visto dos dois lados, ou cópia.
+    cruzadas: dfc.linhas.flatMap((l) => (atual?.linhas ?? []).filter((b) => b.data?.d === l.data?.d && Math.abs(b.movimento) === Math.abs(l.movimento))
+      .map((b) => ({ b3w: b.n, b3wSub2: b.sub2, b3wProva: conciliacao?.casadas.get(b.n) ?? null, n: l.n, sub2: l.sub2,
+        prova: conc?.casadas.get(l.n) ?? null, mesmoSinal: Math.sign(b.movimento) === Math.sign(l.movimento) }))) };
+});
+for (const u of unidadesSeparadas) {
+  if (u.erro) { avisos.push(u.erro); continue; }
+  for (const e of u.erros) avisos.push(`Extrato ${u.sigla}: ${e}`);
+  for (const r of u.conc?.porConta.values() ?? []) if (!r.confere)
+    avisos.push(`Conciliação ${u.sigla} ${r.conta}: ${r.soExtrato.length} movimento(s) só no extrato, ${r.soDfc.length} linha(s) só no DFC${r.saldosFecham ? '' : '; abertura ou fechamento não fecham'}`);
+}
+const tiposTexto = (t) => `${t.exato} exatos, ${t.deslocado} com data deslocada, ${t.agrupado} lotes, ${t.loteDoDia} lote(s) do dia, ${t.centavos} com diferença de centavos`;
+const linhaDaConta = (u, c) => {
+  const r = u.conc?.porConta.get(c);
+  if (!r) return `<tr class="na"><td>${esc(u.sigla)} · ${esc(c)}</td><td>sem extrato em extratos/${esc(u.sigla)}/</td><td>${u.dfc.linhas.filter((l) => normal(l.conta) === c).length} linha(s) sem prova</td><td>—</td><td>não auditável</td></tr>`;
+  const prova = r.prova ? `${r.prova.saldosConferidos} saldo(s) do PDF conferidos na conversão; período do PDF ${esc(r.prova.periodoDoPdf?.join(' a '))}${r.prova.inicioNoFimDeSemana ? ' (começa depois de fim de semana)' : ''}` : '';
+  return `<tr class="${r.confere ? 'ok' : 'bad'}"><td>${esc(u.sigla)} · ${esc(c)}<br><small>${esc(u.arquivo)}</small></td><td>${esc(r.prova?.pdf ?? '—')}<br><small>${prova}</small></td>`
+    + `<td>${r.transacoes} transações × ${r.linhasDfc} linhas: ${tiposTexto(r.tipos)}${r.soDfc.length ? ` | só no DFC: linhas ${r.soDfc.join(', ')}` : ''}${r.soExtrato.length ? ` | só no extrato: ${esc(r.soExtrato.join(', '))}` : ''}</td>`
+    + `<td>abertura DFC ${dinheiro(r.aberturaDfc)} × extrato ${dinheiro(r.aberturaExtrato)}<br>fechamento DFC ${dinheiro(r.fechamentoDfc)} × extrato ${dinheiro(r.fechamentoExtrato)}</td><td>${r.confere ? 'concilia' : 'não concilia'}</td></tr>`;
+};
+const secaoUnidades = `<section><h2>Unidades separadas: DFC da unidade × extratos</h2>
+<p>O DFC de cada unidade (espelho local, ${esc(path.relative(raiz, pastaDfcUnidades) || pastaDfcUnidades)}/&lt;unidade&gt;) contra os extratos de <code>extratos/&lt;unidade&gt;/</code>. Estas contas não estão no DFC B3W: o resultado não muda os indicadores das telas; prova as linhas da unidade.</p>
+<table><thead><tr><th>Unidade · conta</th><th>Extrato</th><th>Casamentos</th><th>Abertura e fechamento</th><th>Estado</th></tr></thead><tbody>${unidadesSeparadas.flatMap((u) => u.erro
+  ? [`<tr class="na"><td>${esc(u.sigla)}</td><td colspan="4">${esc(u.erro)}</td></tr>`] : u.contas.map((c) => linhaDaConta(u, c))).join('')}</tbody></table>
+<h3>Linhas repetidas dentro da unidade (mesma conta, dia, valor e SUB 2)</h3>
+<table><thead><tr><th>Unidade · conta</th><th>Linhas</th><th>Transações do extrato</th><th>Veredito</th></tr></thead><tbody>${unidadesSeparadas.flatMap((u) => (u.repetidas ?? []).map((g) =>
+  `<tr class="${['transação própria', 'casadas em grupo'].includes(g.veredito) ? 'ok' : g.veredito === 'possível dobra' ? 'bad' : 'na'}"><td>${esc(u.sigla)} · ${esc(g.conta)}</td><td>${g.linhas.join(' + ')} (dia ${g.dia}, ${esc(g.sub2)})</td><td>${esc(g.transacoes.join(', ') || '—')}</td><td>${esc(g.veredito)}</td></tr>`)).join('') || '<tr><td colspan="4">nenhuma</td></tr>'}</tbody></table>
+<h3>Mesmo dia e mesmo valor entre a unidade e o DFC B3W</h3>
+<table><thead><tr><th>B3W</th><th>Unidade</th><th>Sinal</th><th>Prova</th></tr></thead><tbody>${unidadesSeparadas.flatMap((u) => (u.cruzadas ?? []).map((x) =>
+  `<tr><td>linha ${x.b3w} (${esc(x.b3wSub2)})</td><td>${esc(u.sigla)} linha ${x.n} (${esc(x.sub2)})</td><td>${x.mesmoSinal ? 'mesmo sinal' : 'sinais opostos'}</td><td>B3W: ${esc(x.b3wProva?.join(', ') ?? 'sem par')}; ${esc(u.sigla)}: ${esc(x.prova?.join(', ') ?? 'sem par')}</td></tr>`)).join('') || '<tr><td colspan="4">nenhuma</td></tr>'}</tbody></table></section>`;
 const secaoN3 = `<section><h2>N3 no DFC B3W</h2><p>O DFC B3W de ${esc(periodo)} tem ${linhasN3.length} linha(s) baixada(s) com <code>EMP.=N3</code>. ${n3
   ? `O DFC separado de N3 da master tem ${n3.linhasSeparado} linha(s) baixada(s) no mês, no bloco ${esc(n3.contasSeparado.join(', '))}: ${n3.pares.length} casam uma a uma com as linhas <code>EMP.=N3</code> do B3W (mesmo dia, valor e SUB 2), ${n3.soSeparado.length} só existem no arquivo de N3 e ${n3.emOutraLinha.length} casam com linha de outra unidade; soma do arquivo de N3 ${dinheiro(n3.somaSeparado)} × soma das linhas N3 do B3W ${dinheiro(n3.somaNoPrincipal)}. <strong>${n3.soSeparado.length === 0 && n3.pares.length === n3.linhasSeparado ? 'N3 já está dentro do DFC B3W: o arquivo separado é a mesma movimentação vista só pelas linhas de N3, não um adicional.' : 'O arquivo de N3 tem lançamentos que o B3W não tem: é adicional nessa parte.'}</strong>`
   : 'O DFC separado de N3 não está na cópia local.'} ${casoN3 ? `Caso: linha ${casoN3.linha} do B3W (dia ${casoN3.dia}, ${esc(casoN3.sub2)}) ${casoN3.par ? `= linha ${casoN3.par} do DFC de N3` : 'sem par no DFC de N3'}${casoN3.extrato ? `; casada no extrato do Itaú (${esc(casoN3.extrato)})` : ''}${casoN3.omie ? `; título 6039461776 no Omie (empresa ${casoN3.omie.emp}, pago em ${esc(casoN3.omie.pago)}, ${casoN3.omie.igual ? 'mesmo valor' : 'valor diferente'})` : '; título 6039461776 não veio na leitura de movimentos do mês'}.` : ''} A tela lê só o DFC B3W e soma as linhas sem filtrar <code>EMP.</code>: cada linha de N3 entra uma vez. Nenhuma soma foi alterada.</p>
@@ -954,6 +1002,7 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><tit
 ${provaMaster}
 ${secaoJev}
 ${secaoN3}
+${secaoUnidades}
 ${secaoDocumentos}
 <section><h2>Omie</h2><p>Omie atual × cache anterior: ${esc(diagnosticoOmie)}</p></section>
 <section><h2>Ponte DRE × caixa</h2><p>${esc(ponteDre)}</p><p>O DRE deste dashboard é gerencial em regime de caixa. Uma ponte contábil por competência exigiria documentos de reconhecimento por competência e não pode ser concluída a partir destas duas fontes. A ponte acima fecha a aritmética e separa os valores por origem; a atribuição causal ainda depende dos documentos e de extratos de todas as contas.</p></section>

@@ -23,7 +23,7 @@
     "testar-detalhe-cartoes": "node scripts/testar-detalhe-cartoes.mjs",
     "conferir-periodo-fluxo": "node scripts/conferir-periodo-fluxo.mjs",
     "auditar": "node scripts/auditar.mjs",
-    "testar-auditoria": "node --test scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs",
+    "testar-auditoria": "node --test scripts/auditoria/core.test.mjs scripts/auditoria/jev.test.mjs scripts/auditoria/extrato-pdf.test.mjs",
     "testar-cache-omie": "node --test scripts/testar-cache-omie.mjs",
     "conferir-filtros": "node scripts/conferir-filtros.mjs",
     "conferir-chave-omie": "node scripts/conferir-chave-omie.mjs",

@@ -432,7 +432,7 @@ Escrito por [`scripts/numeros-das-telas.mjs`](../scripts/numeros-das-telas.mjs) 
 passagem que grava [`docs/conferencia.md`](conferencia.md) — as contagens daqui e as de lá são sempre da mesma leitura
 do Omie, e é assim que este documento e aquela página não têm como discordar.
 
-**De que leitura são as contagens desta tabela:** leitura `9c876008cad2` — 508 arquivos no cache local, o mais novo gravado em 07/10/2026 às 11h10; a última releitura do app que trouxe dado do Omie foi em 01/10/2026 às 16h41 (ok, 292 páginas).
+**De que leitura são as contagens desta tabela:** leitura `dbf2e04b7bbe` — 520 arquivos no cache local, o mais novo gravado em 09/10/2026 às 14h44; a última releitura do app que trouxe dado do Omie foi em 09/10/2026 às 14h44 (ok, 304 páginas).
 
 **De que leitura são as contagens escritas em PROSA neste documento:** da leitura de 27/09/2026, 09h11–09h17 — a
 leitura de referência. Elas são história e ficam como estão; a coluna da direita repete cada uma ao lado da contagem de
@@ -442,15 +442,15 @@ um mês já passado muda de contagem sozinho. Quem trava o que não pode mudar �
 Tela 3, a identidade de cada caso real conferido e a impressão digital dos campos de cadastro de todos os lançamentos
 do mês.
 
-| o que | esta leitura (`9c876008cad2`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
+| o que | esta leitura (`dbf2e04b7bbe`) | a leitura de referência (27/09/2026, 09h11–09h17) | igual? |
 |---|---|---|---|
 | total da leitura de **receita** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 9, 0, 175 | 9, 0, 162 | **não** — a releitura mexeu |
-| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 817, 9, 293 | 809, 9, 276 | **não** — a releitura mexeu |
-| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 555, 29, 619 | 536, 25, 611 | **não** — a releitura mexeu |
-| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 567, 3, 576 | 556, 3, 547 | **não** — a releitura mexeu |
-| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 68, 1, 27, 458, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 1, jan–set (títulos, baixas de parcial, avulsos) | 819, 9, 293 | 809, 9, 276 | **não** — a releitura mexeu |
+| total da leitura de **receita** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 556, 29, 619 | 536, 25, 611 | **não** — a releitura mexeu |
+| total da leitura de **despesa** da empresa 2, jan–set (títulos, baixas de parcial, avulsos) | 567, 3, 577 | 556, 3, 547 | **não** — a releitura mexeu |
+| custos de vendas, jan–set (títulos + baixas + avulsos da empresa 1, depois da 2) | 69, 1, 27, 458, 3, 148 | 66, 1, 20, 447, 3, 137 | **não** — a releitura mexeu |
 | resultado financeiro, jan–set (receita emp. 1, receita emp. 2, despesa emp. 1, despesa emp. 2), sem o `2.04.91` da empresa 2 desde 29/09/2026 | 56, 11, 100, 31 | 55, 11, 98, 31 | **não** — a releitura mexeu |
-| pessoal pago, jan–set (empresa 1, empresa 2) | 256, 337 | 253, 322 | **não** — a releitura mexeu |
+| pessoal pago, jan–set (empresa 1, empresa 2) | 256, 338 | 253, 322 | **não** — a releitura mexeu |
 | impostos pagos (guias), jan–set (títulos, baixas de parcial, avulsos, somando as duas empresas) | 14, 0, 10 | 14, 0, 10 | sim |
 | códigos de outra receita no cadastro (empresa 1, empresa 2), sem o `1.04.99` e o `1.04.03` desde 29/09/2026 | 24, 26 | 24, 26 | sim |
 | títulos `ADCP` do par do adiantamento em 2026 (no ano todo, em agosto) | 53, 1 | 53, 1 | sim |
@@ -1312,6 +1312,16 @@ A regra de "sem conta" não mudou com isso. As duas mudanças que tiraram valor 
 a linha própria e `2.10.99` para fora do DRE) foram decididas pelo dono em 01/10/2026 — as duas categorias continuam
 aparecendo aqui, porque seguem sem `codigo_dre` no cadastro; as outras quatro esvaziam a linha sozinhas quando o
 financeiro preencher o `codigo_dre` no Omie.
+
+**Releitura de 09/10/2026 (cache local, leitura `dbf2e04b7bbe`, 14h44): o financeiro preencheu a Conta do DRE.** No
+cadastro `geral/categorias` da empresa 1, `2.08.01` e `2.10.99` já têm `codigo_dre`, e também `2.01.03`, `2.01.01` e
+`2.03.96`; só a totalizadora `2.01` segue sem conta. **A regra não muda:** `2.08.01` continua na linha própria
+"Retirada de sócio" (`RETIRADA_DE_SOCIO`) e `2.10.99` da empresa 1 continua fora do DRE (`IMPLANTACAO_DE_SALDOS`),
+porque as listas escolhem pelo código de categoria, não pelo `codigo_dre`; o que muda é só que as duas deixam de
+aparecer em "(=) sem conta". Em agosto de 2026 a linha passou de 21 para **2 lançamentos, ambos títulos da empresa 1 na
+`2.01`**: `nCodTitulo` 6034369059 (pago em 25/08/2026) e 6033100844 (pago em 28/08/2026). O primeiro tem pendência
+aberta no portal para o financeiro reclassificar no Omie (`dre-agosto-titulo-6034369059-categoria-2-01`). A trava de
+agosto foi refixada nesta leitura, com o dono ciente.
 
 **Caso real conferido na fonte (30/09/2026).** O maior lançamento de "sem conta" em agosto é um avulso
 (`CONTA_CORRENTE_PAG`, `cOrigem = "EXTP"`) da empresa 1, `nCodMovCC` 6035894750, pago em 03/08/2026, categoria

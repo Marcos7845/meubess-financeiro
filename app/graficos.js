@@ -47,7 +47,7 @@ import { useEffect, useRef, useState } from 'react';
 import { emPorcento, emReais } from './dinheiro.js';
 import {
   FAIXAS_DA_TELA_3, MESES_CURTOS, dadosAnoInteiro, dadosDiaADia, dadosFluxo, dadosMargem, dadosPesoNaReceita,
-  dadosPorCliente, dadosPorMes, dadosRankingDespesa, dadosRankingReceita, pontosDeDestaque,
+  dadosPorCliente, dadosPorMes, dadosRankingDespesa, dadosRankingReceita, linhasDaDica, pontosDeDestaque,
 } from './graficos-dados.mjs';
 
 // A LARGURA DE VERDADE DO GRÁFICO (correção de 28/09/2026: o dono passava o mouse e não via os valores). O gráfico é
@@ -114,14 +114,16 @@ const FUNDO_PONTILHADO = <rect x="0" y="0" width="100%" height="100%" fill="url(
 
 // A DICA: um cartão arredondado com o título (o dia, o mês) e, por série, o nome e o valor em negrito. O texto é o de
 // sempre — `formato(valor, nome)` devolve `[valor em texto, nome]`, como o `formatter` da dica antiga —, só a caixa
-// mudou. `classes` liga a chave da série à classe que pinta a bolinha ao lado do nome.
-function Dica({ active, payload, label, formato, titulo, classes }) {
-  if (!active || !payload?.length) return null;
+// mudou. `classes` liga a chave da série à classe que pinta a bolinha ao lado do nome. As séries que só ajudam a
+// desenhar (degradê, contorno) e as repetidas ficam de fora: `linhasDaDica`, em `app/graficos-dados.mjs`.
+function Dica({ active, payload, label, formato, titulo, classes, omitir }) {
+  const linhas = linhasDaDica(payload).filter((p, _i, todas) => !omitir?.(p, todas));
+  if (!active || !linhas.length) return null;
   const t = titulo ? titulo(label) : label;
   return (
     <div className="dica-cartao">
       {t ? <div className="dica-titulo">{t}</div> : null}
-      {payload.map((p) => {
+      {linhas.map((p) => {
         const [valor, nome] = formato(p.value, p.name, p);
         return (
           <div className="dica-linha" key={String(p.dataKey)}>
@@ -502,7 +504,10 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
   // A saída é desenhada para baixo (negativa), mas na dica ela é dita positiva, como no cartão "Saiu". A POSIÇÃO DE
   // CAIXA, não: ela vai com o sinal que tem — um caixa negativo é dito negativo (correção de 28/09/2026: a primeira
   // versão tirava o sinal de tudo, e uma posição negativa aparecia positiva).
-  const formato = (v, n) => [emReais(n.startsWith('posição de caixa') ? v : Math.abs(v)), n];
+  // Os nomes do quadro, em português e com acento; as duas de previsão só aparecem nos dias futuros.
+  const formato = (v, n, p) => [emReais(p.dataKey === 'posicao' || p.dataKey === 'posicaoPrevista' ? v : Math.abs(v)), n];
+  // No dia de hoje as duas posições existem, e valem o mesmo: fica só a de caixa. A prevista é só dos dias futuros.
+  const omitir = (p, todas) => p.dataKey === 'posicaoPrevista' && todas.some((x) => x.dataKey === 'posicao');
   const classes = {
     entrou: 'serie-receita', aReceber: 'serie-previsao', saiu: 'serie-despesa', aPagar: 'serie-previsao',
     posicao: 'serie-saldo', posicaoPrevista: 'serie-previsao-linha',
@@ -541,32 +546,32 @@ export function DiaADiaDoFluxo({ dias, hoje }) {
           <ReferenceLine yAxisId="dia" x={String(hoje)} className="marca-do-mes" {...LINHA_DE_REFERENCIA}
             label={{ value: 'hoje', position: 'top', className: 'marca-do-mes-texto' }} />
         )}
-        {dica({ formato, titulo: (d) => `dia ${d}`, classes }, CURSOR_LINHA)}
+        {dica({ formato, titulo: (d) => `dia ${d}`, classes, omitir }, CURSOR_LINHA)}
         <Area yAxisId="dia" type="monotone" dataKey="posicao" stroke="none" fill="url(#degrade-saldo)" tooltipType="none"
           legendType="none" dot={false} activeDot={false} isAnimationActive={false} connectNulls={false} />
         <Area yAxisId="dia" type="monotone" dataKey="posicaoPrevista" stroke="none" fill="url(#degrade-previsao)" tooltipType="none"
           legendType="none" dot={false} activeDot={false} isAnimationActive={false} connectNulls={false} />
-        <Bar yAxisId="dia" dataKey="entrou" name="entrou" stackId="dia" className="serie-receita" fill="currentColor"
+        <Bar yAxisId="dia" dataKey="entrou" name="Entrou" stackId="dia" className="serie-receita" fill="currentColor"
           shape={colunaDoDia('aReceber')} isAnimationActive={false} />
-        <Bar yAxisId="dia" dataKey="aReceber" name="a receber (previsão)" stackId="dia" className="serie-previsao"
+        <Bar yAxisId="dia" dataKey="aReceber" name="A receber (previsão)" stackId="dia" className="serie-previsao"
           fill="url(#previsao-entrada)" shape={colunaDoDia(null)} isAnimationActive={false} />
-        <Bar yAxisId="dia" dataKey="saiu" name="saiu" stackId="dia" className="serie-despesa" fill="currentColor"
+        <Bar yAxisId="dia" dataKey="saiu" name="Saiu" stackId="dia" className="serie-despesa" fill="currentColor"
           shape={colunaDoDia('aPagar')} isAnimationActive={false} />
-        <Bar yAxisId="dia" dataKey="aPagar" name="a pagar (previsão)" stackId="dia" className="serie-previsao"
+        <Bar yAxisId="dia" dataKey="aPagar" name="A pagar (previsão)" stackId="dia" className="serie-previsao"
           fill="url(#previsao-saida)" shape={colunaDoDia(null)} isAnimationActive={false} />
         {/* O CONTORNO: a mesma linha, mais grossa e na cor do fundo, por baixo. Fora da dica e da legenda. */}
         <Line yAxisId="dia" type="monotone" dataKey="posicao" className="contorno-da-posicao" stroke="currentColor"
           strokeWidth={5} dot={false} activeDot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
         <Line yAxisId="dia" type="monotone" dataKey="posicaoPrevista" className="contorno-da-posicao" stroke="currentColor"
           strokeWidth={5} dot={false} activeDot={false} isAnimationActive={false} connectNulls={false} legendType="none" tooltipType="none" />
-        <Line yAxisId="dia" type="monotone" dataKey="posicao" name="posição de caixa" className="serie-saldo" stroke="currentColor"
+        <Line yAxisId="dia" type="monotone" dataKey="posicao" name="Posição de caixa" className="serie-saldo" stroke="currentColor"
           strokeWidth={2} filter="url(#sombra-saldo)" dot={pontoDe(daPosicao, 'serie-saldo')} activeDot={pontoAtivo('serie-saldo')}
           isAnimationActive={false} connectNulls={false}>
           <LabelList dataKey="posicao" content={(p) => (posicaoVaiAteOFim
             ? <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={4} classe="rotulo-da-linha" />
             : <PontaDaLinha {...p} ultimo={fimDaPosicao} texto="posição de caixa" desvio={-9} dx={-6} ancora="end" classe="rotulo-da-linha" />)} />
         </Line>
-        <Line yAxisId="dia" type="monotone" dataKey="posicaoPrevista" name="posição de caixa (prevista)" className="serie-previsao-linha"
+        <Line yAxisId="dia" type="monotone" dataKey="posicaoPrevista" name="Posição de caixa (prevista)" className="serie-previsao-linha"
           stroke="currentColor" strokeWidth={2} strokeDasharray="5 4" dot={pontoDe(daPrevista, 'serie-previsao-linha')}
           activeDot={pontoAtivo('serie-previsao-linha')} isAnimationActive={false} connectNulls={false}>
           <LabelList dataKey="posicaoPrevista" content={(p) => (

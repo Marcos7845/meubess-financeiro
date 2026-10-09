@@ -78,3 +78,23 @@ export function pontosDeDestaque(valores, selecionado = -1) {
   if (selecionado >= 0) idx.add(selecionado);
   return idx;
 }
+
+// ---------------------------------------------------------------- as linhas do quadro (a dica)
+// O Recharts entrega à dica customizada TODA série do gráfico, inclusive as que só ajudam a desenhar — o degradê sob a
+// linha, o contorno da cor do fundo — e que levam `tooltipType="none"`. Só a dica padrão do Recharts respeita essa
+// marca; a nossa (`Dica`, em `app/graficos.js`) não respeitava, e o quadro do Fluxo de Caixa repetia a posição de caixa
+// uma vez por série auxiliar (09/10/2026, print do dono). Aqui sai a lista que o quadro mostra: sem série auxiliar,
+// sem série escondida, sem lacuna (`null`) e uma linha só por `dataKey`. O valor de cada linha não é tocado.
+export function linhasDaDica(payload) {
+  const vistas = new Set();
+  const linhas = [];
+  for (const p of payload ?? []) {
+    if (!p || p.type === 'none' || p.hide) continue;
+    if (typeof p.value !== 'number' || !Number.isFinite(p.value)) continue;
+    const chave = String(p.dataKey);
+    if (vistas.has(chave)) continue;
+    vistas.add(chave);
+    linhas.push(p);
+  }
+  return linhas;
+}

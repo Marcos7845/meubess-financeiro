@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import {
   MESES_CURTOS, dadosAnoInteiro, dadosDiaADia, dadosFluxo, dadosMargem, dadosPesoNaReceita, dadosPorCliente,
-  dadosPorMes, dadosRankingDespesa, dadosRankingReceita, pontosDeDestaque,
+  dadosPorMes, dadosRankingDespesa, dadosRankingReceita, linhasDaDica, pontosDeDestaque,
 } from '../app/graficos-dados.mjs';
 
 // ------------------------------------------------ o código de antes (verbatim de app/graficos.js @ 732ff97)
@@ -103,4 +103,26 @@ test('pontos de destaque: maior, menor e selecionado — e nada mais', () => {
   assert.deepEqual([...pontosDeDestaque([])], []);
   // Valor negativo (prejuízo) entra normalmente.
   assert.deepEqual([...pontosDeDestaque([-5, 2, -1])].sort(), [0, 1]);
+});
+
+test('o quadro da dica: só as séries de verdade, uma linha por série, sem lacuna e sem tocar no valor', () => {
+  // O que o Recharts entrega no Fluxo de Caixa: áreas e contornos auxiliares ("none") repetem a posição de caixa.
+  const aux = (dataKey, value) => ({ dataKey, name: dataKey, type: 'none', value });
+  const payload = [
+    aux('posicao', 11), aux('posicaoPrevista', null),
+    { dataKey: 'entrou', name: 'Entrou', value: 223 },
+    { dataKey: 'aReceber', name: 'A receber (previsão)', value: null },
+    { dataKey: 'saiu', name: 'Saiu', value: -1077 },
+    { dataKey: 'aPagar', name: 'A pagar (previsão)', value: undefined },
+    aux('posicao', 12), aux('posicaoPrevista', null), aux('posicao', 13),
+    { dataKey: 'posicao', name: 'Posição de caixa', value: 327 },
+    { dataKey: 'posicao', name: 'Posição de caixa', value: 328 },
+    { dataKey: 'posicaoPrevista', name: 'Posição de caixa (prevista)', value: null },
+    { dataKey: 'oculta', name: 'x', value: 5, hide: true },
+  ];
+  const linhas = linhasDaDica(payload);
+  assert.deepEqual(linhas.map((p) => [p.name, p.value]), [['Entrou', 223], ['Saiu', -1077], ['Posição de caixa', 327]]);
+  // Zero é valor (um dia sem movimento continua na dica); lista vazia ou ausente não quebra.
+  assert.equal(linhasDaDica([{ dataKey: 'receita', name: 'receita', value: 0 }]).length, 1);
+  assert.deepEqual(linhasDaDica(undefined), []);
 });

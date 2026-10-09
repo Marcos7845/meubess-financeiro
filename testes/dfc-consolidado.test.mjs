@@ -160,6 +160,27 @@ test('N3 deduz por data, valor e histórico com multiplicidade', async () => {
   assert.equal(deduzirN3([{ dia: 5, valor: -5, historico: 'A' }], [{ dia: 5, valor: -5, historico: 'B' }], 2026, 8).repetidas, 0);
 });
 
+test('agosto: B3W 223 e 224 (sufixo "-N3") repetem N3 14 e 15; B3W 71 (outra nota) não repete N3 7', () => {
+  const b3w = [
+    { linha: 40, dia: 6, valor: -10, historico: 'COMISSAO - N3' },
+    { linha: 71, dia: 7, valor: -20, historico: 'NF 07' },
+    { linha: 223, dia: 20, valor: 30, historico: '20260811-42040373 -N3' },
+    { linha: 224, dia: 20, valor: 40, historico: '20260820-76875065 -N3' },
+  ];
+  const n3 = [
+    { linha: 6, dia: 6, valor: -10, historico: 'COMISSAO - N3' },
+    { linha: 7, dia: 7, valor: -20, historico: 'NF 06' },
+    { linha: 14, dia: 20, valor: 30, historico: '20260811-42040373' },
+    { linha: 15, dia: 20, valor: 40, historico: '20260820-76875065' },
+  ];
+  const r = deduzirN3(b3w, n3, 2026, 8);
+  assert.equal(r.repetidas, 3);
+  assert.deepEqual(r.exclusivas.map((l) => l.linha), [7]);
+  // O sufixo só vale no fim do histórico; dia ou valor diferente segue exclusivo.
+  assert.equal(deduzirN3([{ dia: 21, valor: 30, historico: '20260811-42040373 -N3' }], [n3[2]], 2026, 8).repetidas, 0);
+  assert.equal(deduzirN3([{ dia: 20, valor: 30, historico: 'N3 - 20260811-42040373' }], [n3[2]], 2026, 8).repetidas, 0);
+});
+
 test('filtro de unidade conserva só as linhas exclusivas da origem física', async () => {
   const base = novaBase({ raiz: process.cwd(), ano: 2026, fonte });
   const consolidado = await base.dfc({ mes: 8 });

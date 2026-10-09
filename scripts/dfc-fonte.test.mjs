@@ -6,6 +6,7 @@ import path from 'node:path';
 import { acharPasta, acharPastas, fonteDaPastaSincronizada } from '../lib/regras/dfc-fonte.mjs';
 import { espelharDfc } from './espelhar-dfc.mjs';
 import { registrarEnvio } from './envio-dfc-log.mjs';
+import { listarEspelho, planejarEnvio } from './envio-dfc-unidades.mjs';
 
 // Árvore de mentira, só com nomes e arquivos vazios; nenhum caminho real entra aqui.
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'meubess-dfc-fonte-'));
@@ -180,4 +181,28 @@ test('registro de falha traz hora, etapa e mensagem sem segredo', async () => {
   const linha = fs.readFileSync(arquivo, 'utf8');
   assert.match(linha, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z resultado=erro etapa=confirmação do envio mensagem=recusado \[oculto\]\n$/);
   assert.doesNotMatch(linha, /segredo-fixture/);
+});
+
+test('envio sem a N3: passa com as outras três, avisa e reenvia só agosto da N3 pelo espelho', () => {
+  const destino = path.join(base, 'espelho-n3');
+  criar('espelho-n3/N3', ['DFC AGOSTO2026.xlsx', 'DFC SETEMBRO2026.xlsx']);
+  const espelho = listarEspelho(destino);
+  assert.deepEqual(espelho, ['N3__DFC AGOSTO2026.xlsx', 'N3__DFC SETEMBRO2026.xlsx']);
+  const nomes = ['3N__DFC SETEMBRO 2026.xlsx', 'B3N__09 - DFC - SETEMBRO2026.xlsx', 'B3W__09 - DFC SETEMBRO 2026.xlsx'];
+  const plano = planejarEnvio({ nomes, espelho });
+  assert.deepEqual(plano.faltam, []);
+  assert.deepEqual(plano.porUnidade, { '3N': 1, B3N: 1, B3W: 1, N3: 0 });
+  assert.deepEqual(plano.doEspelho, ['N3__DFC AGOSTO2026.xlsx']);
+  assert.equal(plano.avisos.length, 1);
+  assert.match(plano.avisos[0], /^N3: sem planilha/);
+  // Sem espelho, o envio passa do mesmo jeito, só com o aviso.
+  assert.deepEqual(planejarEnvio({ nomes }).faltam, []);
+  assert.deepEqual(planejarEnvio({ nomes }).doEspelho, []);
+});
+
+test('envio com a N3 na pasta não usa o espelho; unidade em vigor ausente ainda barra', () => {
+  const nomes = ['3N__DFC AGOSTO 2026.xlsx', 'B3N__08 - DFC - AGOSTO2026.xlsx', 'B3W__08 - DFC AGOSTO 2026.xlsx', 'N3__DFC AGOSTO2026.xlsx'];
+  const plano = planejarEnvio({ nomes, espelho: ['N3__DFC AGOSTO2026.xlsx'] });
+  assert.deepEqual([plano.faltam, plano.avisos, plano.doEspelho], [[], [], []]);
+  assert.deepEqual(planejarEnvio({ nomes: nomes.filter((n) => !n.startsWith('B3N__')) }).faltam, ['B3N']);
 });

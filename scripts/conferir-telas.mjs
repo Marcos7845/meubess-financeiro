@@ -598,7 +598,7 @@ async function provaFisica(mes, diretorio) {
       const efetivas = r.linhas.filter((l) => l.unidade === u);
       const caso = efetivas[0];
       return `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: fonte \`${p.arquivo}\`, aba \`FLUXO DE CAIXA\`; ${efetivas.length} linhas efetivas; caso real linha ${caso?.linha ?? '—'}, dia ${caso?.dia ?? '—'}, pagamento ${caso?.pagamento ?? '—'}.`;
-    }).join('\n') + (r.porUnidade.N3 ? `\n- N3 deduzido em ${String(mes).padStart(2, '0')}/${ANO}: ${r.repetidasN3} linhas repetidas por data, valor e histórico.` : '');
+    }).join('\n') + (r.porUnidade.N3 ? `\n- N3 deduzido em ${String(mes).padStart(2, '0')}/${ANO}: ${r.repetidasN3} linhas repetidas por data, valor e histórico (sem o sufixo "-N3").` : '');
   } finally {
     if (anterior === undefined) delete process.env.DFC_DIR; else process.env.DFC_DIR = anterior;
   }

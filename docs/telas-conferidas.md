@@ -50,8 +50,8 @@ O DFC desta rodada saiu de **cópia local indicada por `DFC_DIR`**, só para lei
 - 08/2026, 3N: fonte `3N__DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 23 linhas efetivas; caso real linha 5, dia 16, pagamento RECEBIDO.
 - 08/2026, B3N: fonte `B3N__08 - DFC - AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 72 linhas efetivas; caso real linha 9, dia 3, pagamento RECEBIDO.
 - 08/2026, B3W: fonte `B3W__08 - DFC AGOSTO 2026.xlsx`, aba `FLUXO DE CAIXA`; 395 linhas efetivas; caso real linha 3, dia 3, pagamento PAGO.
-- 08/2026, N3: fonte `N3__DFC AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 3 linhas efetivas; caso real linha 7, dia 7, pagamento PAGO.
-- N3 deduzido em 08/2026: 8 linhas repetidas por data, valor e histórico.
+- 08/2026, N3: fonte `N3__DFC AGOSTO2026.xlsx`, aba `FLUXO DE CAIXA`; 1 linhas efetivas; caso real linha 7, dia 7, pagamento PAGO.
+- N3 deduzido em 08/2026: 10 linhas repetidas por data, valor e histórico (sem o sufixo "-N3").
 - 09/2026, 3N: fonte `3N__DFC SETEMBRO 2026.xlsx`, aba `FLUXO DE CAIXA`; 33 linhas efetivas; caso real linha 3, dia 4, pagamento PAGO.
 - 09/2026, B3N: fonte `B3N__09 - DFC - SETEMBRO2026.xlsx`, aba `FLUXO DE CAIXA`; 83 linhas efetivas; caso real linha 9, dia 1, pagamento RECEBIDO.
 - 09/2026, B3W: fonte `B3W__09 - DFC SETEMBRO 2026.xlsx`, aba `FLUXO DE CAIXA`; 399 linhas efetivas; caso real linha 3, dia 1, pagamento PAGO.
@@ -84,8 +84,8 @@ A cópia B3W anterior ainda guardada no cache tinha 388 linhas; a atual tem 395.
 dia, sentido, classificação e valor, entraram oito linhas da Stone e saiu uma. As demais linhas que mudaram de número
 na planilha não são novos lançamentos. As contagens do Omie não mudaram neste confronto.
 
-- **Tela 1 — Saldo.** **Na tela:** DFC 493 e Omie 425. **Na conferência:** DFC 493 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 1 — Receitas.** **Na tela:** DFC 157 e Omie 126. **Na conferência:** DFC 157 e Omie 126. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Saldo.** **Na tela:** DFC 491 e Omie 425. **Na conferência:** DFC 491 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 1 — Receitas.** **Na tela:** DFC 155 e Omie 126. **Na conferência:** DFC 155 e Omie 126. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas.** **Na tela:** DFC 327 e Omie 299. **Na conferência:** DFC 327 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas pagas.** **Na tela:** DFC 326 e Omie 299. **Na conferência:** DFC 326 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Despesas pendentes.** **Na tela:** Omie 161. **Na conferência:** Omie 161. **Fonte:** Omie recortado (principal) / DFC (confronto).
@@ -95,7 +95,7 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 1 — Top 10 receitas.** **Na tela:** Omie 126. **Na conferência:** Omie 126. **Fonte:** Omie recortado (principal) / DFC (confronto).
 - **Tela 1 — Receita × despesa por dia.** **Na tela:** DFC 31 e Omie 425. **Na conferência:** DFC 31 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 1 — Receita × despesa por mês.** **Na tela:** DFC 12 e Omie 425. **Na conferência:** DFC 12 e Omie 425. **Fonte:** DFC (principal) / Omie recortado (confronto).
-- **Tela 2 — Receita total.** **Na tela:** DFC 143 e Omie 126. **Na conferência:** DFC 143 e Omie 126. **Fonte:** DFC (principal) / Omie recortado (confronto).
+- **Tela 2 — Receita total.** **Na tela:** DFC 141 e Omie 126. **Na conferência:** DFC 141 e Omie 126. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — Custos e despesas.** **Na tela:** DFC 327 e Omie 299. **Na conferência:** DFC 327 e Omie 299. **Fonte:** DFC (principal) / Omie recortado (confronto).
 - **Tela 2 — EBITDA.** **Na tela:** Omie 425. **Na conferência:** Omie 425. **Também conferido:** receita 126, despesa 299. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
 - **Tela 2 — Lucro líquido.** **Na tela:** Omie 425. **Na conferência:** Omie 425. **Também conferido:** receita 126, despesa 299. **Fonte:** Omie recortado, calculado a partir das linhas da tabela (principal) / DFC (confronto).
@@ -128,9 +128,9 @@ na planilha não são novos lançamentos. As contagens do Omie não mudaram nest
 - **Tela 3 — Lista de títulos.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** comPedido 128, semPedido 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Lançamentos por status.** **Na tela:** Omie 128. **Na conferência:** Omie 128. **Também conferido:** pago 91, atrasado 37, aberto 0. **Fonte:** Omie, títulos a receber por vencimento.
 - **Tela 3 — Despesas fixas pagas.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** contasFixasNoMes 29, contasDaGestora 33, ausentesDaResposta 3. **Fonte:** DFC, pelas contas que a gestora marcou como fixas.
-- **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 143, deducoes 2. **Fonte:** DFC nas duas pontas.
-- **Tela 3 — Projeção do mês.** **Na tela:** DFC 484. **Na conferência:** DFC 484. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
-- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 493. **Na conferência:** DFC 493. **Também conferido:** diasComMovimento 21, bancos 6, bancosQueFecham 6, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
+- **Tela 3 — Fixas / receita líquida.** **Na tela:** DFC 150. **Na conferência:** DFC 150. **Também conferido:** receita 141, deducoes 2. **Fonte:** DFC nas duas pontas.
+- **Tela 3 — Projeção do mês.** **Na tela:** DFC 482. **Na conferência:** DFC 482. **Fonte:** conta desta tela: resultado do mês (DFC) + a receber (Omie) − a pagar (Omie).
+- **Tela 3 — O mês dia a dia.** **Na tela:** DFC 491. **Na conferência:** DFC 491. **Também conferido:** diasComMovimento 21, bancos 6, bancosQueFecham 6, linhasNaoBaixadasNoSaldo 0, bancosComLancamentoDepoisDoSaldo 0, ponteFecha false. **Fonte:** consolidado: DFC, as linhas baixadas do `FLUXO DE CAIXA` do mês pelo dia de `DIA PG` (a conta dos cartões Entrou e Saiu); previsão: Omie, os títulos a receber em aberto e a pagar sem baixa pelo dia de vencimento (os títulos dos cartões "Ainda a receber" e "Ainda a pagar").
 - **Tela 3 — A pagar.** **Na tela:** Omie 161. **Na conferência:** Omie 161. **Fonte:** Omie recortado (principal) / DFC (confronto).
 
 ## Antes e depois da correção do leitor

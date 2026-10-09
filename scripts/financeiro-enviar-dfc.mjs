@@ -3,14 +3,17 @@
 // Depois da confirmação do servidor, atualiza o espelho local. Nunca escreve na origem.
 
 import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fonteDaPastaSincronizada, UNIDADES } from '../lib/regras/dfc-fonte.mjs';
+import { fonteDaPastaSincronizada } from '../lib/regras/dfc-fonte.mjs';
 import { espelharDfc } from './espelhar-dfc.mjs';
+import { listarEspelho, planejarEnvio } from './envio-dfc-unidades.mjs';
 import { registrarEnvio } from './envio-dfc-log.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOG = path.join(RAIZ, '.cache', 'logs', 'envio-dfc.log');
+const ESPELHO = path.join(RAIZ, '.cache', 'dfc-2026');
 const seco = process.argv.includes('--seco');
 let etapa = 'início';
 
@@ -39,17 +42,21 @@ async function executar() {
   if (!fonte.disponivel()) falhar(fonte.descrever(), 2);
   const nomes = await fonte.arquivos();
   if (!nomes.length) falhar('a pasta do DFC não tem nenhum .xlsx', 2);
-  const porUnidade = Object.fromEntries(UNIDADES.map((u) =>
-    [u, nomes.filter((nome) => nome.startsWith(`${u}__`) && /DFC/i.test(nome)).length]));
-  if (Object.values(porUnidade).some((n) => n === 0)) {
-    falhar('o envio exige DFC das quatro unidades (3N, B3N, B3W, N3)', 2);
-  }
+  const { porUnidade, faltam: semPlanilha, avisos, doEspelho } = planejarEnvio({ nomes, espelho: listarEspelho(ESPELHO) });
+  if (semPlanilha.length) falhar(`o envio exige DFC de ${semPlanilha.join(', ')}`, 2);
   console.log(`fontes DFC por unidade: ${Object.entries(porUnidade).map(([u, n]) => `${u}=${n}`).join(', ')}.`);
+  for (const aviso of avisos) console.log(aviso);
 
   etapa = 'leitura das planilhas';
   const arquivos = [];
   for (const nome of nomes) {
     const conteudo = await fonte.ler(nome);
+    arquivos.push({ nome, conteudo, sha256: crypto.createHash('sha256').update(conteudo).digest('hex') });
+  }
+  // A cópia do espelho é a mesma planilha já enviada antes do fim da unidade; o espelho em si não é reescrito por ela.
+  for (const nome of doEspelho) {
+    const [unidade, arquivo] = nome.split('__');
+    const conteudo = await fs.readFile(path.join(ESPELHO, unidade, arquivo));
     arquivos.push({ nome, conteudo, sha256: crypto.createHash('sha256').update(conteudo).digest('hex') });
   }
   const bytes = arquivos.reduce((s, a) => s + a.conteudo.length, 0);

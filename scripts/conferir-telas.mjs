@@ -593,7 +593,7 @@ async function provaFisica(mes, diretorio) {
     return ['3N', 'B3N', 'B3W', 'N3'].map((u) => {
       const p = r.porUnidade[u];
       if (!p) return r.unidadesFaltantes.includes(u)
-        ? `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: ${r.aviso}; nenhuma linha atribuída à unidade ausente.`
+        ? `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: ${r.aviso ?? `sem planilha da ${u} (unidade encerrada, sem aviso na tela)`}; nenhuma linha atribuída à unidade ausente.`
         : `- ${String(mes).padStart(2, '0')}/${ANO}, ${u}: a conferir; sem cópia local.`;
       const efetivas = r.linhas.filter((l) => l.unidade === u);
       const caso = efetivas[0];

@@ -103,7 +103,7 @@ test('agosto: quatro unidades e dedução N3 preservadas', async () => {
   assert.equal(r.aviso, null);
 });
 
-test('setembro: consolida as três planilhas disponíveis e avisa falta da N3', async () => {
+test('setembro: consolida as três planilhas disponíveis e não avisa a falta da N3 encerrada', async () => {
   const base = novaBase({ raiz: process.cwd(), ano: 2026, fonte });
   const r = await base.dfc({ mes: 9 });
   assert.equal(r.ok, true);
@@ -111,7 +111,7 @@ test('setembro: consolida as três planilhas disponíveis e avisa falta da N3', 
   assert.deepEqual(Object.fromEntries(['3N', 'B3N', 'B3W'].map((u) => [u, r.linhas.filter((l) => l.unidade === u).length])),
     { '3N': 1, B3N: 1, B3W: 1 });
   assert.deepEqual(r.unidadesFaltantes, ['N3']);
-  assert.equal(r.aviso, 'sem planilha da N3 neste mês; números sem ela');
+  assert.equal(r.aviso, null);
   for (const unidade of ['3N', 'B3N', 'B3W']) {
     const escolhida = await base.porUnidade(unidade).dfc({ mes: 9 });
     assert.equal(escolhida.ok, true);
@@ -209,4 +209,15 @@ test('Saídas: PAGO soma todas as contas e recorta Itaú da B3W; A PAGAR usa Omi
     banco: 'ITAU', pendentes: { valor: 123, contagem: { omie: 1 } } });
   assert.deepEqual({ fonte: aPagar.fonte, valor: aPagar.valor, contagem: aPagar.contagem },
     { fonte: 'Omie', valor: 123, contagem: 1 });
+});
+
+test('N3 encerrada só cala o próprio aviso: agosto sem ela ainda avisa, e outra unidade faltante segue avisada', async () => {
+  const semN3 = new Map([...arquivos].filter(([nome]) => !nome.startsWith('N3__')));
+  const agosto = await lerDfc({ fonte: { ...fonte, arquivos: async () => [...semN3.keys()] }, ano: 2026, mes: 8, comSerie: false });
+  assert.deepEqual(agosto.unidadesFaltantes, ['N3']);
+  assert.equal(agosto.aviso, 'sem planilha da N3 neste mês; números sem ela');
+  const semB3N = [...arquivos.keys()].filter((nome) => !nome.startsWith('B3N__09'));
+  const setembro = await lerDfc({ fonte: { ...fonte, arquivos: async () => semB3N }, ano: 2026, mes: 9, comSerie: false });
+  assert.deepEqual(setembro.unidadesFaltantes, ['B3N', 'N3']);
+  assert.equal(setembro.aviso, 'sem planilha da B3N neste mês; números sem ela');
 });

@@ -353,3 +353,55 @@ export function repetidasComProva(dfc, conciliacao) {
     return { conta, dia: g[0].data?.d, sub2: g[0].sub2, linhas: g.map((l) => l.n), transacoes: [...new Set(ids)], veredito };
   });
 }
+
+// Identificador de um registro do Omie para comparar a resposta atual com o cache. Uma baixa em lote é UM nCodMovCC
+// com uma linha por título baixado (cada uma com nCodTitulo e nCodBaixa próprios): a chave leva os três, senão as
+// linhas do lote colidem e a comparação acusa campo alterado só porque a ordem das páginas mudou.
+export const chaveOmie = (m) => [m.emp, m.detalhes?.cGrupo ?? '', m.detalhes?.nCodMovCC ?? '',
+  m.detalhes?.nCodTitulo ?? m.cabecTitulo?.nCodTitulo ?? '', m.detalhes?.nCodBaixa ?? ''].join('|');
+
+// O que se compara de cada registro (sem nome; os valores ficam só na memória do auditor).
+export const camposOmie = (m) => ({ vencimento: m.detalhes?.dDtVenc ?? m.cabecTitulo?.dDtVenc,
+  pagamento: m.detalhes?.dDtPagamento, status: m.detalhes?.cStatus ?? m.cabecTitulo?.cStatus,
+  conta: m.detalhes?.nCodCC ?? m.cabecTitulo?.nCodCC, categoria: m.detalhes?.cCodCateg ?? m.cabecTitulo?.cCodCateg,
+  titulo: m.detalhes?.nValorTitulo ?? m.cabecTitulo?.nValorTitulo, pago: m.resumo?.nValPago, aberto: m.resumo?.nValAberto,
+  liquidado: m.resumo?.cLiquidado });
+
+// Resposta atual × cache, por registro. `noMes(campos)` diz se um registro está no mês auditado: só entram na
+// comparação os do mês, dos dois lados, porque a consulta atual é mensal e o cache é do ano.
+export function compararOmie(atual, cache, noMes) {
+  const doMes = (xs) => new Map(xs.filter((m) => noMes(camposOmie(m))).map((m) => [chaveOmie(m), m]));
+  const a = doMes(atual), c = doMes(cache);
+  const somenteAtual = [...a.keys()].filter((k) => !c.has(k));
+  const somenteCache = [...c.keys()].filter((k) => !a.has(k));
+  const alterados = [...a.keys()].filter((k) => c.has(k)).map((k) => {
+    const x = camposOmie(a.get(k)), y = camposOmie(c.get(k));
+    return { chave: k, campos: Object.keys(x).filter((f) => String(x[f] ?? '') !== String(y[f] ?? '')) };
+  }).filter((x) => x.campos.length);
+  return { somenteAtual, somenteCache, alterados, atual: a, cache: c };
+}
+
+// Um registro em uma linha, sem valor: empresa, título, grupo, categoria, vencimento, pagamento e status.
+export function descreverOmie(m) {
+  const x = camposOmie(m);
+  return `empresa ${m.emp}, título ${m.detalhes?.nCodTitulo ?? m.cabecTitulo?.nCodTitulo ?? '—'}`
+    + `${m.detalhes?.cGrupo ? ` (${m.detalhes.cGrupo})` : ''}, categoria ${x.categoria ?? '—'}, vencimento ${x.vencimento ?? '—'}, `
+    + `pagamento ${x.pagamento ?? '—'}, status ${x.status ?? '—'}`;
+}
+
+// Cadastro de categorias atual × cache: o DRE classifica cada lançamento pela categoria da filial, e o financeiro pode
+// preencher ou mudar a conta do DRE (`codigo_dre`) no Omie depois da gravação do cache. Devolve, por empresa e código,
+// os campos de classificação que mudaram e se a categoria tem lançamento no recorte (`usadas`: Set de "emp|código").
+const CAMPOS_CATEGORIA = ['codigo_dre', 'conta_despesa', 'conta_receita', 'transferencia', 'totalizadora'];
+export function compararCategorias(atual, cache, usadas = new Set()) {
+  const porChave = (xs) => new Map(xs.map((c) => [`${c.emp}|${c.codigo}`, c]));
+  const a = porChave(atual), c = porChave(cache);
+  return [...a].flatMap(([k, x]) => {
+    const y = c.get(k);
+    const campos = CAMPOS_CATEGORIA.filter((f) => String(x[f] ?? '') !== String(y?.[f] ?? ''));
+    if (!campos.length) return [];
+    const [emp, codigo] = k.split('|');
+    return [{ emp, codigo, campos, usada: usadas.has(k), antes: Object.fromEntries(campos.map((f) => [f, y?.[f] ?? ''])),
+      depois: Object.fromEntries(campos.map((f) => [f, x[f] ?? ''])) }];
+  });
+}

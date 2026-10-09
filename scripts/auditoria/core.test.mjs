@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { lerCsvExtrato, lerOfxExtrato, reconciliar, estado, indicadoresDfc } from './core.mjs';
+import { lerCsvExtrato, lerOfxExtrato, reconciliar, estado, indicadoresDfc, chaveOmie, compararOmie, descreverOmie, compararCategorias } from './core.mjs';
 import { dreIndependente } from './dre.mjs';
 
 test('extrato CSV e OFX conservam sinal, data e centavos', () => {
@@ -197,4 +197,32 @@ test('repetidas: transação própria, possível dobra e sem extrato', async () 
   assert.deepEqual(repetidasComProva(dfc, reconciliar(dfc, [t('a'), t('b')])).map((g) => g.veredito), ['transação própria']);
   assert.deepEqual(repetidasComProva(dfc, reconciliar(dfc, [t('a')])).map((g) => g.veredito), ['possível dobra']);
   assert.deepEqual(repetidasComProva(dfc, null).map((g) => g.veredito), ['sem extrato']);
+});
+
+test('Omie atual × cache: linhas de uma baixa em lote não colidem e a baixa retroativa aparece por título', () => {
+  const lote = (titulo, baixa, pago) => ({ emp: '2', detalhes: { cGrupo: 'CONTA_CORRENTE_PAG', nCodMovCC: 900, nCodTitulo: titulo, nCodBaixa: baixa,
+    dDtPagamento: '28/08/2026', cCodCateg: '2.04.01' }, resumo: { nValPago: pago } });
+  const [a, b] = [lote(1, 11, 10), lote(2, 12, 20)];
+  assert.notEqual(chaveOmie(a), chaveOmie(b));
+  // A mesma baixa em lote, em ordem diferente nas páginas, não é alteração.
+  const noMes = (x) => String(x.pagamento ?? x.vencimento ?? '').slice(3, 10) === '08/2026';
+  assert.deepEqual(compararOmie([a, b], [b, a], noMes).alterados, []);
+  // Título pago depois da gravação do cache: no cache estava atrasado; agora tem a linha do título e a da baixa.
+  const titulo = (status, pagamento) => ({ emp: '1', detalhes: { cGrupo: 'CONTA_A_PAGAR', nCodTitulo: 7, cCodCateg: '2.01',
+    dDtVenc: '25/08/2026', dDtPagamento: pagamento, cStatus: status }, resumo: { cLiquidado: pagamento ? 'S' : 'N' } });
+  const baixa = { emp: '1', detalhes: { cGrupo: 'CONTA_CORRENTE_PAG', nCodMovCC: 8, nCodTitulo: 7, nCodBaixa: 9,
+    cCodCateg: '2.01', dDtVenc: '25/08/2026', dDtPagamento: '25/08/2026', cStatus: 'PAGO' }, resumo: {} };
+  const pago = titulo('PAGO', '25/08/2026');
+  const mov = compararOmie([a, b, pago, baixa], [a, b], noMes);
+  assert.deepEqual(mov.somenteAtual, [chaveOmie(pago), chaveOmie(baixa)]);
+  const pend = compararOmie([pago], [titulo('ATRASADO', undefined)], (x) => x.vencimento?.slice(3, 10) === '08/2026');
+  assert.deepEqual(pend.alterados[0].campos, ['pagamento', 'status', 'liquidado']);
+  assert.equal(descreverOmie(pago), 'empresa 1, título 7 (CONTA_A_PAGAR), categoria 2.01, vencimento 25/08/2026, pagamento 25/08/2026, status PAGO');
+});
+
+test('categorias atual × cache: conta do DRE preenchida depois da gravação aparece, marcada se tem lançamento', () => {
+  const cache = [{ emp: '1', codigo: '2.08.01', codigo_dre: '', conta_despesa: 'S' }, { emp: '1', codigo: '2.01', codigo_dre: '' }];
+  const atual = [{ emp: '1', codigo: '2.08.01', codigo_dre: '2.01.01', conta_despesa: 'S' }, { emp: '1', codigo: '2.01', codigo_dre: '' }];
+  assert.deepEqual(compararCategorias(atual, cache, new Set(['1|2.08.01'])), [{ emp: '1', codigo: '2.08.01', campos: ['codigo_dre'],
+    usada: true, antes: { codigo_dre: '' }, depois: { codigo_dre: '2.01.01' } }]);
 });

@@ -14,7 +14,7 @@ import { dreIndependente, maioresReceitas } from './auditoria/dre.mjs';
 import { sinaisDeClientes, saldoDeContratos } from './auditoria/compromissos.mjs';
 import * as documentos from './auditoria/documentos.mjs';
 import { lerZip, sharedStrings, abasDo, lerAba } from '../lib/regras/xlsx.mjs';
-import { centavos, normal, soma, lerDfcBruto, indicadoresDfc, lerCsvExtrato, lerOfxExtrato, reconciliar, aberturasDfc, estado, repetidasComProva } from './auditoria/core.mjs';
+import { centavos, normal, soma, chaveOmie, camposOmie, compararOmie, descreverOmie, compararCategorias, lerDfcBruto, indicadoresDfc, lerCsvExtrato, lerOfxExtrato, reconciliar, aberturasDfc, estado, repetidasComProva } from './auditoria/core.mjs';
 import { LIMIAR_PADRAO, sugerirClassificacoes, compararComDfc } from './auditoria/jev.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -368,29 +368,29 @@ function semProvaBancaria(linhas) {
 let cru = null, falhaOmie = null;
 try { cru = await abrirOmie(); } catch (erro) { falhaOmie = erro.message; avisos.push(`Omie: ${falhaOmie}`); }
 let diagnosticoOmie = 'Comparação da resposta atual com o cache anterior indisponível.';
-let casosTitulosOmie = [];
+let casosTitulosOmie = [], casosMovimentosOmie = [];
 if (cru && modoOmie === 'ao vivo') {
   try {
     const anteriorCru = await abrirOmie('cache');
-    const chave = (m) => `${m.emp}|${m.detalhes?.nCodMovCC ?? m.detalhes?.nCodTitulo ?? m.cabecTitulo?.nCodTitulo}|${m.detalhes?.cGrupo ?? ''}`;
-    const campos = (m) => ({ vencimento: m.detalhes?.dDtVenc ?? m.cabecTitulo?.dDtVenc,
-      pagamento: m.detalhes?.dDtPagamento, status: m.detalhes?.cStatus ?? m.cabecTitulo?.cStatus,
-      conta: m.detalhes?.nCodCC ?? m.cabecTitulo?.nCodCC,
-      categoria: m.detalhes?.cCodCateg, titulo: m.detalhes?.nValorTitulo ?? m.cabecTitulo?.nValorTitulo,
-      pago: m.resumo?.nValPago, aberto: m.resumo?.nValAberto });
-    const descrever = (tipo, campo) => {
-      const atuais = new Map(cru[tipo].map((m) => [chave(m), m]));
-      const velhos = new Map(anteriorCru[tipo].map((m) => [chave(m), m]));
-      const somenteAtual = [...atuais.keys()].filter((k) => !velhos.has(k));
-      const somenteCache = [...velhos.keys()].filter((k) => !atuais.has(k))
-        .filter((k) => { const d = campos(velhos.get(k)); return String(d[campo] ?? '').slice(3, 10) === `${String(mes).padStart(2, '0')}/${ano}`; });
-      const alterados = [...atuais.keys()].filter((k) => velhos.has(k)).map((k) => {
-        const a = campos(atuais.get(k)), b = campos(velhos.get(k));
-        return { chave: k, campos: Object.keys(a).filter((f) => String(a[f] ?? '') !== String(b[f] ?? '')) };
-      }).filter((x) => x.campos.length);
-      return { somenteAtual, somenteCache, alterados };
-    };
+    const chave = chaveOmie, campos = camposOmie;
+    const mm = `${String(mes).padStart(2, '0')}/${ano}`;
+    const naData = (campo) => (x) => String(x[campo] ?? '').slice(3, 10) === mm;
+    const descrever = (tipo, campo) => compararOmie(cru[tipo], anteriorCru[tipo], naData(campo));
     const mov = descrever('movimentos', 'pagamento'), tit = descrever('titulos', 'vencimento');
+    // A leitura do cartão "Despesas pendentes" (CP por vencimento) também é comparada: é dela que o cartão sai.
+    const pend = descrever('pendentes', 'vencimento');
+    // Cada movimento que separa a resposta atual do cache, com título, categoria, empresa e datas (sem valor).
+    casosMovimentosOmie = [['movimentos', mov], ['pendentes', pend]].flatMap(([tipo, g]) => [
+      ...g.somenteAtual.map((k) => `${tipo}: só na resposta atual — ${descreverOmie(g.atual.get(k))}`),
+      ...g.somenteCache.map((k) => `${tipo}: só no cache — ${descreverOmie(g.cache.get(k))}`),
+      ...g.alterados.map(({ chave: k, campos: mudados }) => `${tipo}: ${descreverOmie(g.atual.get(k))}; no cache difere em ${mudados.join(', ')}`
+        + ` (antes: status ${campos(g.cache.get(k)).status ?? '—'}, pagamento ${campos(g.cache.get(k)).pagamento ?? '—'})`)]);
+    // O cadastro de categorias também é relido: a conta do DRE preenchida no Omie depois da gravação muda a linha do
+    // DRE em que o lançamento cai, sem nenhum lançamento novo.
+    const usadas = new Set(cru.movimentos.filter((m) => naData('pagamento')(campos(m))).map((m) => `${m.emp}|${m.detalhes?.cCodCateg}`));
+    const cats = compararCategorias(cru.categorias, anteriorCru.categorias, usadas);
+    casosMovimentosOmie.push(...cats.filter((c) => c.usada).map((c) => `categorias: empresa ${c.emp}, categoria ${c.codigo} (com lançamento pago no mês) mudou no cadastro em ${c.campos
+      .map((f) => `${f} "${c.antes[f]}" → "${c.depois[f]}"`).join(', ')}`));
     const exemplo = mov.alterados[0] ?? tit.alterados[0];
     const porCampo = (grupo) => Object.entries(grupo.alterados.flatMap((x) => x.campos)
       .reduce((m, campo) => { m[campo] = (m[campo] ?? 0) + 1; return m; }, {}))
@@ -427,7 +427,7 @@ if (cru && modoOmie === 'ao vivo') {
     }
     let mesmaConsulta = '';
     if (tit.somenteAtual.length) {
-      const [emp, codigo] = tit.somenteAtual[0].split('|');
+      const [emp, , , codigo] = tit.somenteAtual[0].split('|');
       const L = leiturasDe(ano);
       for (const [de, ate] of L.FAIXAS_TIT_R) {
         const resposta = await consulta(emp, 'financas/pesquisartitulos', 'PesquisarLancamentos',
@@ -444,10 +444,13 @@ if (cru && modoOmie === 'ao vivo') {
       const novo = cru.titulos.find((t) => chave(t) === k), velho = anteriorCru.titulos.find((t) => chave(t) === k);
       const antes = new Set((velho?.lancamentos ?? []).map((l) => String(l.nCodLanc)));
       const novas = (novo?.lancamentos ?? []).filter((l) => !antes.has(String(l.nCodLanc)));
-      return `título ${k.split('|').slice(0, 2).join('|')} (${novo?.cabecTitulo?.cOrigem ?? '—'}, vencimento ${novo?.cabecTitulo?.dDtVenc ?? '—'}, status ${novo?.cabecTitulo?.cStatus ?? '—'}) difere em ${mudados.join(', ')}`
+      const [e, , , codigo] = k.split('|');
+      return `título ${e}|${codigo} (${novo?.cabecTitulo?.cOrigem ?? '—'}, vencimento ${novo?.cabecTitulo?.dDtVenc ?? '—'}, status ${novo?.cabecTitulo?.cStatus ?? '—'}) difere em ${mudados.join(', ')}`
         + (novas.length ? `; baixa(s) ausente(s) do cache: ${novas.map((l) => `lançamento ${l.nCodLanc} de ${l.dDtLanc ?? '—'}`).join(', ')}` : '');
     });
-    diagnosticoOmie = `Movimentos: ${mov.somenteAtual.length} apenas na consulta mensal atual, ${mov.somenteCache.length} apenas no cache anual no mês, ${mov.alterados.length} identificadores com campos alterados (${porCampo(mov)}); exemplo só atual ${mov.somenteAtual[0] ?? 'nenhum'}. `
+    diagnosticoOmie = `Categorias: ${cats.length} com classificação diferente do cache (${cats.filter((c) => c.usada).length} com lançamento pago no mês). `
+      + `Pendentes (CP por vencimento): ${pend.somenteAtual.length} apenas na consulta mensal atual, ${pend.somenteCache.length} apenas no cache anual no mês, ${pend.alterados.length} alterados (${porCampo(pend)}). `
+      + `Movimentos: ${mov.somenteAtual.length} apenas na consulta mensal atual, ${mov.somenteCache.length} apenas no cache anual no mês, ${mov.alterados.length} identificadores com campos alterados (${porCampo(mov)}); exemplo só atual ${mov.somenteAtual[0] ?? 'nenhum'}. `
       + `Títulos: ${tit.somenteAtual.length} apenas na consulta mensal atual, ${tit.somenteCache.length} apenas no cache anual no mês, ${tit.alterados.length} alterados (${porCampo(tit)}); exemplo só atual ${tit.somenteAtual[0] ?? 'nenhum'}. `
       + (exemplo ? `Exemplo: código ${exemplo.chave}; campos diferentes: ${exemplo.campos.join(', ')}. ` : '')
       + (mesmaConsultaAlterada.length ? `Mesmo recorte: ${mesmaConsultaAlterada.join('; ')}. ` : '') + mesmaConsulta;
@@ -704,6 +707,9 @@ const semRecalculo = {
   'resultado-sem-terceiros': 'depende dos sinais de clientes e do lucro líquido recalculados',
   'divida-liquida': 'depende do capital de giro recalculado',
 };
+// O cartão "Despesas pendentes" sai da leitura CP por vencimento; os demais de financas/mf, da leitura por pagamento.
+const casosDaLeitura = (fonte) => casosMovimentosOmie.filter((c) => (fonte.includes('cLiquidado') ? ['pendentes:'] : ['movimentos:', 'categorias:'])
+  .some((p) => c.startsWith(p)));
 const rows = Object.entries(titulos).map(([id, [tela, nome]]) => {
   const e = esperado.get(id), i = app?.get(id);
   const serieMostrada = id === 'top-10-despesas' ? i?.dados?.map(({ nome, valor }) => ({ nome: normal(nome), valor }))
@@ -735,10 +741,15 @@ const rows = Object.entries(titulos).map(([id, [tela, nome]]) => {
   else if (e.fonte.includes('PesquisarLancamentos') && dup.omieTitulosDuplicados) motivo = 'títulos com identificador repetido na resposta do Omie';
   else if (e.serie && JSON.stringify(e.serie) !== JSON.stringify(serieComparavel)) motivo = e.motivoSerie ?? 'agrupamento da série difere entre fonte atual e tela';
   else if (e.fonte.includes('financas/mf') && dup.omieDuplicados) motivo = 'identificadores duplicados na resposta de movimentos do Omie';
+  // Sem leitura própria: herda a diferença do lucro líquido recalculado com a resposta atual.
+  else if (id === 'resultado-sem-terceiros' && modoOmie === 'ao vivo' && diferente && casosDaLeitura('financas/mf').length)
+    motivo = `herda o lucro líquido recalculado com a resposta atual do Omie; cache da tela anterior a ela: ${casosDaLeitura('financas/mf').join('; ')}`;
   else if (e.fonte.startsWith('Omie') && modoOmie === 'ao vivo' && ultimaRespostaNoCache && diferente)
     motivo = e.fonte.includes('PesquisarLancamentos')
       ? `cache da tela anterior à resposta atual (última gravação ${new Date(ultimaRespostaNoCache).toLocaleString('pt-BR')}): ${casosTitulosOmie.join('; ') || 'títulos alterados depois da gravação'}; a regra é a mesma, e a tela alcança o Omie na próxima releitura`
-      : 'resposta atual do Omie difere do cache usado pela tela; consultar a causa por lançamento';
+      : casosDaLeitura(e.fonte).length
+        ? `cache da tela anterior à resposta atual (última gravação ${new Date(ultimaRespostaNoCache).toLocaleString('pt-BR')}): ${casosDaLeitura(e.fonte).join('; ')}; a regra é a mesma, e a tela alcança o Omie na próxima releitura`
+        : 'resposta atual do Omie difere do cache usado pela tela, sem movimento diferente no mês; conferir a regra';
   else if ((id === 'capital-de-giro' || id === 'divida-liquida') && diferente) {
     const c = esperado.get('capital-de-giro').contratos;
     const ccb = c.porContrato.filter((x) => x.fonte === 'CCB');
